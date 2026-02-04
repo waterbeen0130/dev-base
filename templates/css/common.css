@@ -1,0 +1,41 @@
+@import url("reset.css");
+@import url("slick.css");
+
+
+:root{
+    --padding:20px;
+    --header_h:100px;
+    --width:1510px;
+    --point-color-1:#df3d6e;
+}
+
+[data-delay] {position: relative; transition: all 1s ease; opacity:0;}
+[data-direction="left"]{left:-40px;}
+[data-direction="right"]{right:-40px;}
+[data-direction="top"]{top:-40px;}
+[data-direction="bottom"]{bottom:-40px;}
+.section_on [data-delay]{opacity:1;}
+.section_on [data-direction="left"]{left:0;}
+.section_on [data-direction="right"]{right:0;}
+.section_on [data-direction="top"]{top:0;}
+.section_on [data-direction="bottom"]{bottom:0;}
+
+
+
+
+
+@media screen and (max-width: 1200px){
+
+}
+
+
+@media screen and (max-width: 1024px){
+
+
+}
+
+
+@media screen and (max-width: 768px){
+
+
+}

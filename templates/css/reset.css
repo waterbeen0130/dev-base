@@ -1,0 +1,241 @@
+@charset "utf-8";
+
+/*reset*/
+*{box-sizing:border-box;}
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,textarea,p,blockquote,th,td,input,select,textarea,button{margin:0;padding:0;}
+html {height:100%;}
+body {height:100%;}
+a:link {text-decoration:none;}
+a:visited {text-decoration:none;}
+a:hover {text-decoration:none; }
+a:active {text-decoration:none;}
+img{border:0px; max-width:100%;}
+img, a, label, span{vertical-align:middle;}
+li{list-style: none;}
+table{border-collapse:collapse;width:100%;}
+address,caption,cite,code,dfn,em,var,h1,h2,h3,h4,h5,h6 {font-style:normal;font-weight:normal;}
+caption,legend,caption *,legend *{position:absolute; left:-10000px; line-height:0; font-size:0;}
+fieldset{border:solid 0px black;padding:0;}
+button{border:none; background:none; cursor:pointer; outline:none;}
+
+body,a,[type=text], [type=password], [type=file], [type=email], [type=number], [type=tel], [type=submit],select,h1, h2, h3, h4, h5, h6, pre,textarea, button{
+font-family:"Pretendard","MalgunGothic","맑은 고딕","돋움","tahoma","sans-serif"; line-height:1.4; color:#000; font-size:inherit; font-weight:inherit; color:inherit;}
+
+html,body {font-size: clamp(14px, 1.2vw, 16px);}
+
+[type=text], [type=password], [type=file], [type=email], [type=number], [type=tel], [type=submit]{padding-left:10px; box-sizing:border-box; vertical-align:middle; border:solid 1px #ddd; height:40px; line-height:38px; outline:none;}
+[type=checkbox], [type=radio]{vertical-align:middle;}
+select{height:40px; line-height:38px; border:1px solid #ddd; box-sizing:border-box; outline:none;}
+
+[type=file], [type=submit]{padding:0; height:auto; }
+textarea{padding:15px; width:100%; border:1px solid #ddd; box-sizing:border-box; resize:none; display:block; outline:none;}
+button:focus,
+textarea:focus,
+select:focus,
+input:focus{outline:none;}
+
+input[type=tel],
+input[type=password],
+input[type=email],
+input[type=search],
+input[type=text] {
+   -webkit-appearance: none;
+   -webkit-border-radius: 0;
+}
+
+input[type=number]::placeholder,
+input[type=password]::placeholder,
+input[type=text]::placeholder{color:#bbb;}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+}
+
+/* Select box 스타일 초기화 
+select {
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;
+}
+*/
+
+/* flex */
+.d-flex{display:flex;}
+.align-center{align-items: center;}
+.ju-center{justify-content: center;}
+.ju-end{justify-content: flex-end;}
+.ju-start{justify-content: flex-start;}
+.f-wrap{flex-wrap:wrap;}
+.ml-auto{margin-left:auto; }
+
+/*float 해제*/
+.clfx:after{ clear: both; content: "."; display: block; height: 0; visibility: hidden; font-size: 0;}
+.clfix{clear: both; content: "."; display: block; height: 0;}
+
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 900;
+   font-display: swap;
+   src: local('Pretendard Black'),
+      url('font/Pretendard-Black.woff2') format('woff2'),
+      url('font/Pretendard-Black.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 800;
+   font-display: swap;
+   src: local('Pretendard ExtraBold'),
+      url('font/Pretendard-ExtraBold.woff2') format('woff2'),
+      url('font/Pretendard-ExtraBold.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 700;
+   font-display: swap;
+   src: local('Pretendard Bold'),
+      url('font/Pretendard-Bold.woff2') format('woff2'),
+      url('font/Pretendard-Bold.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 600;
+   font-display: swap;
+   src: local('Pretendard SemiBold'),
+      url('font/Pretendard-SemiBold.woff2') format('woff2'),
+      url('font/Pretendard-SemiBold.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 500;
+   font-display: swap;
+   src: local('Pretendard Medium'),
+      url('font/Pretendard-Medium.woff2') format('woff2'),
+      url('font/Pretendard-Medium.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 400;
+   font-display: swap;
+   src: local('Pretendard Regular'),
+      url('font/Pretendard-Regular.woff2') format('woff2'),
+      url('font/Pretendard-Regular.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 300;
+   font-display: swap;
+   src: local('Pretendard Light'),
+      url('font/Pretendard-Light.woff2') format('woff2'),
+      url('font/Pretendard-Light.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 200;
+   font-display: swap;
+   src: local('Pretendard ExtraLight'),
+      url('font/Pretendard-ExtraLight.woff2') format('woff2'),
+      url('font/Pretendard-ExtraLight.woff') format('woff');
+}
+
+@font-face {
+   font-family: 'Pretendard';
+   font-weight: 100;
+   font-display: swap;
+   src: local('Pretendard Thin'),
+      url('font/Pretendard-Thin.woff2') format('woff2'),
+      url('font/Pretendard-Thin.woff') format('woff');
+}
+
+/*margin*/
+.mr_0 { margin-right: 0 !important; }
+.mr_4 { margin-right: clamp(2px, 0.3vw, 6px) !important; }
+.mr_5 { margin-right: clamp(3px, 0.4vw, 8px) !important; }
+.mr_10 { margin-right: clamp(6px, 1vw, 16px) !important; }
+.mr_15 { margin-right: clamp(8px, 1.5vw, 24px) !important; }
+.mr_20 { margin-right: clamp(12px, 2vw, 32px) !important; }
+.mr_60 { margin-right: clamp(30px, 6vw, 60px) !important; }
+
+.ml_0 { margin-left: 0 !important; }
+.ml_5 { margin-left: clamp(3px, 0.4vw, 8px) !important; }
+.ml_10 { margin-left: clamp(6px, 1vw, 16px) !important; }
+.ml_15 { margin-left: clamp(8px, 1.5vw, 24px) !important; }
+
+.mb_0 { margin-bottom: 0 !important; }
+.mb_5 { margin-bottom: clamp(3px, 0.4vw, 8px) !important; }
+.mb_8 { margin-bottom: clamp(5px, 0.7vw, 12px) !important; }
+.mb_10 { margin-bottom: clamp(6px, 1vw, 16px) !important; }
+.mb_20 { margin-bottom: clamp(12px, 2vw, 32px) !important; }
+.mb_25 { margin-bottom: clamp(15px, 2.5vw, 40px) !important; }
+.mb_30 { margin-bottom: clamp(18px, 3vw, 48px) !important; }
+.mb_35 { margin-bottom: clamp(20px, 3.5vw, 56px) !important; }
+.mb_40 { margin-bottom: clamp(24px, 4vw, 64px) !important; }
+.mb_45 { margin-bottom: clamp(28px, 4.5vw, 72px) !important; }
+.mb_50 { margin-bottom: clamp(32px, 5vw, 80px) !important; }
+.mb_60 { margin-bottom: clamp(36px, 6vw, 96px) !important; }
+.mb_70 { margin-bottom: clamp(42px, 7vw, 112px) !important; }
+.mb_85 { margin-bottom: clamp(50px, 8.5vw, 136px) !important; }
+
+.mt_0 { margin-top: 0 !important; }
+.mt_5 { margin-top: clamp(3px, 0.4vw, 8px) !important; }
+.mt_8 { margin-top: clamp(5px, 0.7vw, 12px) !important; }
+.mt_10 { margin-top: clamp(6px, 1vw, 16px) !important; }
+.mt_15 { margin-top: clamp(8px, 1.5vw, 24px) !important; }
+.mt_20 { margin-top: clamp(12px, 2vw, 32px) !important; }
+.mt_25 { margin-top: clamp(15px, 2.5vw, 40px) !important; }
+.mt_30 { margin-top: clamp(18px, 3vw, 48px) !important; }
+.mt_35 { margin-top: clamp(20px, 3.5vw, 56px) !important; }
+.mt_40 { margin-top: clamp(24px, 4vw, 64px) !important; }
+.mt_50 { margin-top: clamp(32px, 5vw, 80px) !important; }
+.mt_70 { margin-top: clamp(42px, 7vw, 112px) !important; }
+
+/*padding*/
+.pb_0 { padding-bottom: 0 !important; }
+.pb_5 { padding-bottom: clamp(3px, 0.4vw, 8px) !important; }
+.pb_20 { padding-bottom: clamp(12px, 2vw, 32px) !important; }
+.pb_25 { padding-bottom: clamp(15px, 2.5vw, 40px) !important; }
+
+.pt_0 { padding-top: 0 !important; }
+.pt_8 { padding-top: clamp(5px, 0.7vw, 12px) !important; }
+.pt_10 { padding-top: clamp(6px, 1vw, 16px) !important; }
+.pt_15 { padding-top: clamp(8px, 1.5vw, 24px) !important; }
+.pt_20 { padding-top: clamp(12px, 2vw, 32px) !important; }
+.pt_30 { padding-top: clamp(18px, 3vw, 48px) !important; }
+.pt_35 { padding-top: clamp(20px, 3.5vw, 56px) !important; }
+.pt_40 { padding-top: clamp(24px, 4vw, 64px) !important; }
+.pt_50 { padding-top: clamp(32px, 5vw, 80px) !important; }
+
+.pl_10 { padding-left: clamp(6px, 1vw, 16px) !important; }
+.pl_20 { padding-left: clamp(12px, 2vw, 32px) !important; }
+.pl_25 { padding-left: clamp(15px, 2.5vw, 40px) !important; }
+.pl_30 { padding-left: clamp(18px, 3vw, 48px) !important; }
+
+/*text-align*/
+.txt_r{text-align:right !important;}
+.txt_l{text-align:left !important;}
+.txt_c{text-align:center !important;}
+
+/*background*/
+.back_no{background:none !important;}
+
+/*border*/
+.bd_l{border-left:none !important;}
+.bd_r{border-right:none !important;}
+
+/*ir*/
+.ir{overflow:hidden;line-height:0 !important;font-size:0 !important;position:relative;text-indent:-10000px;/*display:inline-block;*/}
+.ir *{position:absolute;left:-10000px;top:-10000px;margin:0;padding:0;}
+
+/*float*/
+.f-l{float:left;}
+.f-r{float:right;}
