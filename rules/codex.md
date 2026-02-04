@@ -1,39 +1,39 @@
-# Codex Rules
+# Codex 규칙
 
-Rules for GitHub Copilot, Cursor, and other Codex-based AI.
-
----
-
-## Base
-- Apply `common.md` rules first
-- Code comments: English only
+GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 
 ---
 
-## Code Style
+## 기본
+- `common.md` 규칙 우선 적용
+- 코드 주석: 영어만
+
+---
+
+## 코드 스타일
 
 ### HTML
-- Semantic tags
-- Indentation: 4 spaces
-- Follow BEM or project naming convention
+- 시맨틱 태그 사용
+- 들여쓰기: 4 spaces
+- BEM 또는 프로젝트 네이밍 컨벤션 따름
 
 ### CSS
-- **Single line format** for rules
-- Indentation: 4 spaces (for media query blocks)
-- Class names: kebab-case
-- Use shorthand properties
+- **한 줄 포맷**으로 작성
+- 들여쓰기: 4 spaces (미디어쿼리 블록)
+- 클래스명: kebab-case
+- 단축 속성 사용
 
 ### JavaScript
-- ES6+ syntax
-- Indentation: 4 spaces
-- Use semicolons
-- Use const/let (no var)
+- ES6+ 문법
+- 들여쓰기: 4 spaces
+- 세미콜론 사용
+- const/let 사용 (var 금지)
 
 ---
 
-## Autocomplete Hints
+## 자동완성 힌트
 
-### Comment for Intent
+### 주석으로 의도 전달
 ```javascript
 // remove duplicates from array
 const unique = [...new Set(arr)];
@@ -42,16 +42,16 @@ const unique = [...new Set(arr)];
 const formatDate = (date) => { ... }
 ```
 
-### Function Names
-- `getUserById` - get user by ID
-- `validateEmail` - validate email format
-- `formatPrice` - format price with comma
+### 함수명 예시
+- `getUserById` - ID로 사용자 조회
+- `validateEmail` - 이메일 유효성 검사
+- `formatPrice` - 가격 포맷 (콤마 추가)
 
 ---
 
-## Preferred Patterns
+## 선호 패턴
 
-### Conditionals
+### 조건문
 ```javascript
 // ternary for simple cases
 const status = isActive ? 'active' : 'inactive';
@@ -60,14 +60,14 @@ const status = isActive ? 'active' : 'inactive';
 if (!user) return null;
 ```
 
-### Loops
+### 반복문
 ```javascript
 // prefer map, filter, reduce
 const names = users.map(user => user.name);
 const adults = users.filter(user => user.age >= 18);
 ```
 
-### Async
+### 비동기
 ```javascript
 // prefer async/await
 const data = await fetchData();
@@ -75,9 +75,9 @@ const data = await fetchData();
 
 ---
 
-## Avoid
-- Deep nesting
-- Magic numbers/strings
-- Over-abstraction
-- Unnecessary dependencies
-- Multi-line CSS format
+## 피할 것
+- 깊은 중첩
+- 매직 넘버/문자열
+- 과도한 추상화
+- 불필요한 의존성
+- CSS 여러 줄 포맷

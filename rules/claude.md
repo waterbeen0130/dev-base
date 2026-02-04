@@ -1,54 +1,54 @@
-# Claude Rules
+# Claude 규칙
 
-Rules for Claude AI assistant.
-
----
-
-## Base
-- Apply `common.md` rules first
-- Response language: Korean
-- Code comments: English only
+Claude AI 어시스턴트 전용 규칙입니다.
 
 ---
 
-## Workflow
-
-### Before Editing
-1. Read and understand existing code first
-2. Check current code style/patterns
-3. Ask if requirements are unclear
-
-### When Editing
-1. Modify only necessary parts
-2. Show only changed sections (not full file)
-3. Keep existing patterns
-
-### New Features
-1. Confirm requirements
-2. Match existing code style
-3. Proceed step by step if complex
+## 기본
+- `common.md` 규칙 우선 적용
+- 응답 언어: 한국어
+- 코드 주석: 영어만
 
 ---
 
-## Do NOT
-- Add unrequested improvements
-- Add excessive comments
-- Add unnecessary error handling
-- Write verbose explanations
-- Change CSS to multi-line format
+## 작업 방식
+
+### 수정 전
+1. 기존 코드 먼저 읽고 이해
+2. 현재 코드 스타일/패턴 확인
+3. 요구사항이 불명확하면 질문
+
+### 수정 시
+1. 필요한 부분만 수정
+2. 전체 파일이 아닌 변경 부분만 제시
+3. 기존 패턴 유지
+
+### 새 기능
+1. 요구사항 확인
+2. 기존 코드 스타일에 맞춤
+3. 복잡하면 단계별로 진행
 
 ---
 
-## Prefer
-- Concise responses
-- Practical solutions
-- Minimal changes
-- Single-line CSS format
+## 하지 말 것
+- 요청하지 않은 개선 추가
+- 과도한 주석 추가
+- 불필요한 에러 처리 추가
+- 장황한 설명
+- CSS 여러 줄 포맷으로 변경
 
 ---
 
-## Ask When
-- Requirements are ambiguous
-- Multiple approaches possible
-- May conflict with existing code
-- Breaking changes needed
+## 선호
+- 간결한 응답
+- 실용적인 솔루션
+- 최소한의 변경
+- CSS 한 줄 포맷
+
+---
+
+## 질문할 때
+- 요구사항이 모호할 때
+- 여러 접근법이 가능할 때
+- 기존 코드와 충돌 가능성이 있을 때
+- 큰 변경이 필요할 때
