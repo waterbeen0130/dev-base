@@ -85,7 +85,7 @@
 
 ---
 
-## 파일 구조
+## 파일 구조 (Basic 프로젝트)
 ```
 project/
 ├── index.html
@@ -95,6 +95,16 @@ project/
 ├── js/
 │   └── ui_common.js
 └── img/
+```
+
+### Basic 프로젝트 기본 포함 파일
+```html
+<link rel="stylesheet" href="../css/common.css"/>
+<script type="text/javascript" src="../js/jquery-3.7.1.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="../js/gsap.min.js"></script>
+<script type="text/javascript" src="../js/ScrollTrigger.min.js"></script>
+<script type="text/javascript" src="../js/slick.js" charset="utf-8"></script>
+<script type="text/javascript" src="../js/ui_common.js" charset="utf-8"></script>
 ```
 
 ---
