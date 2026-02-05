@@ -28,15 +28,17 @@
 - 기존 프로젝트 컨벤션 우선 적용
 
 ### HTML
-- 시맨틱 태그 사용 (`<header>`, `<main>`, `<section>`, `<article>`, `<footer>`)
+- 시맨틱 태그 사용 (`<header>`, `<main>`, `<section>`, `<article>`, `<footer>`, `<nav>`, `<address>`)
 - 모든 이미지에 `alt` 속성 필수
 - 버튼에 `type="button"` 명시
 - 폼 요소는 `<label>`과 연결
+- 텍스트 없는 인터랙티브 요소에 `aria-label` 필수
 
 ### CSS
-- **한 줄 포맷으로 작성** (미디어쿼리 블록 제외)
+- **모든 셀렉터 한 줄 포맷으로 작성** (미디어쿼리 내부 포함)
+- **미디어쿼리 내부 들여쓰기 없음** — 셀렉터는 컬럼 0에서 시작
 - font-size: PC는 `rem`, 모바일은 고정 `px`
-- padding/margin: 고정 `px` 사용
+- padding/margin/gap: 고정 `px` 사용 (clamp, calc, vw 금지)
 - 768px 이하: padding/margin은 PC 값의 **절반**
 
 ```css
@@ -44,10 +46,15 @@
 .section_name { position: relative; padding: 90px 0; width: 100%; }
 .section_name .title { font-size: 1.5rem; }
 
-/* correct - media query (768px 이하) */
+/* correct - media query (no indent inside) */
+@media screen and (max-width: 768px) {
+.section_name { padding: 45px 0; }
+.section_name .title { font-size: 14px; }
+}
+
+/* wrong - indented inside media query */
 @media screen and (max-width: 768px) {
     .section_name { padding: 45px 0; }
-    .section_name .title { font-size: 14px; }
 }
 
 /* wrong - multi-line */
@@ -55,7 +62,19 @@
     position: relative;
     padding: 90px;
 }
+
+/* wrong - clamp/calc for spacing */
+.section_name { padding: clamp(45px, calc(90 / 1920 * 100vw), 90px) 0; }
 ```
+
+### CSS 클래스 네이밍
+- **페이지 프리픽스 형식**: `{페이지}_{역할}` (예: `main_visual`, `main_about`)
+- `sec_1`, `sec_2`, `section_01` 같은 범용 이름 사용 금지
+- 페이지 프리픽스 예시: `main_`, `company_`, `product_`, `support_`
+- 예시:
+  - 메인: `main_visual`, `main_about`, `main_portfolio`
+  - 회사: `company_overview`, `company_history`
+  - 제품: `product_list`, `product_detail`
 
 ### CSS 속성 순서
 1. position 관련
