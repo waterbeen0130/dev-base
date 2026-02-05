@@ -18,10 +18,26 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - BEM 또는 프로젝트 네이밍 컨벤션 따름
 
 ### CSS
-- **한 줄 포맷**으로 작성
-- 들여쓰기: 4 spaces (미디어쿼리 블록)
-- 클래스명: kebab-case
+- **한 줄 포맷**으로 작성 (미디어쿼리 내부 포함)
+- **미디어쿼리 내부 들여쓰기 없음**
+- 들여쓰기 없음 (미디어쿼리 블록 내부)
+- 클래스명: **페이지 프리픽스 형식** (`{페이지}_{역할}`)
+- `sec_1`, `sec_2` 같은 범용 이름 금지
+- padding/margin/gap: 고정 `px` (clamp, calc, vw 금지)
 - 단축 속성 사용
+
+```css
+/* correct */
+@media screen and (max-width: 768px) {
+.main_about { padding: 60px 0; }
+.main_about .tit h2 { font-size: 28px; }
+}
+
+/* wrong */
+@media screen and (max-width: 768px) {
+    .sec_1 { padding: clamp(60px, calc(120 / 1920 * 100vw), 120px) 0; }
+}
+```
 
 ### JavaScript
 - ES6+ 문법
@@ -81,3 +97,6 @@ const data = await fetchData();
 - 과도한 추상화
 - 불필요한 의존성
 - CSS 여러 줄 포맷
+- CSS 미디어쿼리 내부 들여쓰기
+- padding/margin에 clamp/calc 사용
+- `sec_1`, `sec_2` 같은 범용 클래스명
