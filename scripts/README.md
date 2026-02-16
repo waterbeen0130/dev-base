@@ -1,10 +1,17 @@
 # Figma 추출 스크립트 실행 가이드
 
-이 스크립트는 브레인바디 페이지 기준으로 다음 규칙을 반영해 HTML을 생성합니다.
-- 라벨형 텍스트(`BrainBody`, `MRI`, `그린몰` 계열)는 `span` 우선
-- 문단형 텍스트만 `p` 판정
-- `characterStyleOverrides` 누적 병합 규칙 적용
-- 텍스트 태그 과잉(`p`) 방지
+이 스크립트는 Figma JSON을 HTML로 변환할 때 규칙(profile)을 선택해 반복 가능한 추출 품질을 맞춥니다.
+
+- `brainbody`: 브레인바디 랜딩처럼 라벨 보존이 중요한 페이지에 맞춘 엄격 모드
+- `general`: 일반 페이지용 기본 모드(라벨 후보를 줄이고 문단 판정을 상대적으로 넓게 적용)
+- `auto`(기본): 파일명 기반으로 자동 전환
+  - 파일명에 `brainbody`/`brianbody`가 있으면 `brainbody`
+  - 그 외에는 `general`
+
+공통 동작
+- 라벨형 텍스트 판단에서 과도한 `<p>` 분류를 줄임
+- `characterStyleOverrides` 누적 병합 규칙 유지
+- 텍스트 태그 과잉(`p`)를 줄이도록 보정
 
 ## 실행 예시
 
@@ -14,16 +21,28 @@ python3 scripts/figma_extract_to_html.py \
   /mnt/c/Users/water/Downloads/260212_그린몰_랜딩적용(브레인바디)/html/figma_grinmall_brianbody_260212_page.json \
   /mnt/c/Users/water/Downloads/260212_그린몰_랜딩적용(브레인바디)/html/index.html \
   -o /mnt/c/Users/water/Downloads/260212_그린몰_랜딩적용(브레인바디)/html/index.html
+
+# 자동(profile=auto, 기본값)
+python3 scripts/figma_extract_to_html.py \
+  <figma_json_path> <template_html_path> -o <output_html_path>
+
+# 브레인바디 규칙 강제 적용
+python3 scripts/figma_extract_to_html.py \
+  <figma_json_path> <template_html_path> -o <output_html_path> --profile brainbody
+
+# 일반 페이지 규칙 적용
+python3 scripts/figma_extract_to_html.py \
+  <figma_json_path> <template_html_path> -o <output_html_path> --profile general
 ```
 
 ## 다른 Codex AI에게 요청할 때 권장 문구
 
 - 동일 규칙으로 재추출해 달라  
-`/mnt/d/dev-base/scripts/figma_extract_to_html.py`를 `rules`의 현재 브레인바디 규칙 기준으로 실행해서
-`/mnt/c/Users/water/Downloads/260212_그린몰_랜딩적용(브레인바디)/html/index.html`을 갱신해줘.
+`/mnt/d/dev-base/scripts/figma_extract_to_html.py`를 실행하고 `--profile`을 명시해서 처리해줘.
+예: 브레인바디 페이지라면 `--profile brainbody`, 일반 페이지라면 `--profile general`.
 
 - 새 JSON 기준으로 반복 적용해 달라  
-지금 폴더의 스크립트로 `python3 scripts/figma_extract_to_html.py <figma_json> <template_html> -o <output_html>` 형태로 실행해 결과물과 `git diff`를 확인해 달라고 요청하면 됩니다.
+`python3 scripts/figma_extract_to_html.py <figma_json> <template_html> -o <output_html> --profile <auto|brainbody|general>` 형태로 실행해 결과물을 확인해달라고 요청해.
 
 ## 실행 전 확인
 

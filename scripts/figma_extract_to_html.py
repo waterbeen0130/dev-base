@@ -3,8 +3,8 @@ import argparse
 import copy
 import html
 import json
-import os
 import re
+from pathlib import Path
 
 try:
     from bs4 import BeautifulSoup
@@ -30,54 +30,54 @@ STYLE_OVERRIDE_KEYS = (
     "textCase",
 )
 
-INLINE_TEXT_HINTS = (
-    "브레인바디",
-    "BrainBody",
-    "MRI",
-    "MRI 검진",
-    "비급여",
-    "건강보험",
-    "그린몰 원스톱",
-    "Greenmall",
-    "영상의학과",
-    "원스톱 토탈케어",
-    "원스톱",
-    "토탈케어",
-)
+BRAINBODY_PROFILE = {
+    "name": "brainbody",
+    "inline_text_hints": (
+        "브레인바디",
+        "BrainBody",
+        "MRI",
+        "MRI 검진",
+        "비급여",
+        "건강보험",
+        "그린몰 원스톱",
+        "Greenmall",
+        "영상의학과",
+        "원스톱 토탈케어",
+        "원스톱",
+        "토탈케어",
+    ),
+    "inline_text_exact_hints": (
+        "브레인바디",
+        "BrainBody",
+        "BrainBody+MRI",
+        "BrainBody + MRI",
+        "MRI 검진",
+        "그린몰 원스톱 토탈케어 시스템",
+        "그린몰 원스톱",
+        "Greenmall One-Stop Process",
+    ),
+    "block_text_keywords": ("됩니다", "있습니다", "합니다", "말씀", "수 있습니다", "필요합니다", "확인됩니다"),
+    "paragraph_terms": ("결과", "결국", "때문", "확인됩니다", "필요합니다", "필요", "관리", "검사"),
+    "paragraph_pattern": re.compile(r"[.?!]\Z|습니다$|됩니다$|입니다$|있습니다$|됩니다\.$|필요합니다|확인합니다|판독"),
+}
 
-INLINE_TEXT_EXACT_HINTS = (
-    "브레인바디",
-    "BrainBody",
-    "BrainBody+MRI",
-    "BrainBody + MRI",
-    "MRI 검진",
-    "그린몰 원스톱 토탈케어 시스템",
-    "그린몰 원스톱",
-    "Greenmall One-Stop Process",
-)
+GENERAL_PROFILE = {
+    "name": "general",
+    "inline_text_hints": (
+        "중요",
+        "안내",
+        "주의",
+    ),
+    "inline_text_exact_hints": (),
+    "block_text_keywords": ("됩니다", "있습니다", "입니다", "필요합니다", "확인합니다", "내용"),
+    "paragraph_terms": ("때문", "검토", "결과", "관리", "안내", "확인", "제공", "서비스", "문의", "진행"),
+    "paragraph_pattern": re.compile(r"[.?!]\Z|됩니다$|있습니다$|입니다$|필요합니다$|확인합니다$|안내합니다$"),
+}
 
-BLOCK_TEXT_KEYWORDS = (
-    "됩니다",
-    "있습니다",
-    "합니다",
-    "말씀",
-    "수 있습니다",
-    "필요합니다",
-    "확인됩니다",
-)
-
-PARAGRAPH_TERMS = (
-    "결과",
-    "결국",
-    "때문",
-    "확인됩니다",
-    "필요합니다",
-    "필요",
-    "관리",
-    "검사",
-)
-
-PARAGRAPH_PATTERN = re.compile(r"[.?!]\Z|습니다$|됩니다$|입니다$|있습니다$|됩니다\.$|필요합니다|확인합니다|판독")
+PROFILE_ALIASES = {
+    "brainbody": BRAINBODY_PROFILE,
+    "general": GENERAL_PROFILE,
+}
 
 HEADING_LEVEL_FROM_NAME = {
     "heading 1": "h1",
@@ -110,23 +110,23 @@ def _rgba_from_fill(fill):
     return f"rgba({r}, {g}, {b}, {a})"
 
 
-def _is_inline_label_text(text):
+def _is_inline_label_text(text, profile):
     normalized = text.strip()
     if not normalized:
         return False
-    return any(hint.lower() in normalized.lower() for hint in INLINE_TEXT_HINTS) or any(
-        exact in normalized for exact in INLINE_TEXT_EXACT_HINTS
+    return any(hint.lower() in normalized.lower() for hint in profile["inline_text_hints"]) or any(
+        exact in normalized for exact in profile["inline_text_exact_hints"]
     )
 
 
-def _infer_text_tag(node_name, parent_name, visible_text, style):
+def _infer_text_tag(node_name, parent_name, visible_text, style, profile):
     node_key = (node_name or "").lower()
     parent_key = (parent_name or "").lower()
     visible_key = (visible_text or "").strip().lower()
     font_size = style.get("fontSize")
     font_weight = style.get("fontWeight") or 0
 
-    if _is_inline_label_text(visible_text):
+    if _is_inline_label_text(visible_text, profile):
         return "span"
 
     if visible_key:
@@ -158,7 +158,7 @@ def _infer_text_tag(node_name, parent_name, visible_text, style):
     return "span"
 
 
-def _is_textual_block(text, style):
+def _is_textual_block(text, style, profile):
     font_size = style.get("fontSize") or 0
     line_count = text.count("\n") + 1
     plain = text.replace("\n", "").strip()
@@ -170,9 +170,9 @@ def _is_textual_block(text, style):
         return True
     if line_count > 1:
         return True
-    if any(keyword in plain for keyword in INLINE_TEXT_HINTS):
+    if any(keyword in plain for keyword in profile["inline_text_hints"]):
         return False
-    if any(keyword in plain for keyword in PARAGRAPH_TERMS):
+    if any(keyword in plain for keyword in profile["paragraph_terms"]):
         return True
     if plain_len <= 45 and font_size <= 55:
         return False
@@ -182,14 +182,14 @@ def _is_textual_block(text, style):
         return True
     if line_count == 1 and font_size >= 50 and plain_len >= 40:
         return True
-    if any(keyword in plain for keyword in BLOCK_TEXT_KEYWORDS):
+    if any(keyword in plain for keyword in profile["block_text_keywords"]):
         return True
-    if PARAGRAPH_PATTERN.search(plain):
+    if profile["paragraph_pattern"].search(plain):
         return True
     return False
 
 
-def _normalize_text_for_semantic(node, node_name, parent_name, style):
+def _normalize_text_for_semantic(node, node_name, parent_name, style, profile):
     text = (node.get("characters") or "")
     font_size = style.get("fontSize")
     plain = text.replace("\n", "").strip()
@@ -199,8 +199,8 @@ def _normalize_text_for_semantic(node, node_name, parent_name, style):
     if "\n" in text:
         return "p"
 
-    inferred = _infer_text_tag(node_name, parent_name, text, style)
-    if _is_textual_block(text, style):
+    inferred = _infer_text_tag(node_name, parent_name, text, style, profile)
+    if _is_textual_block(text, style, profile):
         return "p" if inferred == "span" else inferred
 
     if font_size is not None and font_size >= 28 and len(plain) >= 20:
@@ -216,7 +216,7 @@ def _normalize_text_for_semantic(node, node_name, parent_name, style):
         return "span"
     if len(plain.split()) >= 6:
         return "p"
-    if PARAGRAPH_PATTERN.search(plain):
+    if profile["paragraph_pattern"].search(plain):
         return "p"
     if re.search(r"[:;,/]", plain):
         return "p"
@@ -348,13 +348,13 @@ def _build_text_html(child):
     return "".join(pieces)
 
 
-def _extract_node_html(node, parent_name=""):
+def _extract_node_html(node, profile, parent_name=""):
     node_type = node.get("type")
 
     if node_type == "TEXT":
         text_html = _build_text_html(node)
         style = node.get("style", {})
-        tag_name = _normalize_text_for_semantic(node, node.get("name"), parent_name, style)
+        tag_name = _normalize_text_for_semantic(node, node.get("name"), parent_name, style, profile)
         return f'<{tag_name} class="motion_section" data-delay="0.2" data-direction="bottom">{text_html}</{tag_name}>\n'
 
     if node_type in ("RECTANGLE", "ELLIPSE", "VECTOR"):
@@ -377,7 +377,7 @@ def _extract_node_html(node, parent_name=""):
 
     html_parts = []
     for child in node.get("children", []) or []:
-        child_html = _extract_node_html(child, node.get("name", ""))
+        child_html = _extract_node_html(child, profile, node.get("name", ""))
         if child_html:
             html_parts.append(child_html)
     return "".join(html_parts)
@@ -432,7 +432,18 @@ def _insert_into_template(template_html, generated_html_content):
     raise RuntimeError("템플릿 HTML에서 <section class='container'> 또는 <main>을 찾지 못했습니다.")
 
 
-def generate_html_from_figma(figma_json_path, template_html_path, output_html_path=None):
+def _resolve_profile(profile_name, figma_json_path):
+    if profile_name == "auto":
+        stem = Path(figma_json_path).stem.lower()
+        if "brainbody" in stem or "brianbody" in stem:
+            return PROFILE_ALIASES["brainbody"]
+        return PROFILE_ALIASES["general"]
+    return PROFILE_ALIASES[profile_name]
+
+
+def generate_html_from_figma(figma_json_path, template_html_path, profile_name="auto", output_html_path=None):
+    profile = _resolve_profile(profile_name, figma_json_path)
+
     with open(figma_json_path, "r", encoding="utf-8") as f:
         figma_data = json.load(f)
 
@@ -440,7 +451,7 @@ def generate_html_from_figma(figma_json_path, template_html_path, output_html_pa
     if not page_node.get("children"):
         raise RuntimeError("Figma 페이지 노드에 'children'이 없습니다.")
 
-    generated_html_content = "".join(_extract_node_html(child) for child in page_node["children"])
+    generated_html_content = "".join(_extract_node_html(child, profile) for child in page_node["children"])
     if not generated_html_content:
         raise RuntimeError("Figma 데이터에서 HTML 콘텐츠를 생성하지 못했습니다.")
 
@@ -456,14 +467,27 @@ def generate_html_from_figma(figma_json_path, template_html_path, output_html_pa
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate HTML from Figma JSON with BrainBody-preserving tag rules.")
+    parser = argparse.ArgumentParser(
+        description="Generate HTML from Figma JSON with selectable extraction profile."
+    )
     parser.add_argument("figma_json_path", help="Figma JSON path (e.g., figma_grinmall_brianbody_260212_page.json)")
     parser.add_argument("template_html_path", help="Template HTML file path to insert content")
+    parser.add_argument(
+        "--profile",
+        choices=("auto", "brainbody", "general"),
+        default="auto",
+        help="Extraction profile: auto(기본), brainbody(브랜딩 유지 강화), general(일반 페이지)",
+    )
     parser.add_argument("-o", "--output", dest="output_html_path", default=None, help="Output HTML path (default: template path)")
     args = parser.parse_args()
 
     try:
-        output_path = generate_html_from_figma(args.figma_json_path, args.template_html_path, args.output_html_path)
+        output_path = generate_html_from_figma(
+            args.figma_json_path,
+            args.template_html_path,
+            profile_name=args.profile,
+            output_html_path=args.output_html_path,
+        )
     except FileNotFoundError as exc:
         raise SystemExit(f"오류: 파일을 찾을 수 없습니다 - {exc.filename}")
     except json.JSONDecodeError:
