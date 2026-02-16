@@ -111,3 +111,29 @@ project/
     - 그 외에는 `resolvedStyle = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
   - `resolvedStyle`로 출력 후 `previousResolvedStyle = resolvedStyle` 갱신
   - `fontSize`, `fontWeight`, `fontFamily`, `fills`는 미지정일 때만 이전 값 유지, `lineHeightPx`/`letterSpacing`은 각각 `line-height`/`letter-spacing`으로 매핑
+
+> 브레인바디 랜딩 전용 규칙은 `brainbody_extraction_automation.md`에서 추가로 적용한다.
+
+## 브레인바디 랜딩 특화 추출 규칙 (반복 재현용)
+
+다음 규칙은 동일 페이지를 재추출할 때 동일한 HTML/CSS 차이를 재현하기 위한 전용 필수 규칙입니다.
+
+### 텍스트 태그 규칙
+- 문단이 아닌 짧은 라벨/브랜딩 문구는 `<span>`로 유지한다.
+- `BrainBody`, `MRI`, `Greenmall`, `영상의학과`, `원스톱 토탈케어` 등 라벨성 키워드는 절대 `<p>`로 바꾸지 않는다.
+- `p`는 줄바꿈이 있는 경우나 실제 문단성 텍스트(긴 문장)에 한해서만 허용한다.
+
+### 클래스 최소화 규칙
+- 블록 단위 클래스는 필수 최소 집합만 사용하고, 내부 아이템은 `.title`, `.value` 같은 의미 클래스 + 자식 선택자로 표기한다.
+- 동일한 스타일 반복 구간은 `nth-child`보다 의미 클래스를 우선한다(색상 강조/강조색 텍스트 등).
+- `t1`, `g137` 같은 연속 클래스 번호 기반 생성 방식은 지양하고, 구조적/의미적 클래스 또는 부모+자식 선택자로 통일한다.
+
+### 레이아웃 규칙
+- 같은 부모에서 `y` 정렬이 같고 높이가 유사한 항목은 세로 스택이 아닌 행 구조(`inline-flex`/`grid`)로 추출한다.
+- 고정 폭이 들어간 컨테이너는 반응형에서 `max-width` + `margin: 0 auto` 패턴으로 변환한다.
+- 리스트/카드 블록의 `ul > li`는 `ul li`로 완화하고, 구조가 고정될 수 있는 구간만 `>`.
+
+### 스타일 정리 규칙
+- 불필요한 `width: 100%` 제거, 블록 기본은 비워두거나 `max-width` 기반 처리.
+- `background-color`는 실제 배경 레이어가 있을 때만 선언.
+- `line-height`는 가능하면 비율(`1.2`)로 변환하여 반응형 폭에서 유지.

@@ -72,6 +72,8 @@
 - `sec_1`, `sec_2`, `section_01` 같은 범용 이름 사용 금지
 - 페이지 프리픽스 예시: `main_`, `company_`, `product_`, `support_`
 - ul/ol/li/p처럼 태그 선택자에 의존해 스타일을 적용할 때는, 가능하면 요소별 클래스(`section_ul`, `section_li`, `section_p`)를 추가해 클래스 스타일로 대체한다.
+- 동일 구조 블록에 대해 클래스가 과도해지면 자식 선택자(`.section ul li`, `.section .title .value`)를 우선 사용한다.
+- 동일 패턴일수록 클래스 수를 줄이고, `ul > li`처럼 강한 구조 의존은 필수일 때만 사용한다.
 - 예시:
   - 메인: `main_visual`, `main_about`, `main_portfolio`
   - 회사: `company_overview`, `company_history`
@@ -162,6 +164,21 @@ project/
 - `resolvedStyle`을 기준으로 클래스/인라인 계산 후 `previousResolvedStyle = resolvedStyle`로 갱신
 - `fontSize`, `fontWeight`, `fontFamily`, 색상(`fills`)은 `resolvedStyle`에서 누락된 경우 `previousResolvedStyle` 값이 유지되어야 함
 - `lineHeightPx`는 CSS `line-height`로, `letterSpacing`은 `letter-spacing`으로 매핑해 출력
+
+### 텍스트 태그 자동 판정 규칙 (p 태그 최소화)
+- 텍스트 노드에서 기본 태그는 `p`가 아니라 `span`/헤딩 계열 기준으로 시작한다.
+- `p` 태그는 아래 조건 중 하나만 충족할 때만 사용한다.
+  - `characters`에 `\n`이 포함되어 실제 줄바꿈이 있는 경우
+  - 텍스트 길이가 길거나 문단형인지 명확한 경우(예: 95자 초과, 또는 55px 이상 큰 텍스트 + 40자 이상)
+  - 문장형 마침표/종결어(`습니다`, `됩니다`, `필요합니다`, `있습니다`, `확인됩니다`)가 반복되는 경우
+- 라벨성/짧은 문구(`BrainBody`, `MRI`, `Greenmall`, `영상의학과` 등)는 `<span>` 또는 적절한 heading 태그로 유지한다.
+- `heading` 노드명 매핑이 우선이며, 기본적으로 한 줄 라벨이 `p`로 바뀌는 것을 금지한다.
+
+### 레이아웃·타입 디테일 보정 규칙
+- block 요소에 불필요한 `width: 100%`를 기본으로 넣지 않는다.
+- Figma 고정 폭이 큰 컨테이너는 `max-width` + `margin: 0 auto` 중심으로 반응형 기준을 맞춘다.
+- `line-height`는 가능하면 `font-size` 대비 비율(`1.2`)로 기록해 반응형에서 안정적으로 동작하도록 한다.
+- 배경색/보더가 명시되지 않은 레이어는 배경 속성 생략을 우선한다.
 
 ## 레이아웃 추출 보정 규칙 (좌표 기반)
 
