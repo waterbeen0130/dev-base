@@ -57,3 +57,14 @@ Claude AI 어시스턴트 전용 규칙입니다.
 - 여러 접근법이 가능할 때
 - 기존 코드와 충돌 가능성이 있을 때
 - 큰 변경이 필요할 때
+
+---
+
+### 텍스트 추출 품질
+- 피그마 `TEXT` 노드에서 `characterStyleOverrides`가 있으면 오버라이드 구간을 분할해서 굵기/크기/색상 차이를 보존한다
+- `styleOverrideTable` 병합은 누적 방식:
+  - `baseStyle = { ...node.style, fills: node.fills }`
+  - `previousResolvedStyle = null`
+  - overrideId `0` 또는 오버라이드 빈값이면 `resolved = baseStyle`
+  - 나머지는 `resolved = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
+- `fontSize`, `fontWeight`, `fontFamily`, `fills`는 누락값을 이전 오버라이드 구간 값에서 상속하고, `lineHeightPx`/`letterSpacing`은 각각 `line-height`/`letter-spacing`으로 변환한다

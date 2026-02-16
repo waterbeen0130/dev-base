@@ -96,3 +96,18 @@ project/
 - 이미지 기반 섹션은 원본 이미지 픽셀 높이에 맞춰 섹션 `height` 지정하고 `object-fit: cover` 적용
 - 섹션 내부 이미지(`img`)는 `width: 100%` 등 % 기반으로 지정하고 `aspect-ratio`로 비율 유지 (고정 width/height 금지)
 - 모바일 전용 이미지는 반드시 사용하고, 모바일 이미지 픽셀 크기 기준으로 배치/크기 조정
+- ul/ol/li/p처럼 구조 태그에 직접 묶인 스타일은 가급적 피하고, 가능한 한 각 요소에 `..._ul`, `..._li`, `..._p` 형태 클래스명을 부여해 클래스 단위로 스타일링한다.
+- 텍스트 추출 시 `characterStyleOverrides`가 있는 노드는 오버라이드 구간별로 `<span>` 분리하여 굵기/크기/색상 차이를 보존
+- 오버라이드 텍스트는 추출 후 `textAlign`과 줄바꿈 위치를 실제 Figma 기준으로 1차 검증해야 함
+- `styleOverrideTable`에 일부 스타일만 있는 오버라이드(예: `lineHeightPx`만 있는 항목)는 직전 오버라이드 구간의 실제 적용 스타일(폰트/굵기/색상)을 상속해서 병합해야 함
+- `characterStyleOverrides`에서 라인 간격 값이 바뀌는 구간은 기본 `node.style`로 되돌리는 방식이 아니라 `누적 오버라이드 병합`으로 처리해 폰트 크기, 굵기 튐(예: 50px→37px 역전) 오류를 막는다
+- 텍스트 오버라이드 구간은 가능하면 인라인 `style` 대신 클래스 기반으로 출력하고, 동일 스타일은 재사용 클래스로 묶어 길이와 중복을 줄인다.
+- 생성된 텍스트 클래스는 `<style id="figma-inline-style-map">` 블록에서 한 번에 관리한다.
+- 텍스트 오버라이드 병합의 강제 규칙:
+  - `baseStyle = { ...node.style, fills: node.fills }`
+  - `previousResolvedStyle = null`
+  - 각 오버라이드 구간 처리:
+    - overrideId `0` 또는 오버라이드가 비어 있으면 `resolvedStyle = baseStyle`로 초기화
+    - 그 외에는 `resolvedStyle = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
+  - `resolvedStyle`로 출력 후 `previousResolvedStyle = resolvedStyle` 갱신
+  - `fontSize`, `fontWeight`, `fontFamily`, `fills`는 미지정일 때만 이전 값 유지, `lineHeightPx`/`letterSpacing`은 각각 `line-height`/`letter-spacing`으로 매핑

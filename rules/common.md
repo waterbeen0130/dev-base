@@ -71,6 +71,7 @@
 - **페이지 프리픽스 형식**: `{페이지}_{역할}` (예: `main_visual`, `main_about`)
 - `sec_1`, `sec_2`, `section_01` 같은 범용 이름 사용 금지
 - 페이지 프리픽스 예시: `main_`, `company_`, `product_`, `support_`
+- ul/ol/li/p처럼 태그 선택자에 의존해 스타일을 적용할 때는, 가능하면 요소별 클래스(`section_ul`, `section_li`, `section_p`)를 추가해 클래스 스타일로 대체한다.
 - 예시:
   - 메인: `main_visual`, `main_about`, `main_portfolio`
   - 회사: `company_overview`, `company_history`
@@ -134,6 +135,33 @@ project/
 > - 피그마에 기재된 텍스트를 그대로 사용
 > - 추측해서 변경하거나 추가 금지
 > - 오타가 있어도 그대로 추출 (수정 필요시 별도 안내)
+
+### Figma 텍스트 오버라이드 규칙 (중요)
+- 텍스트 노드(`type: TEXT`)에서 `characterStyleOverrides`/`styleOverrideTable`가 존재하면 **반드시 반영**해야 함
+- 추출 흐름:
+  1) `node.characters`를 기준으로 문자를 순회
+  2) 각 문자 인덱스별 `characterStyleOverrides` 값을 읽어 오버라이드 그룹(구간)으로 압축
+  3) 구간별 스타일은 `node.style` + `node.fills`를 기본값으로 두고, `styleOverrideTable` 값으로 병합
+  4) 오버라이드 값이 `0`인 구간은 기본 스타일 사용
+  5) 오버라이드 스타일이 기본과 다르면 `<span>`으로 분할 출력
+- `styleOverrideTable`에는 `style`, `fills`, `letterSpacing`, `lineHeightPx` 등 부분 스타일만 있을 수 있으므로 누락 값은 기본 스타일에서 상속
+- `styleOverrideTable`가 비어 있는데도 결과가 다르면, 오버라이드 없는 동일 텍스트 노드라도 Figma 텍스트 계층(예: `styleId` 기반 공유 스타일)과 `fills` 비교 확인
+- 추출 결과 예시는 텍스트 태그에 기본 클래스 + 오버라이드 구간별 클래스 조합 사용 (`{페이지}_text_{nodeId}_{overrideId}` 형태 권장)
+- 오버라이드 노드가 1개라도 있으면 “텍스트 정상 추출됨” 판정에서 제외하고 수동 QA에서 실제 굵기/크기/색상 2차 확인
+- `styleOverrideTable`에 폰트/굵기/색상 값이 없고 `lineHeightPx`·`letterSpacing`·`fills`만 있는 항목이 있을 경우, 해당 오버라이드는 직전 출력 구간의 실제 스타일 값을 상속해야 한다.
+- 위 규칙 적용: `styleId` 구간별 병합 시 `node.style`를 단순 대입하지 않고, 이전 구간의 해석 결과(`styleId` 이전 구간 적용 스타일)를 기준으로 누락값을 보완해 `50px -> 37px` 같은 기본값 역주입이 일어나지 않게 해야 함.
+- 텍스트에서 오버라이드가 붙는 구간은 가능하면 `style` 속성 인라인 대신 class 분리 규칙으로 출력한다.
+- 동일한 스타일 서명은 전역 캐시로 묶어 재사용 클래스로 치환하고, 클래스명은 짧게 유지한다. (`t1`, `t2`, `t3` 등)
+- 생성기에 의해 추가되는 자동 클래스 block은 `<style id="figma-inline-style-map">...</style>`로 관리해 중복 생성/삭제가 쉬워야 한다.
+- 필수 병합 알고리즘:
+  - `baseStyle = { ...node.style, fills: node.fills }`
+  - `previousResolvedStyle = null`
+  - 각 오버라이드 구간 처리:
+    - overrideId가 `0`이거나 `styleOverrideTable[overrideId]`가 비어있으면 `resolvedStyle = baseStyle`
+    - 나머지는 `resolvedStyle = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
+  - `resolvedStyle`을 기준으로 클래스/인라인 계산 후 `previousResolvedStyle = resolvedStyle`로 갱신
+  - `fontSize`, `fontWeight`, `fontFamily`, 색상(`fills`)은 `resolvedStyle`에서 누락된 경우 `previousResolvedStyle` 값이 유지되어야 함
+  - `lineHeightPx`는 CSS `line-height`로, `letterSpacing`은 `letter-spacing`으로 매핑해 출력
 
 ---
 
