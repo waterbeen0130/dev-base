@@ -159,9 +159,16 @@ project/
   - 각 오버라이드 구간 처리:
     - overrideId가 `0`이거나 `styleOverrideTable[overrideId]`가 비어있으면 `resolvedStyle = baseStyle`
     - 나머지는 `resolvedStyle = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
-  - `resolvedStyle`을 기준으로 클래스/인라인 계산 후 `previousResolvedStyle = resolvedStyle`로 갱신
-  - `fontSize`, `fontWeight`, `fontFamily`, 색상(`fills`)은 `resolvedStyle`에서 누락된 경우 `previousResolvedStyle` 값이 유지되어야 함
-  - `lineHeightPx`는 CSS `line-height`로, `letterSpacing`은 `letter-spacing`으로 매핑해 출력
+- `resolvedStyle`을 기준으로 클래스/인라인 계산 후 `previousResolvedStyle = resolvedStyle`로 갱신
+- `fontSize`, `fontWeight`, `fontFamily`, 색상(`fills`)은 `resolvedStyle`에서 누락된 경우 `previousResolvedStyle` 값이 유지되어야 함
+- `lineHeightPx`는 CSS `line-height`로, `letterSpacing`은 `letter-spacing`으로 매핑해 출력
+
+## 레이아웃 추출 보정 규칙 (좌표 기반)
+
+- Figma에서 동일 부모 내 두 개 이상의 박스가 서로 같은 줄(`y`)에 있고, 동일하거나 유사한 높이를 가질 때는 자동 레이아웃 플래그가 없더라도 실제로는 가로 정렬(1 row)일 가능성이 높다.
+- 같은 `y`를 가지는 블록이 2개라면 기본값으로 세로 스택을 배제하고 `grid` 또는 `inline-flex` 행 정렬을 우선한다.
+- 좌우 폭 차이가 크고 첫 칼럼/둘째 칼럼 위치가 일정하다면 `grid-template-columns`로 고정/비율 너비를 반영한다.
+- `brainbody_problem` 구간 사례: 우측 카드 2개는 `y`가 동일한 상태에서 좌우로 존재하므로 HTML/CSS는 2열(가로) 구조로 유지한다.
 
 ---
 
