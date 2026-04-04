@@ -198,7 +198,7 @@ class SemanticConverter:
 
     def _should_unwrap(self, node: dict) -> bool:
         """Check if this wrapper node should be removed to reduce DOM depth.
-        Unwrap if: no layout, no visual styling, single child, not root."""
+        Unwrap if: no meaningful styling, single child."""
         if node.get("text"):
             return False
         children = node.get("children", [])
@@ -207,12 +207,41 @@ class SemanticConverter:
         layout = node.get("layout")
         visual = node.get("visual", {})
         has_styling = (
-            layout or
             visual.get("background") or
             visual.get("border") or
             (visual.get("borderRadius") and visual["borderRadius"] != "0")
         )
-        return not has_styling
+        # Layout-only wrappers with default direction and no gap/padding can be unwrapped
+        if layout and not has_styling:
+            gap = layout.get("gap", "0")
+            pad = layout.get("padding", "0")
+            if gap == "0" and pad == "0":
+                return True
+        return not has_styling and not layout
+
+    def _is_vector_group(self, node: dict) -> bool:
+        """Detect groups that contain only vectors (SVG illustration groups).
+        These should be handled as images, not individual DOM nodes."""
+        if node.get("text"):
+            return False
+        children = node.get("children", [])
+        if not children:
+            return False
+        # Count vector-type nodes vs text/frame nodes
+        vector_count = 0
+        text_count = 0
+        def count_types(n):
+            nonlocal vector_count, text_count
+            if n.get("type") in ("VECTOR", "ELLIPSE", "LINE", "BOOLEAN_OPERATION", "STAR", "REGULAR_POLYGON"):
+                vector_count += 1
+            elif n.get("type") == "TEXT":
+                text_count += 1
+            for c in n.get("children", []):
+                count_types(c)
+        count_types(node)
+        # If >80% vectors and no text = illustration group
+        total = vector_count + text_count
+        return total > 0 and text_count == 0 and vector_count >= 3
 
     def _fix_padding(self, props: dict[str, str]) -> dict[str, str]:
         """Convert side padding >= 100px to 0 (rely on max-width + margin:auto instead)."""
@@ -261,6 +290,18 @@ class SemanticConverter:
                 props["height"] = "auto"
             self._emit(f".{cls}", props)
             self.html_lines.append(f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{name}"></div>')
+            return
+
+        # Vector illustration groups (3+ vectors, no text) → skip entirely
+        if self._is_vector_group(node):
+            return
+
+        # Depth limiter: if we're already at depth 4+ and this node has
+        # deep children, flatten by skipping intermediate wrappers
+        if depth >= 4 and children and not text:
+            # Render children directly without wrapping div
+            for child in children:
+                self._render(child, depth, parent_cls)
             return
 
         # Decorative vectors
@@ -357,10 +398,30 @@ class SemanticConverter:
 
     # ── Output ──
 
+    def _skip_root_wrappers(self, tree: dict) -> list[dict]:
+        """Skip Figma root wrapper frames (A_main > inner) to reduce DOM depth.
+        Returns the actual content children to render."""
+        children = tree.get("children", [])
+        # If root has children like 'inner' + 'quick', flatten one level
+        if len(children) <= 3:
+            result = []
+            for child in children:
+                name = child.get("name", "").lower()
+                # 'inner' is a common Figma wrapper — unwrap its children
+                if name == "inner" and child.get("children"):
+                    result.extend(child["children"])
+                else:
+                    result.append(child)
+            return result
+        return children
+
     def convert(self, data: dict) -> tuple[str, str, str]:
         """Returns (html, common.css, reset.css)."""
         meta = data["meta"]
-        self._render(data["tree"], depth=1)
+        # Skip root wrappers (A_main > inner) to reduce DOM depth
+        content_nodes = self._skip_root_wrappers(data["tree"])
+        for node in content_nodes:
+            self._render(node, depth=1)
 
         # HTML (no page_ class on body — rule: body 태그에 프리픽스 불필요)
         html = f"""<!DOCTYPE html>
