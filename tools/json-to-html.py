@@ -359,31 +359,42 @@ class SemanticConverter:
         img_path = self.image_map.get(node_id)
         if img_path:
             cls = self._cls(name)
-            v = visual or {}
-            w = v.get("width")
-            props = {}
-            if w:
-                props["max-width"] = "100%"
-                props["height"] = "auto"
-            self._emit(f".{cls}", props)
-            self.html_lines.append(f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{name}"></div>')
+            is_bg = any(kw in name.lower() for kw in
+                        ("bg_img", "bg", "cover", "gettyimages", "배경"))
+
+            if is_bg:
+                bg_cls = f"{cls}_bg"
+                self._emit(f".{bg_cls}", {
+                    "position": "absolute", "top": "0", "left": "0",
+                    "width": "100%", "height": "100%", "z-index": "0"
+                })
+                self._emit(f".{bg_cls} img", {
+                    "width": "100%", "height": "100%", "object-fit": "cover"
+                })
+                self.html_lines.append(
+                    f'{indent}<div class="{bg_cls}"><img src="{img_path}" alt="{name}"></div>')
+            else:
+                props = {"max-width": "100%", "height": "auto"}
+                self._emit(f".{cls}", props)
+                self.html_lines.append(
+                    f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{name}"></div>')
             return
 
         # Vector illustration groups (3+ vectors, no text) → skip entirely
         if self._is_vector_group(node):
             return
 
-        # Depth limiter: cap at depth 4 (max DOM depth = 5)
-        # Exception: nodes with background/border styling are preserved
-        # Exception: common component names (footer, header) are preserved
-        preserve_names = {"footer", "header", "gnb", "f_bar", "f_menu",
-                          "foot_menu", "f_links", "footer_info", "footer_top",
-                          "footer_sns", "footer_bar"}
-        slug_name = _slug(name)
-        is_preserved = slug_name in preserve_names or any(slug_name.startswith(p) for p in preserve_names)
-        if depth >= 4 and children and not text and not img_path and not is_preserved:
-            has_visual = (visual and (visual.get("background") or visual.get("border")))
-            if not has_visual:
+        # Depth limiter: only flatten truly empty wrappers (no styling at all)
+        # Keep all nodes that have layout (gap/padding) or visual styling
+        if depth >= 5 and children and not text and not img_path:
+            layout_has_value = layout and (
+                layout.get("gap", "0") != "0" or
+                layout.get("padding", "0") != "0"
+            )
+            has_visual = visual and (
+                visual.get("background") or visual.get("border")
+            )
+            if not layout_has_value and not has_visual:
                 for child in children:
                     self._render(child, depth, parent_cls)
                 return
@@ -464,7 +475,39 @@ class SemanticConverter:
         container_css = {}
         container_css.update(self._fix_padding(self._layout_to_css(layout)))
         container_css.update(self._visual_to_css(visual, bool(layout)))
+
+        # Content on top of background
+        if node.get("_needs_z_index"):
+            container_css["position"] = "relative"
+            container_css["z-index"] = "1"
+
+        # Detect sections with bg_img or background image children
+        # These need position:relative with bg as absolute overlay
+        has_bg_child = any(
+            c.get("name", "") in ("bg_img", "cover") or
+            (self.image_map.get(c.get("id", "")) and
+             any(kw in c.get("name", "").lower() for kw in ("bg", "cover", "gettyimages", "배경")))
+            for c in children
+        )
+        if has_bg_child and depth <= 3:
+            container_css["position"] = "relative"
+            container_css["overflow"] = "hidden"
+
         self._emit(f".{cls}", container_css)
+
+        # If this container has bg children, non-bg children need z-index
+        if has_bg_child and depth <= 3:
+            for child in children:
+                child_name = child.get("name", "").lower()
+                child_id = child.get("id", "")
+                is_child_bg = any(kw in child_name for kw in ("bg_img", "bg", "cover", "gettyimages"))
+                is_child_bg = is_child_bg or (self.image_map.get(child_id, "") and
+                    any(kw in child_name for kw in ("bg", "cover", "gettyimages")))
+                if not is_child_bg and not child.get("text") and child.get("children"):
+                    # Mark content wrapper to have position:relative + z-index
+                    child_layout = child.get("layout", {})
+                    if child_layout or child.get("children"):
+                        child["_needs_z_index"] = True
 
         is_list = self._is_list(children, name)
         tag_open = f'<ul class="{cls}">' if is_list else f'<div class="{cls}">'
