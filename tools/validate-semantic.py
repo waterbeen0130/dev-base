@@ -196,6 +196,49 @@ class SemanticValidator:
                         self._add("one-line-selector", "MINOR",
                                   f"멀티라인 셀렉터 — 한 줄 포맷 사용: {stripped[:40]}", i, filepath)
 
+    # ===== Class Naming Checks =====
+
+    def check_common_area_prefix(self, html: str, filepath: str):
+        """공통 영역(header, footer, gnb, logo)에 페이지 프리픽스 사용 확인"""
+        common_names = ["header", "footer", "gnb", "logo", "copyright", "btn_top",
+                        "btn_menu", "btn_close", "total_menu"]
+        classes = re.findall(r'class="([^"]*)"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                for common in common_names:
+                    # index_header, main_footer 등 → 위반
+                    if re.match(r'^[a-z]+_' + common + r'($|_)', cls) and cls != common:
+                        # header_btn 같은 건 OK, index_header 같은 건 위반
+                        prefix = cls.split("_" + common)[0]
+                        if prefix and prefix != common.split("_")[0]:
+                            self._add("common-area-prefix", "CRITICAL",
+                                      f"공통 영역에 페이지 프리픽스 사용: .{cls} → .{common} 계열로 변경",
+                                      0, filepath)
+
+    def check_excessive_individual_classes(self, css: str, filepath: str):
+        """개별 클래스 과다 사용 확인 — 부모+태그 선택자로 대체 가능한지"""
+        selectors = re.findall(r'^\.([a-z0-9_]+)\{', css, re.MULTILINE)
+        # 같은 접두사를 가진 클래스가 너무 많으면 경고
+        prefix_count: dict[str, int] = {}
+        for sel in selectors:
+            parts = sel.split("_")
+            if len(parts) >= 2:
+                prefix = "_".join(parts[:2])
+                prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
+        for prefix, count in prefix_count.items():
+            if count > 8:
+                self._add("excessive-classes", "MINOR",
+                          f".{prefix}_* 계열 클래스 {count}개 — 부모+태그 선택자로 축소 검토",
+                          0, filepath)
+
+    def check_body_page_class(self, html: str, filepath: str):
+        """body에 불필요한 page_ 클래스 확인"""
+        match = re.search(r'<body[^>]*class="page_[^"]*"', html)
+        if match:
+            self._add("body-page-class", "MINOR",
+                      "body에 page_ 클래스 불필요 (규칙: body 태그에 페이지 프리픽스 클래스 불필요)",
+                      0, filepath)
+
     # ===== Image Checks =====
 
     def check_image_naming(self, img_dir: str):
@@ -231,6 +274,8 @@ class SemanticValidator:
             self.check_forbidden_tags(html, html_path)
             self.check_list_pattern(html, html_path)
             self.check_p_tag_misuse(html, html_path)
+            self.check_common_area_prefix(html, html_path)
+            self.check_body_page_class(html, html_path)
 
         if css:
             self.check_css_grid(css, css_path)
@@ -242,6 +287,7 @@ class SemanticValidator:
             self.check_font_size_base(css, css_path)
             self.check_root_vars(css, css_path)
             self.check_selector_format(css, css_path)
+            self.check_excessive_individual_classes(css, css_path)
 
         if img_dir:
             self.check_image_naming(img_dir)
