@@ -663,6 +663,123 @@ def _read_input(args: argparse.Namespace) -> tuple[list[dict[str, Any]], dict[st
     return parse_mcp_response(payload), payload
 
 
+def _build_validate_mapping(tree: dict[str, Any]) -> dict[str, Any]:
+    """Build validate.js-compatible mapping from normalized tree (DOD-006)."""
+    mapping: dict[str, Any] = {}
+
+    def _walk(node: dict[str, Any]) -> None:
+        node_id = node.get("id", "")
+        if not node_id:
+            for child in node.get("children", []):
+                _walk(child)
+            return
+
+        css_props: dict[str, Any] = {}
+        layout = node.get("layout")
+        visual = node.get("visual")
+        text = node.get("text")
+
+        if layout:
+            if layout.get("direction"):
+                css_props["flex-direction"] = layout["direction"]
+            if layout.get("gap") and layout["gap"] != "0":
+                css_props["gap"] = layout["gap"]
+            if layout.get("padding") and layout["padding"] != "0":
+                css_props["padding"] = layout["padding"]
+            if layout.get("justify"):
+                css_props["justify-content"] = layout["justify"]
+            if layout.get("align"):
+                css_props["align-items"] = layout["align"]
+
+        if visual:
+            bg = visual.get("background")
+            if bg:
+                css_props["background-color"] = bg
+            border = visual.get("border")
+            if border:
+                css_props["border"] = border
+            br = visual.get("borderRadius")
+            if br and br != "0":
+                css_props["border-radius"] = br
+
+        if text and text.get("segments"):
+            seg = text["segments"][0]["style"]
+            for key in ("fontSize", "fontWeight", "lineHeight", "letterSpacing", "color"):
+                val = seg.get(key)
+                if val is not None:
+                    css_key = {
+                        "fontSize": "font-size",
+                        "fontWeight": "font-weight",
+                        "lineHeight": "line-height",
+                        "letterSpacing": "letter-spacing",
+                        "color": "color",
+                    }[key]
+                    css_props[css_key] = val
+
+        if css_props:
+            mapping[node_id] = {
+                "name": node.get("name", ""),
+                "type": node.get("type", ""),
+                "css": css_props,
+            }
+
+        for child in node.get("children", []):
+            _walk(child)
+
+    _walk(tree)
+    return mapping
+
+
+def _print_rule_log(tree: dict[str, Any], file: Any = None) -> None:
+    """Print normalization rule application log (DOD-007)."""
+    if file is None:
+        file = sys.stderr
+
+    def _log_node(node: dict[str, Any], depth: int = 0) -> None:
+        indent = "  " * depth
+        name = node.get("name", "?")
+        ntype = node.get("type", "?")
+        layout = node.get("layout")
+        visual = node.get("visual")
+        text = node.get("text")
+
+        rules_applied = []
+        if layout:
+            if layout.get("direction"):
+                rules_applied.append(f"layoutMode → flex-direction:{layout['direction']}")
+            if layout.get("gap") and layout["gap"] != "0":
+                rules_applied.append(f"itemSpacing → gap:{layout['gap']}")
+            if layout.get("padding") and layout["padding"] != "0":
+                rules_applied.append(f"padding → {layout['padding']}")
+        if visual:
+            if visual.get("background"):
+                rules_applied.append(f"fills → background:{visual['background']}")
+            if visual.get("border"):
+                rules_applied.append(f"strokes → border:{visual['border']}")
+            if visual.get("borderRadius") and visual["borderRadius"] != "0":
+                rules_applied.append(f"cornerRadius → border-radius:{visual['borderRadius']}")
+        if text:
+            segs = text.get("segments", [])
+            if segs:
+                s = segs[0]["style"]
+                rules_applied.append(f"fontSize:{s.get('fontSize','?')}")
+                rules_applied.append(f"lineHeight:{s.get('lineHeight','?')}")
+            if len(segs) > 1:
+                rules_applied.append(f"overrides:{len(segs)} segments")
+            if text.get("tag_hint"):
+                rules_applied.append(f"tag_hint:{text['tag_hint']}")
+
+        if rules_applied:
+            print(f"{indent}[NORM] {name} ({ntype})", file=file)
+            for rule in rules_applied:
+                print(f"{indent}  [RULE] {rule}", file=file)
+
+        for child in node.get("children", []):
+            _log_node(child, depth + 1)
+
+    _log_node(tree)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize Figma JSON to intermediate JSON tree")
     parser.add_argument("--stdin", action="store_true", help="Read JSON from stdin")
@@ -675,6 +792,9 @@ def main() -> None:
     parser.add_argument("--depth", type=int, default=10, help="Traversal depth for --node-id fetch")
     parser.add_argument("--tree", action="store_true", help="Print visible node tree")
     parser.add_argument("--profile", default="basic", help="Normalization profile (basic|landing)")
+    parser.add_argument("--emit-mapping", action="store_true", help="Also emit validate.js-compatible mapping JSON to stderr")
+    parser.add_argument("--verbose", action="store_true", help="Print normalization rule log to stderr")
+    parser.add_argument("--output", help="Output directory for mapping files")
 
     args = parser.parse_args()
 
@@ -698,8 +818,27 @@ def main() -> None:
             }
 
         normalized = normalize_payload(selected_payload, profile_name=args.profile)
+
+        # DOD-007: verbose rule log
+        if args.verbose:
+            _print_rule_log(normalized["tree"], file=sys.stderr)
+
         json.dump(normalized, sys.stdout, ensure_ascii=False, indent=2)
         sys.stdout.write("\n")
+
+        # DOD-006: emit validate.js-compatible mapping
+        if args.emit_mapping:
+            mapping = _build_validate_mapping(normalized["tree"])
+            if args.output:
+                os.makedirs(args.output, exist_ok=True)
+                name = normalized["meta"]["section_name"].replace(" ", "_")
+                path = os.path.join(args.output, f"{name}_mapping.json")
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(mapping, f, ensure_ascii=False, indent=2)
+                print(f"  -> {path}", file=sys.stderr)
+            else:
+                json.dump(mapping, sys.stderr, ensure_ascii=False, indent=2)
+                sys.stderr.write("\n")
     except Exception as exc:  # pragma: no cover
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(1)
