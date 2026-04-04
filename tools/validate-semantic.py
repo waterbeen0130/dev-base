@@ -196,6 +196,128 @@ class SemanticValidator:
                         self._add("one-line-selector", "MINOR",
                                   f"멀티라인 셀렉터 — 한 줄 포맷 사용: {stripped[:40]}", i, filepath)
 
+    # ===== Additional HTML Checks =====
+
+    def check_empty_div(self, html: str, filepath: str):
+        """빈 div 금지"""
+        for i, line in enumerate(html.split("\n"), 1):
+            if re.search(r'<div[^>]*>\s*</div>', line):
+                self._add("no-empty-div", "MAJOR",
+                          f"빈 div 발견: {line.strip()[:50]}", i, filepath)
+
+    def check_dom_depth(self, html: str, filepath: str):
+        """DOM 최대 깊이 5단계 확인"""
+        max_depth = 0
+        depth = 0
+        for i, line in enumerate(html.split("\n"), 1):
+            opens = len(re.findall(r'<(?:div|ul|li|nav|header|footer|section)\b', line))
+            closes = len(re.findall(r'</(?:div|ul|li|nav|header|footer|section)>', line))
+            depth += opens - closes
+            if depth > max_depth:
+                max_depth = depth
+            if depth > 5:
+                self._add("max-dom-depth", "MAJOR",
+                          f"DOM 깊이 {depth}단계 (최대 5)", i, filepath)
+                break
+
+    def check_snake_case_classes(self, html: str, filepath: str):
+        """클래스명 snake_case 검증"""
+        classes = re.findall(r'class="([^"]*)"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if cls in ("img_area", "cont"):
+                    continue
+                if not re.match(r'^[a-z0-9_]+$', cls):
+                    self._add("snake-case-class", "MAJOR",
+                              f"snake_case 아닌 클래스: .{cls}", 0, filepath)
+
+    # ===== Additional CSS Checks =====
+
+    def check_duplicate_selectors(self, css: str, filepath: str):
+        """같은 셀렉터 중복 선언 금지 (미디어쿼리 내 오버라이드는 제외)"""
+        # 미디어쿼리 밖의 셀렉터만 체크
+        in_media = False
+        seen: dict[str, int] = {}
+        for line in css.split("\n"):
+            if "@media" in line:
+                in_media = True
+                continue
+            # 미디어쿼리 닫는 중괄호 (들여쓰기 없는 })
+            if in_media and line.strip() == "}":
+                in_media = False
+                continue
+            if in_media:
+                continue
+            match = re.match(r'^(\.[a-z0-9_. >:+~\-]+)\{', line)
+            if match:
+                sel = match.group(1).strip()
+                if sel in seen:
+                    self._add("no-duplicate-selector", "MAJOR",
+                              f"셀렉터 중복 선언: {sel}", 0, filepath)
+                seen[sel] = 1
+
+    def check_line_height_px(self, css: str, filepath: str):
+        """line-height에 computed px 사용 금지 — 무단위 비율만"""
+        for i, line in enumerate(css.split("\n"), 1):
+            match = re.search(r'line-height:\s*[\d.]+px', line)
+            if match:
+                self._add("line-height-ratio", "CRITICAL",
+                          f"line-height에 px 사용 금지 — 무단위 비율만: {match.group()}", i, filepath)
+
+    def check_letter_spacing_unit(self, css: str, filepath: str):
+        """letter-spacing em 단위 확인 (2px 이하 미세 조정 예외)"""
+        for i, line in enumerate(css.split("\n"), 1):
+            match = re.search(r'letter-spacing:\s*([\d.]+)px', line)
+            if match:
+                val = float(match.group(1))
+                if val > 2:
+                    self._add("letter-spacing-em", "MAJOR",
+                              f"letter-spacing {val}px — em 단위 사용 (2px 이하만 px 허용)", i, filepath)
+
+    def check_clamp_under_100(self, css: str, filepath: str):
+        """100px 미만 값에 clamp 사용 금지"""
+        for i, line in enumerate(css.split("\n"), 1):
+            matches = re.findall(r'clamp\((\d+)px', line)
+            for m in matches:
+                if int(m) < 10:  # clamp의 min값이 10px 미만이면 의심
+                    self._add("no-clamp-under-100", "MINOR",
+                              f"100px 미만 값에 clamp 사용: {line.strip()[:50]}", i, filepath)
+
+    def check_raw_calc_vw(self, css: str, filepath: str):
+        """calc()/vw 단독 사용 금지 (clamp 내부만 허용)"""
+        for i, line in enumerate(css.split("\n"), 1):
+            # calc가 clamp 밖에서 사용
+            if "calc(" in line and "clamp(" not in line:
+                self._add("no-raw-calc", "MAJOR",
+                          f"calc() 단독 사용 금지 (clamp 내부만 허용): {line.strip()[:50]}", i, filepath)
+            # vw가 clamp 밖에서 사용
+            if re.search(r'\d+vw', line) and "clamp(" not in line:
+                self._add("no-raw-vw", "MAJOR",
+                          f"vw 단독 사용 금지 (clamp 내부만 허용): {line.strip()[:50]}", i, filepath)
+
+    def check_media_indent(self, css: str, filepath: str):
+        """미디어쿼리 내부 들여쓰기 금지"""
+        in_media = False
+        for i, line in enumerate(css.split("\n"), 1):
+            if "@media" in line:
+                in_media = True
+                continue
+            if in_media and line.strip() == "}":
+                in_media = False
+                continue
+            if in_media and line.startswith(("  ", "\t", "    ")):
+                self._add("no-media-indent", "MINOR",
+                          f"미디어쿼리 내부 들여쓰기 금지: {line[:40]}", i, filepath)
+
+    def check_utility_classes(self, css: str, filepath: str):
+        """유틸리티 클래스 금지 (font-family/font-weight 범용 클래스)"""
+        patterns = [r'\.font_', r'\.weight_', r'\.color_', r'\.size_']
+        for i, line in enumerate(css.split("\n"), 1):
+            for p in patterns:
+                if re.search(p, line):
+                    self._add("no-utility-class", "MAJOR",
+                              f"유틸리티 클래스 금지: {line.strip()[:50]}", i, filepath)
+
     # ===== Class Naming Checks =====
 
     def check_common_area_prefix(self, html: str, filepath: str):
@@ -284,6 +406,9 @@ class SemanticValidator:
             self.check_forbidden_tags(html, html_path)
             self.check_list_pattern(html, html_path)
             self.check_p_tag_misuse(html, html_path)
+            self.check_empty_div(html, html_path)
+            self.check_dom_depth(html, html_path)
+            self.check_snake_case_classes(html, html_path)
             self.check_common_area_prefix(html, html_path)
             self.check_generic_class_names(html, html_path)
             self.check_body_page_class(html, html_path)
@@ -297,6 +422,13 @@ class SemanticValidator:
             self.check_word_break(css, css_path)
             self.check_font_size_base(css, css_path)
             self.check_root_vars(css, css_path)
+            self.check_duplicate_selectors(css, css_path)
+            self.check_line_height_px(css, css_path)
+            self.check_letter_spacing_unit(css, css_path)
+            self.check_clamp_under_100(css, css_path)
+            self.check_raw_calc_vw(css, css_path)
+            self.check_media_indent(css, css_path)
+            self.check_utility_classes(css, css_path)
             self.check_selector_format(css, css_path)
             self.check_excessive_individual_classes(css, css_path)
 

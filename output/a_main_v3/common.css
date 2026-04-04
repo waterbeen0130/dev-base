@@ -85,12 +85,11 @@ a{text-decoration:none; color:inherit;}
 
 /* sec_4: 공지사항 + FAQ */
 .main_community{padding:clamp(40px, 7.3vw, 140px) 0;}
-.main_community .cont{display:flex; gap:80px; align-items:flex-start;}
+.main_community .cont{display:flex; gap:40px; align-items:flex-start;}
 .main_community_title{flex-shrink:0; max-width:415px;}
 .main_community_title span{font-size:1.875rem; font-weight:500; color:#424242; display:block; margin-bottom:10px;}
 .main_community_title h2{font-size:3.125rem; font-weight:700; color:#212121; line-height:1.3; word-break:keep-all;}
 .main_community_title h2 strong{color:#000; font-weight:800;}
-.main_community_list{display:flex; gap:40px; flex:1;}
 .main_notice{flex:1;}
 .main_faq{flex:1;}
 .main_s4_tit{display:flex; justify-content:space-between; align-items:center; padding-bottom:30px; border-bottom:1px solid #616161;}
