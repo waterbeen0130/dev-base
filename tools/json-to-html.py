@@ -260,28 +260,36 @@ class SemanticConverter:
         return not has_styling and not layout
 
     def _is_vector_group(self, node: dict) -> bool:
-        """Detect groups that contain only vectors (SVG illustration groups).
-        These should be handled as images, not individual DOM nodes."""
+        """Detect groups that contain only vectors/rectangles (SVG/icon groups).
+        These should be skipped — they need image-map to render properly."""
         if node.get("text"):
             return False
         children = node.get("children", [])
         if not children:
             return False
-        # Count vector-type nodes vs text/frame nodes
         vector_count = 0
         text_count = 0
+        frame_count = 0
         def count_types(n):
-            nonlocal vector_count, text_count
-            if n.get("type") in ("VECTOR", "ELLIPSE", "LINE", "BOOLEAN_OPERATION", "STAR", "REGULAR_POLYGON"):
+            nonlocal vector_count, text_count, frame_count
+            ntype = n.get("type", "")
+            if ntype in ("VECTOR", "ELLIPSE", "LINE", "BOOLEAN_OPERATION",
+                         "STAR", "REGULAR_POLYGON", "RECTANGLE"):
                 vector_count += 1
-            elif n.get("type") == "TEXT":
+            elif ntype == "TEXT":
                 text_count += 1
+            elif ntype in ("FRAME", "INSTANCE", "GROUP"):
+                frame_count += 1
             for c in n.get("children", []):
                 count_types(c)
         count_types(node)
-        # If >80% vectors and no text = illustration group
-        total = vector_count + text_count
-        return total > 0 and text_count == 0 and vector_count >= 3
+        # Pure vector/rectangle group with no text = illustration/icon
+        if text_count == 0 and vector_count >= 3:
+            return True
+        # Icon-like: mostly vectors with 1 text label at most
+        if vector_count >= 5 and text_count <= 1:
+            return True
+        return False
 
     def _fix_padding(self, props: dict[str, str]) -> dict[str, str]:
         """Convert side padding >= 100px to 0 (rely on max-width + margin:auto instead)."""
@@ -336,13 +344,17 @@ class SemanticConverter:
         if self._is_vector_group(node):
             return
 
-        # Depth limiter: if we're already at depth 4+ and this node has
-        # deep children, flatten by skipping intermediate wrappers
+        # Depth limiter: flatten intermediate wrappers at depth 4+
+        # BUT preserve nodes that have meaningful styling or are known components
         if depth >= 4 and children and not text:
-            # Render children directly without wrapping div
-            for child in children:
-                self._render(child, depth, parent_cls)
-            return
+            has_meaningful_style = (
+                (layout and (layout.get("gap", "0") != "0" or layout.get("padding", "0") != "0")) or
+                (visual and (visual.get("background") or visual.get("border")))
+            )
+            if not has_meaningful_style and not img_path:
+                for child in children:
+                    self._render(child, depth, parent_cls)
+                return
 
         # Decorative vectors
         if self._is_decorative(node):

@@ -1,0 +1,221 @@
+/* A_main | profile: basic | nodes: 5770 */
+
+:root{
+--width:1440px;
+--padding:20px;
+}
+.cont{margin:0 auto; max-width:var(--width); padding:0 var(--padding); width:100%;}
+.img_area{overflow:hidden;}
+
+.header{max-width:100%; height:auto}
+.main_mv{display:flex; flex-direction:row; gap:10px; padding:0px 0; justify-content:space-between; align-items:center}
+.main_bg_img{max-width:100%; height:auto}
+.main_inner{display:flex; flex-direction:row; gap:60px; justify-content:flex-start; align-items:center}
+.main_txt{display:flex; flex-direction:column; gap:40px; justify-content:flex-start; align-items:flex-start}
+.main_title{display:flex; flex-direction:column; gap:20px; justify-content:center; align-items:flex-start}
+.main_txt_1{display:flex; flex-direction:row; gap:15px; justify-content:flex-start; align-items:center}
+.main_2026{display:flex; flex-direction:row; gap:10px; padding:5px 15px; justify-content:center; align-items:center; background-color:#60a23a; border-radius:2em}
+.main_2026_1{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.75rem; font-weight:700; line-height:1.4; color:#fff}
+.main_half_price_trip_with_jecheon{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.75rem; font-weight:700; line-height:1.4; color:#424242}
+.main_half_price_trip_with_jecheon_s1{color:#60a23a}
+.main_txt_2{display:flex; flex-direction:column; gap:5px; justify-content:flex-start; align-items:flex-start}
+.main_el{background-color:#000; font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:4.375rem; font-weight:700; line-height:1.3; letter-spacing:-0.03em; color:#212121}
+.main_el_s1{color:#f36f20}
+.main_el_s2{color:#0094cb}
+.main_2{background-color:#000; font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:2.1875rem; font-weight:700; line-height:1.4; letter-spacing:-0.03em; color:#212121}
+.main_2_s1{color:#0094cb}
+.main_btn{display:flex; flex-direction:row; gap:15px; justify-content:flex-start; align-items:flex-start}
+.main_btn_1{display:flex; flex-direction:row; gap:10px; padding:15px 25px; justify-content:center; align-items:center; background-color:#508830; border-radius:2em}
+.main_el_1{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.25rem; font-weight:700; line-height:1.1; color:#f2ff37; text-align:center}
+.main_icon_arrow{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector{background-color:#fff; display:block}
+.main_btn_2{display:flex; flex-direction:row; gap:10px; padding:15px 25px; justify-content:center; align-items:center; background-color:#508830; border-radius:2em}
+.main_el_2{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.25rem; font-weight:700; line-height:1.1; color:#fff; text-align:center}
+.main_icon_arrow_1{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_1{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_1{background-color:#fff; display:block}
+.main_btn_3{display:flex; flex-direction:row; gap:10px; padding:15px 25px; justify-content:center; align-items:center; background-color:#508830; border-radius:2em}
+.main_el_3{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.25rem; font-weight:700; line-height:1.1; color:#fff; text-align:center}
+.main_icon_arrow_2{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_2{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_2{background-color:#fff; display:block}
+.main_img{max-width:100%; height:auto}
+.main_list{display:flex; flex-direction:column; gap:25px; padding:25px 20px; justify-content:flex-start; align-items:flex-start; background-color:#fff; border-radius:20px}
+.main_list_1{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:flex-start}
+.main_top{display:flex; flex-direction:row; gap:128px; justify-content:space-between; align-items:center}
+.main_urimji{font-family:'NEXON Lv1 Gothic OTF', sans-serif; font-size:1.75rem; font-weight:700; line-height:1.2; color:#000}
+.main_btn_page{display:flex; flex-direction:row; gap:12px; justify-content:flex-start; align-items:center}
+.main_btn_ic_arrow_l{display:flex; flex-direction:row; gap:10px; padding:10px; justify-content:center; align-items:center; background-color:#424242; border-radius:50%}
+.main_page{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_1{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:800; line-height:1.2; letter-spacing:0.1em; color:#508830}
+.main_5{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:500; line-height:1.2; letter-spacing:0.1em; color:#757575}
+.main_btn_ic_arrow_r{display:flex; flex-direction:row; gap:10px; padding:10px; justify-content:center; align-items:center; background-color:#424242; border-radius:50%}
+.main_img_1{max-width:100%; height:auto}
+.main_list_2{display:flex; flex-direction:column; gap:25px; padding:0px 10px; justify-content:flex-start; align-items:flex-start}
+.main_list_txt{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_3{display:flex; flex-direction:row; gap:12px; justify-content:flex-start; align-items:center}
+.main_ic_add{max-width:100%; height:auto}
+.main_urimji_33{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.2; letter-spacing:-0.03em; color:#000}
+.main_txt_4{display:flex; flex-direction:row; gap:12px; justify-content:flex-start; align-items:center}
+.main_ic_map{max-width:100%; height:auto}
+.main_043_651_7101{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.2; letter-spacing:-0.03em; color:#000}
+.main_inner_1{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:center}
+.main_btn_more{display:flex; flex-direction:row; gap:10px; padding:10px 25px; justify-content:center; align-items:center; background-color:#fff; border:1px solid #508830; border-radius:2em}
+.main_el_4{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.0625rem; font-weight:700; line-height:1.1; color:#212121; text-align:center}
+.main_icon_arrow_3{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_3{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_3{background-color:#508830; display:block}
+.main_bg_img_1{max-width:100%; height:auto}
+.main_inner_2{display:flex; flex-direction:column; gap:70px; padding:140px 0px; justify-content:flex-start; align-items:center}
+.main_title_1{display:flex; flex-direction:column; gap:10px; justify-content:center; align-items:center}
+.main_el_5{font-family:'NEXON Lv2 Gothic OTF', sans-serif; font-size:1.875rem; font-weight:500; line-height:1.1; color:#424242; text-align:center}
+.main_el_6{background-color:#000; font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:3.125rem; font-weight:700; line-height:1.3; letter-spacing:-0.03em; color:#212121; text-align:center}
+.main_el_6_s2{color:#60a23a}
+.main_list_3{display:flex; flex-direction:column; gap:60px; justify-content:flex-start; align-items:center}
+.main_list_process{display:flex; flex-direction:row; gap:40px; justify-content:flex-start; align-items:center}
+.main_list_4{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:center}
+.main_img_2{max-width:100%; height:auto}
+.main_1_1{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.4; color:#212121; text-align:center}
+.main_list_5{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:center}
+.main_img_3{max-width:100%; height:auto}
+.main_app{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.4; color:#212121; text-align:center}
+.main_list_6{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:center}
+.main_img_4{max-width:100%; height:auto}
+.main_el_7{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.4; color:#212121; text-align:center}
+.main_list_7{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:center}
+.main_img_5{max-width:100%; height:auto}
+.main_10_mountain{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.4; color:#212121; text-align:center}
+.main_list_8{display:flex; flex-direction:column; gap:20px; justify-content:flex-start; align-items:center}
+.main_img_6{max-width:100%; height:auto}
+.main_14{font-family:'Pretendard', sans-serif; font-size:1.125rem; font-weight:500; line-height:1.4; color:#212121; text-align:center}
+.main_btn_more_1{display:flex; flex-direction:row; gap:10px; padding:15px 25px; justify-content:center; align-items:center; background-color:#fff; border:1px solid #508830; border-radius:2em}
+.main_el_8{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.25rem; font-weight:700; line-height:1.1; color:#508830; text-align:center}
+.main_el_8_s1{color:#212121}
+.main_icon_arrow_4{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_4{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_4{background-color:#508830; display:block}
+.main_bg_img_2{max-width:100%; height:auto}
+.main_apply_1{display:flex; flex-direction:row; gap:71px; padding:140px 0; justify-content:space-between; align-items:flex-start}
+.main_frame_338{display:flex; flex-direction:row; gap:71px; justify-content:flex-start; align-items:flex-start}
+.main_title_2{display:flex; flex-direction:column; gap:10px; justify-content:center; align-items:flex-start}
+.main_el_9{font-family:'NEXON Lv2 Gothic OTF', sans-serif; font-size:1.875rem; font-weight:500; line-height:1.1; color:#424242}
+.main_el_10{background-color:#000; font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:3.125rem; font-weight:700; line-height:1.3; letter-spacing:-0.04em; color:#212121}
+.main_el_10_s1{color:#60a23a}
+.main_frame_313{display:flex; flex-direction:row; gap:32px; justify-content:flex-start; align-items:flex-start}
+.main_list_9{display:flex; flex-direction:column; gap:30px; justify-content:flex-start; align-items:flex-start}
+.main_img_7{max-width:100%; height:auto}
+.main_txt_5{display:flex; flex-direction:column; gap:12px; justify-content:flex-start; align-items:flex-start}
+.main_el_11{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:1.375rem; font-weight:700; line-height:1.1; letter-spacing:-0.03em; color:#000}
+.main_el_12{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.5; letter-spacing:-0.03em; color:#000}
+.main_btn_more_2{display:flex; flex-direction:row; gap:5px; padding:10px 15px; justify-content:flex-start; align-items:center; border:1px solid #bdbdbd; border-radius:2em}
+.main_el_13{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:500; line-height:1.2; letter-spacing:-0.03em; color:#000}
+.main_icon_arrow_5{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_5{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_5{background-color:#616161; display:block}
+.main_list_10{display:flex; flex-direction:column; gap:30px; justify-content:flex-start; align-items:flex-start}
+.main_img_8{max-width:100%; height:auto}
+.main_txt_6{display:flex; flex-direction:column; gap:12px; justify-content:flex-start; align-items:flex-start}
+.main_chak{font-family:'NEXON Lv1 Gothic OTF', sans-serif; font-size:1.375rem; font-weight:700; line-height:1.1; letter-spacing:-0.03em; color:#000}
+.main_chak_1{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.5; letter-spacing:-0.03em; color:#000}
+.main_btn_more_3{display:flex; flex-direction:row; gap:5px; padding:10px 15px; justify-content:flex-start; align-items:center; border:1px solid #bdbdbd; border-radius:2em}
+.main_el_14{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:500; line-height:1.2; letter-spacing:-0.03em; color:#000}
+.main_icon_arrow_6{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center}
+.main_arrow_6{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_vector_6{background-color:#616161; display:block}
+.main_community{display:flex; flex-direction:row; gap:80px; padding:140px 0; justify-content:space-between; align-items:flex-start}
+.main_title_3{display:flex; flex-direction:column; gap:10px; justify-content:center; align-items:flex-start}
+.main_el_15{font-family:'NEXON Lv2 Gothic OTF', sans-serif; font-size:1.875rem; font-weight:500; line-height:1.1; color:#424242}
+.main_el_16{background-color:#000; font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:3.125rem; font-weight:700; line-height:1.3; letter-spacing:-0.03em; color:#212121}
+.main_el_16_s1{color:#0094cb}
+.main_list_11{display:flex; flex-direction:row; gap:40px; justify-content:flex-start; align-items:flex-start}
+.main_community_tit{display:flex; flex-direction:row; gap:196px; padding:0px 0px 30px 0px; justify-content:space-between; align-items:center; border:1px solid #616161}
+.main_notice{font-family:'NEXON Lv1 Gothic OTF', sans-serif; font-size:1.75rem; font-weight:700; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_btn_plus{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center; background-color:#212121; border-radius:50%}
+.main_rectangle_34624181{display:block; background-color:#fff; width:2px; height:100%}
+.main_rectangle_34624182{display:block; background-color:#fff; width:100%; height:2px}
+.main_frame_322{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_7{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_8{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_el_17{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_18{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.main_frame_323{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_9{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_10{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_el_19{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_20{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10_1{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.main_frame_324{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_11{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_12{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_el_21{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_22{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10_2{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.main_community_tit_1{display:flex; flex-direction:row; gap:196px; padding:0px 0px 30px 0px; justify-content:space-between; align-items:center; border:1px solid #616161}
+.main_notice_1{font-family:'NEXON Lv1 Gothic OTF', sans-serif; font-size:1.75rem; font-weight:700; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_btn_plus_1{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center; background-color:#212121; border-radius:50%}
+.main_rectangle_34624181_1{display:block; background-color:#fff; width:2px; height:100%}
+.main_rectangle_34624182_1{display:block; background-color:#fff; width:100%; height:2px}
+.main_frame_325{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_13{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_14{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_00000000000{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_23{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10_3{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.main_frame_322_1{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_15{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_16{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_el_24{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_25{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10_4{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.main_frame_323_1{display:flex; flex-direction:column; gap:15px; padding:15px 0px; justify-content:flex-start; align-items:flex-start; border:1px solid #e0e0e0}
+.main_txt_17{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_txt_18{display:flex; flex-direction:row; gap:5px; justify-content:flex-start; align-items:center}
+.main_el_26{font-family:'Pretendard', sans-serif; font-size:1.5rem; font-weight:600; line-height:1.4; letter-spacing:-0.01em; color:#000}
+.main_el_27{font-family:'Pretendard', sans-serif; font-size:1rem; font-weight:400; line-height:1.4; letter-spacing:-0.01em; color:#757575}
+.main_2026_03_10_5{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.9; letter-spacing:-0.01em; color:#0094cb}
+.footer{display:flex; flex-direction:column; justify-content:flex-start; align-items:center; gap:25px; padding:0px 40px}
+.main_bg_img_3{max-width:100%; height:auto}
+.main_list_12{display:flex; flex-direction:column; gap:40px; justify-content:flex-start; align-items:center}
+.main_f_bar{display:flex; flex-direction:row; gap:232px; padding:0px 0px 0px 40px; justify-content:space-between; align-items:center; background-color:#60a23a; border-radius:2em}
+.main_f_menu{display:flex; flex-direction:row; gap:12px; justify-content:flex-start; align-items:center}
+.main_el_28{font-family:'NEXON Lv2 Gothic', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.1; letter-spacing:-0.01em; color:#fff}
+.main_cir{background-color:rgba(255,255,255,0.2); display:block}
+.main_el_29{font-family:'NEXON Lv2 Gothic', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.1; letter-spacing:-0.01em; color:#fff}
+.main_cir_1{background-color:rgba(255,255,255,0.2); display:block}
+.main_el_30{font-family:'NEXON Lv2 Gothic', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.1; letter-spacing:-0.01em; color:#fff}
+.main_cir_2{background-color:rgba(255,255,255,0.2); display:block}
+.main_el_31{font-family:'NEXON Lv2 Gothic', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.1; letter-spacing:-0.01em; color:#fff}
+.main_btn_with{display:flex; flex-direction:row; gap:40px; padding:0px 30px; justify-content:flex-start; align-items:center; background-color:#508830; border-radius:2em}
+.main_in{display:flex; flex-direction:row; gap:61px; justify-content:space-between; align-items:center}
+.main_family_site{font-family:'NEXON Lv2 Gothic', sans-serif; font-size:1rem; font-weight:500; line-height:1.1; letter-spacing:-0.01em; color:#fff}
+.main_btn_drop_down{display:flex; flex-direction:row; gap:10px; justify-content:center; align-items:center; border-radius:50%}
+.main_icon_arrow2{display:flex; flex-direction:row; gap:10px; justify-content:flex-start; align-items:center}
+.main_union{background-color:#fff; display:block}
+.main_foot_menu{display:flex; flex-direction:row; gap:15px; justify-content:flex-start; align-items:center}
+.main_el_32{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:0.8125rem; font-weight:700; line-height:1.1; color:#424242}
+.main_cir_3{background-color:#424242; display:block}
+.main_el_33{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:0.8125rem; font-weight:700; line-height:1.1; color:#424242}
+.main_cir_4{background-color:#424242; display:block}
+.btn_top{display:flex; flex-direction:row; gap:10px; padding:8px 20px; justify-content:center; align-items:center; border:1px solid #616161; border-radius:2em}
+.main_top_1{font-family:'NEXON Lv1 Gothic Low OTF', sans-serif; font-size:0.9375rem; font-weight:700; line-height:1.1; color:#424242}
+.main_info{display:flex; flex-direction:row; gap:477px; justify-content:center; align-items:flex-start}
+.main_el_34{display:flex; flex-direction:column; gap:15px; justify-content:center; align-items:flex-start}
+.main_list_13{display:flex; flex-direction:column; gap:5px; justify-content:flex-start; align-items:center}
+.main_frame_153{display:flex; flex-direction:row; gap:15px; justify-content:flex-start; align-items:flex-start}
+.main_26240_64{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:400; line-height:1.2; letter-spacing:-0.01em; color:#616161}
+.main_033_370_2540_1{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:400; line-height:1.2; letter-spacing:-0.01em; color:#616161}
+.main_033_370_2540_1_s1{font-size:1rem; font-weight:700; color:#508830; letter-spacing:-0.0094em; line-height:1.1}
+.main_09_00_17_00{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:600; line-height:1.2; letter-spacing:-0.01em; color:#616161}
+.main_frame_153_1{display:flex; flex-direction:row; gap:15px; justify-content:flex-start; align-items:flex-start}
+.main_50_5{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:400; line-height:1.2; letter-spacing:-0.01em; color:#616161}
+.main_el_35{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:400; line-height:1.2; letter-spacing:-0.01em; color:#616161}
+.main_mountain{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:500; line-height:1.2; letter-spacing:-0.01em; color:#33561f}
+.copyright_yeongwol_gun_all_rights_reserved{font-family:'Pretendard', sans-serif; font-size:0.9375rem; font-weight:400; line-height:1.2; letter-spacing:-0.01em; color:#616161; text-align:center}
+.main_quick{display:flex; flex-direction:column; gap:10px; justify-content:flex-start; align-items:flex-start}
+.main_btn_4{max-width:100%; height:auto}
+.main_btn_5{max-width:100%; height:auto}
+.main_btn_6{max-width:100%; height:auto}
+.main_btn_7{max-width:100%; height:auto}
+.main_btn_8{max-width:100%; height:auto}
