@@ -25,25 +25,58 @@ def _slug(name: str) -> str:
 
 
 class SemanticConverter:
-    def __init__(self, page: str, image_map: dict[str, str] | None = None):
+    # Generic name → meaningful name mapping
+    # Keys with regex: sec_N, section_N patterns
+    GENERIC_REMAP = {
+        "sec_1": "process",
+        "sec_2": "info",
+        "sec_3": "apply",
+        "sec_4": "community",
+        "sec_5": "gallery",
+        "sec_6": "partner",
+    }
+
+    def __init__(self, page: str, image_map: dict[str, str] | None = None,
+                 name_overrides: dict[str, str] | None = None):
         self.page = page
-        self.css_rules: dict[str, dict[str, str]] = {}  # selector -> props (dedup)
+        self.css_rules: dict[str, dict[str, str]] = {}
         self.html_lines: list[str] = []
         self.image_map = image_map or {}
         self.cls_counter: dict[str, int] = {}
+        self.name_overrides = name_overrides or {}  # custom node name → class overrides
+        self.current_depth = 0
 
     # ── Class naming ──
 
-    def _cls(self, name: str, is_common: bool = False) -> str:
-        """Generate class. Common areas (header/footer/gnb/logo) get no page prefix."""
+    def _remap_name(self, name: str) -> str:
+        """Remap generic names (sec_1, section_01) to meaningful names."""
         slug = _slug(name)
+        # User overrides first
+        if slug in self.name_overrides:
+            return self.name_overrides[slug]
+        # Built-in generic remap
+        if slug in self.GENERIC_REMAP:
+            return self.GENERIC_REMAP[slug]
+        # sec_N / section_N pattern
+        m = re.match(r'^sec(?:tion)?_(\d+)$', slug)
+        if m:
+            return f"section_{m.group(1)}"  # will still be caught by validator
+        return slug
+
+    def _cls(self, name: str, is_common: bool = False) -> str:
+        """Generate class. Common areas get no page prefix. Generic names remapped."""
+        slug = self._remap_name(_slug(name))
         common_names = {"header", "footer", "gnb", "logo", "copyright",
-                        "btn_top", "btn_menu", "btn_close", "total_menu"}
+                        "btn_top", "btn_menu", "btn_close", "total_menu",
+                        "cont", "sub_wrap", "sub_visual", "navi", "lnb"}
+        # Also match names that START with common keywords
+        for cn in list(common_names):
+            if slug.startswith(cn + "_") or slug.startswith(cn):
+                return slug  # No page prefix for copyright_xxx, footer_xxx etc
         if is_common or slug in common_names:
             base = slug
         else:
             base = f"{self.page}_{slug}"
-        # Ensure unique
         count = self.cls_counter.get(base, 0)
         self.cls_counter[base] = count + 1
         return base if count == 0 else f"{base}_{count}"
@@ -163,7 +196,51 @@ class SemanticConverter:
 
     # ── Rendering ──
 
+    def _should_unwrap(self, node: dict) -> bool:
+        """Check if this wrapper node should be removed to reduce DOM depth.
+        Unwrap if: no layout, no visual styling, single child, not root."""
+        if node.get("text"):
+            return False
+        children = node.get("children", [])
+        if len(children) != 1:
+            return False
+        layout = node.get("layout")
+        visual = node.get("visual", {})
+        has_styling = (
+            layout or
+            visual.get("background") or
+            visual.get("border") or
+            (visual.get("borderRadius") and visual["borderRadius"] != "0")
+        )
+        return not has_styling
+
+    def _fix_padding(self, props: dict[str, str]) -> dict[str, str]:
+        """Convert side padding >= 100px to 0 (rely on max-width + margin:auto instead)."""
+        pad = props.get("padding")
+        if not pad:
+            return props
+        parts = pad.replace("px", "").split()
+        if len(parts) >= 2:
+            try:
+                lr = int(float(parts[1]))  # right value
+                if lr >= 100:
+                    # Keep top/bottom, zero out left/right
+                    if len(parts) == 2:
+                        props["padding"] = f"{parts[0]}px 0"
+                    elif len(parts) == 4:
+                        props["padding"] = f"{parts[0]}px 0 {parts[2]}px 0"
+            except (ValueError, IndexError):
+                pass
+        return props
+
     def _render(self, node: dict, depth: int = 0, parent_cls: str = "") -> None:
+        # Unwrap unnecessary wrappers (reduce DOM depth)
+        if depth > 0 and self._should_unwrap(node):
+            children = node.get("children", [])
+            if children:
+                self._render(children[0], depth, parent_cls)
+            return
+
         indent = "  " * depth
         name = node.get("name", "")
         node_id = node.get("id", "")
@@ -222,7 +299,7 @@ class SemanticConverter:
 
             # Container CSS (layout + visual, but NOT background-color if it equals text color)
             container_css = {}
-            container_css.update(self._layout_to_css(layout))
+            container_css.update(self._fix_padding(self._layout_to_css(layout)))
             container_css.update(self._visual_to_css(visual, bool(layout)))
             # Base text style from first segment
             if segments:
@@ -260,7 +337,7 @@ class SemanticConverter:
         # ── Container nodes ──
         cls = self._cls(name)
         container_css = {}
-        container_css.update(self._layout_to_css(layout))
+        container_css.update(self._fix_padding(self._layout_to_css(layout)))
         container_css.update(self._visual_to_css(visual, bool(layout)))
         self._emit(f".{cls}", container_css)
 
@@ -345,6 +422,7 @@ def main() -> None:
     parser.add_argument("--page", default="main", help="Page name for CSS prefix (default: main)")
     parser.add_argument("--output", default="./output", help="Output directory")
     parser.add_argument("--image-map", help="JSON file mapping node IDs to image paths")
+    parser.add_argument("--name-map", help="JSON file mapping generic node names to meaningful names (e.g. {\"sec_1\":\"process\"})")
     args = parser.parse_args()
 
     if args.input:
@@ -358,7 +436,12 @@ def main() -> None:
         with open(args.image_map, "r", encoding="utf-8") as f:
             image_map = json.load(f)
 
-    conv = SemanticConverter(page=args.page, image_map=image_map)
+    name_overrides = {}
+    if args.name_map:
+        with open(args.name_map, "r", encoding="utf-8") as f:
+            name_overrides = json.load(f)
+
+    conv = SemanticConverter(page=args.page, image_map=image_map, name_overrides=name_overrides)
     html, css, reset = conv.convert(data)
 
     os.makedirs(args.output, exist_ok=True)

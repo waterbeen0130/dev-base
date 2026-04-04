@@ -186,8 +186,13 @@ class SemanticValidator:
                           f"reset.css와 중복: {desc} — common.css에서 제거", 0, filepath)
 
     def check_word_break(self, css: str, filepath: str):
-        """word-break: keep-all 적용 확인"""
-        if "keep-all" not in css:
+        """word-break: keep-all 적용 확인 (reset.css 포함)"""
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        combined = css
+        if os.path.exists(reset_path):
+            combined += Path(reset_path).read_text(encoding="utf-8")
+        if "keep-all" not in combined:
             self._add("word-break", "MAJOR",
                       "word-break: keep-all 미적용 (한국어 텍스트 필수)", 0, filepath)
 
