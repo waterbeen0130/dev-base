@@ -358,9 +358,15 @@ class SemanticConverter:
         if self._is_vector_group(node):
             return
 
-        # Depth limiter: hard cap at depth 4 (max DOM depth = 5)
-        if depth >= 4 and children and not text and not img_path:
-            # Only keep wrapper if it has essential visual styling
+        # Depth limiter: cap at depth 4 (max DOM depth = 5)
+        # Exception: nodes with background/border styling are preserved
+        # Exception: common component names (footer, header) are preserved
+        preserve_names = {"footer", "header", "gnb", "f_bar", "f_menu",
+                          "foot_menu", "f_links", "footer_info", "footer_top",
+                          "footer_sns", "footer_bar"}
+        slug_name = _slug(name)
+        is_preserved = slug_name in preserve_names or any(slug_name.startswith(p) for p in preserve_names)
+        if depth >= 4 and children and not text and not img_path and not is_preserved:
             has_visual = (visual and (visual.get("background") or visual.get("border")))
             if not has_visual:
                 for child in children:
