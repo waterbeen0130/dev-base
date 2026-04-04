@@ -173,15 +173,49 @@
 
 ---
 
-## 8. 검증 체크리스트
+## 8. 이미지 파일명 규칙
+
+### 8.1 네이밍 패턴
+- **snake_case 전용**: `mv_bg_illust.png`, `process_01.png`
+- Figma node ID(`190-11144.png`, `I191-52874;190-52826.png`)를 파일명으로 사용 금지
+- 이미지의 역할/위치를 알 수 있는 의미 있는 이름 사용
+
+### 8.2 카테고리별 접두사
+
+| 카테고리 | 접두사 | 예시 |
+|---------|--------|------|
+| 아이콘 | `ic_` | `ic_menu.png`, `ic_location.png`, `ic_phone.png` |
+| 로고 | `logo` | `logo.png`, `logo_white.png` |
+| 배경 | `{섹션}_bg` | `mv_bg_illust.png`, `sec_1_bg.png`, `footer_bg.png` |
+| 캐릭터/일러스트 | `{섹션}_character` | `mv_character.png`, `sec_3_character.png` |
+| 사진 | `{용도}` | `spot_urimji.png`, `card_apply.png` |
+| 순서형 | `{역할}_01~N` | `process_01.png` ~ `process_05.png` |
+| SNS | `sns_{플랫폼}` | `sns_instagram.png`, `sns_facebook.png` |
+| 퀵메뉴 | `quick_{기능}` | `quick_travel.png`, `quick_food.png` |
+
+### 8.3 금지
+- Figma node ID를 파일명으로 사용 (`190-11144.png`)
+- 의미 없는 번호 (`img_01.png`, `image_1.png`)
+- 한글 파일명
+- 공백, 특수문자, 세미콜론(`;`) 포함
+
+---
+
+## 9. 검증 체크리스트
 
 변환 완료 후 아래를 확인:
 - [ ] JSON 노드 수 == HTML 요소 수 (visible 노드만)
 - [ ] 모든 CSS 값이 JSON의 값과 일치 (재계산 없음)
 - [ ] 짧은 텍스트에 `<p>` 태그 없음
-- [ ] 반복 아이템이 `<ul><li>`로 변환됨
+- [ ] 반복 아이템이 `<ul><li>`로 변환됨 (메뉴, 리스트, 카드 등)
+- [ ] 네비게이션 메뉴가 `nav > ul > li > a` 구조
 - [ ] 인라인 스타일 없음
 - [ ] CSS Grid 사용 없음
 - [ ] 각 셀렉터가 한 줄 포맷
 - [ ] 같은 셀렉터 중복 없음
 - [ ] 클래스명이 snake_case + 페이지 프리픽스
+- [ ] 이미지 파일명이 의미 있는 snake_case (Figma node ID 금지)
+- [ ] 이미지가 `.img_area` 래퍼 안에 배치 (배경 이미지 제외)
+- [ ] 한국어 텍스트에 `word-break: keep-all` 적용
+- [ ] `html,body`에 `font-size:clamp(14px, 1.2vw, 16px)` 설정 (basic 프로필)
+- [ ] 100px 이상 padding/margin에 `clamp()` 사용
