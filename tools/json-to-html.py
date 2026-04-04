@@ -19,14 +19,33 @@ from typing import Any
 
 
 def _slug(name: str) -> str:
-    s = re.sub(r"[^a-zA-Z0-9_]", "_", name.lower())
+    # Keep Korean characters for readable class names, transliterate later
+    s = re.sub(r"[^a-zA-Z0-9가-힣_]", "_", name.lower())
     s = re.sub(r"_+", "_", s).strip("_")
-    return s or "el"
+    if not s:
+        return "el"
+    # If purely Korean, transliterate common words
+    KR_MAP = {
+        "공지사항": "notice", "자주묻는질문": "faq", "로고": "logo",
+        "메뉴": "menu", "헤더": "header", "푸터": "footer",
+        "검색": "search", "버튼": "btn", "목록": "list",
+        "제목": "title", "내용": "content", "설명": "desc",
+        "이미지": "img", "아이콘": "icon", "배경": "bg",
+        "구름": "cloud", "산": "mountain", "나무": "tree",
+        "의림지": "urimji",
+    }
+    for kr, en in KR_MAP.items():
+        s = s.replace(kr, en)
+    # If still has Korean, use a generic slug
+    if re.search(r"[가-힣]", s):
+        # Extract any English parts
+        en_parts = re.findall(r"[a-z0-9_]+", s)
+        return "_".join(en_parts) if en_parts else "el"
+    return s
 
 
 class SemanticConverter:
     # Generic name → meaningful name mapping
-    # Keys with regex: sec_N, section_N patterns
     GENERIC_REMAP = {
         "sec_1": "process",
         "sec_2": "info",
@@ -34,6 +53,15 @@ class SemanticConverter:
         "sec_4": "community",
         "sec_5": "gallery",
         "sec_6": "partner",
+        # Child name prefixes that reference parent section numbers
+        "s1_tit": "process_tit",
+        "s2_tit": "info_tit",
+        "s3_tit": "apply_tit",
+        "s4_tit": "community_tit",
+        "s1_list": "process_list",
+        "s2_list": "info_list",
+        "s3_list": "apply_list",
+        "s4_list": "community_list",
     }
 
     def __init__(self, page: str, image_map: dict[str, str] | None = None,
@@ -49,18 +77,30 @@ class SemanticConverter:
     # ── Class naming ──
 
     def _remap_name(self, name: str) -> str:
-        """Remap generic names (sec_1, section_01) to meaningful names."""
+        """Remap generic names (sec_1, section_01, s4_tit) to meaningful names."""
         slug = _slug(name)
         # User overrides first
         if slug in self.name_overrides:
             return self.name_overrides[slug]
-        # Built-in generic remap
+        # Built-in generic remap (exact match)
         if slug in self.GENERIC_REMAP:
             return self.GENERIC_REMAP[slug]
         # sec_N / section_N pattern
         m = re.match(r'^sec(?:tion)?_(\d+)$', slug)
         if m:
-            return f"section_{m.group(1)}"  # will still be caught by validator
+            num = m.group(1)
+            return self.GENERIC_REMAP.get(f"sec_{num}", slug)
+        # s{N}_{role} pattern (child referencing parent section number)
+        m = re.match(r'^s(\d+)_(.+)$', slug)
+        if m:
+            num, role = m.group(1), m.group(2)
+            parent_name = self.GENERIC_REMAP.get(f"sec_{num}")
+            if parent_name:
+                return f"{parent_name}_{role}"
+        # Frame NNN, Group NNN, el NNN patterns → generic, just use role
+        m = re.match(r'^(?:frame|group|el|element|clip_path_group)_?\d*$', slug)
+        if m:
+            return slug  # keep as-is, will show as MINOR in validator
         return slug
 
     def _cls(self, name: str, is_common: bool = False) -> str:
