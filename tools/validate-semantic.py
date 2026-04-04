@@ -231,6 +231,16 @@ class SemanticValidator:
                           f".{prefix}_* 계열 클래스 {count}개 — 부모+태그 선택자로 축소 검토",
                           0, filepath)
 
+    def check_generic_class_names(self, html: str, filepath: str):
+        """sec_1, sec_2, section_01 같은 범용 클래스명 확인"""
+        classes = re.findall(r'class="([^"]*)"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if re.match(r'.*sec_\d+$', cls) or re.match(r'.*section_\d+$', cls) or re.match(r'.*box\d+$', cls):
+                    self._add("generic-class-name", "CRITICAL",
+                              f"범용 클래스명 금지: .{cls} → 역할/내용을 반영한 이름 사용",
+                              0, filepath)
+
     def check_body_page_class(self, html: str, filepath: str):
         """body에 불필요한 page_ 클래스 확인"""
         match = re.search(r'<body[^>]*class="page_[^"]*"', html)
@@ -275,6 +285,7 @@ class SemanticValidator:
             self.check_list_pattern(html, html_path)
             self.check_p_tag_misuse(html, html_path)
             self.check_common_area_prefix(html, html_path)
+            self.check_generic_class_names(html, html_path)
             self.check_body_page_class(html, html_path)
 
         if css:
