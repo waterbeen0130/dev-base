@@ -170,17 +170,37 @@ class SemanticValidator:
                       "word-break: keep-all 미적용 (한국어 텍스트 필수)", 0, filepath)
 
     def check_font_size_base(self, css: str, filepath: str):
-        """html,body font-size clamp 기준 확인"""
-        if "font-size:clamp(" not in css.replace(" ", ""):
+        """html,body font-size clamp 기준 확인 (reset.css 포함)"""
+        # reset.css가 있으면 그쪽도 체크
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        combined = css
+        if os.path.exists(reset_path):
+            combined += Path(reset_path).read_text(encoding="utf-8")
+        if "font-size:clamp(" not in combined.replace(" ", ""):
             self._add("font-size-base", "MAJOR",
                       "html,body에 font-size:clamp(14px, 1.2vw, 16px) 미적용", 0, filepath)
 
     def check_root_vars(self, css: str, filepath: str):
-        """필수 :root 변수 확인"""
+        """필수 :root 변수 확인 + 각 변수 줄바꿈 확인"""
         if "--width" not in css:
             self._add("root-vars", "MAJOR", ":root에 --width 변수 미선언", 0, filepath)
         if "--padding" not in css:
             self._add("root-vars", "MAJOR", ":root에 --padding 변수 미선언", 0, filepath)
+        # :root 안에 변수가 한 줄에 여러 개 있으면 위반
+        for i, line in enumerate(css.split("\n"), 1):
+            if ":root{" in line.replace(" ", "") and "--" in line and ";" in line:
+                # :root{--a:1; --b:2;} 패턴 = 위반
+                vars_in_line = line.count("--")
+                if vars_in_line >= 2:
+                    self._add("root-var-line-separated", "MAJOR",
+                              f":root 변수는 각각 줄바꿈 필요 ({vars_in_line}개 한 줄에)", i, filepath)
+
+    def check_reset_css(self, html: str, filepath: str):
+        """basic 프로젝트: reset.css 별도 파일 존재 확인"""
+        if 'reset.css' not in html:
+            self._add("reset-css-separate", "MAJOR",
+                      "reset.css가 별도 파일로 분리되어 있지 않음 (basic 프로젝트 규칙)", 0, filepath)
 
     def check_selector_format(self, css: str, filepath: str):
         """셀렉터 한 줄 포맷 확인 (미디어쿼리 내부 제외)"""
@@ -188,7 +208,7 @@ class SemanticValidator:
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
             # 여는 중괄호만 있는 줄 (멀티라인 셀렉터)
-            if stripped.endswith("{") and not stripped.startswith("@") and not stripped.startswith("/*"):
+            if stripped.endswith("{") and not stripped.startswith("@") and not stripped.startswith("/*") and not stripped.startswith(":root"):
                 # 다음 줄에 속성이 있으면 멀티라인 = 위반
                 if i < len(lines):
                     next_line = lines[i].strip() if i < len(lines) else ""
@@ -412,6 +432,7 @@ class SemanticValidator:
             self.check_common_area_prefix(html, html_path)
             self.check_generic_class_names(html, html_path)
             self.check_body_page_class(html, html_path)
+            self.check_reset_css(html, html_path)
 
         if css:
             self.check_css_grid(css, css_path)

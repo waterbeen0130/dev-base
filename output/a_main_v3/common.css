@@ -2,14 +2,12 @@
 /* 모든 값은 Figma 원본에서 figma-extract.py로 추출 */
 
 *{margin:0; padding:0; box-sizing:border-box;}
-:root{--width:1440px; --padding:20px;}
-html,body{font-size:clamp(14px, 1.2vw, 16px);}
-body{font-family:'NEXON Lv2 Gothic OTF', 'Pretendard', sans-serif; overflow-x:hidden; color:#212121; word-break:keep-all;}
-ul{list-style:none;}
-img{max-width:100%; height:auto; display:block;}
-a{text-decoration:none; color:inherit;}
-.img_area{overflow:hidden;}
+:root{
+--width:1440px;
+--padding:20px;
+}
 .cont{margin:0 auto; max-width:var(--width); padding:0 var(--padding); width:100%;}
+.img_area{overflow:hidden;}
 
 /* header */
 .header{background:#fff; position:sticky; top:0; z-index:100;}

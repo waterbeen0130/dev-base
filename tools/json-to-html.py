@@ -296,18 +296,17 @@ class Converter:
 </html>"""
 
         # Build CSS (common.md 규칙 자동 적용)
+        # reset.css는 별도 파일 (basic 프로젝트 규칙)
         css_parts = [
             f"/* {meta.get('section_name','')} | profile: {meta.get('profile','basic')} | nodes: {meta.get('total_nodes',0)} */",
             "",
-            "/* reset + base rules (common.md) */",
-            ":root{--width:1440px; --padding:20px;}",
-            "html,body{font-size:clamp(14px, 1.2vw, 16px);}",
-            "body{font-family:'Pretendard', sans-serif; overflow-x:hidden; color:#212121; word-break:keep-all;}",
-            "ul{list-style:none;}",
-            "img{max-width:100%; height:auto; display:block;}",
-            "a{text-decoration:none; color:inherit;}",
-            ".img_area{overflow:hidden;}",
+            "/* :root variables (each on its own line) */",
+            ":root{",
+            "--width:1440px;",
+            "--padding:20px;",
+            "}",
             ".cont{margin:0 auto; max-width:var(--width); padding:0 var(--padding); width:100%;}",
+            ".img_area{overflow:hidden;}",
             "",
             "/* components */",
         ]
