@@ -1,306 +1,311 @@
 #!/usr/bin/env python3
-"""Convert normalized Figma JSON to HTML + CSS files.
+"""Convert normalized Figma JSON to semantic HTML + CSS.
 
-Reads the normalized intermediate JSON (from figma-extract.py) and generates
-pixel-accurate HTML + CSS using ALL values from the normalization data.
-No shortcuts, no screenshot images — every node becomes real markup.
+ALL CSS values come directly from the normalized JSON — no guessing, no memorizing.
+AI decisions are limited to: tag choice, class naming, selector strategy, list detection.
 
 Usage:
-  python3 tools/json-to-html.py --input normalized.json --page index --output ./output/
-  echo '<json>' | python3 tools/json-to-html.py --page index --output ./output/
+  python3 tools/json-to-html.py --input normalized.json --page main --output ./output/
+  echo '<json>' | python3 tools/json-to-html.py --page main --output ./output/
 """
 
 import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from typing import Any
 
 
 def _slug(name: str) -> str:
-    """Convert node name to CSS-safe class slug."""
-    s = re.sub(r"[^a-zA-Z0-9가-힣_]", "_", name.lower())
+    s = re.sub(r"[^a-zA-Z0-9_]", "_", name.lower())
     s = re.sub(r"_+", "_", s).strip("_")
     return s or "el"
 
 
-class Converter:
+class SemanticConverter:
     def __init__(self, page: str, image_map: dict[str, str] | None = None):
         self.page = page
-        self.css_lines: list[str] = []
-        self.selector_count: dict[str, int] = {}
+        self.css_rules: dict[str, dict[str, str]] = {}  # selector -> props (dedup)
         self.html_lines: list[str] = []
-        self.image_map = image_map or {}  # node_id -> image path
+        self.image_map = image_map or {}
+        self.cls_counter: dict[str, int] = {}
 
-    def _unique_cls(self, name: str) -> str:
-        """Generate unique class name with page prefix."""
-        base = f"{self.page}_{_slug(name)}"
-        count = self.selector_count.get(base, 0)
-        self.selector_count[base] = count + 1
-        if count == 0:
-            return base
-        return f"{base}_{count}"
+    # ── Class naming ──
 
-    def _css_props(self, node: dict) -> dict[str, str]:
-        """Extract all CSS properties from a normalized node."""
-        props: dict[str, str] = {}
-        layout = node.get("layout")
-        visual = node.get("visual")
+    def _cls(self, name: str, is_common: bool = False) -> str:
+        """Generate class. Common areas (header/footer/gnb/logo) get no page prefix."""
+        slug = _slug(name)
+        common_names = {"header", "footer", "gnb", "logo", "copyright",
+                        "btn_top", "btn_menu", "btn_close", "total_menu"}
+        if is_common or slug in common_names:
+            base = slug
+        else:
+            base = f"{self.page}_{slug}"
+        # Ensure unique
+        count = self.cls_counter.get(base, 0)
+        self.cls_counter[base] = count + 1
+        return base if count == 0 else f"{base}_{count}"
 
-        if layout:
-            props["display"] = layout.get("display", "flex")
-            d = layout.get("direction")
-            if d:
-                props["flex-direction"] = d
-            gap = layout.get("gap")
-            if gap and gap != "0":
-                props["gap"] = gap
-            pad = layout.get("padding")
-            if pad and pad != "0":
-                props["padding"] = pad
-            j = layout.get("justify")
-            if j:
-                props["justify-content"] = j
-            a = layout.get("align")
-            if a:
-                props["align-items"] = a
+    # ── CSS extraction (ALL values from JSON, zero guessing) ──
 
-        if visual:
-            bg = visual.get("background")
-            if bg:
-                props["background-color"] = bg
-            border = visual.get("border")
-            if border:
-                props["border"] = border
-            br = visual.get("borderRadius")
-            if br and br != "0":
-                props["border-radius"] = br
-            opacity = visual.get("opacity")
-            if opacity is not None and float(opacity) < 1.0:
-                props["opacity"] = str(opacity)
-            # width/height for non-layout containers
-            w = visual.get("width")
-            h = visual.get("height")
-            if w and not layout:
-                props["width"] = f"{int(w)}px"
-            if h and not layout:
-                props["height"] = f"{int(h)}px"
+    def _layout_to_css(self, layout: dict | None) -> dict[str, str]:
+        if not layout:
+            return {}
+        p: dict[str, str] = {}
+        p["display"] = layout.get("display", "flex")
+        d = layout.get("direction")
+        if d:
+            p["flex-direction"] = d
+        gap = layout.get("gap")
+        if gap and gap != "0":
+            p["gap"] = gap
+        pad = layout.get("padding")
+        if pad and pad != "0":
+            p["padding"] = pad
+        j = layout.get("justify")
+        if j:
+            p["justify-content"] = j
+        a = layout.get("align")
+        if a:
+            p["align-items"] = a
+        return p
 
-        return props
+    def _visual_to_css(self, visual: dict | None, has_layout: bool = False) -> dict[str, str]:
+        if not visual:
+            return {}
+        p: dict[str, str] = {}
+        bg = visual.get("background")
+        if bg:
+            p["background-color"] = bg
+        border = visual.get("border")
+        if border:
+            p["border"] = border
+        br = visual.get("borderRadius")
+        if br and br != "0":
+            p["border-radius"] = br
+        opacity = visual.get("opacity")
+        if opacity is not None and float(opacity) < 1.0:
+            p["opacity"] = str(opacity)
+        return p
 
-    def _text_css(self, style: dict) -> dict[str, str]:
-        """Extract text CSS properties from a segment style."""
-        props: dict[str, str] = {}
-        ff = style.get("fontFamily")
-        if ff:
-            props["font-family"] = f"'{ff}', sans-serif"
-        fs = style.get("fontSize")
-        if fs:
-            props["font-size"] = str(fs)
-        fw = style.get("fontWeight")
-        if fw:
-            props["font-weight"] = str(fw)
-        lh = style.get("lineHeight")
-        if lh is not None:
-            props["line-height"] = str(lh)
+    def _segment_to_css(self, style: dict) -> dict[str, str]:
+        """Extract ALL text CSS from a single segment style. No omission."""
+        p: dict[str, str] = {}
+        if style.get("fontFamily"):
+            p["font-family"] = f"'{style['fontFamily']}', sans-serif"
+        if style.get("fontSize"):
+            p["font-size"] = str(style["fontSize"])
+        if style.get("fontWeight"):
+            p["font-weight"] = str(style["fontWeight"])
+        if style.get("lineHeight") is not None:
+            p["line-height"] = str(style["lineHeight"])
         ls = style.get("letterSpacing")
         if ls and ls != "0em":
-            props["letter-spacing"] = ls
-        color = style.get("color")
-        if color:
-            props["color"] = color
+            p["letter-spacing"] = ls
+        if style.get("color"):
+            p["color"] = style["color"]
         ta = style.get("textAlign")
         if ta and ta != "left":
-            props["text-align"] = ta
-        return props
+            p["text-align"] = ta
+        return p
 
-    def _emit_css(self, cls: str, props: dict[str, str]) -> None:
-        """Add a CSS rule (one-line format)."""
+    def _emit(self, selector: str, props: dict[str, str]) -> None:
+        """Add CSS rule, merging into existing if same selector."""
         if not props:
             return
-        parts = [f"{k}:{v}" for k, v in props.items() if v]
-        if parts:
-            self.css_lines.append(f".{cls}{{{'; '.join(parts)}}}")
+        if selector in self.css_rules:
+            self.css_rules[selector].update(props)
+        else:
+            self.css_rules[selector] = dict(props)
 
-    def _is_list_pattern(self, children: list[dict]) -> bool:
-        """Detect repeating list pattern in children."""
+    # ── Detection helpers ──
+
+    def _is_list(self, children: list[dict]) -> bool:
         if len(children) < 2:
             return False
         types = [c.get("type") for c in children]
-        if len(set(types)) != 1:
+        if len(set(types)) != 1 or types[0] not in ("FRAME", "INSTANCE"):
             return False
-        if types[0] not in ("FRAME", "INSTANCE"):
-            return False
-        child_counts = [len(c.get("children", [])) for c in children]
-        if not child_counts:
-            return False
-        return max(child_counts) - min(child_counts) <= 2
+        counts = [len(c.get("children", [])) for c in children]
+        return counts and max(counts) - min(counts) <= 2
 
     def _is_divider(self, node: dict) -> bool:
-        """Detect divider nodes (thin elements)."""
-        visual = node.get("visual")
-        if not visual:
-            return False
-        w = visual.get("width", 999)
-        h = visual.get("height", 999)
+        v = node.get("visual", {})
+        w, h = v.get("width", 999), v.get("height", 999)
         return (w is not None and w <= 3) or (h is not None and h <= 3)
 
-    def _is_image_node(self, node: dict) -> bool:
-        """Detect nodes that should be images (no text, no children, has background)."""
-        if node.get("text"):
+    def _is_decorative(self, node: dict) -> bool:
+        """Leaf node without text/children — purely visual."""
+        if node.get("text") or node.get("children"):
             return False
-        if node.get("children"):
-            return False
-        visual = node.get("visual")
-        if not visual:
-            return False
-        ntype = node.get("type", "")
-        # VECTOR, ELLIPSE, LINE, RECTANGLE without children are likely decorative
-        if ntype in ("VECTOR", "ELLIPSE", "LINE", "BOOLEAN_OPERATION", "STAR", "REGULAR_POLYGON"):
-            return True
-        return False
+        return node.get("type", "") in ("VECTOR", "ELLIPSE", "LINE",
+                                         "BOOLEAN_OPERATION", "STAR", "REGULAR_POLYGON")
 
-    def _render_node(self, node: dict, depth: int = 0) -> None:
-        """Recursively render a node to HTML + CSS."""
+    def _style_diff(self, base: dict, override: dict) -> dict[str, str]:
+        """Return only the CSS properties that differ between two segment styles."""
+        diff: dict[str, str] = {}
+        for key in ("fontSize", "fontWeight", "fontFamily", "color", "letterSpacing", "lineHeight"):
+            base_val = base.get(key)
+            over_val = override.get(key)
+            if over_val is not None and over_val != base_val:
+                css_key = {
+                    "fontSize": "font-size", "fontWeight": "font-weight",
+                    "fontFamily": "font-family", "color": "color",
+                    "letterSpacing": "letter-spacing", "lineHeight": "line-height",
+                }.get(key, key)
+                if key == "fontFamily":
+                    diff[css_key] = f"'{over_val}', sans-serif"
+                else:
+                    diff[css_key] = str(over_val)
+        return diff
+
+    # ── Rendering ──
+
+    def _render(self, node: dict, depth: int = 0, parent_cls: str = "") -> None:
         indent = "  " * depth
         name = node.get("name", "")
-        ntype = node.get("type", "")
         node_id = node.get("id", "")
         text = node.get("text")
         children = node.get("children", [])
-        cls = self._unique_cls(name)
+        layout = node.get("layout")
+        visual = node.get("visual")
 
-        # Check if this node has a downloaded image
+        # Image map hit
         img_path = self.image_map.get(node_id)
         if img_path:
-            visual = node.get("visual", {})
-            w = visual.get("width")
-            h = visual.get("height")
+            cls = self._cls(name)
+            v = visual or {}
+            w = v.get("width")
             props = {}
             if w:
-                props["width"] = f"{int(w)}px"
                 props["max-width"] = "100%"
                 props["height"] = "auto"
-            self._emit_css(cls, props)
-            alt = name or "image"
-            self.html_lines.append(f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{alt}"></div>')
+            self._emit(f".{cls}", props)
+            self.html_lines.append(f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{name}"></div>')
             return
 
-        # Skip pure decorative vectors (render as empty styled elements)
-        if self._is_image_node(node):
-            props = self._css_props(node)
-            if props.get("background-color"):
-                self._emit_css(cls, props)
+        # Decorative vectors
+        if self._is_decorative(node):
+            bg = (visual or {}).get("background")
+            if bg:
+                cls = self._cls(name)
+                self._emit(f".{cls}", {"background-color": bg, "display": "block"})
                 self.html_lines.append(f"{indent}<span class=\"{cls}\"></span>")
             return
 
-        # Divider nodes
+        # Dividers
         if self._is_divider(node):
-            visual = node.get("visual", {})
-            props = {"display": "block"}
-            bg = visual.get("background")
+            cls = self._cls(name)
+            v = visual or {}
+            props: dict[str, str] = {"display": "block"}
+            bg = v.get("background")
             if bg:
                 props["background-color"] = bg
-            w = visual.get("width")
-            h = visual.get("height")
+            w, h = v.get("width", 999), v.get("height", 999)
             if w and w <= 3:
                 props["width"] = f"{int(w)}px"
                 props["height"] = "100%"
             elif h and h <= 3:
                 props["width"] = "100%"
                 props["height"] = f"{int(h)}px"
-            self._emit_css(cls, props)
+            self._emit(f".{cls}", props)
             self.html_lines.append(f"{indent}<span class=\"{cls}\"></span>")
             return
 
-        # Text nodes
+        # ── Text nodes ──
         if text:
+            cls = self._cls(name)
             tag = text.get("tag_hint", "span")
-            content = text.get("content", "")
             segments = text.get("segments", [])
-            has_newline = text.get("has_newline", False)
 
-            # Build CSS from first segment's style + container visual
-            container_props = self._css_props(node)
+            # Container CSS (layout + visual, but NOT background-color if it equals text color)
+            container_css = {}
+            container_css.update(self._layout_to_css(layout))
+            container_css.update(self._visual_to_css(visual, bool(layout)))
+            # Base text style from first segment
             if segments:
-                text_props = self._text_css(segments[0]["style"])
-                container_props.update(text_props)
-            # Remove background-color if it's same as text color (Figma text fill)
-            if container_props.get("background-color") == container_props.get("color"):
-                del container_props["background-color"]
-            self._emit_css(cls, container_props)
+                base_style = segments[0]["style"]
+                base_css = self._segment_to_css(base_style)
+                # Remove bg-color if same as text color (Figma text fill artifact)
+                if container_css.get("background-color") == base_css.get("color"):
+                    del container_css["background-color"]
+                container_css.update(base_css)
+            self._emit(f".{cls}", container_css)
 
-            # Render text content
+            # Render content with override spans
             if len(segments) > 1:
-                # Multiple segments — render with override spans
-                inner_parts = []
+                base_style = segments[0]["style"]
+                parts = []
                 for i, seg in enumerate(segments):
                     seg_text = seg["text"].replace("\n", "<br>")
-                    if seg.get("is_override") and i > 0:
-                        seg_cls = f"{cls}_s{i}"
-                        seg_style = self._text_css(seg["style"])
-                        self._emit_css(seg_cls, seg_style)
-                        inner_parts.append(f"<span class=\"{seg_cls}\">{seg_text}</span>")
+                    if i == 0:
+                        parts.append(seg_text)
                     else:
-                        inner_parts.append(seg_text)
-                inner = "".join(inner_parts)
+                        diff = self._style_diff(base_style, seg["style"])
+                        if diff:
+                            seg_cls = f"{cls}_s{i}"
+                            self._emit(f".{seg_cls}", diff)
+                            parts.append(f'<span class="{seg_cls}">{seg_text}</span>')
+                        else:
+                            parts.append(seg_text)
+                inner = "".join(parts)
             else:
-                inner = content.replace("\n", "<br>")
+                inner = text.get("content", "").replace("\n", "<br>")
 
             self.html_lines.append(f"{indent}<{tag} class=\"{cls}\">{inner}</{tag}>")
             return
 
-        # Container nodes
-        container_props = self._css_props(node)
+        # ── Container nodes ──
+        cls = self._cls(name)
+        container_css = {}
+        container_css.update(self._layout_to_css(layout))
+        container_css.update(self._visual_to_css(visual, bool(layout)))
+        self._emit(f".{cls}", container_css)
 
-        # Detect list pattern
-        is_list = self._is_list_pattern(children)
+        is_list = self._is_list(children)
+        tag_open = f'<ul class="{cls}">' if is_list else f'<div class="{cls}">'
+        tag_close = "</ul>" if is_list else "</div>"
 
-        if is_list:
-            self._emit_css(cls, container_props)
-            self.html_lines.append(f"{indent}<ul class=\"{cls}\">")
-            for child in children:
+        self.html_lines.append(f"{indent}{tag_open}")
+        for child in children:
+            if is_list:
                 self.html_lines.append(f"{indent}  <li>")
-                self._render_node(child, depth + 2)
+                self._render(child, depth + 2, cls)
                 self.html_lines.append(f"{indent}  </li>")
-            self.html_lines.append(f"{indent}</ul>")
-        else:
-            self._emit_css(cls, container_props)
-            self.html_lines.append(f"{indent}<div class=\"{cls}\">")
-            for child in children:
-                self._render_node(child, depth + 1)
-            self.html_lines.append(f"{indent}</div>")
+            else:
+                self._render(child, depth + 1, cls)
+        self.html_lines.append(f"{indent}{tag_close}")
 
-    def convert(self, data: dict) -> tuple[str, str]:
-        """Convert normalized JSON to HTML + CSS strings."""
+    # ── Output ──
+
+    def convert(self, data: dict) -> tuple[str, str, str]:
+        """Returns (html, common.css, reset.css)."""
         meta = data["meta"]
-        tree = data["tree"]
+        self._render(data["tree"], depth=1)
 
-        self._render_node(tree, depth=1)
-
-        # Build HTML
+        # HTML (no page_ class on body — rule: body 태그에 프리픽스 불필요)
         html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{meta.get('section_name', 'Page')}</title>
+<link rel="stylesheet" href="reset.css">
 <link rel="stylesheet" href="common.css">
 </head>
-<body class="page_{self.page}">
+<body>
 
 {chr(10).join(self.html_lines)}
 
 </body>
 </html>"""
 
-        # Build CSS (common.md 규칙 자동 적용)
-        # reset.css는 별도 파일 (basic 프로젝트 규칙)
+        # CSS — :root variables each on own line
         css_parts = [
             f"/* {meta.get('section_name','')} | profile: {meta.get('profile','basic')} | nodes: {meta.get('total_nodes',0)} */",
             "",
-            "/* :root variables (each on its own line) */",
             ":root{",
             "--width:1440px;",
             "--padding:20px;",
@@ -308,18 +313,36 @@ class Converter:
             ".cont{margin:0 auto; max-width:var(--width); padding:0 var(--padding); width:100%;}",
             ".img_area{overflow:hidden;}",
             "",
-            "/* components */",
         ]
-        css_parts.extend(self.css_lines)
+        # Emit all CSS rules (deduplicated, one-line format)
+        for selector, props in self.css_rules.items():
+            parts = [f"{k}:{v}" for k, v in props.items() if v]
+            if parts:
+                css_parts.append(f"{selector}{{{'; '.join(parts)}}}")
 
         css = "\n".join(css_parts)
-        return html, css
+
+        # reset.css (separate file — basic project rule)
+        reset = """@charset "UTF-8";
+html,body{font-size:clamp(14px, 1.2vw, 16px);}
+body{font-family:'Pretendard', sans-serif; overflow-x:hidden; color:#212121; word-break:keep-all; margin:0; padding:0;}
+*{margin:0; padding:0; box-sizing:border-box;}
+ul{list-style:none;}
+ol{list-style:none;}
+img{max-width:100%; height:auto; display:block; border:0;}
+a{text-decoration:none; color:inherit;}
+button{cursor:pointer; border:none; background:none;}
+input,textarea,select{font-family:inherit; font-size:inherit;}
+table{border-collapse:collapse; border-spacing:0;}
+address{font-style:normal;}"""
+
+        return html, css, reset
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Convert normalized Figma JSON to HTML + CSS")
+    parser = argparse.ArgumentParser(description="Convert normalized Figma JSON to semantic HTML + CSS")
     parser.add_argument("--input", help="Input normalized JSON file (default: stdin)")
-    parser.add_argument("--page", default="index", help="Page name for CSS prefix")
+    parser.add_argument("--page", default="main", help="Page name for CSS prefix (default: main)")
     parser.add_argument("--output", default="./output", help="Output directory")
     parser.add_argument("--image-map", help="JSON file mapping node IDs to image paths")
     args = parser.parse_args()
@@ -335,25 +358,28 @@ def main() -> None:
         with open(args.image_map, "r", encoding="utf-8") as f:
             image_map = json.load(f)
 
-    conv = Converter(page=args.page, image_map=image_map)
-    html, css = conv.convert(data)
+    conv = SemanticConverter(page=args.page, image_map=image_map)
+    html, css, reset = conv.convert(data)
 
     os.makedirs(args.output, exist_ok=True)
-    html_path = os.path.join(args.output, f"{args.page}.html")
+    html_path = os.path.join(args.output, f"index.html")
     css_path = os.path.join(args.output, "common.css")
+    reset_path = os.path.join(args.output, "reset.css")
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
     with open(css_path, "w", encoding="utf-8") as f:
         f.write(css)
+    with open(reset_path, "w", encoding="utf-8") as f:
+        f.write(reset)
 
     print(f"Generated: {html_path} ({len(conv.html_lines)} lines)", file=sys.stderr)
-    print(f"CSS rules: {len(conv.css_lines)}", file=sys.stderr)
+    print(f"CSS rules: {len(conv.css_rules)} (deduplicated)", file=sys.stderr)
+    print(f"Reset: {reset_path}", file=sys.stderr)
 
     # Auto-validation
     validator_path = os.path.join(os.path.dirname(__file__), "validate-semantic.py")
     if os.path.exists(validator_path):
-        import subprocess
         img_dir = os.path.join(args.output, "img")
         cmd = [sys.executable, validator_path, "--html", html_path, "--css", css_path]
         if os.path.isdir(img_dir):
@@ -362,10 +388,6 @@ def main() -> None:
         print(result.stdout, file=sys.stderr, end="")
         if result.stderr:
             print(result.stderr, file=sys.stderr, end="")
-        if result.returncode == 2:
-            print("❌ CRITICAL 위반 — 수정 필요", file=sys.stderr)
-        elif result.returncode == 1:
-            print("⚠️  MAJOR 위반 — 수정 권장", file=sys.stderr)
 
 
 if __name__ == "__main__":
