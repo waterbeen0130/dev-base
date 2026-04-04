@@ -163,6 +163,28 @@ class SemanticValidator:
                               f"좌우 padding {side_pad}px — max-width + margin:auto 사용 권장",
                               i, filepath)
 
+    def check_reset_duplicate(self, css: str, filepath: str):
+        """common.css에 reset.css 내용 중복 확인"""
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        if not os.path.exists(reset_path):
+            return
+        # reset에 있는 핵심 패턴이 common.css에도 있으면 중복
+        reset_patterns = [
+            (r'\*\s*\{[^}]*margin\s*:\s*0', "* { margin:0 }"),
+            (r'\*\s*\{[^}]*padding\s*:\s*0', "* { padding:0 }"),
+            (r'\*\s*\{[^}]*box-sizing', "* { box-sizing }"),
+            (r'ul\s*\{[^}]*list-style\s*:\s*none', "ul { list-style:none }"),
+            (r'^img\s*\{[^}]*max-width', "img { max-width }"),
+            (r'a\s*\{[^}]*text-decoration\s*:\s*none', "a { text-decoration:none }"),
+            (r'body\s*\{[^}]*overflow-x', "body { overflow-x }"),
+            (r'body\s*\{[^}]*word-break', "body { word-break }"),
+        ]
+        for pattern, desc in reset_patterns:
+            if re.search(pattern, css):
+                self._add("reset-duplicate", "MAJOR",
+                          f"reset.css와 중복: {desc} — common.css에서 제거", 0, filepath)
+
     def check_word_break(self, css: str, filepath: str):
         """word-break: keep-all 적용 확인"""
         if "keep-all" not in css:
@@ -435,6 +457,7 @@ class SemanticValidator:
             self.check_reset_css(html, html_path)
 
         if css:
+            self.check_reset_duplicate(css, css_path)
             self.check_css_grid(css, css_path)
             self.check_important(css, css_path)
             self.check_border_radius_999(css, css_path)
