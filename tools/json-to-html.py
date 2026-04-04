@@ -10,11 +10,13 @@ Usage:
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 
@@ -339,6 +341,19 @@ class SemanticConverter:
         children = node.get("children", [])
         layout = node.get("layout")
         visual = node.get("visual")
+
+        # Component template hit (footer, header)
+        component_name = _slug(name)
+        template_dir = Path(__file__).resolve().parent / "component-templates"
+        template_path = template_dir / f"{component_name}.py"
+        if template_path.exists() and depth <= 2:
+            spec = importlib.util.spec_from_file_location(component_name, template_path)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            html = mod.render(node, self.image_map, self.css_rules)
+            for line in html.split("\n"):
+                self.html_lines.append(f"{indent}{line}")
+            return
 
         # Image map hit
         img_path = self.image_map.get(node_id)
