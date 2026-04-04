@@ -1,0 +1,9 @@
+{
+  "font_size_pc": "rem",
+  "font_size_mobile": "px",
+  "rem_base": 16,
+  "reset_css": "separate_file",
+  "required_root_vars": ["--width", "--padding"],
+  "mobile_spacing": "half_of_pc",
+  "mobile_breakpoint": 768
+}

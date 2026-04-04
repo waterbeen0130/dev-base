@@ -1,0 +1,8 @@
+{
+  "font_size_pc": "px",
+  "font_size_mobile": "px",
+  "reset_css": "inline_top_of_css",
+  "required_root_vars": ["--padding", "--header_h", "--width", "--point-color-1"],
+  "mobile_spacing": "explicit_px",
+  "animation": { "attrs": ["data-delay", "data-direction"], "motion_class": "section_on" }
+}
