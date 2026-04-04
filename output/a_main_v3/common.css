@@ -1,7 +1,6 @@
 /* 반값여행 제천 A_main — 정규화 데이터 기반 시멘틱 CSS */
 /* 모든 값은 Figma 원본에서 figma-extract.py로 추출 */
 
-*{margin:0; padding:0; box-sizing:border-box;}
 :root{
 --width:1440px;
 --padding:20px;
