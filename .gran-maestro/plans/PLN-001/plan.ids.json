@@ -1,0 +1,6 @@
+[
+  { "id": "PAC-1", "text": "pyproject.toml에 pytest 설정이 존재하고 pip install pytest로 테스트 실행 가능하다", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-2", "text": "tests/ 디렉토리에 smoke test 파일이 존재한다", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-3", "text": "smoke test가 figma-extract.py의 rgba_to_hex, extract_fill_color 함수를 import하여 기본 동작을 검증한다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "pytest 명령으로 모든 테스트가 통과한다", "grade": "MUST", "tags": ["TIER-B"] }
+]

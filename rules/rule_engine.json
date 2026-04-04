@@ -1,0 +1,446 @@
+{
+  "meta": {
+    "version": "2.5.0",
+    "mode": "strict_transform"
+  },
+
+  "project_type": {
+    "default": "basic",
+    "override_note": "specify project type to apply type-specific rules. landing overrides css.font_size.pc from rem to px",
+    "types": {
+      "basic": {
+        "css_font_size_pc": "rem",
+        "css_font_size_mobile": "px",
+        "js_include": "local",
+        "reset_css": "separate_file",
+        "required_root_vars": ["--width", "--padding"]
+      },
+      "landing": {
+        "css_font_size_pc": "px",
+        "css_font_size_mobile": "px",
+        "js_include": "cdn",
+        "reset_css": "inline_top_of_css",
+        "required_root_vars": ["--padding", "--header_h", "--width", "--point-color-1"]
+      }
+    }
+  },
+
+  "parsing": {
+    "preserve_newline": true,
+    "newline_to_br": true,
+    "whitespace_normalize": false,
+    "split_text_on_override": true,
+    "override_merge": "cumulative",
+    "inherit_missing_font_props": true,
+    "text_newline": {
+      "detect": "\\n in node.characters",
+      "single_n": "<br>",
+      "double_n": "</p><p> or close + new block",
+      "forbid_ignore": true
+    },
+    "style_split": {
+      "trigger_props": ["fontSize", "fontWeight", "fontFamily", "fills", "letterSpacing", "lineHeightPx"],
+      "min_diff_count": 1,
+      "output": "<span class=\"{auto}\">",
+      "forbid_flatten": true
+    },
+    "text_node_mapping": {
+      "one_node_one_element": true,
+      "one_node_one_element_note": "each Figma TEXT node must map to its own HTML element, never merge adjacent TEXT nodes",
+      "forbid_merge_adjacent": true,
+      "forbid_merge_adjacent_note": "two adjacent TEXT nodes with different styles must remain separate HTML elements"
+    }
+  },
+
+  "node_preservation": {
+    "divider_bar": {
+      "preserve": true,
+      "preserve_note": "thin frames with fill-only (divider/bar/separator) must be kept as DOM elements, never dropped",
+      "output": "<span class=\"{page}_{role}_divider\">",
+      "detect": "frame with width<=2 or height<=2 and has fills, no children or single RECTANGLE child",
+      "forbid_drop": true
+    },
+    "visibility_rule": {
+      "exclude_only": "node.visible===false",
+      "exclude_only_note": "only exclude nodes where visible is explicitly false. fill-only nodes, stroke-invisible nodes with fills, thin frames must all be preserved"
+    },
+    "decorative_nodes": {
+      "preserve": true,
+      "preserve_note": "background fills, decorative shapes, icons, dividers — all must map to DOM elements. never silently drop any visible node"
+    }
+  },
+
+  "border_stroke": {
+    "border_from_stroke_only": true,
+    "border_from_stroke_only_note": "CSS border-* properties must only be generated when the Figma node has strokes with visible===true",
+    "forbid_heuristic_border": true,
+    "forbid_heuristic_border_note": "never infer border from layout patterns or adjacent selectors (+). if Figma has no stroke, CSS must have no border",
+    "forbid_adjacent_selector_border": true,
+    "forbid_adjacent_selector_border_note": ".card+.card{border-left:...} type inference is forbidden. use actual divider nodes instead",
+    "divider_is_node_not_border": true,
+    "divider_is_node_not_border_note": "Figma divider bars are independent nodes — render as HTML elements with background-color, not as CSS border on siblings"
+  },
+
+  "structure": {
+    "section_pattern": "{page}_{role}",
+    "require_inner_wrapper": true,
+    "inner_wrapper_limit": 1,
+    "inner_wrapper_class": "cont",
+    "max_dom_depth": 5,
+    "forbid_empty_div": true,
+    "forbid_anonymous_wrapper": true,
+    "flexbox_only": true,
+    "animation_attrs": ["data-delay", "data-direction"],
+    "motion_section_class": "motion_section"
+  },
+
+  "animation": {
+    "applies_to": "landing",
+    "attrs": ["data-delay", "data-direction"],
+    "motion_section_class": "section_on",
+    "required_css_rules": [
+      "[data-delay]{position:relative; transition:all 1s ease; opacity:0;}",
+      "[data-direction='left']{left:-40px;}",
+      "[data-direction='right']{right:-40px;}",
+      "[data-direction='top']{top:-40px;}",
+      "[data-direction='bottom']{bottom:-40px;}",
+      ".section_on [data-delay]{opacity:1;}",
+      ".section_on [data-direction='left']{left:0;}",
+      ".section_on [data-direction='right']{right:0;}",
+      ".section_on [data-direction='top']{top:0;}",
+      ".section_on [data-direction='bottom']{bottom:0;}"
+    ],
+    "gsap_fallback_required": true,
+    "gsap_fallback_note": "if GSAP not loaded, data-delay elements must not remain invisible"
+  },
+
+  "image": {
+    "wrapper_required": true,
+    "wrapper_class": "img_area",
+    "bg_section": {
+      "applies_to": "landing",
+      "height_from_original_px": true,
+      "object_fit": "cover",
+      "note": "image-based sections: set height equal to original image pixel height and apply object-fit:cover"
+    },
+    "inline_img": {
+      "width_percent_based": true,
+      "aspect_ratio_required": true,
+      "forbid_fixed_dimensions": true,
+      "note": "img inside sections: use width:100% or % + aspect-ratio. never fixed px width/height"
+    },
+    "mobile_image": {
+      "required": true,
+      "applies_to": "landing",
+      "note": "mobile-specific images must be used; sizing follows mobile image pixel dimensions"
+    },
+    "lazy_loading": {
+      "policy": "none",
+      "note": "loading=lazy is not required. do not add automatically"
+    }
+  },
+
+  "text_tag_selection": {
+    "default_tag": "span",
+    "p_tag_conditions": [
+      "characters_contains_newline",
+      "characters_length_gt_95",
+      "sentence_ending_repeat"
+    ],
+    "forbid_p_for_labels": true,
+    "forbid_p_for_labels_note": "short label text (brand names, keywords like BrainBody/MRI) must use span or heading, never p",
+    "heading_usage": "use h1-h6 for actual section headings only, maintain sequential hierarchy"
+  },
+
+  "naming": {
+    "case": "snake_case",
+    "page_prefix_required": true,
+    "regex": "^[a-z0-9_]+$",
+    "forbidden": ["sec_1", "sec_2", "section_01", "box1"],
+    "common_suffixes": ["_area", "_wrap", "_list", "_item", "_inner", "_cont"],
+    "common_component_types": {
+      "list_pattern": "listType_{N}",
+      "list_note": "reusable list UI shared across pages: listType_1, listType_2, listType_3 ...",
+      "title_pattern": "titleType_{N}",
+      "title_note": "reusable title/heading block shared across pages: titleType_1, titleType_2 ..."
+    },
+    "state_classes": {
+      "active": "active",
+      "visible": "section_on",
+      "animated_item_on": "on",
+      "note": "state classes do not require page prefix"
+    },
+    "exception_kebab": {
+      "allowed_prefixes": ["is-", "has-", "js-"],
+      "note": "status prefix (is-, has-) and JS hook prefix (js-) may use kebab-case. all other classes must be snake_case"
+    },
+    "selector_scoping": true,
+    "page_filename": {
+      "main_page": "index.html",
+      "case": "snake_case",
+      "structure": "flat",
+      "forbidden_patterns": ["page_\\d+", "sub_\\d+", "page_[a-z]$"],
+      "meaningful_name_required": true,
+      "class_prefix_rule": "filename without .html extension becomes CSS class prefix",
+      "body_class_pattern": "page_{filename_without_ext}",
+      "examples": {
+        "greeting": { "file": "greeting.html", "body_class": "page_greeting", "css_prefix": "greeting_" },
+        "products": { "file": "products.html", "body_class": "page_products", "css_prefix": "products_" },
+        "notice": { "file": "notice.html", "body_class": "page_notice", "css_prefix": "notice_" }
+      }
+    }
+  },
+
+  "layout": {
+    "container_strategy": "max-width + margin:0 auto",
+    "container_pattern": ".cont{margin:0 auto; max-width:var(--width); padding:0 var(--padding); width:100%;}",
+    "avoid_width_100_block": true,
+    "figma_layout_mapping": {
+      "layoutMode_VERTICAL": "flex-direction: column",
+      "layoutMode_HORIZONTAL": "flex-direction: row",
+      "itemSpacing": "gap",
+      "paddingLeft_paddingRight_paddingTop_paddingBottom": "padding",
+      "counterAxisAlignItems": "align-items",
+      "primaryAxisAlignItems": "justify-content"
+    },
+    "forbid_layout_info_loss": true,
+    "forbid_layout_info_loss_note": "layoutMode, itemSpacing, padding values from Figma must be reflected in CSS",
+    "project_init": {
+      "tool_path": "D:/dev-base/tools/init-project.py",
+      "tool_usage": "python3 D:/dev-base/tools/init-project.py <project_path> --type <basic|landing> --publishing",
+      "mandatory": true,
+      "note": "must run before any project work. creates CLAUDE.md, settings, .gran-maestro structure"
+    },
+
+    "figma_mcp_workflow": {
+      "enabled": true,
+      "method": "mcp_section_by_section",
+      "method_note": "use Figma MCP (get_figma_data) to fetch section-level node data. AI interprets MCP response directly. section-by-section calls keep context manageable for accurate interpretation",
+      "mcp_tools": {
+        "get_data": "mcp__figma__get_figma_data",
+        "download_images": "mcp__figma__download_figma_images"
+      },
+      "workflow": {
+        "step1": "get frame overview with shallow depth to identify sections",
+        "step2": "for each section: call MCP with nodeId → AI interprets → generate HTML/CSS",
+        "step3": "validate with validate.js --type basic|landing"
+      },
+      "forbid_full_page_single_call": true,
+      "forbid_full_page_single_call_note": "processing entire page in one MCP call produces lower quality. always split into sections",
+      "forbid_plausible_values": true,
+      "forbid_plausible_values_note": "if MCP response lacks a property, do not guess. only use values present in the response",
+      "figma_to_css_properties": ["layoutMode", "itemSpacing", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "width", "height", "fills", "strokes", "cornerRadius", "fontSize", "fontWeight", "fontFamily", "lineHeightPx", "letterSpacing", "primaryAxisAlignItems", "counterAxisAlignItems", "layoutSizingHorizontal", "layoutSizingVertical"],
+      "optional_mapping_tool": {
+        "tool_path": "D:/dev-base/tools/figma-extract.py",
+        "tool_usage": "echo '<mcp_response>' | python3 D:/dev-base/tools/figma-extract.py --stdin --name <section> --output ./extracted/ --json-only",
+        "note": "optional: pipe MCP response to generate mapping.json for precise value validation"
+      },
+      "validation_tool_path": "D:/dev-base/tools/validate.js",
+      "validation_usage": "node D:/dev-base/tools/validate.js --html <file> --css <file> --type basic|landing",
+      "validation_checks": ["css_format", "html_tags", "project_type_rules"]
+    },
+    "coordinate_based_row": {
+      "rule": "boxes with same parent and matching y-coordinate + similar height → prefer inline-flex row layout",
+      "applies_to": "all",
+      "note": "when 2+ boxes share the same y position in the same parent, default to row (inline-flex) not vertical stack"
+    }
+  },
+
+  "agent_distribution": {
+    "claude_role": "pm_orchestrator_only",
+    "claude_role_note": "Claude must only orchestrate/manage. code implementation must be outsourced to Codex or Gemini CLI",
+    "forbid_claude_code_execution": true,
+    "forbid_claude_code_execution_note": "using Task(subagent_type: general-purpose) for code implementation is forbidden. it only consumes Claude tokens without utilizing Codex/Gemini",
+    "project_type_routing": {
+      "publishing": {
+        "primary": "gemini-dev",
+        "primary_note": "HTML/CSS publishing + Figma-to-code = 100% frontend. gemini-dev has frontend + large-context capabilities, ideal for large Figma JSON",
+        "codex_role": "none",
+        "codex_role_note": "codex capabilities (code, refactor, test) are irrelevant for publishing projects",
+        "config_template": "D:/dev-base/rules/templates/publishing/config.json",
+        "agents_template": "D:/dev-base/rules/templates/publishing/agents.json"
+      },
+      "fullstack": {
+        "backend": "codex-dev",
+        "frontend": "gemini-dev",
+        "note": "split by layer: codex handles backend/API/DB, gemini handles frontend/UI"
+      },
+      "backend_only": {
+        "primary": "codex-dev"
+      },
+      "docs_config": {
+        "primary": "claude-dev",
+        "note": "small inline edits to md/json/config files only"
+      }
+    },
+    "assignment_by_capability": {
+      "codex-dev": ["backend", "refactor", "test", "api", "database"],
+      "gemini-dev": ["frontend", "html", "css", "publishing", "figma", "docs", "large-context"],
+      "claude-dev": ["config", "small-inline", "md-docs"]
+    },
+    "claude_direct_intervention": "only after max_cli_retries exhausted for both primary and fallback agents"
+  },
+
+  "html": {
+    "no_inline_style": true,
+    "br_class_responsive": ["mb_only", "pc_only"],
+    "img_in_wrapper": true,
+    "no_figure_figcaption": true,
+    "no_figure_figcaption_note": "do not use <figure>/<figcaption>. use <div class='img_area'> + <p> or <span> instead",
+    "prefer_div_over_semantic": true,
+    "prefer_div_over_semantic_note": "use <div> with class for sections/wrappers. <section> only for major content sections. avoid <main>, <article>, <figure>, <figcaption>",
+    "minimal_aria": true,
+    "minimal_aria_note": "use aria-label only on interactive elements without visible text. do not add aria-label to decorative wrappers or aria-hidden to spans",
+    "img_alt_concise": true,
+    "img_alt_concise_note": "alt text should be short and descriptive (e.g. 'logo', 'product image'), not full Korean sentences"
+  },
+
+  "css": {
+    "root_var_format": "each variable on its own line inside :root{}",
+    "root_var_naming": "point-color-N, font-color-N, --width, --padding pattern. do not use semantic names like --landing-dark, --landing-navy",
+    "selector_single_line": true,
+    "selector_single_line_note": "each selector rule on one line (.a{...}), never multi-line brace expansion",
+    "forbid_duplicate_selector": true,
+    "forbid_duplicate_selector_note": "same selector must not appear multiple times. merge all properties into one rule",
+    "media_query_format": {
+      "opening_brace_same_line": true,
+      "each_rule_own_line": true,
+      "no_indent": true,
+      "closing_brace_own_line": true
+    },
+    "font_size": {
+      "pc": "rem",
+      "mobile": "px",
+      "pc_note": "PC breakpoint uses rem exclusively for font-size (basic project)",
+      "mobile_note": "768px and below uses fixed px for font-size",
+      "landing_override": "px_all",
+      "landing_override_note": "landing project: both PC and mobile use fixed px for font-size. overrides pc:rem rule"
+    },
+    "line_height": {
+      "format": "ratio",
+      "format_note": "always use unitless ratio (1.3, 1.45, 1.6). never use computed pixel values like 25.86600112915039px or 63.228px",
+      "forbid_computed_px": true
+    },
+    "letter_spacing": {
+      "unit": "em",
+      "unit_note": "default: use em units (-0.025em). fine-tuning exception: px allowed when value <= 2px absolute (e.g. -0.5px, -1px, -0.8px)"
+    },
+    "border_radius": {
+      "circle": "50%",
+      "circle_note": "for circular elements use 50%, not 999px or large px values",
+      "pill": "2em",
+      "pill_note": "for pill-shaped buttons/elements use 2em only. 50% is reserved for circle. 999px is always forbidden"
+    },
+    "spacing_unit": "px_only",
+    "clamp_threshold": 100,
+    "clamp_policy": "px < 100 fixed only, px >= 100 clamp allowed",
+    "no_raw_calc": true,
+    "no_raw_calc_note": "calc() forbidden standalone. only permitted inside clamp() function",
+    "no_raw_vw": true,
+    "no_raw_vw_note": "vw forbidden standalone. only permitted inside clamp() function",
+    "max_function": {
+      "allowed": true,
+      "note": "max() function is allowed for responsive sizing. primary pattern: max(calc(N/1920*100vw), Npx) where N is design value",
+      "primary_pattern": "padding:max(calc({design_value}/1920*100vw), {min_px}px)",
+      "also_valid_for": ["margin", "border-radius"],
+      "example": "padding:max(calc(110/1920*100vw), 55px) 0"
+    },
+    "mobile_spacing_policy": {
+      "breakpoint": 768,
+      "strategy": "half_of_pc",
+      "applies_to": ["basic"],
+      "applies_to_note": "landing uses explicit px values, not half rule",
+      "note": "768px and below: padding/margin defaults to half of PC value for basic projects"
+    },
+    "color_format": "hex_only",
+    "rgba_opacity_allowed": true,
+    "no_grid": true,
+    "no_important": true,
+    "no_important_exception": "!important allowed only in override utility classes (.mb_N, .mt_N, .txt_c, .txt_l, .txt_r, .back_no, .bd_l, .bd_r)",
+    "shorthand_preferred": true,
+    "transition_default": "all 0.3s ease-out",
+    "property_order": ["position", "margin", "padding", "width/height", "display", "align", "background", "font-size", "font-weight", "color", "기타"],
+    "forbid_utility_classes": true,
+    "forbid_utility_classes_note": "do not create font-family/font-weight utility classes (.landing_font_serif, .landing_weight_bold). apply typography through scoped parent selectors instead",
+    "forbid_utility_classes_exception": "layout override utilities are allowed in reset/common: .mb_N .mt_N .mr_N .ml_N .pb_N .pt_N (margin/padding override), .txt_c .txt_l .txt_r (text-align override), .back_no .bd_l .bd_r (misc override), .pc_only .mb_only (responsive display)",
+    "inherit_from_parent": true,
+    "inherit_from_parent_note": "font-family, font-weight, color should be inherited from parent/section selector, not applied via utility class on every element",
+    "word_break": {
+      "korean_text": "keep-all",
+      "note": "apply word-break:keep-all to all Korean text paragraphs and headings to ensure word-boundary line breaks"
+    },
+    "aspect_ratio": {
+      "preferred": true,
+      "note": "use aspect-ratio property for elements that need fixed width/height ratio. prefer over padding-bottom hack",
+      "patterns": {
+        "square": "aspect-ratio:1/1",
+        "custom": "aspect-ratio:{width}/{height}"
+      },
+      "example": ".icon_wrap{width:40px; aspect-ratio:1/1;}"
+    },
+    "multiline_ellipsis": {
+      "pattern": "overflow:hidden; display:-webkit-box; -webkit-line-clamp:{N}; -webkit-box-orient:vertical;",
+      "note": "for N-line text truncation with ellipsis. N is the max number of visible lines"
+    },
+    "bullet_dot_decorator": {
+      "pattern": "position:absolute; left:0; top:{N}px; width:3px; aspect-ratio:1/1; background-color:{color}; border-radius:50%; display:block; content:\"\";",
+      "note": "standard before/after bullet dot pattern for list items. use aspect-ratio:1/1 instead of height:3px"
+    },
+    "base_font_size": {
+      "pattern": "html,body{font-size:clamp(14px, 1.2vw, 16px);}",
+      "note": "basic project: set base font-size with clamp on html/body. all rem values are relative to this base"
+    }
+  },
+
+  "root_vars": {
+    "format": "each variable on its own line inside :root{}",
+    "naming_pattern": "--point-color-N, --font-color-N, --width, --padding",
+    "forbidden_names": ["--landing-dark", "--landing-navy", "--primary", "--secondary"],
+    "required_by_type": {
+      "landing": ["--padding", "--header_h", "--width", "--point-color-1"],
+      "basic": ["--width", "--padding"]
+    },
+    "note": "CSS variables must follow naming pattern. semantic names forbidden. required vars must all be declared"
+  },
+
+  "breakpoints": {
+    "values": [1400, 1200, 960, 768],
+    "optional_values": [1024],
+    "direction": "desktop_first",
+    "note": "1024 is optional for tablet mid-range. use only when design requires it"
+  },
+
+  "output_policy": {
+    "no_refactor": true,
+    "no_structure_optimization": true,
+    "replicate_existing_style_profile": true
+  },
+
+  "sub_page": {
+    "common_components": ["header", "total_menu_wrap", "sub_visual", "breadcrumb", "page_title", "footer"],
+    "copy_from_existing": true,
+    "copy_from_existing_note": "when project already has converted sub pages, copy common components as-is and only change menu active state and breadcrumb text",
+    "fallback_templates": {
+      "list": "templates/sub_list.html",
+      "view": "templates/sub_view.html"
+    },
+    "css_append_to_existing": true,
+    "css_append_to_existing_note": "new sub page CSS must be appended to bottom of existing common.css, never modify existing rules",
+    "body_class_pattern": "page_{name}",
+    "naming": {
+      "list_section": "{page}_section",
+      "list_container": "{page}_list",
+      "list_item": "list_item",
+      "list_row": "list_row",
+      "view_section": "{page}_view",
+      "view_info": "{page}_info_area",
+      "view_detail": "{page}_detail",
+      "tab": ["tab_menu", "tab_list"],
+      "search": ["search_bar", "search_input", "select_box"],
+      "pagination": ["pagination", "btn_page", "num"],
+      "bottom": ["list_bottom", "btn_group", "btn_outline"],
+      "back": "btn_back",
+      "info_table": "info_table"
+    }
+  }
+}

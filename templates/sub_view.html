@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" xml:lang="ko">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="description" content="">
+<meta property="og:type" content="website">
+<meta property="og:title" content="">
+<meta property="og:description" content="">
+<meta property="og:image" content="../img/logo.png">
+<meta property="og:url" content="">
+<link rel="canonical" href="">
+<link rel="stylesheet" href="../css/common.css"/>
+<script type="text/javascript" src="../js/jquery-3.7.1.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="../js/gsap.min.js"></script>
+<script type="text/javascript" src="../js/ScrollTrigger.min.js"></script>
+<script type="text/javascript" src="../js/slick.js" charset="utf-8"></script>
+<script type="text/javascript" src="../js/ui_common.js" charset="utf-8"></script>
+</head>
+
+<body class="page_{name}_view">
+
+<div id="wrap">
+
+<!-- header -->
+<header>
+	<!-- project header here -->
+</header>
+<!-- //header -->
+
+<!-- total_menu -->
+<div class="total_menu_wrap">
+	<!-- project total menu here -->
+</div>
+<!-- //total_menu -->
+
+<div class="sub_wrap">
+	<!-- sub visual -->
+	<div class="sub_visual">
+		<div class="inner">
+			<!-- sub visual content -->
+		</div>
+	</div>
+
+	<!-- breadcrumb -->
+	<div class="breadcrumb">
+		<div class="inner">
+			<!-- breadcrumb items -->
+		</div>
+	</div>
+
+	<!-- page title -->
+	<div class="page_title">
+		<div class="inner">
+			<h3>{page_title}</h3>
+		</div>
+	</div>
+
+	<!-- contents -->
+	<div class="{page}_view">
+		<div class="inner">
+			<!-- top info area (image + info) -->
+			<div class="{page}_info_area">
+				<!-- image slider -->
+				<div class="view_img_area">
+					<div class="view_slider">
+						<div class="slide_item">
+							<img src="../img/{img}" alt="{alt}" />
+						</div>
+					</div>
+				</div>
+
+				<!-- info -->
+				<div class="view_info">
+					<h4>{item_title}</h4>
+					<div class="info_table">
+						<dl>
+							<dt>{label_1}</dt>
+							<dd>{value_1}</dd>
+						</dl>
+						<dl>
+							<dt>{label_2}</dt>
+							<dd>{value_2}</dd>
+						</dl>
+					</div>
+					<div class="info_desc">
+						<p>{description}</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- detail content -->
+			<div class="{page}_detail">
+				<h4>{detail_title}</h4>
+				<div class="detail_content">
+					<p>{detail_text}</p>
+					<div class="img_area">
+						<img src="../img/{detail_img}" alt="{alt}" />
+					</div>
+				</div>
+			</div>
+
+			<!-- back button -->
+			<div class="btn_back">
+				<a href="{list_url}">{back_label}</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- footer -->
+<div class="footer">
+	<!-- project footer here -->
+</div>
+<!-- //footer -->
+
+</div>
+<!-- //wrap -->
+
+<script>
+$(function(){
+	$('.view_slider').slick({
+		dots: true,
+		arrows: false,
+		infinite: true,
+		speed: 500,
+		fade: true,
+		autoplay: true,
+		autoplaySpeed: 3000,
+		cssEase: 'ease-in-out',
+		appendDots: $('.view_img_area')
+	});
+});
+</script>
+
+</body>
+</html>

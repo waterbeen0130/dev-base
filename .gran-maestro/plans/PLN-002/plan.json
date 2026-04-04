@@ -1,0 +1,21 @@
+{
+  "id": "PLN-002",
+  "title": "figma-extract.py 정규화 엔진 재설계 + 변환 규칙 문서화",
+  "status": "completed",
+  "created_at": "2026-04-04T03:49:17.000Z",
+  "linked_requests": [
+    "REQ-002"
+  ],
+  "cynefin_domain": "complicated",
+  "linked_objective": "AGI-001",
+  "linked_intent": "INTENT-002",
+  "next_action": {
+    "expected_skill": "mst:request",
+    "source_skill": "mst:plan",
+    "source_id": "PLN-002",
+    "auto_mode": true,
+    "project_root": "/mnt/d/dev-base",
+    "created_at": "2026-04-04T03:49:17.000Z"
+  },
+  "completed_at": "2026-04-04T04:07:26.756489+00:00"
+}

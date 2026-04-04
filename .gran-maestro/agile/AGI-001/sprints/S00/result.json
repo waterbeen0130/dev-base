@@ -1,0 +1,21 @@
+{
+  "sprint_id": "S00",
+  "status": "done",
+  "planned": [
+    "테스트 환경 구축"
+  ],
+  "completed": [
+    "테스트 환경 구축"
+  ],
+  "generated": {
+    "pln": [
+      "PLN-001"
+    ],
+    "req": [
+      "REQ-001"
+    ]
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-04-04T03:46:38.443388+00:00",
+  "summary": "pytest smoke test 7/7 통과"
+}

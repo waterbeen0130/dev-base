@@ -1,0 +1,139 @@
+{
+  "_comment": "Publishing project config — Gemini-dev only, no Codex",
+  "version": "1.0.0",
+  "plugin_name": "gran-maestro",
+  "branding": {
+    "name": "Gran Maestro",
+    "tagline": "I am the Maestro — I conduct, I don't code."
+  },
+  "server": {
+    "port": 3847,
+    "host": "127.0.0.1",
+    "auth_enabled": true
+  },
+  "workflow": {
+    "max_feedback_rounds": 5,
+    "auto_approve_spec": false,
+    "auto_accept_result": true,
+    "default_agent": "gemini-dev"
+  },
+  "concurrency": {
+    "max_parallel_tasks": 5,
+    "max_parallel_reviews": 3,
+    "batch_max_parallel_reqs": 1,
+    "queue_strategy": "fifo"
+  },
+  "timeouts": {
+    "cli_default_ms": 300000,
+    "cli_large_task_ms": 1800000,
+    "pre_check_ms": 120000,
+    "merge_ms": 60000,
+    "user_approval_ms": null,
+    "dashboard_health_check_ms": 10000
+  },
+  "worktree": {
+    "root_directory": ".gran-maestro/worktrees",
+    "max_active": 10,
+    "base_branch": "main",
+    "stale_timeout_hours": 24,
+    "auto_cleanup_on_cancel": true
+  },
+  "retry": {
+    "max_cli_retries": 2,
+    "max_fallback_depth": 1,
+    "backoff_base_ms": 1000
+  },
+  "history": {
+    "retention_days": 30,
+    "auto_archive": true
+  },
+  "archive": {
+    "max_active_sessions": 20,
+    "archive_retention_days": null,
+    "auto_archive_on_create": true,
+    "auto_archive_on_complete": true,
+    "archive_directory": ".gran-maestro/archive"
+  },
+  "notifications": {
+    "terminal": true,
+    "dashboard": true
+  },
+  "realtime": {
+    "protocol": "sse",
+    "debounce_ms": 100
+  },
+  "debug": {
+    "enabled": false,
+    "log_level": "info",
+    "log_prompts": false
+  },
+  "discussion": {
+    "agents": { "codex": 0, "gemini": 1, "claude": 1 },
+    "response_char_limit": 2000,
+    "critique_char_limit": 2000,
+    "default_max_rounds": 5,
+    "max_rounds_upper_limit": 10
+  },
+  "ideation": {
+    "agents": { "codex": 0, "gemini": 1, "claude": 1 },
+    "opinion_char_limit": 2000,
+    "critique_char_limit": 2000
+  },
+  "collaborative_debug": {
+    "finding_char_limit": 3000,
+    "merge_wait_ms": 60000,
+    "auto_trigger_from_start": true
+  },
+  "participants": {
+    "opinion_providers": { "codex": 0, "gemini": 1, "claude": 1 }
+  },
+  "models": {
+    "claude": {
+      "pm_conductor": "sonnet",
+      "architect": "sonnet",
+      "ideation": "sonnet",
+      "discussion": "sonnet",
+      "debug": "sonnet"
+    },
+    "gemini": {
+      "default": "gemini-3.1-pro-preview"
+    },
+    "developer": {
+      "primary": { "provider": "gemini", "model": "gemini-3.1-pro-preview" },
+      "fallback": { "provider": "claude", "model": "sonnet" },
+      "claude_dev": { "provider": "claude", "model": "sonnet" }
+    },
+    "reviewer": {
+      "primary": { "provider": "gemini", "model": "gemini-3.1-pro-preview" },
+      "fallback": { "provider": "claude", "model": "sonnet" }
+    }
+  },
+  "code_review": {
+    "enabled": true,
+    "agents": 1,
+    "agent_roster": ["gemini"],
+    "parallel": false
+  },
+  "cleanup": {
+    "ideation_keep_count": 10,
+    "discussion_keep_count": 10,
+    "debug_keep_count": 10,
+    "old_request_threshold_hours": 24
+  },
+  "stitch": {
+    "enabled": false,
+    "auto_detect": false,
+    "auto_trigger": false,
+    "project_id": null,
+    "failure_policy": "skip"
+  },
+  "figma_mcp": {
+    "section_by_section": true,
+    "section_by_section_note": "fetch each section via Figma MCP separately for accurate AI interpretation",
+    "mcp_tools": ["mcp__figma__get_figma_data", "mcp__figma__download_figma_images"]
+  },
+  "validation": {
+    "tool_path": "D:/dev-base/tools/validate.js",
+    "run_after_impl": true
+  }
+}

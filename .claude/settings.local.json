@@ -4,7 +4,28 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git config:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(codex --version:*)",
+      "Bash(codex:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)",
+      "Bash(node tools/validate.js:*)",
+      "Bash(/tmp/validate-test/bad.css:*)",
+      "Bash(__NEW_LINE_04f20114ea1b0235__ node tools/validate.js --html /tmp/validate-test/test.html --css /tmp/validate-test/bad.css)",
+      "Bash(git restore:*)",
+      "Bash(deno --version:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(printf %s:*)",
+      "Read(//home/waterbeen/.gran-maestro/chrome-extension/**)",
+      "Bash(npm:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   }
 }

@@ -1,0 +1,119 @@
+{
+  "server": {
+    "port": 3847,
+    "host": "127.0.0.1",
+    "auth_enabled": true
+  },
+  "workflow": {
+    "max_feedback_rounds": 5,
+    "auto_approve_spec": false,
+    "auto_accept_result": true,
+    "default_agent": "codex-dev"
+  },
+  "concurrency": {
+    "max_parallel_tasks": 5,
+    "max_parallel_reviews": 3,
+    "queue_strategy": "fifo"
+  },
+  "timeouts": {
+    "cli_default_ms": 300000,
+    "cli_large_task_ms": 1800000,
+    "pre_check_ms": 120000,
+    "merge_ms": 60000,
+    "user_approval_ms": null,
+    "dashboard_health_check_ms": 10000
+  },
+  "worktree": {
+    "root_directory": ".gran-maestro/worktrees",
+    "max_active": 10,
+    "base_branch": "main",
+    "stale_timeout_hours": 24,
+    "auto_cleanup_on_cancel": true
+  },
+  "retry": {
+    "max_cli_retries": 2,
+    "max_fallback_depth": 1,
+    "backoff_base_ms": 1000
+  },
+  "history": {
+    "retention_days": 30,
+    "auto_archive": true
+  },
+  "archive": {
+    "max_active_sessions": 20,
+    "archive_retention_days": null,
+    "auto_archive_on_create": true,
+    "auto_archive_on_complete": true,
+    "archive_directory": ".gran-maestro/archive"
+  },
+  "notifications": {
+    "terminal": true,
+    "dashboard": true
+  },
+  "realtime": {
+    "protocol": "sse",
+    "debounce_ms": 100
+  },
+  "debug": {
+    "enabled": false,
+    "log_level": "info",
+    "log_prompts": false
+  },
+  "discussion": {
+    "response_char_limit": 2000,
+    "critique_char_limit": 2000,
+    "default_max_rounds": 5,
+    "max_rounds_upper_limit": 10
+  },
+  "ideation": {
+    "opinion_char_limit": 2000,
+    "critique_char_limit": 2000
+  },
+  "collaborative_debug": {
+    "finding_char_limit": 3000,
+    "merge_wait_ms": 60000,
+    "auto_trigger_from_start": true
+  },
+  "participants": {
+    "opinion_providers": {
+      "codex": 3,
+      "gemini": 1,
+      "claude": 1
+    }
+  },
+  "models": {
+    "claude": {
+      "pm_conductor": "opus",
+      "architect": "opus",
+      "ideation": "opus",
+      "discussion": "opus",
+      "debug": "opus"
+    },
+    "developer": {
+      "primary": {
+        "provider": "codex",
+        "model": "gpt-5.3-codex"
+      },
+      "fallback": {
+        "provider": "gemini",
+        "model": "gemini-3-pro-preview"
+      }
+    },
+    "reviewer": {
+      "primary": {
+        "provider": "codex",
+        "model": "gpt-5.3-codex"
+      },
+      "fallback": {
+        "provider": "gemini",
+        "model": "gemini-3-pro-preview"
+      }
+    }
+  },
+  "cleanup": {
+    "ideation_keep_count": 10,
+    "discussion_keep_count": 10,
+    "debug_keep_count": 10,
+    "old_request_threshold_hours": 24
+  }
+}

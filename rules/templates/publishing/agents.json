@@ -1,0 +1,44 @@
+{
+  "_comment": "Publishing project agents — Gemini-dev only, Codex disabled",
+  "_config_ref": "models/provider settings in config.json models section",
+  "execution_agents": {
+    "primary_dev": {
+      "role": "developer",
+      "agent_category": "execution",
+      "provider": "gemini",
+      "capabilities": ["frontend", "docs", "large-context"],
+      "cli_command_map": { "gemini": "gemini" },
+      "note": "publishing projects use gemini-dev exclusively for HTML/CSS/JS"
+    },
+    "fallback_dev": {
+      "role": "developer",
+      "agent_category": "execution",
+      "provider": "claude",
+      "capabilities": ["code", "docs", "config", "small-inline"],
+      "cli_command_map": { "claude": "Task(subagent_type: general-purpose)" },
+      "note": "claude-dev as fallback only when gemini fails"
+    }
+  },
+  "review_agents": {
+    "primary_reviewer": {
+      "role": "reviewer",
+      "agent_category": "review",
+      "provider": "gemini",
+      "capabilities": ["code-review", "accuracy", "large-context"],
+      "cli_command_map": { "gemini": "gemini" }
+    },
+    "fallback_reviewer": {
+      "role": "reviewer",
+      "agent_category": "review",
+      "provider": "claude",
+      "capabilities": ["review", "consistency"],
+      "cli_command_map": { "claude": "Task(subagent_type: general-purpose)" }
+    }
+  },
+  "disabled_agents": {
+    "codex-dev": {
+      "reason": "Codex capabilities (code, refactor, test) are irrelevant for HTML/CSS publishing",
+      "redirect_to": "gemini-dev"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "sprint_id": "S02",
+  "status": "done",
+  "planned": [
+    "DOD-004: 시멘틱 변환 파이프라인"
+  ],
+  "completed": [
+    "DOD-004: 시멘틱 변환 규칙 + 프롬프트 템플릿 완료"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-04-04T04:14:24.120343+00:00",
+  "summary": "semantic-transform-rules.md + semantic-prompt.md 작성, main 커밋"
+}

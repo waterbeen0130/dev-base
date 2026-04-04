@@ -1,0 +1,13 @@
+[
+  { "id": "PAC-1", "text": "Figma MCP JSON을 stdin으로 입력하면 정규화된 중간 JSON이 출력된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "레이아웃 속성이 CSS 값으로 정확히 변환된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "시각 속성이 정확히 변환된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "타이포그래피 속성이 정확히 변환된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "characterStyleOverrides 누적 병합이 정확하게 세그먼트로 분할된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "프로필별 font-size 변환 (basic:rem, landing:px)", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-7", "text": "프로필 설정이 JSON 파일로 분리되어 코드 내 하드코딩 분기 없음", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-8", "text": "모든 변환 규칙이 문서에 매핑표로 정리됨", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-9", "text": "기존 --tree 모드 호환 유지", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-10", "text": "기존 smoke test 통과 유지", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] },
+  { "id": "PAC-11", "text": "신규 테스트가 각 변환 카테고리를 검증", "grade": "MUST", "tags": ["TIER-A"] }
+]

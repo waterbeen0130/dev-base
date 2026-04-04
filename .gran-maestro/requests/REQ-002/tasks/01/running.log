@@ -1,0 +1,1832 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019d56a4-814f-72a2-803c-909cbdff6464
+--------
+user
+# 구현 요청: figma-extract.py 정규화 엔진 전면 재작성
+
+## 핵심 지시
+
+**반드시 아래 파일을 먼저 Read하세요:**
+1. `.gran-maestro/agile/AGI-001/objective/details/normalization-engine.md` — 목표 JSON 스키마, 전체 변환 규칙 매핑표
+2. `rules/rule_engine.json` — 프로젝트 타입 설정, CSS 규칙 정의
+3. `tools/figma-extract.py` — 기존 코드 (전면 재작성 대상)
+
+## 무엇을 만드는가
+
+`tools/figma-extract.py`를 전면 재작성하여 Figma MCP JSON → 정규화된 중간 JSON을 출력하는 엔진을 만든다.
+
+## 왜 만드는가
+
+AI가 raw Figma JSON을 직접 해석할 때 편차가 너무 커서, 모든 시각적 속성을 규칙 기반으로 CSS 값까지 확정한 중간 포맷을 만들어 AI 해석 여지를 제거한다.
+
+## 산출물 4개
+
+### 1. `tools/figma-extract.py` (전면 재작성)
+
+**입력**: stdin으로 Figma MCP JSON
+**출력**: stdout으로 정규화된 중간 JSON (트리 구조)
+
+**최상위 구조**:
+```json
+{
+  "meta": { "source": "figma-mcp", "extracted_at": "...", "profile": "basic", "section_name": "...", "section_id": "...", "total_nodes": N },
+  "tree": { "id": "...", "name": "...", "type": "FRAME", "layout": {...}, "visual": {...}, "text": {...}, "children": [...] }
+}
+```
+
+**layout 객체** (FRAME/INSTANCE 노드):
+```json
+{
+  "display": "flex",
+  "direction": "column|row",
+  "gap": "20px",
+  "padding": "40px 30px",
+  "justify": "center|flex-start|flex-end|space-between",
+  "align": "center|flex-start|flex-end|baseline|stretch",
+  "sizing": { "horizontal": "FILL|HUG|FIXED", "vertical": "FILL|HUG|FIXED" }
+}
+```
+
+**visual 객체**:
+```json
+{
+  "width": 1920,
+  "height": 800,
+  "background": "#ffffff",
+  "border": "1px solid #ccc" | null,
+  "borderRadius": "8px" | "50%" | "2em",
+  "opacity": 1.0
+}
+```
+- border는 strokes에 visible:true인 것이 있을 때만. 없으면 null.
+- borderRadius: 999px → 50% (원형) 또는 2em (pill). 개별 모서리 다르면 4값 shorthand.
+
+**text 객체** (TEXT 노드):
+```json
+{
+  "content": "Hello World",
+  "tag_hint": "span|h2|p",
+  "has_newline": false,
+  "char_length": 11,
+  "segments": [
+    {
+      "text": "Hello ",
+      "style": {
+        "fontFamily": "Pretendard",
+        "fontWeight": 700,
+        "fontSize": "1rem",
+        "lineHeight": 1.5,
+        "letterSpacing": "-0.025em",
+        "color": "#090944"
+      },
+      "is_override": false
+    }
+  ]
+}
+```
+- tag_hint 규칙: 기본 span, \n 포함 또는 95자 초과 또는 문장형 종결 → p, 섹션 제목 → h2/h3
+- fontSize: --profile basic이면 rem (16px 기준), --profile landing이면 px
+- lineHeight: 무단위 비율 (lineHeightPx / fontSize)
+- letterSpacing: em 단위 (letterSpacing / fontSize)
+
+**characterStyleOverrides 누적 병합**:
+- baseStyle = { ...node.style, fills: node.fills }
+- 연속 같은 overrideId 문자를 그룹화 → 세그먼트
+- id=0 또는 테이블에 없음 → resolved = baseStyle
+- 그 외 → resolved = { ...(prev_resolved || baseStyle), ...override }
+- 각 세그먼트의 CSS 값을 완전 해석하여 저장
+
+**노드 보존 규칙**:
+- visible:false만 제외 (유일한 제외 조건)
+- fill-only 얇은 프레임(w≤2 or h≤2) → divider로 보존
+- 장식용 노드 → 모두 보존
+
+### 2. `tools/profiles/basic.json`
+```json
+{
+  "font_size_pc": "rem",
+  "font_size_mobile": "px",
+  "rem_base": 16,
+  "reset_css": "separate_file",
+  "required_root_vars": ["--width", "--padding"],
+  "mobile_spacing": "half_of_pc",
+  "mobile_breakpoint": 768
+}
+```
+
+### 3. `tools/profiles/landing.json`
+```json
+{
+  "font_size_pc": "px",
+  "font_size_mobile": "px",
+  "reset_css": "inline_top_of_css",
+  "required_root_vars": ["--padding", "--header_h", "--width", "--point-color-1"],
+  "mobile_spacing": "explicit_px",
+  "animation": { "attrs": ["data-delay", "data-direction"], "motion_class": "section_on" }
+}
+```
+
+### 4. `docs/conversion-rules.md`
+Figma 속성 → CSS 변환 규칙 전체 매핑표 (레이아웃/시각/타이포/오버라이드/프로필 카테고리별)
+
+## CLI 인터페이스
+
+```bash
+# 주 워크플로우 (MCP stdin)
+echo '<json>' | python3 tools/figma-extract.py --stdin --profile basic
+
+# 노드 트리 시각화 (기존 호환)
+echo '<json>' | python3 tools/figma-extract.py --stdin --tree
+
+# 프로필 지정
+python3 tools/figma-extract.py --stdin --profile landing
+```
+
+## 기존 함수 호환 (CRITICAL)
+
+tests/test_smoke.py가 아래 함수를 import합니다. 동일 시그니처를 유지하거나 호환 래퍼를 제공하세요:
+- `rgba_to_hex(r, g, b, a=1.0)` → hex string
+- `extract_fill_color(fills)` → hex string or None
+- `line_height_to_ratio(line_height_px, font_size)` → float ratio
+- `figma_align_to_css(value, axis='primary')` → CSS string
+
+## 검증 명령
+```bash
+# 기존 smoke test 호환
+pytest tests/test_smoke.py -v
+
+# 신규 테스트 (T02에서 추가하지만 기본 구조는 여기서도 통과해야 함)
+echo '{"type":"FRAME","name":"test","visible":true,"children":[]}' | python3 tools/figma-extract.py --stdin --profile basic | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'meta' in d and 'tree' in d; print('OK')"
+```
+
+## 테스트를 먼저 작성한 후 구현하세요 (TDD)
+
+`tests/test_normalization.py`를 먼저 작성하고, 그 테스트가 통과하도록 `figma-extract.py`를 구현하세요.
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_memory starting
+mcp: omx_trace starting
+mcp: omx_state starting
+mcp: omx_code_intel starting
+mcp: omx_team_run starting
+mcp: omx_trace ready
+mcp: omx_memory ready
+mcp: omx_code_intel ready
+mcp: omx_state ready
+mcp: omx_team_run ready
+mcp startup: ready: omx_trace, omx_memory, omx_code_intel, omx_state, omx_team_run
+codex
+요청하신 전면 재작업을 진행하겠습니다. 먼저 지정하신 3개 파일을 순서대로 읽어 스키마/규칙/기존 호환 포인트를 고정한 뒤, `tests/test_normalization.py`를 먼저 작성하고 그 테스트를 통과시키는 방식(TDD)으로 구현하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,240p' .gran-maestro/agile/AGI-001/objective/details/normalization-engine.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 exited 2 in 0ms:
+sed: can't read .gran-maestro/agile/AGI-001/objective/details/normalization-engine.md: No such file or directory
+codex
+지정된 첫 번째 파일 경로가 현재 워크트리에서 바로 보이지 않아, 동일 파일을 정확히 찾기 위해 `.gran-maestro` 하위 경로를 먼저 탐색하겠습니다.
+exec
+/bin/bash -lc "rg --files .gran-maestro | rg 'normalization-engine\\.md|AGI-001|objective/details'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 exited 1 in 0ms:
+rg: .gran-maestro: IO error for operation on .gran-maestro: No such file or directory (os error 2)
+exec
+/bin/bash -lc 'pwd; ls -la' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01
+total 0
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 ..
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 .claude
+-rwxrwxrwx 1 waterbeen waterbeen   51 Apr  4 12:57 .git
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 landing
+-rwxrwxrwx 1 waterbeen waterbeen   48 Apr  4 12:57 pyproject.toml
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 rules
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 templates
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 tests
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 tools
+exec
+/bin/bash -lc "sed -n '1,260p' /mnt/d/dev-base/.gran-maestro/agile/AGI-001/objective/details/normalization-engine.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+# 정규화 엔진
+
+> 이 문서는 objective.md의 상세 참조 문서입니다.
+> 관련 DoD: DOD-001, DOD-002, DOD-003
+
+## 개요
+
+Figma MCP JSON 응답을 AI 해석 개입 없이 규칙 기반으로 정규화된 중간 JSON 포맷으로 변환하는 엔진. 기존 `figma-extract.py`(34.2KB, 916행)를 전면 재설계하여 더 단순하고 명확한 구조로 개선한다.
+
+## 설계 결정
+
+### AD-001: 중간 포맷은 JSON
+- **결정**: 정규화 출력을 JSON으로 확정
+- **근거**: 기존 매핑 파일이 JSON이며, AI가 파싱하기에 가장 자연스러운 포맷. 마크다운 테이블 출력은 사람이 읽기엔 좋지만 AI가 구조적으로 파싱하기엔 한계가 있음
+- **대안 검토**: YAML(가독성 좋으나 파싱 라이브러리 추가 필요), 마크다운 테이블(기존 출력이지만 구조화 한계)
+- **영향 범위**: figma-extract.py 출력 형식, 2차 시멘틱 변환 레이어의 입력 형식, validate.js 매핑 연동
+
+### AD-002: figma-extract.py 전면 재작성 허용
+- **결정**: 기존 코드 보존보다 더 나은 구조로의 개선에 비중. 복잡한 병합 로직 포함 전면 재작성 가능
+- **근거**: 사용자 명시 — "기존 병합 규칙이 복잡하다면 모두 수정해도 상관없어, 더 나은 방향으로 개선함에 더 비중을 크게 둬"
+exec
+/bin/bash -lc "sed -n '261,520p' /mnt/d/dev-base/.gran-maestro/agile/AGI-001/objective/details/normalization-engine.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+| 이미지 노드 | `<div class="img_area">` 래핑 힌트 |
+| width 고정값 > 비율 변환 | flex 비율(%) 또는 flex: 1 사용 (고정 px 지양) |
+| padding/margin < 100px | 고정 px |
+| padding/margin ≥ 100px | clamp() 허용 |
+
+### 4. 프로젝트 타입 프로필 구조
+
+현재 `rule_engine.json`의 `project_type` 섹션 기반:
+
+```json
+{
+  "basic": {
+    "font_size_pc": "rem",
+    "font_size_mobile": "px",
+    "rem_base": "clamp(14px, 1.2vw, 16px)",
+    "reset_css": "separate_file",
+    "required_root_vars": ["--width", "--padding"],
+    "mobile_spacing": "half_of_pc",
+    "mobile_breakpoint": 768
+  },
+codex
+목표 문서를 읽어 핵심 규칙(트리 스키마, 오버라이드 누적 병합, border/보존 규칙, 프로필 분리)을 확보했습니다. 이제 `rules/rule_engine.json`과 기존 `tools/figma-extract.py`를 읽어 실제 구현 기준과 기존 호환 함수를 확정하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,260p' rules/rule_engine.json" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 exited 2 in 0ms:
+sed: can't read rules/rule_engine.json: No such file or directory
+exec
+/bin/bash -lc 'ls -la rules; rg --files rules' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+total 28
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 ..
+-rwxrwxrwx 1 waterbeen waterbeen 2076 Apr  4 12:57 claude.md
+-rwxrwxrwx 1 waterbeen waterbeen 3862 Apr  4 12:57 codex.md
+-rwxrwxrwx 1 waterbeen waterbeen 9703 Apr  4 12:57 common.md
+-rwxrwxrwx 1 waterbeen waterbeen 6791 Apr  4 12:57 landing.md
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:57 rules
+rules/codex.md
+rules/landing.md
+rules/common.md
+rules/claude.md
+rules/rules/validation_schema.json
+rules/rules/enhancement-flow.md
+rules/rules/claude-settings-template.json
+rules/rules/css-enhancement.md
+rules/rules/common.md
+rules/rules/codex.md
+rules/rules/CLAUDE.md
+rules/rules/landing.md
+exec
+/bin/bash -lc "sed -n '1,320p' rules/rules/rule_engine.json" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+{
+  "meta": {
+    "version": "2.5.0",
+    "mode": "strict_transform"
+  },
+
+  "project_type": {
+    "default": "basic",
+    "override_note": "specify project type to apply type-specific rules. landing overrides css.font_size.pc from rem to px",
+    "types": {
+      "basic": {
+        "css_font_size_pc": "rem",
+        "css_font_size_mobile": "px",
+        "js_include": "local",
+        "reset_css": "separate_file",
+        "required_root_vars": ["--width", "--padding"]
+      },
+      "landing": {
+        "css_font_size_pc": "px",
+        "css_font_size_mobile": "px",
+exec
+/bin/bash -lc "sed -n '1,280p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""
+Figma Property Extractor
+=========================
+Extracts CSS-relevant properties from Figma data and outputs:
+1. Structured markdown table for spec.md inclusion
+2. JSON mapping file for validate.js comparison
+
+Supports two input modes:
+  1. Local JSON file (legacy): --figma <file>
+  2. MCP response via stdin: --stdin (pipe Figma MCP response)
+
+Usage:
+  # From local JSON file (legacy)
+  python3 tools/figma-extract.py --figma <figma.json> --frame <frame_id> [--output <output_dir>]
+
+  # From Figma MCP response via stdin (recommended)
+  echo '<mcp_response_json>' | python3 tools/figma-extract.py --stdin [--output <output_dir>]
+  python3 tools/figma-extract.py --stdin --name "section_name" < mcp_response.json
+
+exec
+/bin/bash -lc "sed -n '281,620p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+    for seg in segments:
+        oid = seg['override_id']
+        oid_str = str(oid)
+
+        if oid == 0 or oid_str not in override_table:
+            resolved = dict(base_style)
+        else:
+            override_entry = override_table[oid_str]
+            source = prev_resolved if prev_resolved else base_style
+            resolved = dict(source)
+            # merge style fields
+            if isinstance(override_entry, dict):
+                for k, v in override_entry.items():
+                    if k == 'fills':
+                        resolved['fills'] = v
+                    else:
+                        resolved[k] = v
+
+        prev_resolved = resolved
+
+exec
+/bin/bash -lc "sed -n '621,980p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+    return None
+
+
+def get_top_frames(data):
+    """Get all top-level frames from the document."""
+    root = data.get('document', data)
+    frames = []
+    for child in root.get('children', []):
+        if child.get('type') == 'CANVAS':
+            for frame in child.get('children', []):
+                if frame.get('type') in ('FRAME', 'COMPONENT', 'COMPONENT_SET'):
+                    frames.append(frame)
+        elif child.get('type') in ('FRAME', 'COMPONENT', 'COMPONENT_SET'):
+            frames.append(child)
+    return frames
+
+
+# --- Figma API direct fetch ---
+def fetch_figma_node(file_key, node_id, depth=8):
+    """Fetch node data directly from Figma REST API.
+exec
+/bin/bash -lc "rg --files | rg 'AGENTS\\.md"'$|test_smoke'"\\.py"'$|figma-extract'"\\.py"'$|normalization'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 31ms:
+tests/test_smoke.py
+tools/figma-extract.py
+codex
+필수 3개 파일 읽기를 완료했습니다. 이제 기존 호환 함수 요구사항을 정확히 맞추기 위해 `tests/test_smoke.py`를 확인하고, 그다음 `tests/test_normalization.py`를 먼저 작성하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,260p' tests/test_smoke.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+import sys
+import os
+import importlib.util
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
+
+spec = importlib.util.spec_from_file_location(
+    "figma_extract",
+    os.path.join(os.path.dirname(__file__), "..", "tools", "figma-extract.py"),
+)
+figma_extract = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(figma_extract)
+
+rgba_to_hex = figma_extract.rgba_to_hex
+extract_fill_color = figma_extract.extract_fill_color
+line_height_to_ratio = figma_extract.line_height_to_ratio
+figma_align_to_css = figma_extract.figma_align_to_css
+
+
+def test_rgba_to_hex_red():
+exec
+/bin/bash -lc 'cat pyproject.toml' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+codex
+구현 전 작업 계획을 고정합니다.
+
+1. `tests/test_normalization.py`를 먼저 추가해서 목표 동작을 명시합니다.  
+2. 테스트는 `meta/tree` 구조, 레이아웃/비주얼 변환, 텍스트 세그먼트 누적 오버라이드, `--profile`별 font-size, `visible:false` 제외, `--tree` 출력, 기존 호환 함수(스모크)를 함께 검증하도록 구성합니다.  
+3. 이후 `tools/figma-extract.py`를 전면 재작성해 stdin 기반 정규화 JSON 엔진으로 교체하고, 요구된 4개 호환 함수는 동일 시그니처로 유지합니다.  
+4. `tools/profiles/basic.json`, `tools/profiles/landing.json`, `docs/conversion-rules.md`를 생성한 뒤 `pytest tests/test_smoke.py tests/test_normalization.py -v`로 검증합니다.
+exec
+/bin/bash -lc "cat > tests/test_normalization.py <<'PY'
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+
+
+ROOT = os.path.dirname(os.path.dirname(__file__))
+SCRIPT_PATH = os.path.join(ROOT, \"tools\", \"figma-extract.py\")
+
+
+spec = importlib.util.spec_from_file_location(\"figma_extract\", SCRIPT_PATH)
+figma_extract = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(figma_extract)
+
+
+SAMPLE_TEXT = {
+    \"id\": \"2:1\",
+    \"name\": \"title\",
+    \"type\": \"TEXT\",
+    \"visible\": True,
+    \"characters\": \"Hello World\",
+    \"fills\": [{\"type\": \"SOLID\", \"visible\": True, \"color\": {\"r\": 0.035, \"g\": 0.035, \"b\": 0.266, \"a\": 1}}],
+    \"style\": {
+        \"fontFamily\": \"Pretendard\",
+        \"fontWeight\": 700,
+        \"fontSize\": 16,
+        \"lineHeightPx\": 24,
+        \"letterSpacing\": -0.4,
+    },
+    \"characterStyleOverrides\": [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+    \"styleOverrideTable\": {
+        \"1\": {
+            \"fontWeight\": 400,
+            \"fills\": [{\"type\": \"SOLID\", \"visible\": True, \"color\": {\"r\": 1, \"g\": 0, \"b\": 0, \"a\": 1}}],
+        }
+    },
+}
+
+
+def sample_payload():
+    return {
+        \"id\": \"1:1\",
+        \"name\": \"hero_section\",
+        \"type\": \"FRAME\",
+        \"visible\": True,
+        \"layoutMode\": \"VERTICAL\",
+        \"itemSpacing\": 20,
+        \"paddingTop\": 40,
+        \"paddingRight\": 30,
+        \"paddingBottom\": 40,
+        \"paddingLeft\": 30,
+        \"primaryAxisAlignItems\": \"CENTER\",
+        \"counterAxisAlignItems\": \"MIN\",
+        \"layoutSizingHorizontal\": \"FILL\",
+        \"layoutSizingVertical\": \"HUG\",
+        \"absoluteBoundingBox\": {\"width\": 1920, \"height\": 800},
+        \"fills\": [{\"type\": \"SOLID\", \"visible\": True, \"color\": {\"r\": 1, \"g\": 1, \"b\": 1, \"a\": 1}}],
+        \"strokes\": [{\"type\": \"SOLID\", \"visible\": True, \"color\": {\"r\": 0.8, \"g\": 0.8, \"b\": 0.8, \"a\": 1}}],
+        \"strokeWeight\": 1,
+        \"cornerRadius\": 8,
+        \"children\": [
+            SAMPLE_TEXT,
+            {
+                \"id\": \"3:1\",
+                \"name\": \"hidden\",
+                \"type\": \"FRAME\",
+                \"visible\": False,
+                \"children\": [],
+            },
+            {
+                \"id\": \"4:1\",
+                \"name\": \"divider\",
+                \"type\": \"FRAME\",
+                \"visible\": True,
+                \"absoluteBoundingBox\": {\"width\": 2, \"height\": 100},
+                \"fills\": [{\"type\": \"SOLID\", \"visible\": True, \"color\": {\"r\": 0, \"g\": 0, \"b\": 0, \"a\": 1}}],
+                \"children\": [],
+            },
+        ],
+    }
+
+
+def test_normalize_payload_tree_meta_and_visibility():
+    result = figma_extract.normalize_payload(sample_payload(), profile_name=\"basic\")
+
+    assert result[\"meta\"][\"source\"] == \"figma-mcp\"
+    assert result[\"meta\"][\"profile\"] == \"basic\"
+    assert result[\"meta\"][\"section_name\"] == \"hero_section\"
+    assert result[\"meta\"][\"section_id\"] == \"1:1\"
+    assert result[\"meta\"][\"total_nodes\"] == 3
+
+    tree = result[\"tree\"]
+    assert tree[\"layout\"][\"display\"] == \"flex\"
+    assert tree[\"layout\"][\"direction\"] == \"column\"
+    assert tree[\"layout\"][\"gap\"] == \"20px\"
+    assert tree[\"layout\"][\"padding\"] == \"40px 30px\"
+    assert tree[\"layout\"][\"justify\"] == \"center\"
+    assert tree[\"layout\"][\"align\"] == \"flex-start\"
+    assert tree[\"layout\"][\"sizing\"] == {\"horizontal\": \"FILL\", \"vertical\": \"HUG\"}
+
+    assert tree[\"visual\"][\"background\"] == \"#fff\"
+    assert tree[\"visual\"][\"border\"] == \"1px solid #ccc\"
+    assert tree[\"visual\"][\"borderRadius\"] == \"8px\"
+
+    child_ids = [child[\"id\"] for child in tree[\"children\"]]
+    assert \"3:1\" not in child_ids
+    assert \"4:1\" in child_ids
+
+
+def test_text_segments_cumulative_override_and_typography_conversion():
+    result = figma_extract.normalize_payload(sample_payload(), profile_name=\"basic\")
+    text_node = next(child for child in result[\"tree\"][\"children\"] if child[\"type\"] == \"TEXT\")
+    text = text_node[\"text\"]
+
+    assert text[\"content\"] == \"Hello World\"
+    assert text[\"has_newline\"] is False
+    assert text[\"char_length\"] == 11
+
+    seg1, seg2 = text[\"segments\"]
+    assert seg1[\"text\"] == \"Hello \"
+    assert seg1[\"style\"][\"fontSize\"] == \"1rem\"
+    assert seg1[\"style\"][\"lineHeight\"] == 1.5
+    assert seg1[\"style\"][\"letterSpacing\"] == \"-0.025em\"
+    assert seg1[\"style\"][\"color\"] == \"#090944\"
+    assert seg1[\"is_override\"] is False
+
+    assert seg2[\"text\"] == \"World\"
+    assert seg2[\"style\"][\"fontWeight\"] == 400
+    assert seg2[\"style\"][\"color\"] == \"#f00\"
+    assert seg2[\"is_override\"] is True
+
+
+def test_profile_landing_uses_px_font_size():
+    result = figma_extract.normalize_payload(sample_payload(), profile_name=\"landing\")
+    text_node = next(child for child in result[\"tree\"][\"children\"] if child[\"type\"] == \"TEXT\")
+    first_segment = text_node[\"text\"][\"segments\"][0]
+    assert first_segment[\"style\"][\"fontSize\"] == \"16px\"
+
+
+def test_border_is_only_generated_from_visible_stroke():
+    payload = sample_payload()
+    payload[\"strokes\"] = [{\"type\": \"SOLID\", \"visible\": False, \"color\": {\"r\": 1, \"g\": 0, \"b\": 0, \"a\": 1}}]
+
+    result = figma_extract.normalize_payload(payload, profile_name=\"basic\")
+    assert result[\"tree\"][\"visual\"][\"border\"] is None
+
+
+def test_corner_radius_circle_and_pill():
+    payload = {
+        \"id\": \"1:2\",
+        \"name\": \"radius_test\",
+        \"type\": \"FRAME\",
+        \"visible\": True,
+        \"children\": [
+            {
+                \"id\": \"1:2:1\",
+                \"name\": \"circle\",
+                \"type\": \"FRAME\",
+                \"visible\": True,
+                \"absoluteBoundingBox\": {\"width\": 100, \"height\": 100},
+                \"cornerRadius\": 999,
+                \"children\": [],
+            },
+            {
+                \"id\": \"1:2:2\",
+                \"name\": \"pill\",
+                \"type\": \"FRAME\",
+                \"visible\": True,
+                \"absoluteBoundingBox\": {\"width\": 200, \"height\": 40},
+                \"cornerRadius\": 999,
+                \"children\": [],
+            },
+        ],
+    }
+
+    result = figma_extract.normalize_payload(payload, profile_name=\"basic\")
+    circle = result[\"tree\"][\"children\"][0]
+    pill = result[\"tree\"][\"children\"][1]
+
+    assert circle[\"visual\"][\"borderRadius\"] == \"50%\"
+    assert pill[\"visual\"][\"borderRadius\"] == \"2em\"
+
+
+def test_cli_stdin_and_tree_mode():
+    payload = {\"type\": \"FRAME\", \"name\": \"test\", \"visible\": True, \"children\": []}
+
+    cmd = [sys.executable, SCRIPT_PATH, \"--stdin\", \"--profile\", \"basic\"]
+    proc = subprocess.run(cmd, input=json.dumps(payload), text=True, capture_output=True, check=True)
+    data = json.loads(proc.stdout)
+    assert \"meta\" in data and \"tree\" in data
+
+    tree_cmd = [sys.executable, SCRIPT_PATH, \"--stdin\", \"--tree\"]
+    tree_proc = subprocess.run(tree_cmd, input=json.dumps(payload), text=True, capture_output=True, check=True)
+    assert \"test (FRAME)\" in tree_proc.stdout
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+
+codex
+`test_normalization`을 먼저 추가했습니다. 이제 구현 전 단계로 테스트를 실행해 현재 실패 지점을 확인하고, 그 결과를 기준으로 엔진을 재작성하겠습니다.
+exec
+/bin/bash -lc 'pytest tests/test_normalization.py -v' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 exited 1 in 510ms:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01
+configfile: pyproject.toml
+collecting ... collected 6 items
+
+tests/test_normalization.py::test_normalize_payload_tree_meta_and_visibility FAILED [ 16%]
+tests/test_normalization.py::test_text_segments_cumulative_override_and_typography_conversion FAILED [ 33%]
+tests/test_normalization.py::test_profile_landing_uses_px_font_size FAILED [ 50%]
+tests/test_normalization.py::test_border_is_only_generated_from_visible_stroke FAILED [ 66%]
+tests/test_normalization.py::test_corner_radius_circle_and_pill FAILED   [ 83%]
+tests/test_normalization.py::test_cli_stdin_and_tree_mode FAILED         [100%]
+
+=================================== FAILURES ===================================
+_______________ test_normalize_payload_tree_meta_and_visibility ________________
+
+    def test_normalize_payload_tree_meta_and_visibility():
+>       result = figma_extract.normalize_payload(sample_payload(), profile_name="basic")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+codex
+테스트 실패를 확인했고, 이제 `tools/figma-extract.py`를 전체 교체합니다. 새 파일은 정규화 트리 출력 전용 구조로 바꾸되, `test_smoke.py` 호환 함수 4개는 그대로 유지하겠습니다.
+exec
+/bin/bash -lc "cat > tools/figma-extract.py <<'PY'
+#"'!/usr/bin/env python3
+"""Normalize Figma MCP JSON into a CSS-resolved intermediate JSON tree."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+import math
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+PROFILE_DIR = Path(__file__).resolve().parent / "profiles"
+
+
+# -----------------------------------------------------------------------------
+# Compatibility helpers (required by tests/test_smoke.py)
+# -----------------------------------------------------------------------------
+def rgba_to_hex(r: float, g: float, b: float, a: float = 1.0) -> str:
+    """Convert Figma RGBA (0-1 floats) to CSS color string."""
+    ri = min(255, max(0, round(r * 255)))
+    gi = min(255, max(0, round(g * 255)))
+    bi = min(255, max(0, round(b * 255)))
+
+    if a < 1.0:
+        return f"rgba({ri},{gi},{bi},{_trim_float(a, 2)})"
+
+    value = f"#{ri:02x}{gi:02x}{bi:02x}"
+    if value[1] == value[2] and value[3] == value[4] and value[5] == value[6]:
+        return f"#{value[1]}{value[3]}{value[5]}"
+    return value
+
+
+def extract_fill_color(fills: list[dict[str, Any]] | None) -> str | None:
+    """Extract first visible SOLID fill as CSS color."""
+    if not fills:
+        return None
+
+    for fill in fills:
+        if fill.get("type") != "SOLID" or fill.get("visible", True) is False:
+            continue
+        color = fill.get("color") or {}
+        fill_alpha = float(fill.get("opacity", 1.0)) * float(color.get("a", 1.0))
+        return rgba_to_hex(
+            float(color.get("r", 0.0)),
+            float(color.get("g", 0.0)),
+            float(color.get("b", 0.0)),
+            fill_alpha,
+        )
+
+    return None
+
+
+def line_height_to_ratio(line_height_px: float | int | None, font_size: float | int | None) -> float | None:
+    """Convert line-height px into CSS unitless ratio."""
+    if not line_height_px or not font_size:
+        return None
+    ratio = float(line_height_px) / float(font_size)
+    one_decimal = round(ratio, 1)
+    if abs(one_decimal - ratio) < 0.05:
+        return one_decimal
+    return round(ratio, 2)
+
+
+def figma_align_to_css(value: str | None, axis: str = "primary") -> str:
+    """Map Figma axis alignment to CSS flex alignment values."""
+    mapping_primary = {
+        "MIN": "flex-start",
+        "CENTER": "center",
+        "MAX": "flex-end",
+        "SPACE_BETWEEN": "space-between",
+    }
+    mapping_counter = {
+        "MIN": "flex-start",
+        "CENTER": "center",
+        "MAX": "flex-end",
+        "BASELINE": "baseline",
+        "STRETCH": "stretch",
+    }
+    mapping = mapping_primary if axis == "primary" else mapping_counter
+    if value is None:
+        return "flex-start"
+    return mapping.get(value, value)
+
+
+# -----------------------------------------------------------------------------
+# Core utils
+# -----------------------------------------------------------------------------
+def _trim_float(value: float, precision: int = 3) -> str:
+    text = f"{value:.{precision}f}".rstrip("0").rstrip(".")
+    if text in {"", "-0"}:
+        return "0"
+    return text
+
+
+def _fmt_px(value: float | int) -> str:
+    rounded = round(float(value), 3)
+    if rounded.is_integer():
+        return f"{int(rounded)}px"
+    return f"{_trim_float(rounded, 3)}px"
+
+
+def _coerce_float(value: Any, fallback: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _pick_node_size(node: dict[str, Any]) -> tuple[int | None, int | None]:
+    bbox = node.get("absoluteBoundingBox") or {}
+    width = bbox.get("width", node.get("width"))
+    height = bbox.get("height", node.get("height"))
+
+    w = None if width is None else round(float(width))
+    h = None if height is None else round(float(height))
+    return w, h
+
+
+def _padding_shorthand(pt: Any, pr: Any, pb: Any, pl: Any) -> str:
+    top = round(_coerce_float(pt, 0))
+    right = round(_coerce_float(pr, 0))
+    bottom = round(_coerce_float(pb, 0))
+    left = round(_coerce_float(pl, 0))
+
+    if top == right == bottom == left:
+        return f"{top}px"
+    if top == bottom and right == left:
+        return f"{top}px {right}px"
+    return f"{top}px {right}px {bottom}px {left}px"
+
+
+def _load_profile(profile_name: str) -> dict[str, Any]:
+    path = PROFILE_DIR / f"{profile_name}.json"
+    if not path.exists():
+        raise ValueError(f"unknown profile: {profile_name}")
+    with path.open("r", encoding="utf-8") as fp:
+        data = json.load(fp)
+    data["name"] = profile_name
+    return data
+
+
+def _font_size_css(font_size: float | int | None, profile: dict[str, Any]) -> str | None:
+    if font_size is None:
+        return None
+
+    font_size_value = float(font_size)
+    unit = profile.get("font_size_pc", "rem")
+    if unit == "rem":
+        rem_base = _coerce_float(profile.get("rem_base", 16), 16)
+        rem = font_size_value / rem_base
+        return f"{_trim_float(rem, 4)}rem"
+    return f"{_trim_float(font_size_value, 3)}px"
+
+
+def _letter_spacing_css(letter_spacing: float | int | None, font_size: float | int | None) -> str | None:
+    if letter_spacing is None or not font_size:
+        return None
+    em = float(letter_spacing) / float(font_size)
+    return f"{_trim_float(em, 4)}em"
+
+
+def _text_align_css(value: str | None) -> str | None:
+    if value is None:
+        return None
+    mapping = {
+        "LEFT": "left",
+        "CENTER": "center",
+        "RIGHT": "right",
+        "JUSTIFIED": "justify",
+    }
+    return mapping.get(value, value.lower())
+
+
+def _stroke_border(node: dict[str, Any]) -> str | None:
+    strokes = node.get("strokes") or []
+    for stroke in strokes:
+        if stroke.get("type") != "SOLID" or stroke.get("visible", True) is False:
+            continue
+        color = extract_fill_color([stroke])
+        if not color:
+            continue
+        weight = round(_coerce_float(node.get("strokeWeight", 1), 1))
+        return f"{weight}px solid {color}"
+    return None
+
+
+def _radius_values(node: dict[str, Any]) -> list[float] | None:
+    radii = node.get("rectangleCornerRadii")
+    if isinstance(radii, list) and len(radii) == 4:
+        return [float(v or 0) for v in radii]
+
+    keys = ["topLeftRadius", "topRightRadius", "bottomRightRadius", "bottomLeftRadius"]
+    corners = [node.get(k) for k in keys]
+    if any(v is not None for v in corners):
+        return [float(v or 0) for v in corners]
+
+    corner_radius = node.get("cornerRadius")
+    if corner_radius is not None:
+        radius = float(corner_radius)
+        return [radius, radius, radius, radius]
+
+    return None
+
+
+def _radius_to_css(node: dict[str, Any], width: int | None, height: int | None) -> str:
+    values = _radius_values(node)
+    if not values:
+        return "0"
+
+    if all(v == 0 for v in values):
+        return "0"
+
+    if len(set(round(v, 4) for v in values)) == 1:
+        radius = values[0]
+        if width and height and abs(width - height) <= 1 and radius >= (min(width, height) / 2):
+            return "50%"
+        if height and width and width > height and radius > (height / 2):
+            return "2em"
+        return _fmt_px(radius)
+
+    return " ".join(_fmt_px(v) for v in values)
+
+
+def _style_to_css(style: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+    css: dict[str, Any] = {}
+
+    font_family = style.get("fontFamily")
+    if font_family:
+        css["fontFamily"] = font_family
+
+    font_weight = style.get("fontWeight")
+    if font_weight is not None:
+        css["fontWeight"] = font_weight
+
+    font_size = style.get("fontSize")
+    font_size_css = _font_size_css(font_size, profile)
+    if font_size_css:
+        css["fontSize"] = font_size_css
+
+    line_height = line_height_to_ratio(style.get("lineHeightPx"), font_size)
+    if line_height is not None:
+        css["lineHeight"] = line_height
+
+    letter_spacing = _letter_spacing_css(style.get("letterSpacing"), font_size)
+    if letter_spacing is not None:
+        css["letterSpacing"] = letter_spacing
+
+    color = extract_fill_color(style.get("fills"))
+    if color:
+        css["color"] = color
+
+    text_align = _text_align_css(style.get("textAlignHorizontal"))
+    if text_align:
+        css["textAlign"] = text_align
+
+    decoration = style.get("textDecoration")
+    if decoration == "UNDERLINE":
+        css["textDecoration"] = "underline"
+    elif decoration == "STRIKETHROUGH":
+        css["textDecoration"] = "line-through"
+
+    return css
+
+
+def _split_override_segments(chars: str, overrides: list[int]) -> list[dict[str, Any]]:
+    if not chars:
+        return []
+
+    if not overrides:
+        return [{"text": chars, "override_id": 0}]
+
+    padded = list(overrides)
+    if len(padded) < len(chars):
+        padded.extend([0] * (len(chars) - len(padded)))
+
+    segments: list[dict[str, Any]] = []
+    start = 0
+    current = padded[0]
+
+    for index in range(1, len(chars)):
+        value = padded[index]
+        if value != current:
+            segments.append({"text": chars[start:index], "override_id": current})
+            start = index
+            current = value
+
+    segments.append({"text": chars[start:], "override_id": current})
+    return segments
+
+
+def _resolved_text_segments(node: dict[str, Any], profile: dict[str, Any]) -> list[dict[str, Any]]:
+    chars = node.get("characters") or ""
+    base_style = dict(node.get("style") or {})
+    base_style["fills"] = node.get("fills") or base_style.get("fills") or []
+    base_css = _style_to_css(base_style, profile)
+
+    segments = _split_override_segments(chars, node.get("characterStyleOverrides") or [])
+    override_table = node.get("styleOverrideTable") or {}
+
+    resolved_segments: list[dict[str, Any]] = []
+    prev_resolved: dict[str, Any] | None = None
+
+    for segment in segments:
+        override_id = segment["override_id"]
+        override_key = str(override_id)
+
+        if override_id == 0 or override_key not in override_table:
+            resolved_style = copy.deepcopy(base_style)
+        else:
+            source = prev_resolved if prev_resolved is not None else base_style
+            resolved_style = copy.deepcopy(source)
+            override = override_table.get(override_key) or {}
+            resolved_style.update(override)
+
+        prev_resolved = resolved_style
+        segment_css = _style_to_css(resolved_style, profile)
+
+        resolved_segments.append(
+            {
+                "text": segment["text"],
+                "style": segment_css,
+                "is_override": segment_css != base_css,
+            }
+        )
+
+    return resolved_segments
+
+
+def _looks_sentence_like(text: str) -> bool:
+    content = text.strip()
+    if not content or " " not in content:
+        return False
+    return content.endswith(".") or content.endswith("!") or content.endswith("?")
+
+
+def _is_short_label(text: str) -> bool:
+    content = text.strip()
+    if not content:
+        return True
+    if len(content) > 24:
+        return False
+    if any(ch in content for ch in ".!?,;:"):
+        return False
+    return "'"\\n\" not in content
+
+
+def _tag_hint(node: dict[str, Any], content: str, depth: int) -> str:
+    lowered_name = (node.get(\"name\") or \"\").lower()
+
+    if \"title\" in lowered_name or \"heading\" in lowered_name or \"headline\" in lowered_name:
+        return \"h2\" if depth <= 1 else \"h3\"
+
+    if \"\\n\" in content or len(content) > 95 or _looks_sentence_like(content):
+        if not _is_short_label(content):
+            return \"p\"
+
+    return \"span\"
+
+
+def _extract_layout(node: dict[str, Any]) -> dict[str, Any] | None:
+    if node.get(\"type\") not in {\"FRAME\", \"INSTANCE\", \"COMPONENT\", \"COMPONENT_SET\"}:
+        return None
+
+    layout_mode = node.get(\"layoutMode\")
+    direction = \"column\" if layout_mode == \"VERTICAL\" else \"row\"
+
+    item_spacing = node.get(\"itemSpacing\")
+    if item_spacing is None:
+        gap = \"0\"
+    else:
+        gap = f\"{round(float(item_spacing))}px\" if float(item_spacing) > 1 else \"0\"
+
+    has_padding = any(
+        node.get(key) is not None
+        for key in [\"paddingTop\", \"paddingRight\", \"paddingBottom\", \"paddingLeft\"]
+    )
+    padding = _padding_shorthand(
+        node.get(\"paddingTop\", 0),
+        node.get(\"paddingRight\", 0),
+        node.get(\"paddingBottom\", 0),
+        node.get(\"paddingLeft\", 0),
+    )
+
+    return {
+        \"display\": \"flex\" if layout_mode in {\"VERTICAL\", \"HORIZONTAL\"} else \"block\",
+        \"direction\": direction,
+        \"gap\": gap,
+        \"padding\": padding if has_padding else \"0\",
+        \"justify\": figma_align_to_css(node.get(\"primaryAxisAlignItems\"), axis=\"primary\"),
+        \"align\": figma_align_to_css(node.get(\"counterAxisAlignItems\"), axis=\"counter\"),
+        \"sizing\": {
+            \"horizontal\": node.get(\"layoutSizingHorizontal\", \"FIXED\"),
+            \"vertical\": node.get(\"layoutSizingVertical\", \"FIXED\"),
+        },
+    }
+
+
+def _extract_visual(node: dict[str, Any]) -> dict[str, Any]:
+    width, height = _pick_node_size(node)
+
+    return {
+        \"width\": width,
+        \"height\": height,
+        \"background\": extract_fill_color(node.get(\"fills\")),
+        \"border\": _stroke_border(node),
+        \"borderRadius\": _radius_to_css(node, width, height),
+        \"opacity\": float(node.get(\"opacity\", 1.0)),
+    }
+
+
+def _extract_text(node: dict[str, Any], profile: dict[str, Any], depth: int) -> dict[str, Any] | None:
+    if node.get(\"type\") "'!= "TEXT":
+        return None
+
+    content = node.get("characters") or ""
+    segments = _resolved_text_segments(node, profile)
+
+    return {
+        "content": content,
+        "tag_hint": _tag_hint(node, content, depth),
+        "has_newline": "'"\\n\" in content,
+        \"char_length\": len(content),
+        \"segments\": segments,
+    }
+
+
+def _normalize_node(node: dict[str, Any], profile: dict[str, Any], depth: int = 0) -> dict[str, Any] | None:
+    if node.get(\"visible\", True) is False:
+        return None
+
+    normalized_children = []
+    for child in node.get(\"children\") or []:
+        item = _normalize_node(child, profile, depth + 1)
+        if item is not None:
+            normalized_children.append(item)
+
+    return {
+        \"id\": node.get(\"id\", \"\"),
+        \"name\": node.get(\"name\", \"\"),
+        \"type\": node.get(\"type\", \"\"),
+        \"layout\": _extract_layout(node),
+        \"visual\": _extract_visual(node),
+        \"text\": _extract_text(node, profile, depth),
+        \"children\": normalized_children,
+    }
+
+
+def _count_nodes(tree: dict[str, Any] | None) -> int:
+    if not tree:
+        return 0
+    return 1 + sum(_count_nodes(child) for child in tree.get(\"children\") or [])
+
+
+def _try_parse_json_text(text: str) -> dict[str, Any] | None:
+    stripped = text.strip()
+    if not stripped:
+        return None
+
+    if stripped.startswith(\""'```"):
+        lines = stripped.splitlines()
+        if len(lines) >= 3 and lines[0].startswith("```"):
+            stripped = "'"\\n\".join(lines[1:-1]).strip()
+
+    try:
+        value = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
+
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def parse_mcp_response(data: dict[str, Any]) -> list[dict[str, Any]]:
+    \"\"\"Parse known Figma MCP / API response envelopes into node candidates.\"\"\"
+    if not isinstance(data, dict):
+        raise ValueError(\"input JSON root must be an object\")
+
+    for key in (\"data\", \"result\", \"payload\"):
+        wrapped = data.get(key)
+        if isinstance(wrapped, dict):
+            return parse_mcp_response(wrapped)
+
+    content = data.get(\"content\")
+    if isinstance(content, list):
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+            parsed = _try_parse_json_text(str(item.get(\"text\", \"\")))
+            if parsed:
+                return parse_mcp_response(parsed)
+
+    if \"nodes\" in data and isinstance(data[\"nodes\"], dict):
+        nodes: list[dict[str, Any]] = []
+        for wrapper in data[\"nodes\"].values():
+            if isinstance(wrapper, dict):
+                doc = wrapper.get(\"document\", wrapper)
+                if isinstance(doc, dict):
+                    nodes.append(doc)
+        if nodes:
+            return nodes
+
+    if \"document\" in data and isinstance(data[\"document\"], dict):
+        document = data[\"document\"]
+        if document.get(\"children\") and document.get(\"type\") is None:
+            return [child for child in document.get(\"children\", []) if isinstance(child, dict)]
+        return [document]
+
+    if data.get(\"type\"):
+        return [data]
+
+    if data.get(\"children\") and isinstance(data.get(\"children\"), list):
+        return [data]
+
+    raise ValueError(\"could not detect Figma node structure from input\")
+
+
+def normalize_payload(data: dict[str, Any], profile_name: str = \"basic\") -> dict[str, Any]:
+    \"\"\"Normalize Figma payload into the intermediate JSON format.\"\"\"
+    profile = _load_profile(profile_name)
+    targets = parse_mcp_response(data)
+
+    if not targets:
+        raise ValueError(\"no extractable nodes found\")
+
+    root = targets[0] if len(targets) == 1 else {
+        \"id\": \"\",
+        \"name\": \"root\",
+        \"type\": \"FRAME\",
+        \"visible\": True,
+        \"children\": targets,
+    }
+
+    tree = _normalize_node(root, profile, depth=0)
+    total_nodes = _count_nodes(tree)
+
+    return {
+        \"meta\": {
+            \"source\": \"figma-mcp\",
+            \"extracted_at\": datetime.now(timezone.utc).isoformat(),
+            \"profile\": profile_name,
+            \"section_name\": root.get(\"name\", \"\"),
+            \"section_id\": root.get(\"id\", \"\"),
+            \"total_nodes\": total_nodes,
+        },
+        \"tree\": tree,
+    }
+
+
+def find_node_by_id(data: dict[str, Any], target_id: str) -> dict[str, Any] | None:
+    if data.get(\"id\") == target_id:
+        return data
+    for child in data.get(\"children\", []) or []:
+        found = find_node_by_id(child, target_id)
+        if found:
+            return found
+    return None
+
+
+def find_node_by_name(data: dict[str, Any], target_name: str) -> dict[str, Any] | None:
+    if target_name.lower() in str(data.get(\"name\", \"\")).lower():
+        return data
+    for child in data.get(\"children\", []) or []:
+        found = find_node_by_name(child, target_name)
+        if found:
+            return found
+    return None
+
+
+def get_top_frames(data: dict[str, Any]) -> list[dict[str, Any]]:
+    root = data.get(\"document\", data)
+    frames: list[dict[str, Any]] = []
+    for child in root.get(\"children\", []) or []:
+        child_type = child.get(\"type\")
+        if child_type == \"CANVAS\":
+            frames.extend([
+                n
+                for n in child.get(\"children\", []) or []
+                if n.get(\"type\") in {\"FRAME\", \"COMPONENT\", \"COMPONENT_SET\"}
+            ])
+        elif child_type in {\"FRAME\", \"COMPONENT\", \"COMPONENT_SET\"}:
+            frames.append(child)
+    return frames
+
+
+def fetch_figma_node(file_key: str, node_id: str, depth: int = 8) -> dict[str, Any]:
+    \"\"\"Fetch node data from Figma REST API.\"\"\"
+    import urllib.error
+    import urllib.request
+
+    token = os.environ.get(\"FIGMA_TOKEN\") or os.environ.get(\"FIGMA_PERSONAL_ACCESS_TOKEN\")
+    if not token:
+        token_path = Path.home() / \".figma_token\"
+        if token_path.exists():
+            token = token_path.read_text(encoding=\"utf-8\").strip()
+
+    if not token:
+        raise RuntimeError(\"Figma token not found. Set FIGMA_TOKEN or ~/.figma_token\")
+
+    api_node_id = node_id.replace(\"-\", \":\")
+    url = f\"https://api.figma.com/v1/files/{file_key}/nodes?ids={api_node_id}&depth={depth}\"
+
+    request = urllib.request.Request(url)
+    request.add_header(\"X-Figma-Token\", token)
+
+    try:
+        with urllib.request.urlopen(request) as response:
+            return json.loads(response.read().decode(\"utf-8\"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f\"Figma API error {exc.code}: {exc.reason}\") from exc
+
+
+def _print_tree(node: dict[str, Any], indent: int = 0) -> None:
+    if node.get(\"visible\", True) is False:
+        return
+
+    name = node.get(\"name\", \"\")
+    node_type = node.get(\"type\", \"\")
+    print(f\"{'  ' * indent}{name} ({node_type})\")
+
+    for child in node.get(\"children\", []) or []:
+        _print_tree(child, indent + 1)
+
+
+def _read_input(args: argparse.Namespace) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if args.node_id:
+        if not args.file_key:
+            raise ValueError(\"--file-key is required with --node-id\")
+        payload = fetch_figma_node(args.file_key, args.node_id, depth=args.depth)
+    elif args.stdin:
+        raw = sys.stdin.read()
+        if not raw.strip():
+            raise ValueError(\"empty stdin\")
+        payload = json.loads(raw)
+    elif args.figma:
+        with open(args.figma, \"r\", encoding=\"utf-8\") as fp:
+            payload = json.load(fp)
+    else:
+        raise ValueError(\"one of --stdin, --figma, or --node-id is required\")
+
+    if args.figma and any([args.frame, args.frame_name, args.all]):
+        document = payload.get(\"document\", payload)
+        if args.frame:
+            node = find_node_by_id(document, args.frame)
+            if not node:
+                raise ValueError(f\"frame id not found: {args.frame}\")
+            return [node], payload
+        if args.frame_name:
+            node = find_node_by_name(document, args.frame_name)
+            if not node:
+                raise ValueError(f\"frame name not found: {args.frame_name}\")
+            return [node], payload
+        if args.all:
+            frames = get_top_frames(payload)
+            if not frames:
+                raise ValueError(\"no top-level frames found\")
+            return frames, payload
+
+    return parse_mcp_response(payload), payload
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=\"Normalize Figma JSON to intermediate JSON tree\")
+    parser.add_argument(\"--stdin\", action=\"store_true\", help=\"Read JSON from stdin\")
+    parser.add_argument(\"--figma\", help=\"Read JSON from local file\")
+    parser.add_argument(\"--node-id\", help=\"Fetch Figma node by ID via REST API\")
+    parser.add_argument(\"--file-key\", help=\"Figma file key for --node-id\")
+    parser.add_argument(\"--frame\", help=\"Frame ID for --figma mode\")
+    parser.add_argument(\"--frame-name\", help=\"Frame name search for --figma mode\")
+    parser.add_argument(\"--all\", action=\"store_true\", help=\"Extract all top-level frames for --figma mode\")
+    parser.add_argument(\"--depth\", type=int, default=10, help=\"Traversal depth for --node-id fetch\")
+    parser.add_argument(\"--tree\", action=\"store_true\", help=\"Print visible node tree\")
+    parser.add_argument(\"--profile\", default=\"basic\", help=\"Normalization profile (basic|landing)\")
+
+    args = parser.parse_args()
+
+    try:
+        targets, payload = _read_input(args)
+
+        if args.tree:
+            for target in targets:
+                _print_tree(target)
+            return
+
+        if len(targets) == 1:
+            selected_payload = targets[0]
+        else:
+            selected_payload = {
+                \"id\": \"\",
+                \"name\": \"root\",
+                \"type\": \"FRAME\",
+                \"visible\": True,
+                \"children\": targets,
+            }
+
+        normalized = normalize_payload(selected_payload, profile_name=args.profile)
+        json.dump(normalized, sys.stdout, ensure_ascii=False, indent=2)
+        sys.stdout.write(\"\\n\")
+    except Exception as exc:  # pragma: no cover
+        print(f\"ERROR: {exc}\", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == \"__main__\":
+    main()
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+
+codex
+`figma-extract.py`를 새 구조로 교체했는데, 셸 quoting 흔적이 섞였을 가능성이 있어 바로 파일 문법을 점검하고 깨진 부분을 정리하겠습니다.
+exec
+/bin/bash -lc "python3 -m py_compile tools/figma-extract.py && echo OK || true; sed -n '1,260p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+OK
+#!/usr/bin/env python3
+"""Normalize Figma MCP JSON into a CSS-resolved intermediate JSON tree."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+import math
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+PROFILE_DIR = Path(__file__).resolve().parent / "profiles"
+
+
+exec
+/bin/bash -lc "sed -n '261,560p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+    decoration = style.get("textDecoration")
+    if decoration == "UNDERLINE":
+        css["textDecoration"] = "underline"
+    elif decoration == "STRIKETHROUGH":
+        css["textDecoration"] = "line-through"
+
+    return css
+
+
+def _split_override_segments(chars: str, overrides: list[int]) -> list[dict[str, Any]]:
+    if not chars:
+        return []
+
+    if not overrides:
+        return [{"text": chars, "override_id": 0}]
+
+    padded = list(overrides)
+    if len(padded) < len(chars):
+        padded.extend([0] * (len(chars) - len(padded)))
+
+exec
+/bin/bash -lc "sed -n '561,860p' tools/figma-extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+            return found
+    return None
+
+
+def find_node_by_name(data: dict[str, Any], target_name: str) -> dict[str, Any] | None:
+    if target_name.lower() in str(data.get("name", "")).lower():
+        return data
+    for child in data.get("children", []) or []:
+        found = find_node_by_name(child, target_name)
+        if found:
+            return found
+    return None
+
+
+def get_top_frames(data: dict[str, Any]) -> list[dict[str, Any]]:
+    root = data.get("document", data)
+    frames: list[dict[str, Any]] = []
+    for child in root.get("children", []) or []:
+        child_type = child.get("type")
+        if child_type == "CANVAS":
+codex
+엔진 파일 문법은 정상입니다. 이제 요구 산출물인 프로필 2개와 규칙 문서를 추가한 뒤 전체 테스트를 돌리겠습니다.
+exec
+/bin/bash -lc "mkdir -p tools/profiles docs
+cat > tools/profiles/basic.json <<'JSON'
+{
+  \"font_size_pc\": \"rem\",
+  \"font_size_mobile\": \"px\",
+  \"rem_base\": 16,
+  \"reset_css\": \"separate_file\",
+  \"required_root_vars\": [\"--width\", \"--padding\"],
+  \"mobile_spacing\": \"half_of_pc\",
+  \"mobile_breakpoint\": 768
+}
+JSON
+cat > tools/profiles/landing.json <<'JSON'
+{
+  \"font_size_pc\": \"px\",
+  \"font_size_mobile\": \"px\",
+  \"reset_css\": \"inline_top_of_css\",
+  \"required_root_vars\": [\"--padding\", \"--header_h\", \"--width\", \"--point-color-1\"],
+  \"mobile_spacing\": \"explicit_px\",
+  \"animation\": { \"attrs\": [\"data-delay\", \"data-direction\"], \"motion_class\": \"section_on\" }
+}
+JSON" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+
+exec
+/bin/bash -lc "cat > docs/conversion-rules.md <<'MD'
+# Conversion Rules: Figma -> Normalized Intermediate JSON
+
+## Layout
+
+| Figma | Output path | Rule |
+|---|---|---|
+| "'`layoutMode: VERTICAL` | `layout.direction` | `column` |
+| `layoutMode: HORIZONTAL` | `layout.direction` | `row` |
+| `layoutMode` present | `layout.display` | `flex` |
+| `layoutMode` absent | `layout.display` | `block` |
+| `itemSpacing` | `layout.gap` | `>1 -> Npx`, else `0` |
+| `paddingTop/Right/Bottom/Left` | `layout.padding` | CSS shorthand (1/2/4-value) |
+| `primaryAxisAlignItems` | `layout.justify` | `MIN/CENTER/MAX/SPACE_BETWEEN -> flex-start/center/flex-end/space-between` |
+| `counterAxisAlignItems` | `layout.align` | `MIN/CENTER/MAX/BASELINE/STRETCH -> flex-start/center/flex-end/baseline/stretch` |
+| `layoutSizingHorizontal` | `layout.sizing.horizontal` | Preserve enum (`FILL/HUG/FIXED`) |
+| `layoutSizingVertical` | `layout.sizing.vertical` | Preserve enum (`FILL/HUG/FIXED`) |
+
+## Visual
+
+| Figma | Output path | Rule |
+|---|---|---|
+| `absoluteBoundingBox.width/height` (fallback `width/height`) | `visual.width`, `visual.height` | Rounded number |
+| `fills[]` first visible `SOLID` | `visual.background` | RGBA(0-1) -> hex or `rgba()` |
+| visible `strokes[]` only | `visual.border` | `strokeWeight px solid color` |
+| no visible stroke | `visual.border` | `null` |
+| `cornerRadius` or `rectangleCornerRadii` | `visual.borderRadius` | px string or 4-value shorthand |
+| circle heuristic (`w≈h` and `r>=w/2`) | `visual.borderRadius` | `50%` |
+| pill heuristic (`w>h` and `r>h/2`) | `visual.borderRadius` | `2em` |
+| `opacity` | `visual.opacity` | Preserve float (default `1.0`) |
+
+## Typography
+
+| Figma | Output path | Rule |
+|---|---|---|
+| `characters` | `text.content` | Preserve original text |
+| `characters` includes `'"\\n"'` | `text.has_newline` | `true` |
+| `len(characters)` | `text.char_length` | Integer length |
+| default tag | `text.tag_hint` | `span` |
+| paragraph heuristic | `text.tag_hint` | `p` when newline, long text (`>95`), or sentence-like ending |
+| heading heuristic | `text.tag_hint` | `h2/h3` when node name indicates title/heading |
+| `style.fontFamily` | `text.segments[].style.fontFamily` | Preserve |
+| `style.fontWeight` | `text.segments[].style.fontWeight` | Preserve |
+| `style.fontSize` | `text.segments[].style.fontSize` | Profile-aware unit conversion |
+| `style.lineHeightPx` | `text.segments[].style.lineHeight` | Unitless ratio `lineHeightPx / fontSize` |
+| `style.letterSpacing` | `text.segments[].style.letterSpacing` | `em` unit `letterSpacing / fontSize` |
+| text fill color | `text.segments[].style.color` | RGBA(0-1) -> hex/rgba |
+| `style.textAlignHorizontal` | `text.segments[].style.textAlign` | LEFT/CENTER/RIGHT/JUSTIFIED -> left/center/right/justify |
+| `style.textDecoration` | `text.segments[].style.textDecoration` | UNDERLINE/STRIKETHROUGH -> underline/line-through |
+
+## Character Override Resolution
+
+| Step | Rule |
+|---|---|
+| Base style | `baseStyle = { ...node.style, fills: node.fills }` |
+| Segment split | Group contiguous characters by same `characterStyleOverrides` id |
+| `id=0` or missing table entry | Resolved style = `baseStyle` |
+| other id | Resolved style = `{ ...(prevResolved || baseStyle), ...override }` (cumulative merge) |
+| segment output | Store fully converted CSS style in each `segments[]` entry |
+| override marker | `is_override = segment_style != base_style` |
+
+## Node Preservation
+
+| Condition | Rule |
+|---|---|
+| `visible: false` | Exclude (only exclusion rule) |
+| thin fill-only frame (`w<=2` or `h<=2`) | Preserve as normal node (divider candidate) |
+| decorative/background/icon nodes | Preserve |
+| empty visible frame | Preserve |
+
+## Profile Rules
+
+| Profile | PC font-size | Mobile font-size | reset_css | required_root_vars |
+|---|---|---|---|---|
+| `basic` | `rem` (`rem_base=16`) | `px` | `separate_file` | `--width`, `--padding` |
+| `landing` | `px` | `px` | `inline_top_of_css` | `--padding`, `--header_h`, `--width`, `--point-color-1` |
+
+Additional profile metadata is loaded from `tools/profiles/<profile>.json` and emitted into `meta.profile` through CLI selection.
+MD' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+
+exec
+/bin/bash -lc "sed -n '1,220p' docs/conversion-rules.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+# Conversion Rules: Figma -> Normalized Intermediate JSON
+
+## Layout
+
+| Figma | Output path | Rule |
+|---|---|---|
+| `layoutMode: VERTICAL` | `layout.direction` | `column` |
+| `layoutMode: HORIZONTAL` | `layout.direction` | `row` |
+| `layoutMode` present | `layout.display` | `flex` |
+| `layoutMode` absent | `layout.display` | `block` |
+| `itemSpacing` | `layout.gap` | `>1 -> Npx`, else `0` |
+| `paddingTop/Right/Bottom/Left` | `layout.padding` | CSS shorthand (1/2/4-value) |
+| `primaryAxisAlignItems` | `layout.justify` | `MIN/CENTER/MAX/SPACE_BETWEEN -> flex-start/center/flex-end/space-between` |
+| `counterAxisAlignItems` | `layout.align` | `MIN/CENTER/MAX/BASELINE/STRETCH -> flex-start/center/flex-end/baseline/stretch` |
+| `layoutSizingHorizontal` | `layout.sizing.horizontal` | Preserve enum (`FILL/HUG/FIXED`) |
+| `layoutSizingVertical` | `layout.sizing.vertical` | Preserve enum (`FILL/HUG/FIXED`) |
+
+## Visual
+
+| Figma | Output path | Rule |
+exec
+/bin/bash -lc 'pytest tests/test_smoke.py tests/test_normalization.py -v' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 528ms:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01
+configfile: pyproject.toml
+collecting ... collected 13 items
+
+tests/test_smoke.py::test_rgba_to_hex_red PASSED                         [  7%]
+tests/test_smoke.py::test_rgba_to_hex_white PASSED                       [ 15%]
+tests/test_smoke.py::test_rgba_to_hex_with_opacity PASSED                [ 23%]
+tests/test_smoke.py::test_extract_fill_color_solid PASSED                [ 30%]
+tests/test_smoke.py::test_extract_fill_color_empty PASSED                [ 38%]
+tests/test_smoke.py::test_line_height_to_ratio PASSED                    [ 46%]
+tests/test_smoke.py::test_figma_align_to_css PASSED                      [ 53%]
+tests/test_normalization.py::test_normalize_payload_tree_meta_and_visibility PASSED [ 61%]
+tests/test_normalization.py::test_text_segments_cumulative_override_and_typography_conversion PASSED [ 69%]
+tests/test_normalization.py::test_profile_landing_uses_px_font_size PASSED [ 76%]
+tests/test_normalization.py::test_border_is_only_generated_from_visible_stroke PASSED [ 84%]
+tests/test_normalization.py::test_corner_radius_circle_and_pill PASSED   [ 92%]
+tests/test_normalization.py::test_cli_stdin_and_tree_mode PASSED         [100%]
+codex
+핵심 테스트 13개 모두 통과했습니다. 마지막으로 요청하신 stdin 단건 검증 커맨드도 실행해 `meta/tree` 출력 계약을 확인하겠습니다.
+exec
+/bin/bash -lc "echo '{\"type\":\"FRAME\",\"name\":\"test\",\"visible\":true,\"children\":[]}' | python3 tools/figma-extract.py --stdin --profile basic | python3 -c \"import sys,json; d=json.load(sys.stdin); assert 'meta' in d and 'tree' in d; print('OK')\"" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+OK
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 735ms:
+?? docs/
+?? rules/rules/
+?? tests/__pycache__/
+?? tests/test_normalization.py
+?? tools/
+exec
+/bin/bash -lc 'git status --short tests/test_normalization.py tools/figma-extract.py tools/profiles/basic.json tools/profiles/landing.json docs/conversion-rules.md' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 50ms:
+?? docs/conversion-rules.md
+?? tests/test_normalization.py
+?? tools/figma-extract.py
+?? tools/profiles/basic.json
+?? tools/profiles/landing.json
+codex
+마무리로 사소한 정리를 진행하겠습니다. 사용하지 않는 import/변수만 제거해 린트 리스크를 줄인 뒤 최종 결과를 정리하겠습니다.
+file update
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py
+@@ -8,3 +8,2 @@
+ import json
+-import math
+ import os
+@@ -682,3 +681,3 @@
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+apply_patch(auto_approved=true) exited 0 in 169ms:
+Success. Updated the following files:
+M tools/figma-extract.py
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+exec
+/bin/bash -lc 'pytest tests/test_smoke.py tests/test_normalization.py -q' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 421ms:
+.............                                                            [100%]
+13 passed in 0.29s
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+exec
+/bin/bash -lc "echo '{\"type\":\"FRAME\",\"name\":\"test\",\"visible\":true,\"children\":[]}' | python3 tools/figma-extract.py --stdin --profile basic | python3 -c \"import sys,json; d=json.load(sys.stdin); assert 'meta' in d and 'tree' in d; print('OK')\"" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+OK
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+exec
+/bin/bash -lc 'rg -n "def (rgba_to_hex|extract_fill_color|line_height_to_ratio|figma_align_to_css|normalize_payload|main)" tools/figma-extract.py; rg -n "def test_" tests/test_normalization.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01 succeeded in 0ms:
+22:def rgba_to_hex(r: float, g: float, b: float, a: float = 1.0) -> str:
+37:def extract_fill_color(fills: list[dict[str, Any]] | None) -> str | None:
+57:def line_height_to_ratio(line_height_px: float | int | None, font_size: float | int | None) -> float | None:
+68:def figma_align_to_css(value: str | None, axis: str = "primary") -> str:
+522:def normalize_payload(data: dict[str, Any], profile_name: str = "basic") -> dict[str, Any]:
+666:def main() -> None:
+84:def test_normalize_payload_tree_meta_and_visibility():
+111:def test_text_segments_cumulative_override_and_typography_conversion():
+134:def test_profile_landing_uses_px_font_size():
+141:def test_border_is_only_generated_from_visible_stroke():
+149:def test_corner_radius_circle_and_pill():
+185:def test_cli_stdin_and_tree_mode():
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+codex
+전면 재작성 완료했습니다. TDD 순서로 `tests/test_normalization.py`를 먼저 추가하고, 그 테스트를 통과시키도록 엔진을 다시 구현했습니다.
+
+변경 파일:
+- [tools/figma-extract.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py)
+- [tests/test_normalization.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tests/test_normalization.py)
+- [tools/profiles/basic.json](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/profiles/basic.json)
+- [tools/profiles/landing.json](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/profiles/landing.json)
+- [docs/conversion-rules.md](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/docs/conversion-rules.md)
+
+핵심 구현 포인트:
+- stdin 기반 Figma JSON -> 정규화 중간 JSON(`meta`, `tree`) 출력
+- `--profile basic|landing` 지원
+- `--tree` 출력 호환
+- 텍스트 `characterStyleOverrides` 누적 병합 구현
+- `visible:false`만 제외, 나머지 노드 보존
+- stroke `visible:true`일 때만 border 생성
+- border radius circle/pill(50%/2em) 처리
+- 스모크 호환 함수 시그니처 유지:
+  - `rgba_to_hex` [22](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:22)
+  - `extract_fill_color` [37](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:37)
+  - `line_height_to_ratio` [57](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:57)
+  - `figma_align_to_css` [68](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:68)
+
+검증:
+- `pytest tests/test_smoke.py tests/test_normalization.py -q` -> `13 passed`
+- 요청하신 CLI 검증 커맨드 실행 -> `OK`
+
+단순화(의도적):
+- 출력 포맷을 정규화 JSON 중심으로 통일(기존 md/json 파일 저장 흐름 제거)
+- 변환 로직을 레이아웃/비주얼/타이포/오버라이드 함수로 분리해 재계산 최소화
+
+남은 리스크:
+- `tag_hint`(h2/h3/p/span) 휴리스틱은 프로젝트별 추가 튜닝 여지 있음
+- 실제 Figma MCP의 드문 wrapper 변형은 샘플 추가 시 `parse_mcp_response` 확장 가능
+- `--node-id/--file-key` API fetch 경로는 토큰/네트워크 환경에서 별도 실검증 필요
+file update:
+diff --git a/tools/figma-extract.py b/tools/figma-extract.py
+index bb9e1b3829542a1f51506a08447c0259bdb3c6e0..1da346d243bdeb313e7f6fb678771819723f201f
+--- a/tools/figma-extract.py
++++ b/tools/figma-extract.py
+@@ -6,7 +6,6 @@
+ import argparse
+ import copy
+ import json
+-import math
+ import os
+ import sys
+ from datetime import datetime, timezone
+@@ -680,7 +679,7 @@
+     args = parser.parse_args()
+ 
+     try:
+-        targets, payload = _read_input(args)
++        targets, _ = _read_input(args)
+ 
+         if args.tree:
+             for target in targets:
+
+tokens used
+87,656
+전면 재작성 완료했습니다. TDD 순서로 `tests/test_normalization.py`를 먼저 추가하고, 그 테스트를 통과시키도록 엔진을 다시 구현했습니다.
+
+변경 파일:
+- [tools/figma-extract.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py)
+- [tests/test_normalization.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tests/test_normalization.py)
+- [tools/profiles/basic.json](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/profiles/basic.json)
+- [tools/profiles/landing.json](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/profiles/landing.json)
+- [docs/conversion-rules.md](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/docs/conversion-rules.md)
+
+핵심 구현 포인트:
+- stdin 기반 Figma JSON -> 정규화 중간 JSON(`meta`, `tree`) 출력
+- `--profile basic|landing` 지원
+- `--tree` 출력 호환
+- 텍스트 `characterStyleOverrides` 누적 병합 구현
+- `visible:false`만 제외, 나머지 노드 보존
+- stroke `visible:true`일 때만 border 생성
+- border radius circle/pill(50%/2em) 처리
+- 스모크 호환 함수 시그니처 유지:
+  - `rgba_to_hex` [22](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:22)
+  - `extract_fill_color` [37](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:37)
+  - `line_height_to_ratio` [57](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:57)
+  - `figma_align_to_css` [68](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-002-T01/tools/figma-extract.py:68)
+
+검증:
+- `pytest tests/test_smoke.py tests/test_normalization.py -q` -> `13 passed`
+- 요청하신 CLI 검증 커맨드 실행 -> `OK`
+
+단순화(의도적):
+- 출력 포맷을 정규화 JSON 중심으로 통일(기존 md/json 파일 저장 흐름 제거)
+- 변환 로직을 레이아웃/비주얼/타이포/오버라이드 함수로 분리해 재계산 최소화
+
+남은 리스크:
+- `tag_hint`(h2/h3/p/span) 휴리스틱은 프로젝트별 추가 튜닝 여지 있음
+- 실제 Figma MCP의 드문 wrapper 변형은 샘플 추가 시 `parse_mcp_response` 확장 가능
+- `--node-id/--file-key` API fetch 경로는 토큰/네트워크 환경에서 별도 실검증 필요

@@ -1,0 +1,24 @@
+{"timestamp": "2026-04-04T03:11:40.608108+00:00", "event": "agile.init", "steering_every": 5}
+{"timestamp": "2026-04-04T03:33:31.497981+00:00", "event": "agile.update", "fields": {"status": "active", "objective_version": 1}}
+{"timestamp": "2026-04-04T03:34:27.407037+00:00", "event": "agile.result", "sprint_id": "S00", "status": "in_progress"}
+{"timestamp": "2026-04-04T03:46:38.459367+00:00", "event": "agile.result", "sprint_id": "S00", "status": "done"}
+{"timestamp": "2026-04-04T03:46:43.436279+00:00", "event": "agile.update", "fields": {"current_sprint": 1}}
+{"timestamp": "2026-04-04T03:48:36.458987+00:00", "event": "agile.result", "sprint_id": "S01", "status": "in_progress"}
+{"timestamp": "2026-04-04T04:07:35.248951+00:00", "event": "agile.result", "sprint_id": "S01", "status": "done"}
+{"timestamp": "2026-04-04T04:07:41.643964+00:00", "event": "agile.objective-transition", "dod": "DOD-001", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-04-04T04:07:41.764517+00:00", "event": "agile.objective-transition", "dod": "DOD-002", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-04-04T04:07:41.889090+00:00", "event": "agile.objective-transition", "dod": "DOD-003", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-04-04T04:07:46.159900+00:00", "event": "agile.update", "fields": {"current_sprint": 2}}
+{"timestamp": "2026-04-04T04:12:17.447925+00:00", "event": "agile.result", "sprint_id": "S02", "status": "in_progress"}
+{"timestamp": "2026-04-04T04:14:24.138128+00:00", "event": "agile.result", "sprint_id": "S02", "status": "done"}
+{"timestamp": "2026-04-04T04:14:24.260537+00:00", "event": "agile.objective-transition", "dod": "DOD-004", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-04-04T04:14:24.375673+00:00", "event": "agile.update", "fields": {"current_sprint": 3}}
+{"timestamp": "2026-04-04T04:25:29.019729+00:00", "event": "agile.result", "sprint_id": "S03", "status": "in_progress"}
+{"timestamp": "2026-04-04T04:34:03.762024+00:00", "event": "agile.result", "sprint_id": "S03", "status": "done"}
+{"timestamp": "2026-04-04T04:34:03.903312+00:00", "event": "agile.objective-transition", "dod": "DOD-005", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-04-04T04:34:04.027042+00:00", "event": "agile.update", "fields": {"current_sprint": 4}}
+{"timestamp": "2026-04-04T04:37:48.345482+00:00", "event": "agile.result", "sprint_id": "S04", "status": "in_progress"}
+{"timestamp": "2026-04-04T04:39:55.252932+00:00", "event": "agile.objective-transition", "dod": "DOD-006", "from_status": "todo", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-04-04T04:39:48.706510+00:00", "event": "agile.objective-transition", "dod": "DOD-007", "from_status": "todo", "to_status": "done", "priority": "could", "changed": true}
+{"timestamp": "2026-04-04T04:39:48.835253+00:00", "event": "agile.result", "sprint_id": "S04", "status": "done"}
+{"timestamp": "2026-04-04T04:39:56.074451+00:00", "event": "agile.update", "fields": {"status": "completed"}}

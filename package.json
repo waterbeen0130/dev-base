@@ -1,0 +1,13 @@
+{
+  "name": "dev-base",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Figma-to-HTML validation tools",
+  "scripts": {
+    "validate": "node tools/validate.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "postcss": "^8.4.0"
+  }
+}

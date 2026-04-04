@@ -1,0 +1,54 @@
+{
+  "id": "REQ-002",
+  "title": "figma-extract.py 정규화 엔진 재설계",
+  "original_request": "figma-extract.py를 정규화 엔진으로 재설계하여 Figma JSON의 모든 시각적 속성을 정규화된 JSON 중간 포맷으로 손실 없이 변환하고, 변환 규칙을 문서화한다. basic/landing 프로필 분리 포함.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-04T03:51:47.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-002",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "figma-extract.py 정규화 엔진 재작성 + 프로필 분리 + 문서화",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "AC-008",
+        "AC-009",
+        "AC-010"
+      ]
+    },
+    {
+      "id": "T02",
+      "title": "통합 테스트 + 회귀 테스트",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-T01",
+        "AC-T02",
+        "AC-T03"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-001"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "linked_objective": "AGI-001",
+  "updated_at": "2026-04-04T04:07:20.000Z"
+}
