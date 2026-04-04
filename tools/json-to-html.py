@@ -195,14 +195,28 @@ class SemanticConverter:
 
     # ── Detection helpers ──
 
-    def _is_list(self, children: list[dict]) -> bool:
-        if len(children) < 2:
+    def _is_list(self, children: list[dict], parent_name: str = "") -> bool:
+        """Detect repeating list pattern — strict rules to avoid false positives."""
+        if len(children) < 3:
+            return False
+        # Layout wrapper names are never lists
+        wrapper_names = {"inner", "cont", "wrap", "wrapper", "title", "top", "bottom",
+                         "info", "txt", "bg_img", "frame"}
+        if _slug(parent_name) in wrapper_names:
             return False
         types = [c.get("type") for c in children]
         if len(set(types)) != 1 or types[0] not in ("FRAME", "INSTANCE"):
             return False
         counts = [len(c.get("children", [])) for c in children]
-        return counts and max(counts) - min(counts) <= 2
+        if not counts or max(counts) - min(counts) > 2:
+            return False
+        # Children should have similar names (e.g. list_item, card, frame_322)
+        names = [c.get("name", "") for c in children]
+        # If children have diverse names, likely not a list
+        base_names = set(_slug(n).rstrip("_0123456789") for n in names)
+        if len(base_names) > 2:
+            return False
+        return True
 
     def _is_divider(self, node: dict) -> bool:
         v = node.get("visual", {})
@@ -284,10 +298,10 @@ class SemanticConverter:
                 count_types(c)
         count_types(node)
         # Pure vector/rectangle group with no text = illustration/icon
-        if text_count == 0 and vector_count >= 3:
+        if text_count == 0 and vector_count >= 2:
             return True
         # Icon-like: mostly vectors with 1 text label at most
-        if vector_count >= 5 and text_count <= 1:
+        if vector_count >= 3 and text_count <= 1:
             return True
         return False
 
@@ -344,14 +358,11 @@ class SemanticConverter:
         if self._is_vector_group(node):
             return
 
-        # Depth limiter: flatten intermediate wrappers at depth 4+
-        # BUT preserve nodes that have meaningful styling or are known components
-        if depth >= 4 and children and not text:
-            has_meaningful_style = (
-                (layout and (layout.get("gap", "0") != "0" or layout.get("padding", "0") != "0")) or
-                (visual and (visual.get("background") or visual.get("border")))
-            )
-            if not has_meaningful_style and not img_path:
+        # Depth limiter: hard cap at depth 4 (max DOM depth = 5)
+        if depth >= 4 and children and not text and not img_path:
+            # Only keep wrapper if it has essential visual styling
+            has_visual = (visual and (visual.get("background") or visual.get("border")))
+            if not has_visual:
                 for child in children:
                     self._render(child, depth, parent_cls)
                 return
@@ -434,7 +445,7 @@ class SemanticConverter:
         container_css.update(self._visual_to_css(visual, bool(layout)))
         self._emit(f".{cls}", container_css)
 
-        is_list = self._is_list(children)
+        is_list = self._is_list(children, name)
         tag_open = f'<ul class="{cls}">' if is_list else f'<div class="{cls}">'
         tag_close = "</ul>" if is_list else "</div>"
 
