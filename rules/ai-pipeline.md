@@ -95,15 +95,59 @@ python3 D:/dev-base/tools/validate-semantic.py \
 - PM(Claude)은 오케스트레이션만 — 코드 직접 작성 금지
 - 브라우저 테스트 + 피그마 비교는 PM 책임
 
-## 작업 지시 예시
+## 작업 지시 방법 (자연어)
 
-새 프로젝트에서 이 파이프라인을 실행하려면:
-
+### 기본 형식
 ```
 피그마 파일키: {file_key}
 노드 ID: {node_id}
 프로젝트명: {name}
-프로필: basic 또는 landing
+타입: basic 또는 landing
+타이틀: {페이지 타이틀}
 
-위 파이프라인으로 HTML/CSS를 생성해줘.
+AI 파이프라인으로 퍼블리싱해줘.
 ```
+
+### Basic 프로젝트 예시
+```
+피그마 파일키: MGvYalHCtVrf3DLndOFLH2
+노드 ID: 19:594
+프로젝트명: youngwol
+타입: basic
+타이틀: 영월반값여행
+
+AI 파이프라인으로 퍼블리싱해줘.
+```
+
+### Landing 프로젝트 예시
+```
+피그마 파일키: cYdPLSbasrsfCZ4gKkE13p
+노드 ID: 190:11140
+프로젝트명: brainbody
+타입: landing
+타이틀: 브레인바디
+
+AI 파이프라인으로 퍼블리싱해줘.
+```
+
+### PM 실행 절차
+
+위 지시를 받으면 PM(Claude)은 아래 순서로 실행한다:
+
+1. `run-pipeline.py --profile {타입}`으로 전체 파이프라인 실행
+2. 결과를 브라우저 스크린샷으로 확인
+3. 피그마 원본 이미지(Figma API)와 섹션별 비교
+4. 차이 발견 시 해당 섹션만 프롬프트 보강 후 Gemini 재처리
+5. **모든 섹션이 피그마와 시각적으로 일치하는 것을 PM이 확인한 후에만 전달**
+6. validate-semantic.py로 규칙 위반 0 확인
+
+### Basic vs Landing 차이
+
+| 항목 | basic | landing |
+|------|-------|---------|
+| font-size | PC `rem`, 모바일 `px` | PC/모바일 모두 고정 `px` |
+| padding/margin | 고정 px, 100px+ clamp | 모두 고정 `px` |
+| 좌우 여백 | - | max-width 변환 필수 |
+| reset.css | 별도 파일 | CSS 최상단에 인라인 |
+| JS | 로컬 파일 | CDN |
+| GSAP | - | data-delay/data-direction |
