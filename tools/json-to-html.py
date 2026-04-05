@@ -65,6 +65,24 @@ class SemanticConverter:
         "s3_list": "apply_list",
         "s4_list": "community_list",
     }
+    GENERIC_NAME_PATTERN = re.compile(
+        r"^(el|txt|btn|list|item|box|wrap|frame|group|element)_?\d*$"
+    )
+    GENERIC_PARENT_STOPWORDS = {
+        "cont", "inner", "wrapper", "wrap", "box", "group", "frame",
+        "list", "item", "el", "txt", "btn",
+    }
+    GENERIC_ROLE_MAP = {
+        "el": "item",
+        "element": "item",
+        "frame": "item",
+        "group": "item",
+        "box": "item",
+        "wrap": "item",
+    }
+    IMAGE_CONTEXT_NAMES = {
+        "graphic", "image", "img", "icon", "vector", "photo", "picture",
+    }
 
     def __init__(self, page: str, image_map: dict[str, str] | None = None,
                  name_overrides: dict[str, str] | None = None):
@@ -105,9 +123,58 @@ class SemanticConverter:
             return slug  # keep as-is, will show as MINOR in validator
         return slug
 
-    def _cls(self, name: str, is_common: bool = False) -> str:
-        """Generate class. Common areas get no page prefix. Generic names remapped."""
+    def _is_generic_slug(self, slug: str) -> bool:
+        return bool(self.GENERIC_NAME_PATTERN.match(slug))
+
+    def _parent_context_slug(self, parent_cls: str) -> str:
+        """Extract a meaningful parent context token from parent class name."""
+        if not parent_cls:
+            return ""
+        parent = parent_cls
+        page_prefix = f"{self.page}_"
+        if parent.startswith(page_prefix):
+            parent = parent[len(page_prefix):]
+        parent = re.sub(r"_\d+$", "", parent)
+        tokens = [t for t in parent.split("_") if t]
+        for token in reversed(tokens):
+            if token in self.GENERIC_PARENT_STOPWORDS:
+                continue
+            if self._is_generic_slug(token):
+                continue
+            return token
+        return ""
+
+    def _generic_role_slug(self, slug: str) -> str:
+        """Normalize generic child role names to a stable semantic token."""
+        role = re.sub(r"_?\d+$", "", slug)
+        return self.GENERIC_ROLE_MAP.get(role, role or "item")
+
+    def _contextual_slug(self, name: str, parent_cls: str = "") -> str:
+        """Resolve class slug with parent context for generic child names."""
         slug = self._remap_name(_slug(name))
+        if not self._is_generic_slug(slug):
+            return slug
+        parent_context = self._parent_context_slug(parent_cls)
+        if not parent_context or self._is_generic_slug(parent_context):
+            return slug
+        role = self._generic_role_slug(slug)
+        return f"{parent_context}_{role}"
+
+    def _contextual_image_slug(self, name: str, parent_cls: str = "") -> tuple[str, bool]:
+        """Build image slug with parent context for duplicate-prone names."""
+        slug = self._remap_name(_slug(name))
+        parent_context = self._parent_context_slug(parent_cls)
+        base_slug = re.sub(r"_\d+$", "", slug)
+        should_contextualize = bool(parent_context) and (
+            self._is_generic_slug(slug) or base_slug in self.IMAGE_CONTEXT_NAMES
+        )
+        if should_contextualize:
+            return f"{parent_context}_{base_slug}", True
+        return slug, False
+
+    def _cls(self, name: str, is_common: bool = False, parent_cls: str = "") -> str:
+        """Generate class. Common areas get no page prefix. Generic names remapped."""
+        slug = self._contextual_slug(name, parent_cls)
         common_names = {"header", "footer", "gnb", "logo", "copyright",
                         "btn_top", "btn_menu", "btn_close", "total_menu",
                         "cont", "sub_wrap", "sub_visual", "navi", "lnb"}
@@ -250,6 +317,47 @@ class SemanticConverter:
                     diff[css_key] = str(over_val)
         return diff
 
+    def _has_text_descendant(self, node: dict) -> bool:
+        """Check if any descendant has text content."""
+        if node.get("text"):
+            return True
+        for child in node.get("children", []):
+            if self._has_text_descendant(child):
+                return True
+        return False
+
+    def _should_keep_fixed_width(self, node: dict) -> bool:
+        """Keep width behavior for decorative/image/divider nodes."""
+        if self._is_decorative(node) or self._is_divider(node):
+            return True
+        return bool(self.image_map.get(node.get("id", "")))
+
+    def _flex_sizing_css(self, node: dict, siblings: list[dict]) -> dict[str, str]:
+        """Convert Figma sizing metadata to flex sizing CSS."""
+        sizing = (node.get("layout") or {}).get("sizing", {})
+        horizontal = sizing.get("horizontal", "FIXED")
+        visual = node.get("visual") or {}
+        width = visual.get("width")
+
+        if horizontal == "FILL":
+            return {"flex": "1"}
+        if horizontal == "HUG":
+            return {}
+        if horizontal == "FIXED" and width and siblings:
+            try:
+                total_width = sum(
+                    float((s.get("visual") or {}).get("width", 0) or 0)
+                    for s in siblings
+                )
+                width_value = float(width)
+            except (TypeError, ValueError):
+                return {}
+            if total_width > 0:
+                pct = round(width_value / total_width * 100, 1)
+                pct_str = str(int(pct)) if pct.is_integer() else str(pct)
+                return {"flex": f"0 0 {pct_str}%"}
+        return {}
+
     # ── Rendering ──
 
     def _should_unwrap(self, node: dict) -> bool:
@@ -341,6 +449,7 @@ class SemanticConverter:
         children = node.get("children", [])
         layout = node.get("layout")
         visual = node.get("visual")
+        pending_flex_css = dict(node.pop("_flex_sizing_css", {}))
 
         # Component template hit (footer, header)
         component_name = _slug(name)
@@ -358,9 +467,11 @@ class SemanticConverter:
         # Image map hit
         img_path = self.image_map.get(node_id)
         if img_path:
-            cls = self._cls(name)
+            image_slug, used_context = self._contextual_image_slug(name, parent_cls)
+            cls = self._cls(image_slug, parent_cls=parent_cls)
             is_bg = any(kw in name.lower() for kw in
                         ("bg_img", "bg", "cover", "gettyimages", "배경"))
+            alt_text = image_slug.replace("_", " ") if used_context else name
 
             if is_bg:
                 bg_cls = f"{cls}_bg"
@@ -372,12 +483,13 @@ class SemanticConverter:
                     "width": "100%", "height": "100%", "object-fit": "cover"
                 })
                 self.html_lines.append(
-                    f'{indent}<div class="{bg_cls}"><img src="{img_path}" alt="{name}"></div>')
+                    f'{indent}<div class="{bg_cls}"><img src="{img_path}" alt="{alt_text}"></div>')
             else:
                 props = {"max-width": "100%", "height": "auto"}
+                props.update(pending_flex_css)
                 self._emit(f".{cls}", props)
                 self.html_lines.append(
-                    f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{name}"></div>')
+                    f'{indent}<div class="img_area"><img class="{cls}" src="{img_path}" alt="{alt_text}"></div>')
             return
 
         # Vector illustration groups (3+ vectors, no text) → skip entirely
@@ -394,7 +506,7 @@ class SemanticConverter:
             has_visual = visual and (
                 visual.get("background") or visual.get("border")
             )
-            if not layout_has_value and not has_visual:
+            if not layout_has_value and not has_visual and not self._has_text_descendant(node):
                 for child in children:
                     self._render(child, depth, parent_cls)
                 return
@@ -403,14 +515,14 @@ class SemanticConverter:
         if self._is_decorative(node):
             bg = (visual or {}).get("background")
             if bg:
-                cls = self._cls(name)
+                cls = self._cls(name, parent_cls=parent_cls)
                 self._emit(f".{cls}", {"background-color": bg, "display": "block"})
                 self.html_lines.append(f"{indent}<span class=\"{cls}\"></span>")
             return
 
         # Dividers
         if self._is_divider(node):
-            cls = self._cls(name)
+            cls = self._cls(name, parent_cls=parent_cls)
             v = visual or {}
             props: dict[str, str] = {"display": "block"}
             bg = v.get("background")
@@ -429,7 +541,7 @@ class SemanticConverter:
 
         # ── Text nodes ──
         if text:
-            cls = self._cls(name)
+            cls = self._cls(name, parent_cls=parent_cls)
             tag = text.get("tag_hint", "span")
             segments = text.get("segments", [])
 
@@ -437,6 +549,7 @@ class SemanticConverter:
             container_css = {}
             container_css.update(self._fix_padding(self._layout_to_css(layout)))
             container_css.update(self._visual_to_css(visual, bool(layout)))
+            container_css.update(pending_flex_css)
             # Base text style from first segment
             if segments:
                 base_style = segments[0]["style"]
@@ -471,10 +584,11 @@ class SemanticConverter:
             return
 
         # ── Container nodes ──
-        cls = self._cls(name)
+        cls = self._cls(name, parent_cls=parent_cls)
         container_css = {}
         container_css.update(self._fix_padding(self._layout_to_css(layout)))
         container_css.update(self._visual_to_css(visual, bool(layout)))
+        container_css.update(pending_flex_css)
 
         # Content on top of background
         if node.get("_needs_z_index"):
@@ -510,6 +624,13 @@ class SemanticConverter:
                         child["_needs_z_index"] = True
 
         is_list = self._is_list(children, name)
+        if not is_list and children:
+            flex_targets = [c for c in children if not self._should_keep_fixed_width(c)]
+            if len(flex_targets) >= 2:
+                for child in flex_targets:
+                    flex_css = self._flex_sizing_css(child, flex_targets)
+                    if flex_css:
+                        child["_flex_sizing_css"] = flex_css
         tag_open = f'<ul class="{cls}">' if is_list else f'<div class="{cls}">'
         tag_close = "</ul>" if is_list else "</div>"
 
