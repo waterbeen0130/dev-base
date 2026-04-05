@@ -1,0 +1,1933 @@
+{
+  "meta": {
+    "section_index": 5,
+    "section_name": "footer",
+    "profile": "basic",
+    "page": "A_main",
+    "total_sections": 7
+  },
+  "tree": {
+    "id": "224:3035",
+    "name": "footer",
+    "type": "INSTANCE",
+    "layout": {
+      "display": "flex",
+      "direction": "column",
+      "gap": "10px",
+      "padding": "50px 240px",
+      "justify": "flex-start",
+      "align": "flex-start",
+      "sizing": {
+        "horizontal": "FIXED",
+        "vertical": "HUG"
+      }
+    },
+    "visual": {
+      "width": 1920,
+      "height": 533,
+      "background": "#f5f5f5",
+      "border": null,
+      "borderRadius": "0",
+      "opacity": 1.0
+    },
+    "text": null,
+    "children": [
+      {
+        "id": "I224:3035;45:1577",
+        "name": "list",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "40px",
+          "padding": "0",
+          "justify": "flex-start",
+          "align": "flex-start",
+          "sizing": {
+            "horizontal": "FIXED",
+            "vertical": "HUG"
+          }
+        },
+        "visual": {
+          "width": 1440,
+          "height": 433,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "I224:3035;45:1578",
+            "name": "top",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "row",
+              "gap": "10px",
+              "padding": "0",
+              "justify": "space-between",
+              "align": "center",
+              "sizing": {
+                "horizontal": "FILL",
+                "vertical": "HUG"
+              }
+            },
+            "visual": {
+              "width": 1440,
+              "height": 113,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I224:3035;223:2880",
+                "name": "list_apply",
+                "type": "INSTANCE",
+                "layout": {
+                  "display": "flex",
+                  "direction": "column",
+                  "gap": "10px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "flex-start",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 620,
+                  "height": 113,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;223:2880;217:8331",
+                    "name": "A Half-price Trip With Yeongwol",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 368,
+                      "height": 31,
+                      "background": "#424242",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "A Half-price Trip With Yeongwol",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 31,
+                      "segments": [
+                        {
+                          "text": "A Half-price Trip",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1.375rem",
+                            "lineHeight": 1.4,
+                            "letterSpacing": "-0.03em",
+                            "color": "#424242",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        },
+                        {
+                          "text": " ",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1.375rem",
+                            "lineHeight": 1.4,
+                            "letterSpacing": "-0.03em",
+                            "color": "#424242",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        },
+                        {
+                          "text": "With Yeongwol",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 500,
+                            "fontSize": "1.375rem",
+                            "lineHeight": 1.4,
+                            "letterSpacing": "-0.03em",
+                            "color": "#424242",
+                            "textAlign": "left"
+                          },
+                          "is_override": true
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2880;217:8332",
+                    "name": "한글타이틀",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "16px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "HUG",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 620,
+                      "height": 72,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;223:2880;217:8333",
+                        "name": "심볼",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 160,
+                          "height": 72,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I224:3035;223:2880;217:8334",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "10px 0px",
+                              "justify": "center",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 51,
+                              "height": 50,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2880;217:8335",
+                                "name": "영월",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 51,
+                                  "height": 30,
+                                  "background": "#f58220",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "영월",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 2,
+                                  "segments": [
+                                    {
+                                      "text": "영월",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 500,
+                                        "fontSize": "1.625rem",
+                                        "lineHeight": 1.2,
+                                        "letterSpacing": "0em",
+                                        "color": "#f58220",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I224:3035;223:2880;217:8336",
+                            "name": "반값",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 52,
+                              "height": 60,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2880;217:8337",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 52,
+                                  "height": 60,
+                                  "background": "#1d9741",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2880;217:8338",
+                                "name": "반값",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 40,
+                                  "height": 30,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "반값",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 2,
+                                  "segments": [
+                                    {
+                                      "text": "반값",
+                                      "style": {
+                                        "fontFamily": "NanumSquareRound",
+                                        "fontWeight": 800,
+                                        "fontSize": "1.375rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#fff",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I224:3035;223:2880;217:8339",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "10px 0px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 51,
+                              "height": 50,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2880;217:8340",
+                                "name": "여행",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 51,
+                                  "height": 30,
+                                  "background": "#212121",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "여행",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 2,
+                                  "segments": [
+                                    {
+                                      "text": "여행",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 500,
+                                        "fontSize": "1.625rem",
+                                        "lineHeight": 1.2,
+                                        "letterSpacing": "0em",
+                                        "color": "#212121",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I224:3035;223:2880;217:8341",
+                            "name": "그래픽",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 23,
+                              "height": 19,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2880;217:8342",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 12,
+                                  "height": 12,
+                                  "background": "#1d9741",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2880;217:8343",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 3,
+                                  "height": 3,
+                                  "background": "#a0deb2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2880;217:8344",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 5,
+                                  "height": 5,
+                                  "background": "#f58220",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "I224:3035;223:2880;217:8345",
+                        "name": "영월반값여행 신청하기",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 384,
+                          "height": 56,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "영월반값여행 신청하기",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 11,
+                          "segments": [
+                            {
+                              "text": "영월반값여행",
+                              "style": {
+                                "fontFamily": "Gmarket Sans",
+                                "fontWeight": 400,
+                                "fontSize": "2.5rem",
+                                "lineHeight": 1.4,
+                                "letterSpacing": "-0.03em",
+                                "color": "#212121",
+                                "textAlign": "left"
+                              },
+                              "is_override": false
+                            },
+                            {
+                              "text": " ",
+                              "style": {
+                                "fontFamily": "Gmarket Sans",
+                                "fontWeight": 400,
+                                "fontSize": "2.5rem",
+                                "lineHeight": 1.4,
+                                "letterSpacing": "-0.03em",
+                                "color": "#212121",
+                                "textAlign": "left"
+                              },
+                              "is_override": false
+                            },
+                            {
+                              "text": "신청하기",
+                              "style": {
+                                "fontFamily": "Gmarket Sans",
+                                "fontWeight": 500,
+                                "fontSize": "2.5rem",
+                                "lineHeight": 1.4,
+                                "letterSpacing": "-0.03em",
+                                "color": "#f58220",
+                                "textAlign": "left"
+                              },
+                              "is_override": true
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I224:3035;223:2880;217:8346",
+                        "name": "arrow_box",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "8px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 44,
+                          "height": 44,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I224:3035;223:2880;224:3012",
+                            "name": "icon_arrow",
+                            "type": "INSTANCE",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 44,
+                              "height": 12,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2880;224:3012;224:3008",
+                                "name": "Union",
+                                "type": "BOOLEAN_OPERATION",
+                                "layout": null,
+                                "visual": {
+                                  "width": 44,
+                                  "height": 12,
+                                  "background": "#212121",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I224:3035;223:2880;224:3012;224:3009",
+                                    "name": "arrow",
+                                    "type": "VECTOR",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 41,
+                                      "height": 10,
+                                      "background": null,
+                                      "border": "3px solid #fff",
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "I224:3035;223:2926",
+                "name": "icon",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "15px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 265,
+                  "height": 55,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;223:2927",
+                    "name": "ic_instagram",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "17px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 55,
+                      "height": 55,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "50%",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;223:2927;71:10286",
+                        "name": "insta",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 22,
+                          "height": 22,
+                          "background": "#fff",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I224:3035;223:2928",
+                    "name": "ic_facebook",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "18px 23px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 55,
+                      "height": 55,
+                      "background": "#4169af",
+                      "border": null,
+                      "borderRadius": "50%",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;223:2928;71:10288",
+                        "name": "facebook",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 10,
+                          "height": 20,
+                          "background": "#fff",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I224:3035;223:2929",
+                    "name": "ic_kakao",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "13px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 55,
+                      "height": 55,
+                      "background": "#ffca28",
+                      "border": null,
+                      "borderRadius": "50%",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;223:2929;71:10290",
+                        "name": "kakao",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "block",
+                          "direction": "row",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FIXED",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 28,
+                          "height": 28,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I224:3035;223:2929;71:10291",
+                            "name": "Group 51",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 28,
+                              "height": 26,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;223:2929;71:10292",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 28,
+                                  "height": 26,
+                                  "background": "#263238",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10293",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 5,
+                                  "height": 1,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10294",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 1,
+                                  "height": 7,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10295",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 1,
+                                  "height": 7,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10296",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 5,
+                                  "height": 5,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10297",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 4,
+                                  "height": 4,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10298",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 4,
+                                  "height": 1,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10299",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 6,
+                                  "height": 7,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "I224:3035;223:2929;71:10300",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 1,
+                                  "height": 6,
+                                  "background": "#ffca28",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I224:3035;223:2930",
+                    "name": "ic_youtube",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0",
+                      "justify": "center",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 55,
+                      "height": 55,
+                      "background": "#d72e2e",
+                      "border": null,
+                      "borderRadius": "50%",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;223:2930;71:10317",
+                        "name": "youtube 1",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 28,
+                          "height": 28,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I224:3035;45:1586",
+            "name": "배너존",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "row",
+              "gap": "232px",
+              "padding": "0px 40px",
+              "justify": "space-between",
+              "align": "center",
+              "sizing": {
+                "horizontal": "FILL",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 1440,
+              "height": 60,
+              "background": "#084460",
+              "border": null,
+              "borderRadius": "2em",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I224:3035;223:2946",
+                "name": "f_menu",
+                "type": "INSTANCE",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "16px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 484,
+                  "height": 16,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;223:2946;45:1588",
+                    "name": "반값여행소개",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 92,
+                      "height": 16,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "반값여행소개",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 6,
+                      "segments": [
+                        {
+                          "text": "반값여행소개",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "-0.01em",
+                            "color": "#fff",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1589",
+                    "name": "구분cir",
+                    "type": "ELLIPSE",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 4,
+                      "background": "rgba(255,255,255,0.2)",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1590",
+                    "name": "참여안내",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 62,
+                      "height": 16,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "참여안내",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "참여안내",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "-0.01em",
+                            "color": "#fff",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1591",
+                    "name": "구분cir",
+                    "type": "ELLIPSE",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 4,
+                      "background": "rgba(255,255,255,0.2)",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1592",
+                    "name": "참가신청",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 62,
+                      "height": 16,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "참가신청",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "참가신청",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "-0.01em",
+                            "color": "#fff",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1593",
+                    "name": "구분cir",
+                    "type": "ELLIPSE",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 4,
+                      "background": "rgba(255,255,255,0.2)",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1594",
+                    "name": "경비신청",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 62,
+                      "height": 16,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "경비신청",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "경비신청",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "-0.01em",
+                            "color": "#fff",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1595",
+                    "name": "구분cir",
+                    "type": "ELLIPSE",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 4,
+                      "background": "rgba(255,255,255,0.2)",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;223:2946;45:1596",
+                    "name": "고객지원",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 62,
+                      "height": 16,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "고객지원",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "고객지원",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "-0.01em",
+                            "color": "#fff",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "I224:3035;45:1597",
+                "name": "패밀리사이트",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "40px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "FIXED"
+                  }
+                },
+                "visual": {
+                  "width": 258,
+                  "height": 40,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;45:1598",
+                    "name": "구분라인",
+                    "type": "LINE",
+                    "layout": null,
+                    "visual": {
+                      "width": 0,
+                      "height": 24,
+                      "background": null,
+                      "border": "2px solid #7f85a2",
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;224:3027",
+                    "name": "btn_famliy",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "61px",
+                      "padding": "0",
+                      "justify": "space-between",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 218,
+                      "height": 24,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;224:3027;45:1600",
+                        "name": "Family Site",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 93,
+                          "height": 16,
+                          "background": "#fff",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "Family Site",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 11,
+                          "segments": [
+                            {
+                              "text": "Family Site",
+                              "style": {
+                                "fontFamily": "Gmarket Sans",
+                                "fontWeight": 400,
+                                "fontSize": "1rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.01em",
+                                "color": "#fff",
+                                "textAlign": "left"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I224:3035;224:3027;45:1601",
+                        "name": "btn_drop down",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "10px",
+                          "padding": "0",
+                          "justify": "center",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "FIXED",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 24,
+                          "height": 24,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I224:3035;224:3027;45:1602",
+                            "name": "icon_arrow2",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 11,
+                              "height": 8,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I224:3035;224:3027;45:1603",
+                                "name": "Union",
+                                "type": "BOOLEAN_OPERATION",
+                                "layout": null,
+                                "visual": {
+                                  "width": 11,
+                                  "height": 7,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I224:3035;224:3027;45:1604",
+                                    "name": "arrow",
+                                    "type": "VECTOR",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 10,
+                                      "height": 5,
+                                      "background": null,
+                                      "border": "2px solid #fff",
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I224:3035;45:1605",
+            "name": "footer",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "column",
+              "gap": "25px",
+              "padding": "0px 40px",
+              "justify": "flex-start",
+              "align": "flex-start",
+              "sizing": {
+                "horizontal": "FILL",
+                "vertical": "HUG"
+              }
+            },
+            "visual": {
+              "width": 1440,
+              "height": 180,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I224:3035;45:1606",
+                "name": "menu",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "16px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 190,
+                  "height": 15,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;45:1607",
+                    "name": "개인정보처리방침",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 116,
+                      "height": 15,
+                      "background": "#212121",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "개인정보처리방침",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 8,
+                      "segments": [
+                        {
+                          "text": "개인정보처리방침",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 500,
+                            "fontSize": "0.9375rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "0em",
+                            "color": "#212121",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I224:3035;45:1608",
+                    "name": "이용약관",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 58,
+                      "height": 15,
+                      "background": "#212121",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "이용약관",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "이용약관",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 500,
+                            "fontSize": "0.9375rem",
+                            "lineHeight": 1.0,
+                            "letterSpacing": "0em",
+                            "color": "#212121",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "I224:3035;45:1610",
+                "name": "info",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "477px",
+                  "padding": "0",
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "FILL",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 1360,
+                  "height": 140,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I224:3035;45:1611",
+                    "name": "정보",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "20px",
+                      "padding": "0",
+                      "justify": "center",
+                      "align": "flex-start",
+                      "sizing": {
+                        "horizontal": "HUG",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 626,
+                      "height": 140,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I224:3035;71:10232",
+                        "name": "list",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "10px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 626,
+                          "height": 102,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I224:3035;45:1612",
+                            "name": "[26240] 강원특별자치도 영월군 영월읍 하송로 64 영월군청",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 351,
+                              "height": 18,
+                              "background": "#616161",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "[26240] 강원특별자치도 영월군 영월읍 하송로 64 영월군청",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 35,
+                              "segments": [
+                                {
+                                  "text": "[26240] 강원특별자치도 영월군 영월읍 하송로 64 영월군청",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 400,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.2,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#616161",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": false
+                                }
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "I224:3035;71:10228",
+                            "name": "운영사 : 강원특별자치도 원주시 혁신로 50, 5층 / (주)트래블파트너스 대표 김영수",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 469,
+                              "height": 18,
+                              "background": "#616161",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "운영사 : 강원특별자치도 원주시 혁신로 50, 5층 / (주)트래블파트너스 대표 김영수",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 48,
+                              "segments": [
+                                {
+                                  "text": "운영사 : 강원특별자치도 원주시 혁신로 50, 5층 / (주)트래블파트너스 대표 김영수",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 400,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.2,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#616161",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": false
+                                }
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "I224:3035;71:10226",
+                            "name": "영월반값여행 콜센터 : 033-370-2540~1 / 평일 09:00~17:00 운영",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 405,
+                              "height": 18,
+                              "background": "#616161",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "영월반값여행 콜센터 : 033-370-2540~1 / 평일 09:00~17:00 운영",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 47,
+                              "segments": [
+                                {
+                                  "text": "영월반값여행 콜센터 : 033-370-2540~1 /",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 400,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.1,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#616161",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                },
+                                {
+                                  "text": " ",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 800,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.1,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#0e80b5",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                },
+                                {
+                                  "text": "평일 09:00~17:00 운영",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 600,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.1,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#616161",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                }
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "I224:3035;71:10227",
+                            "name": "※신청·승인·지급 등 모든 절차는 평일에만 운영되며, 주말 및 공휴일은 운영 및 처리 기간 산정에서 제외됩니다.",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 626,
+                              "height": 18,
+                              "background": "#0c6b97",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "※신청·승인·지급 등 모든 절차는 평일에만 운영되며, 주말 및 공휴일은 운영 및 처리 기간 산정에서 제외됩니다.",
+                              "tag_hint": "p",
+                              "has_newline": false,
+                              "char_length": 62,
+                              "segments": [
+                                {
+                                  "text": "※신청·승인·지급 등 모든 절차는 평일에만 운영되며, 주말 및 공휴일은 운영 및 처리 기간 산정에서 제외됩니다.",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 600,
+                                    "fontSize": "0.9375rem",
+                                    "lineHeight": 1.2,
+                                    "letterSpacing": "-0.01em",
+                                    "color": "#0c6b97",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": false
+                                }
+                              ]
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "I224:3035;71:10231",
+                        "name": "COPYRIGHT ⓒ YEONGWOL-GUN. ALL RIGHTS RESERVED.",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 388,
+                          "height": 18,
+                          "background": "#616161",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "COPYRIGHT ⓒ YEONGWOL-GUN. ALL RIGHTS RESERVED.",
+                          "tag_hint": "p",
+                          "has_newline": false,
+                          "char_length": 46,
+                          "segments": [
+                            {
+                              "text": "COPYRIGHT ⓒ YEONGWOL-GUN. ALL RIGHTS RESERVED.",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "0.9375rem",
+                                "lineHeight": 1.2,
+                                "letterSpacing": "-0.01em",
+                                "color": "#616161",
+                                "textAlign": "left"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,4897 @@
+{
+  "meta": {
+    "section_index": 2,
+    "section_name": "sec_1 추천코스",
+    "profile": "basic",
+    "page": "A_main",
+    "total_sections": 7
+  },
+  "tree": {
+    "id": "68:1670",
+    "name": "sec_1 추천코스",
+    "type": "GROUP",
+    "layout": null,
+    "visual": {
+      "width": 1921,
+      "height": 1008,
+      "background": null,
+      "border": null,
+      "borderRadius": "0",
+      "opacity": 1.0
+    },
+    "text": null,
+    "children": [
+      {
+        "id": "68:1671",
+        "name": "bg_img",
+        "type": "GROUP",
+        "layout": null,
+        "visual": {
+          "width": 1920,
+          "height": 1008,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "68:1672",
+            "name": "Rectangle 76",
+            "type": "RECTANGLE",
+            "layout": null,
+            "visual": {
+              "width": 1920,
+              "height": 1008,
+              "background": "#d9d9d9",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "68:1673",
+            "name": "배경",
+            "type": "RECTANGLE",
+            "layout": null,
+            "visual": {
+              "width": 1920,
+              "height": 1008,
+              "background": "#fff",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "68:1723",
+            "name": "도로",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 646,
+              "height": 373,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "68:1724",
+                "name": "Road",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 646,
+                  "height": 373,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "68:1725",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 74,
+                      "height": 46,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1726",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 202,
+                      "height": 140,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1727",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 187,
+                      "height": 137,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1728",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 74,
+                      "height": 46,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1729",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 337,
+                      "height": 201,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1730",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 583,
+                      "height": 338,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "68:1731",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 14,
+                          "height": 7,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1732",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 12,
+                          "height": 10,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1733",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 9,
+                          "height": 12,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1734",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 8,
+                          "height": 12,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1735",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 9,
+                          "height": 12,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1736",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 11,
+                          "height": 11,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1737",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 14,
+                          "height": 9,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1738",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 109,
+                          "height": 109,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1739",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 12,
+                              "height": 8,
+                              "background": "#f1f2f2",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1740",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 4,
+                              "background": "#f1f2f2",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1741",
+                            "name": "Group",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 80,
+                              "height": 95,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "68:1742",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 14,
+                                  "height": 7,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "68:1743",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 12,
+                                  "height": 10,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "68:1744",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 9,
+                                  "height": 12,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "68:1745",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 8,
+                                  "height": 12,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "68:1746",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 8,
+                                  "height": 12,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "68:1747",
+                                "name": "Vector",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 11,
+                                  "height": 11,
+                                  "background": "#f1f2f2",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "68:1748",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 12,
+                          "height": 4,
+                          "background": "#f1f2f2",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1749",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 127,
+                          "height": 73,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1750",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1751",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1752",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1753",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1754",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1755",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1756",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 8,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "68:1757",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 154,
+                          "height": 89,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1758",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1759",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1760",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1761",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1762",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1763",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1764",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1765",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1766",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1767",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 11,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "68:1768",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 10,
+                              "height": 6,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "68:1769",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 533,
+                      "height": 307,
+                      "background": "#b3b3b3",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "68:1770",
+                "name": "Shadow",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 41,
+                  "height": 25,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "68:1771",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 41,
+                      "height": 25,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "68:1772",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 41,
+                          "height": 25,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1773",
+                            "name": "Frame",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "block",
+                              "direction": "row",
+                              "gap": "0",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 41,
+                              "height": 25,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "68:1774",
+                                "name": "Group",
+                                "type": "GROUP",
+                                "layout": null,
+                                "visual": {
+                                  "width": 41,
+                                  "height": 25,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "68:1775",
+                                    "name": "Mask group",
+                                    "type": "GROUP",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 41,
+                                      "height": 25,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "68:1778",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 41,
+                          "height": 25,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1779",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 41,
+                              "height": 25,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "68:1780",
+                "name": "Shadow",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 41,
+                  "height": 25,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "68:1781",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 41,
+                      "height": 25,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "68:1782",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 41,
+                          "height": 25,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1783",
+                            "name": "Frame",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "block",
+                              "direction": "row",
+                              "gap": "0",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 41,
+                              "height": 25,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "68:1784",
+                                "name": "Group",
+                                "type": "GROUP",
+                                "layout": null,
+                                "visual": {
+                                  "width": 41,
+                                  "height": 25,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "68:1785",
+                                    "name": "Mask group",
+                                    "type": "GROUP",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 41,
+                                      "height": 25,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "68:1788",
+                        "name": "Group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 41,
+                          "height": 25,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "68:1789",
+                            "name": "Vector",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 41,
+                              "height": 25,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "68:1790",
+                "name": "Markers",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 217,
+                  "height": 132,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "68:1791",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 37,
+                      "height": 63,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "68:1792",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 26,
+                          "height": 35,
+                          "background": "#3caadd",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1793",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 32,
+                          "height": 63,
+                          "background": "#69bde5",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "68:1794",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 34,
+                          "height": 61,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "68:1795",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 26,
+                      "height": 35,
+                      "background": "#d06f1b",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1796",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 32,
+                      "height": 63,
+                      "background": "#f79948",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "68:1797",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 34,
+                      "height": 61,
+                      "background": "#f58220",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "69:1980",
+            "name": "도로",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 970,
+              "height": 890,
+              "background": "rgba(253,225,201,0.3)",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "69:2011",
+            "name": "집",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 62,
+              "height": 43,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "69:1983",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 16,
+                  "height": 15,
+                  "background": "#82bf2f",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:1984",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 51,
+                  "height": 43,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:1985",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 36,
+                      "height": 17,
+                      "background": "#67adb5",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:1986",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 31,
+                      "height": 17,
+                      "background": "#4e9093",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:1987",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 27,
+                      "height": 41,
+                      "background": "#fff",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:1988",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 21,
+                      "height": 26,
+                      "background": "#f2f2f2",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:1989",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 8,
+                      "height": 13,
+                      "background": "#76becf",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:1990",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 18,
+                      "height": 5,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "69:1991",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1992",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1993",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1994",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "69:1995",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 18,
+                      "height": 5,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "69:1996",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1997",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1998",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:1999",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "69:2000",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 18,
+                      "height": 5,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "69:2001",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2002",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2003",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2004",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "69:2005",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 18,
+                      "height": 5,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "69:2006",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2007",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2008",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "69:2009",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 3,
+                          "height": 5,
+                          "background": "#76becf",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "69:2057",
+            "name": "사람",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 53,
+              "height": 73,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "69:2014",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 3,
+                  "height": 2,
+                  "background": "#3f7eb2",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2015",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 10,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2016",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 7,
+                      "height": 3,
+                      "background": "#2f2d48",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2017",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 3,
+                      "height": 7,
+                      "background": "#fbaf9a",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2018",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 11,
+                  "height": 10,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2019",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 5,
+                      "height": 7,
+                      "background": "#2f2d48",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2020",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 8,
+                      "height": 6,
+                      "background": "#fbaf9a",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2021",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 10,
+                  "background": "#f8853a",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2022",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 3,
+                  "height": 3,
+                  "background": "#ea917d",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2023",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 1,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2024",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 4,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2025",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 10,
+                  "height": 11,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2026",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 10,
+                      "height": 8,
+                      "background": "#1f1d2b",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2027",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 5,
+                      "height": 4,
+                      "background": "#feaa94",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2028",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 8,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2029",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 11,
+                      "height": 6,
+                      "background": "#2f2d48",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2030",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 4,
+                      "background": "#feaa94",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2031",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 16,
+                  "height": 29,
+                  "background": "#1f1d2b",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2032",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 17,
+                  "height": 33,
+                  "background": "#2f2d48",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2033",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 9,
+                  "background": "#fbaf9a",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2034",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 5,
+                  "background": "#fdbf48",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2035",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 6,
+                  "height": 1,
+                  "background": "#fdbf48",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2036",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 25,
+                  "background": "#f05e51",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2037",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 2,
+                  "height": 3,
+                  "background": "#e07259",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2038",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 19,
+                  "background": "#fbaf9a",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2039",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 9,
+                  "background": "#fbaf9a",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2040",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 4,
+                  "height": 2,
+                  "background": "#e07259",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2041",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 16,
+                  "height": 14,
+                  "background": "#fdbf48",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2042",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 10,
+                  "background": "#3f7eb2",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2043",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 2,
+                  "background": "#3f7eb2",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2044",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 9,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2045",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 6,
+                  "background": "#fbaf9a",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2046",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 5,
+                  "background": "#3f7eb2",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2047",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 1,
+                  "background": "#ea917d",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2048",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 0,
+                  "height": 1,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2049",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 0,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2050",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 1,
+                  "background": "#f05e51",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2051",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 2,
+                  "height": 6,
+                  "background": "#cc443e",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2052",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 2,
+                  "height": 4,
+                  "background": "#cc443e",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2053",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 0,
+                  "height": 1,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2054",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 1,
+                  "background": "#211c31",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2055",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 0,
+                  "background": "#ea917d",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "69:2092",
+            "name": "사람",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 53,
+              "height": 100,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "69:2059",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 9,
+                  "background": "#fb9f8f",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2060",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 7,
+                  "background": "#522a54",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2061",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 15,
+                  "height": 37,
+                  "background": "#5267b5",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2062",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 11,
+                  "background": "#21196e",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2063",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 9,
+                  "height": 12,
+                  "background": "#fca097",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2064",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 11,
+                  "height": 30,
+                  "background": "#fffeff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2065",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 17,
+                  "height": 10,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2066",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 16,
+                      "height": 8,
+                      "background": "#161259",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2067",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 6,
+                      "height": 4,
+                      "background": "#fb9c8d",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2068",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 16,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2069",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 14,
+                      "height": 14,
+                      "background": "#161259",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2070",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 6,
+                      "height": 5,
+                      "background": "#fb9c8d",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2071",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 38,
+                  "height": 50,
+                  "background": "#292972",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2072",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 3,
+                  "height": 3,
+                  "background": "#f26961",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2073",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 20,
+                  "height": 40,
+                  "background": "#5267b5",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2074",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 10,
+                  "height": 9,
+                  "background": "#000",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2075",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 24,
+                  "height": 13,
+                  "background": "#fccc46",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2076",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 6,
+                  "height": 7,
+                  "background": "#fca097",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2077",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 25,
+                  "height": 13,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2078",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 5,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2079",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 2,
+                      "height": 3,
+                      "background": "#251d7d",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2080",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 2,
+                      "height": 3,
+                      "background": "#251d7d",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2081",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 23,
+                  "background": "#3544b3",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2082",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 3,
+                  "background": "#3544b3",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2083",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 3,
+                  "height": 15,
+                  "background": "#181662",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2084",
+                "name": "Group",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 4,
+                  "height": 5,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "69:2085",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 1,
+                      "height": 1,
+                      "background": "#0d1114",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2086",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 1,
+                      "height": 1,
+                      "background": "#0d1114",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2087",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 2,
+                      "height": 1,
+                      "background": "#21196e",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "69:2088",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 2,
+                      "height": 1,
+                      "background": "#f26961",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "69:2089",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 2,
+                  "height": 1,
+                  "background": "#21196e",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:2090",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1,
+                  "height": 2,
+                  "background": "#f26961",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40:851",
+        "name": "sec_1",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "70px",
+          "padding": "140px 50px",
+          "justify": "flex-start",
+          "align": "flex-start",
+          "sizing": {
+            "horizontal": "FIXED",
+            "vertical": "HUG"
+          }
+        },
+        "visual": {
+          "width": 1921,
+          "height": 1008,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "40:852",
+            "name": "tit",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "column",
+              "gap": "40px",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "center",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "HUG"
+              }
+            },
+            "visual": {
+              "width": 1820,
+              "height": 178,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "40:854",
+                "name": "tit",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "column",
+                  "gap": "10px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "FIXED",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 1440,
+                  "height": 98,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "40:1001",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "HUG",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 483,
+                      "height": 60,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:995",
+                        "name": "영월반값여행",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 253,
+                          "height": 60,
+                          "background": "#1d1d1d",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "영월반값여행",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 6,
+                          "segments": [
+                            {
+                              "text": "영월반값여행",
+                              "style": {
+                                "fontFamily": "Gmarket Sans",
+                                "fontWeight": 400,
+                                "fontSize": "2.8125rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.03em",
+                                "color": "#1d1d1d",
+                                "textAlign": "left"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "65:691",
+                        "name": "추천코스",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 220,
+                          "height": 60,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1000",
+                            "name": "추천코스",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 170,
+                              "height": 60,
+                              "background": "#f58220",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "추천코스",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 4,
+                              "segments": [
+                                {
+                                  "text": "추천코스",
+                                  "style": {
+                                    "fontFamily": "Gmarket Sans",
+                                    "fontWeight": 500,
+                                    "fontSize": "2.8125rem",
+                                    "lineHeight": 1.3,
+                                    "letterSpacing": "-0.03em",
+                                    "color": "#f58220",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": false
+                                }
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "212:2485",
+                            "name": "ic_map",
+                            "type": "INSTANCE",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "center",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 50,
+                              "height": 50,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I212:2485;65:689",
+                                "name": "Group 139",
+                                "type": "GROUP",
+                                "layout": null,
+                                "visual": {
+                                  "width": 31,
+                                  "height": 45,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I212:2485;65:687",
+                                    "name": "Vector",
+                                    "type": "VECTOR",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 31,
+                                      "height": 45,
+                                      "background": "#f58220",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:1002",
+                    "name": "자연과 문화, 다채로움이 있는 여행",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 286,
+                      "height": 28,
+                      "background": "#616161",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "자연과 문화, 다채로움이 있는 여행",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 19,
+                      "segments": [
+                        {
+                          "text": "자연과 문화, 다채로움이 있는 여행",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "1.25rem",
+                            "lineHeight": 1.4,
+                            "letterSpacing": "-0.03em",
+                            "color": "#616161",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "40:1041",
+                "name": "tag_in",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "column",
+                  "gap": "10px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "flex-start",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 773,
+                  "height": 40,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "40:859",
+                    "name": "tab",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "25px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "HUG",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 773,
+                      "height": 40,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "214:2468",
+                        "name": "ic_arrow_L",
+                        "type": "INSTANCE",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "10px",
+                          "padding": "0px 0px 0px 16px",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "FIXED",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 40,
+                          "height": 40,
+                          "background": "#fff",
+                          "border": "1px solid #bdbdbd",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I214:2468;40:1049",
+                            "name": "arrow_R",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 14,
+                              "background": null,
+                              "border": "2px solid #212121",
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "214:2457",
+                        "name": "tab",
+                        "type": "INSTANCE",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "10px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 643,
+                          "height": 40,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I214:2457;40:1025",
+                            "name": "btn_select",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "16px",
+                              "padding": "0px 18px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 79,
+                              "height": 40,
+                              "background": "#f58220",
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I214:2457;40:1026",
+                                "name": "#txt",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 43,
+                                  "height": 22,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "#핫플",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 3,
+                                  "segments": [
+                                    {
+                                      "text": "#핫플",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 500,
+                                        "fontSize": "1rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.01em",
+                                        "color": "#fff",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I214:2457;40:1027",
+                            "name": "btn_추천코스",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "16px",
+                              "padding": "0px 18px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 128,
+                              "height": 40,
+                              "background": "#ebebeb",
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I214:2457;40:1028",
+                                "name": "#txt",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 92,
+                                  "height": 22,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "#자연과 힐링",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 7,
+                                  "segments": [
+                                    {
+                                      "text": "#자연과 힐링",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 400,
+                                        "fontSize": "1rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.01em",
+                                        "color": "#343434",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I214:2457;40:1029",
+                            "name": "btn_추천코스",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "16px",
+                              "padding": "0px 18px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 128,
+                              "height": 40,
+                              "background": "#ebebeb",
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I214:2457;40:1030",
+                                "name": "#txt",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 92,
+                                  "height": 22,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "#문화와 역사",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 7,
+                                  "segments": [
+                                    {
+                                      "text": "#문화와 역사",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 400,
+                                        "fontSize": "1rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.01em",
+                                        "color": "#343434",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I214:2457;40:1031",
+                            "name": "btn_추천코스",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "16px",
+                              "padding": "0px 18px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 109,
+                              "height": 40,
+                              "background": "#ebebeb",
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I214:2457;40:1032",
+                                "name": "#txt",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 73,
+                                  "height": 22,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "#액티비티",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 5,
+                                  "segments": [
+                                    {
+                                      "text": "#액티비티",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 400,
+                                        "fontSize": "1rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.01em",
+                                        "color": "#343434",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "I214:2457;40:1033",
+                            "name": "btn_추천코스",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "16px",
+                              "padding": "0px 18px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 159,
+                              "height": 40,
+                              "background": "#ebebeb",
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I214:2457;40:1034",
+                                "name": "#txt",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 123,
+                                  "height": 22,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "#반려견 동반여행",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 9,
+                                  "segments": [
+                                    {
+                                      "text": "#반려견 동반여행",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 400,
+                                        "fontSize": "1rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.01em",
+                                        "color": "#343434",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "214:2470",
+                        "name": "ic_arrow_R",
+                        "type": "INSTANCE",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "10px",
+                          "padding": "0px 16px 0px 0px",
+                          "justify": "flex-end",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "FIXED",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 40,
+                          "height": 40,
+                          "background": "#fff",
+                          "border": "1px solid #bdbdbd",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I214:2470;40:1043",
+                            "name": "arrow_R",
+                            "type": "VECTOR",
+                            "layout": null,
+                            "visual": {
+                              "width": 14,
+                              "height": 14,
+                              "background": null,
+                              "border": "2px solid #212121",
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "219:2975",
+            "name": "list_course",
+            "type": "INSTANCE",
+            "layout": {
+              "display": "flex",
+              "direction": "row",
+              "gap": "25px",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "center",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 1821,
+              "height": 480,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I219:2975;218:3641",
+                "name": "list",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 344,
+                  "height": 480,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I219:2975;218:3642",
+                    "name": "Rectangle 190",
+                    "type": "RECTANGLE",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": "#f5f5f5",
+                      "border": null,
+                      "borderRadius": "30px",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I219:2975;218:3643",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3644",
+                        "name": "Rectangle 191",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 480,
+                          "background": "#f7efe5",
+                          "border": null,
+                          "borderRadius": "30px",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3645",
+                        "name": "Mask group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 639,
+                          "height": 420,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I219:2975;218:3646",
+                            "name": "Ellipse 1",
+                            "type": "ELLIPSE",
+                            "layout": null,
+                            "visual": {
+                              "width": 639,
+                              "height": 420,
+                              "background": "#d9d9d9",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3647",
+                            "name": "GettyImages-a12139095 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 706,
+                              "height": 451,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I219:2975;218:3648",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "12px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 344,
+                      "height": 62,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3649",
+                        "name": "선암마을 한반도지형",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 28,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "선암마을 한반도지형",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 10,
+                          "segments": [
+                            {
+                              "text": "선암마을 한반도지형",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 700,
+                                "fontSize": "1.5625rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.02em",
+                                "color": "#212121",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3650",
+                        "name": "하늘에서 보면 한반도 모양으로 생긴 강 지형",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 22,
+                          "background": "#424242",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "하늘에서 보면 한반도 모양으로 생긴 강 지형",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 24,
+                          "segments": [
+                            {
+                              "text": "하늘에서 보면 한반도 모양으로 생긴 강 지형",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "1.0625rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.02em",
+                                "color": "#424242",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "I219:2975;218:3593",
+                "name": "list",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 344,
+                  "height": 480,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I219:2975;218:3594",
+                    "name": "Rectangle 190",
+                    "type": "RECTANGLE",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": "#f5f5f5",
+                      "border": null,
+                      "borderRadius": "30px",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I219:2975;218:3595",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3596",
+                        "name": "Rectangle 191",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 480,
+                          "background": "#f7efe5",
+                          "border": null,
+                          "borderRadius": "30px",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3597",
+                        "name": "Mask group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 639,
+                          "height": 420,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I219:2975;218:3598",
+                            "name": "Ellipse 1",
+                            "type": "ELLIPSE",
+                            "layout": null,
+                            "visual": {
+                              "width": 639,
+                              "height": 420,
+                              "background": "#d9d9d9",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3599",
+                            "name": "GettyImages-a10421869 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 545,
+                              "height": 363,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3600",
+                            "name": "GettyImages-a12197296 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 700,
+                              "height": 372,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3601",
+                            "name": "GettyImages-a12232546 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 569,
+                              "height": 377,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I219:2975;218:3602",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "12px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 344,
+                      "height": 62,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3603",
+                        "name": "청령포",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 28,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "청령포",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 3,
+                          "segments": [
+                            {
+                              "text": "청령포",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 700,
+                                "fontSize": "1.5625rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.02em",
+                                "color": "#212121",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3604",
+                        "name": "단종이 유배되었던 역사적인 장소",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 22,
+                          "background": "#424242",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "단종이 유배되었던 역사적인 장소",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 17,
+                          "segments": [
+                            {
+                              "text": "단종이 유배되었던 역사적인 장소",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "1.0625rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.02em",
+                                "color": "#424242",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "I219:2975;218:3605",
+                "name": "list",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 344,
+                  "height": 480,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I219:2975;218:3606",
+                    "name": "Rectangle 190",
+                    "type": "RECTANGLE",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": "#f5f5f5",
+                      "border": null,
+                      "borderRadius": "30px",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I219:2975;218:3607",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3608",
+                        "name": "Rectangle 191",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 480,
+                          "background": "#f7efe5",
+                          "border": null,
+                          "borderRadius": "30px",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3609",
+                        "name": "Mask group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 639,
+                          "height": 420,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I219:2975;218:3610",
+                            "name": "Ellipse 1",
+                            "type": "ELLIPSE",
+                            "layout": null,
+                            "visual": {
+                              "width": 639,
+                              "height": 420,
+                              "background": "#d9d9d9",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3613",
+                            "name": "GettyImages-a12142090 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 701,
+                              "height": 359,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I219:2975;218:3614",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "12px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 344,
+                      "height": 62,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3615",
+                        "name": "별마로 천문대",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 28,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "별마로 천문대",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 7,
+                          "segments": [
+                            {
+                              "text": "별마로 천문대",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 700,
+                                "fontSize": "1.5625rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.02em",
+                                "color": "#212121",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3616",
+                        "name": "영월에서 가장 유명한 야경 관광지",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 22,
+                          "background": "#424242",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "영월에서 가장 유명한 야경 관광지",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 18,
+                          "segments": [
+                            {
+                              "text": "영월에서 가장 유명한 야경 관광지",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "1.0625rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.02em",
+                                "color": "#424242",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "I219:2975;218:3617",
+                "name": "list",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 344,
+                  "height": 480,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I219:2975;218:3618",
+                    "name": "Rectangle 190",
+                    "type": "RECTANGLE",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": "#f5f5f5",
+                      "border": null,
+                      "borderRadius": "30px",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I219:2975;218:3619",
+                    "name": "Mask group",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3620",
+                        "name": "Rectangle 191",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 480,
+                          "background": "#f7efe5",
+                          "border": null,
+                          "borderRadius": "30px",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3621",
+                        "name": "Mask group",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 639,
+                          "height": 420,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I219:2975;218:3622",
+                            "name": "Ellipse 1",
+                            "type": "ELLIPSE",
+                            "layout": null,
+                            "visual": {
+                              "width": 639,
+                              "height": 420,
+                              "background": "#d9d9d9",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3623",
+                            "name": "GettyImages-jv13427435 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 527,
+                              "height": 381,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I219:2975;218:3624",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "12px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 344,
+                      "height": 62,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3625",
+                        "name": "고씨굴",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 28,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "고씨굴",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 3,
+                          "segments": [
+                            {
+                              "text": "고씨굴",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 700,
+                                "fontSize": "1.5625rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.02em",
+                                "color": "#212121",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3626",
+                        "name": "천연기념물로 지정된 석회암 동굴",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 22,
+                          "background": "#424242",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "천연기념물로 지정된 석회암 동굴",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 17,
+                          "segments": [
+                            {
+                              "text": "천연기념물로 지정된 석회암 동굴",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "1.0625rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.02em",
+                                "color": "#424242",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "I219:2975;218:3627",
+                "name": "list",
+                "type": "FRAME",
+                "layout": {
+                  "display": "block",
+                  "direction": "row",
+                  "gap": "0",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "flex-start",
+                  "sizing": {
+                    "horizontal": "FIXED",
+                    "vertical": "FIXED"
+                  }
+                },
+                "visual": {
+                  "width": 344,
+                  "height": 480,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I219:2975;218:3628",
+                    "name": "Rectangle 190",
+                    "type": "RECTANGLE",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": "#f5f5f5",
+                      "border": null,
+                      "borderRadius": "30px",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I219:2975;218:3629",
+                    "name": "in_img",
+                    "type": "GROUP",
+                    "layout": null,
+                    "visual": {
+                      "width": 344,
+                      "height": 480,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3630",
+                        "name": "Rectangle 191",
+                        "type": "RECTANGLE",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 480,
+                          "background": "#f7efe5",
+                          "border": null,
+                          "borderRadius": "30px",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3631",
+                        "name": "img",
+                        "type": "GROUP",
+                        "layout": null,
+                        "visual": {
+                          "width": 639,
+                          "height": 420,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I219:2975;218:3632",
+                            "name": "Ellipse 1",
+                            "type": "ELLIPSE",
+                            "layout": null,
+                            "visual": {
+                              "width": 639,
+                              "height": 420,
+                              "background": "#d9d9d9",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "I219:2975;218:3633",
+                            "name": "GettyImages-a12248235 (1) 1",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 1085,
+                              "height": 648,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I219:2975;218:3635",
+                    "name": "txt",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "12px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 344,
+                      "height": 62,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I219:2975;218:3636",
+                        "name": "선암마을 한반도지형",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 28,
+                          "background": "#212121",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "동강",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 2,
+                          "segments": [
+                            {
+                              "text": "동강",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 700,
+                                "fontSize": "1.5625rem",
+                                "lineHeight": 1.0,
+                                "letterSpacing": "-0.02em",
+                                "color": "#212121",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I219:2975;218:3637",
+                        "name": "하늘에서 보면 한반도 모양으로 생긴 강 지형",
+                        "type": "TEXT",
+                        "layout": null,
+                        "visual": {
+                          "width": 344,
+                          "height": 22,
+                          "background": "#424242",
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": {
+                          "content": "영월군을 흐르는 대표적인 자연 관광지",
+                          "tag_hint": "span",
+                          "has_newline": false,
+                          "char_length": 20,
+                          "segments": [
+                            {
+                              "text": "영월군을 흐르는 대표적인 자연 관광지",
+                              "style": {
+                                "fontFamily": "Pretendard",
+                                "fontWeight": 400,
+                                "fontSize": "1.0625rem",
+                                "lineHeight": 1.3,
+                                "letterSpacing": "-0.02em",
+                                "color": "#424242",
+                                "textAlign": "center"
+                              },
+                              "is_override": false
+                            }
+                          ]
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

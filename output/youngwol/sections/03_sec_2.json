@@ -1,0 +1,2170 @@
+{
+  "meta": {
+    "section_index": 3,
+    "section_name": "sec_2 지원절차",
+    "profile": "basic",
+    "page": "A_main",
+    "total_sections": 7
+  },
+  "tree": {
+    "id": "40:964",
+    "name": "sec_2 지원절차",
+    "type": "GROUP",
+    "layout": null,
+    "visual": {
+      "width": 1920,
+      "height": 915,
+      "background": null,
+      "border": null,
+      "borderRadius": "0",
+      "opacity": 1.0
+    },
+    "text": null,
+    "children": [
+      {
+        "id": "40:1080",
+        "name": "bg_img",
+        "type": "GROUP",
+        "layout": null,
+        "visual": {
+          "width": 1920,
+          "height": 915,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "40:1081",
+            "name": "Rectangle 76",
+            "type": "RECTANGLE",
+            "layout": null,
+            "visual": {
+              "width": 1920,
+              "height": 915,
+              "background": "#d9d9d9",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "40:1082",
+            "name": "배경",
+            "type": "RECTANGLE",
+            "layout": null,
+            "visual": {
+              "width": 1920,
+              "height": 915,
+              "background": "#e6f1f6",
+              "border": null,
+              "borderRadius": "100px 100px 0px 0px",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "69:11886",
+            "name": "그래픽",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 1769,
+              "height": 1530,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "69:11882",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 1769,
+                  "height": 1530,
+                  "background": "#c6e6f5",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 0.4000000059604645
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:11883",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 931,
+                  "height": 626,
+                  "background": "#69bde5",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 0.20000000298023224
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "69:11884",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 848,
+                  "height": 655,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "68:1653",
+            "name": "폭죽",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 66,
+              "height": 62,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "68:1640",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 3,
+                  "height": 62,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1641",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 55,
+                  "height": 33,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1642",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 55,
+                  "height": 33,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1643",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 25,
+                  "height": 41,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1644",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 46,
+                  "height": 3,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1645",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 25,
+                  "height": 41,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1646",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 6,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1647",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 6,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1648",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 3,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1649",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 6,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1650",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 5,
+                  "height": 6,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "68:1651",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 3,
+                  "background": "#3caadd",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "69:2235",
+            "name": "A Half-price Trip With YeongWol",
+            "type": "TEXT",
+            "layout": null,
+            "visual": {
+              "width": 1444,
+              "height": 112,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.20000000298023224
+            },
+            "text": {
+              "content": "A Half-price Trip With YeongWol",
+              "tag_hint": "span",
+              "has_newline": false,
+              "char_length": 31,
+              "segments": [
+                {
+                  "text": "A Half-price Trip With YeongWol",
+                  "style": {
+                    "fontFamily": "Gmarket Sans",
+                    "fontWeight": 500,
+                    "fontSize": "5rem",
+                    "lineHeight": 1.4,
+                    "letterSpacing": "0em",
+                    "textAlign": "left"
+                  },
+                  "is_override": false
+                }
+              ]
+            },
+            "children": []
+          },
+          {
+            "id": "69:11889",
+            "name": "구름",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 220,
+              "height": 136,
+              "background": "#fff",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.800000011920929
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "69:11891",
+            "name": "구름",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 113,
+              "height": 70,
+              "background": "#fff",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "40:962",
+        "name": "list",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "70px",
+          "padding": "140px 240px",
+          "justify": "flex-start",
+          "align": "center",
+          "sizing": {
+            "horizontal": "FIXED",
+            "vertical": "HUG"
+          }
+        },
+        "visual": {
+          "width": 1920,
+          "height": 914,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "40:1156",
+            "name": "tit",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "column",
+              "gap": "10px",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "center",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "HUG"
+              }
+            },
+            "visual": {
+              "width": 1440,
+              "height": 98,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "40:1157",
+                "name": "txt",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "10px",
+                  "padding": "0",
+                  "justify": "space-between",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "FIXED",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 433,
+                  "height": 60,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "40:1158",
+                    "name": "영월반값여행",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 253,
+                      "height": 60,
+                      "background": "#1d1d1d",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "영월반값여행",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 6,
+                      "segments": [
+                        {
+                          "text": "영월반값여행",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 400,
+                            "fontSize": "2.8125rem",
+                            "lineHeight": 1.3,
+                            "letterSpacing": "-0.03em",
+                            "color": "#1d1d1d",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "40:1159",
+                    "name": "지원절차",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 170,
+                      "height": 60,
+                      "background": "#1197d5",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "지원절차",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 4,
+                      "segments": [
+                        {
+                          "text": "지원절차",
+                          "style": {
+                            "fontFamily": "Gmarket Sans",
+                            "fontWeight": 500,
+                            "fontSize": "2.8125rem",
+                            "lineHeight": 1.3,
+                            "letterSpacing": "-0.03em",
+                            "color": "#1197d5",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "40:1160",
+                "name": "영월에서 힐링하고 여행경비 돌려받으세요.",
+                "type": "TEXT",
+                "layout": null,
+                "visual": {
+                  "width": 356,
+                  "height": 28,
+                  "background": "#616161",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": {
+                  "content": "영월에서 힐링하고 여행경비 돌려받으세요.",
+                  "tag_hint": "p",
+                  "has_newline": false,
+                  "char_length": 22,
+                  "segments": [
+                    {
+                      "text": "영월에서 힐링하고 여행경비 돌려받으세요.",
+                      "style": {
+                        "fontFamily": "Gmarket Sans",
+                        "fontWeight": 400,
+                        "fontSize": "1.25rem",
+                        "lineHeight": 1.4,
+                        "letterSpacing": "-0.03em",
+                        "color": "#616161",
+                        "textAlign": "left"
+                      },
+                      "is_override": false
+                    }
+                  ]
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "40:1170",
+            "name": "list",
+            "type": "FRAME",
+            "layout": {
+              "display": "flex",
+              "direction": "column",
+              "gap": "40px",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "center",
+              "sizing": {
+                "horizontal": "HUG",
+                "vertical": "HUG"
+              }
+            },
+            "visual": {
+              "width": 1441,
+              "height": 466,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "40:1084",
+                "name": "list",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "40px",
+                  "padding": "0",
+                  "justify": "flex-start",
+                  "align": "flex-start",
+                  "sizing": {
+                    "horizontal": "FIXED",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 1441,
+                  "height": 372,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "40:1085",
+                    "name": "list",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0px 0px 20px 0px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 256,
+                      "height": 372,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:1086",
+                        "name": "inner",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 256,
+                          "height": 352,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1112",
+                            "name": "img",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 256,
+                              "height": 256,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1113",
+                                "name": "Rectangle 416",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#e0e0e0",
+                                  "border": null,
+                                  "borderRadius": "31px",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1114",
+                                "name": "Rectangle 34624178",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 426,
+                                  "height": 320,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "66:887",
+                                "name": "GettyImages-1902263324 1",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 362,
+                                  "height": 263,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:1119",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "15px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 256,
+                              "height": 121,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1088",
+                                "name": " num",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 50,
+                                  "height": 50,
+                                  "background": "#009dff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:1089",
+                                    "name": "01",
+                                    "type": "TEXT",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 23,
+                                      "height": 28,
+                                      "background": "#fff",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": {
+                                      "content": "01",
+                                      "tag_hint": "span",
+                                      "has_newline": false,
+                                      "char_length": 2,
+                                      "segments": [
+                                        {
+                                          "text": "01",
+                                          "style": {
+                                            "fontFamily": "Gmarket Sans",
+                                            "fontWeight": 500,
+                                            "fontSize": "1.25rem",
+                                            "lineHeight": 1.4,
+                                            "letterSpacing": "-0.03em",
+                                            "color": "#fff",
+                                            "textAlign": "center"
+                                          },
+                                          "is_override": false
+                                        }
+                                      ]
+                                    },
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "40:1117",
+                                "name": "사전신청 여행계획 접수하기",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 56,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "사전신청\n여행계획 접수하기",
+                                  "tag_hint": "p",
+                                  "has_newline": true,
+                                  "char_length": 14,
+                                  "segments": [
+                                    {
+                                      "text": "사전신청\n",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "여행계획 ",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "접수하기",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#1197d5",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": true
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:1138",
+                    "name": "list",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0px 0px 20px 0px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 256,
+                      "height": 372,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:1139",
+                        "name": "inner",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 256,
+                          "height": 352,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1140",
+                            "name": "img",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 256,
+                              "height": 256,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1141",
+                                "name": "Rectangle 416",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#e0e0e0",
+                                  "border": null,
+                                  "borderRadius": "31px",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1142",
+                                "name": "Rectangle 34624178",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#d9e3ff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "69:7030",
+                                "name": "Group",
+                                "type": "GROUP",
+                                "layout": null,
+                                "visual": {
+                                  "width": 200,
+                                  "height": 180,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "69:7031",
+                                    "name": "Object",
+                                    "type": "GROUP",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 200,
+                                      "height": 180,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:1143",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "15px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 256,
+                              "height": 121,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1144",
+                                "name": " num",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 50,
+                                  "height": 50,
+                                  "background": "#009dff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:1145",
+                                    "name": "02",
+                                    "type": "TEXT",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 27,
+                                      "height": 28,
+                                      "background": "#fff",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": {
+                                      "content": "02",
+                                      "tag_hint": "span",
+                                      "has_newline": false,
+                                      "char_length": 2,
+                                      "segments": [
+                                        {
+                                          "text": "02",
+                                          "style": {
+                                            "fontFamily": "Gmarket Sans",
+                                            "fontWeight": 500,
+                                            "fontSize": "1.25rem",
+                                            "lineHeight": 1.4,
+                                            "letterSpacing": "-0.03em",
+                                            "color": "#fff",
+                                            "textAlign": "center"
+                                          },
+                                          "is_override": false
+                                        }
+                                      ]
+                                    },
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "40:1146",
+                                "name": "지자체 승인 문자발송 안내",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 56,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "지자체 승인\n문자발송 안내",
+                                  "tag_hint": "p",
+                                  "has_newline": true,
+                                  "char_length": 14,
+                                  "segments": [
+                                    {
+                                      "text": "지자체 승인\n",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "문자발송 안내",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#1197d5",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": true
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:1129",
+                    "name": "list",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0px 0px 20px 0px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 256,
+                      "height": 372,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:1130",
+                        "name": "inner",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 256,
+                          "height": 352,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1131",
+                            "name": "img",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 256,
+                              "height": 256,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1132",
+                                "name": "Rectangle 416",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#e0e0e0",
+                                  "border": null,
+                                  "borderRadius": "31px",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1133",
+                                "name": "Rectangle 34624178",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 426,
+                                  "height": 320,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "69:11820",
+                                "name": "GettyImages-1412520896 1",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 431,
+                                  "height": 287,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:1134",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "15px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 256,
+                              "height": 121,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1135",
+                                "name": " num",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 50,
+                                  "height": 50,
+                                  "background": "#009dff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:1136",
+                                    "name": "03",
+                                    "type": "TEXT",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 27,
+                                      "height": 28,
+                                      "background": "#fff",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": {
+                                      "content": "03",
+                                      "tag_hint": "span",
+                                      "has_newline": false,
+                                      "char_length": 2,
+                                      "segments": [
+                                        {
+                                          "text": "03",
+                                          "style": {
+                                            "fontFamily": "Gmarket Sans",
+                                            "fontWeight": 500,
+                                            "fontSize": "1.25rem",
+                                            "lineHeight": 1.4,
+                                            "letterSpacing": "-0.03em",
+                                            "color": "#fff",
+                                            "textAlign": "center"
+                                          },
+                                          "is_override": false
+                                        }
+                                      ]
+                                    },
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "40:1137",
+                                "name": "영월 여행하며 영수증과 이용사진 촬영",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 56,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "영월 여행하며\n영수증과 이용사진 촬영",
+                                  "tag_hint": "p",
+                                  "has_newline": true,
+                                  "char_length": 20,
+                                  "segments": [
+                                    {
+                                      "text": "영월 ",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "여행하며\n",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "영수증과 이용사진 촬영",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#1197d5",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": true
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:1147",
+                    "name": "list",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0px 0px 20px 0px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 256,
+                      "height": 372,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:1148",
+                        "name": "inner",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 256,
+                          "height": 352,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1149",
+                            "name": "img",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 256,
+                              "height": 256,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1150",
+                                "name": "Rectangle 416",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#e0e0e0",
+                                  "border": null,
+                                  "borderRadius": "31px",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1151",
+                                "name": "Rectangle 34624178",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 426,
+                                  "height": 320,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "69:11822",
+                                "name": "GettyImages-1440796859 1",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 449,
+                                  "height": 374,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:1152",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "15px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 256,
+                              "height": 121,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1153",
+                                "name": " num",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 50,
+                                  "height": 50,
+                                  "background": "#009dff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:1154",
+                                    "name": "04",
+                                    "type": "TEXT",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 28,
+                                      "height": 28,
+                                      "background": "#fff",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": {
+                                      "content": "04",
+                                      "tag_hint": "span",
+                                      "has_newline": false,
+                                      "char_length": 2,
+                                      "segments": [
+                                        {
+                                          "text": "04",
+                                          "style": {
+                                            "fontFamily": "Gmarket Sans",
+                                            "fontWeight": 500,
+                                            "fontSize": "1.25rem",
+                                            "lineHeight": 1.4,
+                                            "letterSpacing": "-0.03em",
+                                            "color": "#fff",
+                                            "textAlign": "center"
+                                          },
+                                          "is_override": false
+                                        }
+                                      ]
+                                    },
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "40:1155",
+                                "name": "여행경비 지원금 신청",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 56,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "여행경비 지원금 신청",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 11,
+                                  "segments": [
+                                    {
+                                      "text": "여행경비 ",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "지원금 신청",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#1197d5",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": true
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:1120",
+                    "name": "list",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0px 0px 20px 0px",
+                      "justify": "flex-start",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 256,
+                      "height": 372,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "40:1121",
+                        "name": "inner",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "0",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 256,
+                          "height": 352,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1122",
+                            "name": "img",
+                            "type": "GROUP",
+                            "layout": null,
+                            "visual": {
+                              "width": 256,
+                              "height": 256,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1123",
+                                "name": "Rectangle 416",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 256,
+                                  "background": "#e0e0e0",
+                                  "border": null,
+                                  "borderRadius": "31px",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1124",
+                                "name": "Rectangle 34624178",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 426,
+                                  "height": 320,
+                                  "background": "#c5d6f4",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "69:11824",
+                                "name": "GettyImages-1409980940 1",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 295,
+                                  "height": 214,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:1125",
+                            "name": "txt",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "15px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 256,
+                              "height": 121,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1126",
+                                "name": " num",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 50,
+                                  "height": 50,
+                                  "background": "#009dff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:1127",
+                                    "name": "05",
+                                    "type": "TEXT",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 27,
+                                      "height": 28,
+                                      "background": "#fff",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": {
+                                      "content": "05",
+                                      "tag_hint": "span",
+                                      "has_newline": false,
+                                      "char_length": 2,
+                                      "segments": [
+                                        {
+                                          "text": "05",
+                                          "style": {
+                                            "fontFamily": "Gmarket Sans",
+                                            "fontWeight": 500,
+                                            "fontSize": "1.25rem",
+                                            "lineHeight": 1.4,
+                                            "letterSpacing": "-0.03em",
+                                            "color": "#fff",
+                                            "textAlign": "center"
+                                          },
+                                          "is_override": false
+                                        }
+                                      ]
+                                    },
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "40:1128",
+                                "name": "ㅊ",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 256,
+                                  "height": 56,
+                                  "background": "#343434",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "여행경비 지원금 수령",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 11,
+                                  "segments": [
+                                    {
+                                      "text": "여행경비 ",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#343434",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": false
+                                    },
+                                    {
+                                      "text": "지원금 수령",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 600,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#1197d5",
+                                        "textAlign": "center"
+                                      },
+                                      "is_override": true
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "79:12809",
+                "name": "btn_more_round",
+                "type": "INSTANCE",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "8px",
+                  "padding": "15px 30px",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 175,
+                  "height": 54,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "2em",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I79:12809;29:2672",
+                    "name": "txt",
+                    "type": "TEXT",
+                    "layout": null,
+                    "visual": {
+                      "width": 75,
+                      "height": 24,
+                      "background": "#424242",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": {
+                      "content": "자세히 보기",
+                      "tag_hint": "span",
+                      "has_newline": false,
+                      "char_length": 6,
+                      "segments": [
+                        {
+                          "text": "자세히 보기",
+                          "style": {
+                            "fontFamily": "Pretendard",
+                            "fontWeight": 600,
+                            "fontSize": "1.0625rem",
+                            "lineHeight": 1.4,
+                            "letterSpacing": "-0.03em",
+                            "color": "#424242",
+                            "textAlign": "left"
+                          },
+                          "is_override": false
+                        }
+                      ]
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I79:12809;29:2673",
+                    "name": "arrow_box",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "10px",
+                      "padding": "0",
+                      "justify": "center",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 32,
+                      "height": 24,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I79:12809;29:2674",
+                        "name": "icon_arrow",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "10px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 32,
+                          "height": 10,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I79:12809;29:2675",
+                            "name": "icon_arrow",
+                            "type": "BOOLEAN_OPERATION",
+                            "layout": null,
+                            "visual": {
+                              "width": 32,
+                              "height": 10,
+                              "background": "#424242",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I79:12809;29:2676",
+                                "name": "arrow",
+                                "type": "VECTOR",
+                                "layout": null,
+                                "visual": {
+                                  "width": 30,
+                                  "height": 8,
+                                  "background": null,
+                                  "border": "2px solid #fff",
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

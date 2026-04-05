@@ -1,0 +1,2513 @@
+{
+  "meta": {
+    "section_index": 1,
+    "section_name": "mv",
+    "profile": "basic",
+    "page": "A_main",
+    "total_sections": 7
+  },
+  "tree": {
+    "id": "65:715",
+    "name": "mv",
+    "type": "GROUP",
+    "layout": null,
+    "visual": {
+      "width": 1921,
+      "height": 770,
+      "background": null,
+      "border": null,
+      "borderRadius": "0",
+      "opacity": 1.0
+    },
+    "text": null,
+    "children": [
+      {
+        "id": "65:719",
+        "name": "bg",
+        "type": "BOOLEAN_OPERATION",
+        "layout": null,
+        "visual": {
+          "width": 1921,
+          "height": 770,
+          "background": "#d9d9d9",
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "65:722",
+            "name": "Union",
+            "type": "BOOLEAN_OPERATION",
+            "layout": null,
+            "visual": {
+              "width": 1921,
+              "height": 770,
+              "background": "#d9d9d9",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "65:716",
+                "name": "Rectangle 34624180",
+                "type": "RECTANGLE",
+                "layout": null,
+                "visual": {
+                  "width": 1921,
+                  "height": 706,
+                  "background": "#d9d9d9",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "65:717",
+                "name": "Ellipse 14",
+                "type": "ELLIPSE",
+                "layout": null,
+                "visual": {
+                  "width": 1921,
+                  "height": 132,
+                  "background": "#d9d9d9",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "87:1134",
+        "name": "GettyImages-a12566459 1",
+        "type": "RECTANGLE",
+        "layout": null,
+        "visual": {
+          "width": 2076,
+          "height": 1384,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": []
+      },
+      {
+        "id": "65:727",
+        "name": "cover",
+        "type": "RECTANGLE",
+        "layout": null,
+        "visual": {
+          "width": 1920,
+          "height": 770,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": []
+      },
+      {
+        "id": "67:971",
+        "name": "그래픽",
+        "type": "GROUP",
+        "layout": null,
+        "visual": {
+          "width": 2184,
+          "height": 944,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "67:1561",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 972,
+              "height": 622,
+              "background": "#e7f5fb",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:963",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 388,
+              "height": 642,
+              "background": "#084460",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:966",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 578,
+              "height": 207,
+              "background": "#187e36",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 0.5
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:969",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 858,
+              "height": 599,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "67:1556",
+        "name": "플라워",
+        "type": "GROUP",
+        "layout": null,
+        "visual": {
+          "width": 294,
+          "height": 187,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 0.8999999761581421
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "67:1487",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 81,
+              "height": 124,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1488",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 56,
+                  "height": 115,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1489",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1490",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1491",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 14,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1492",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 14,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1493",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 13,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1494",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1495",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 16,
+                  "height": 22,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1496",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 37,
+                  "height": 27,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1497",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 22,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1498",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 20,
+                  "height": 28,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1499",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1500",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 14,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1501",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 23,
+                  "height": 4,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1502",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1503",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 13,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1504",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 12,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1505",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 9,
+              "height": 62,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1506",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 15,
+              "height": 121,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1507",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 15,
+              "height": 121,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1508",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 26,
+              "height": 86,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1509",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 18,
+              "height": 157,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1510",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 31,
+              "height": 36,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1511",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 11,
+                  "height": 8,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1512",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 31,
+                  "height": 32,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1513",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 31,
+              "height": 76,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1514",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 4,
+                  "height": 67,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1515",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 23,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1516",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 20,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1517",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 12,
+                  "height": 13,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1518",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 14,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1519",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 13,
+                  "height": 11,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1520",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 15,
+                  "height": 13,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1521",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 9,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1522",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 11,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1523",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 14,
+                  "height": 9,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1524",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 16,
+                  "height": 9,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1525",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 15,
+                  "height": 9,
+                  "background": "#1d9741",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1526",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 13,
+              "height": 51,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1527",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 21,
+              "height": 47,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1528",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 37,
+              "height": 54,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1529",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 38,
+              "height": 48,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1530",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 41,
+              "height": 62,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1531",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 15,
+              "height": 42,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1532",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 19,
+              "height": 41,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1533",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 36,
+              "height": 42,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1534",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 27,
+              "height": 43,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1535",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 28,
+              "height": 42,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1536",
+            "name": "Vector",
+            "type": "VECTOR",
+            "layout": null,
+            "visual": {
+              "width": 28,
+              "height": 42,
+              "background": "#1d9741",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": []
+          },
+          {
+            "id": "67:1537",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 56,
+              "height": 47,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1538",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 56,
+                  "height": 47,
+                  "background": "#fee462",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1539",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 24,
+                  "height": 20,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1540",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 45,
+              "height": 36,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1541",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 45,
+                  "height": 36,
+                  "background": "#f58220",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1542",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 19,
+                  "height": 15,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1543",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 41,
+              "height": 42,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1544",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 41,
+                  "height": 41,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1545",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 41,
+                  "height": 41,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1546",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 8,
+                  "background": "#ffe817",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1547",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 35,
+              "height": 35,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1548",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 34,
+                  "height": 34,
+                  "background": "#fee462",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1549",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 34,
+                  "height": 34,
+                  "background": "#fee462",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1550",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 7,
+                  "height": 7,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "67:1551",
+            "name": "Group",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 39,
+              "height": 39,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "67:1552",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 38,
+                  "height": 38,
+                  "background": "#fee462",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1553",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 38,
+                  "height": 38,
+                  "background": "#fee462",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              },
+              {
+                "id": "67:1554",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 8,
+                  "height": 8,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40:965",
+        "name": "mv",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "10px",
+          "padding": "0",
+          "justify": "flex-start",
+          "align": "flex-start",
+          "sizing": {
+            "horizontal": "FIXED",
+            "vertical": "FIXED"
+          }
+        },
+        "visual": {
+          "width": 1922,
+          "height": 800,
+          "background": null,
+          "border": null,
+          "borderRadius": "0",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "19:941",
+            "name": "메인배너",
+            "type": "GROUP",
+            "layout": null,
+            "visual": {
+              "width": 1920,
+              "height": 770,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "29:2670",
+                "name": "layout",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "0",
+                  "padding": "0px 160px",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "FIXED",
+                    "vertical": "FIXED"
+                  }
+                },
+                "visual": {
+                  "width": 1920,
+                  "height": 770,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "19:1018",
+                    "name": "tit",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "30px",
+                      "padding": "120px 0px",
+                      "justify": "flex-start",
+                      "align": "flex-start",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FILL"
+                      }
+                    },
+                    "visual": {
+                      "width": 700,
+                      "height": 770,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "19:1019",
+                        "name": "txt",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "column",
+                          "gap": "16px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "flex-start",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 700,
+                          "height": 192,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "210:2612",
+                            "name": "top_tag",
+                            "type": "INSTANCE",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "0px 24px 0px 16px",
+                              "justify": "center",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 195,
+                              "height": 36,
+                              "background": "#0e80b5",
+                              "border": null,
+                              "borderRadius": "16px 100px 100px 0px",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I210:2612;19:1021",
+                                "name": "숙박부터 체험까지",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 155,
+                                  "height": 28,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "숙박부터 체험까지",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 9,
+                                  "segments": [
+                                    {
+                                      "text": "숙박부터 체험까지",
+                                      "style": {
+                                        "fontFamily": "Gmarket Sans",
+                                        "fontWeight": 400,
+                                        "fontSize": "1.25rem",
+                                        "lineHeight": 1.4,
+                                        "letterSpacing": "-0.03em",
+                                        "color": "#fff",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "19:1022",
+                            "name": "영월 반값여행 에서 지금 떠나는 특별한 할인 여행",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 611,
+                              "height": 140,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "영월 반값여행 에서 지금 떠나는 특별한 할인 여행",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 27,
+                              "segments": [
+                                {
+                                  "text": "영월 반값여행",
+                                  "style": {
+                                    "fontFamily": "Gmarket Sans",
+                                    "fontWeight": 500,
+                                    "fontSize": "3.125rem",
+                                    "lineHeight": 1.4,
+                                    "letterSpacing": "-0.03em",
+                                    "color": "#fff",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                },
+                                {
+                                  "text": " ",
+                                  "style": {
+                                    "fontFamily": "Gmarket Sans",
+                                    "fontWeight": 500,
+                                    "fontSize": "2.75rem",
+                                    "lineHeight": 1.6,
+                                    "letterSpacing": "-0.0341em",
+                                    "color": "#fff",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                },
+                                {
+                                  "text": "에서 지금 떠나는 특별한 할인 여행",
+                                  "style": {
+                                    "fontFamily": "Gmarket Sans",
+                                    "fontWeight": 400,
+                                    "fontSize": "3.125rem",
+                                    "lineHeight": 1.4,
+                                    "letterSpacing": "-0.03em",
+                                    "color": "#fff",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": true
+                                }
+                              ]
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "54:1657",
+                        "name": "btn_more_round",
+                        "type": "INSTANCE",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "8px",
+                          "padding": "15px 30px",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 175,
+                          "height": 54,
+                          "background": "#fff",
+                          "border": null,
+                          "borderRadius": "2em",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "I54:1657;29:2672",
+                            "name": "txt",
+                            "type": "TEXT",
+                            "layout": null,
+                            "visual": {
+                              "width": 75,
+                              "height": 24,
+                              "background": "#424242",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": {
+                              "content": "자세히 보기",
+                              "tag_hint": "span",
+                              "has_newline": false,
+                              "char_length": 6,
+                              "segments": [
+                                {
+                                  "text": "자세히 보기",
+                                  "style": {
+                                    "fontFamily": "Pretendard",
+                                    "fontWeight": 600,
+                                    "fontSize": "1.0625rem",
+                                    "lineHeight": 1.4,
+                                    "letterSpacing": "-0.03em",
+                                    "color": "#424242",
+                                    "textAlign": "left"
+                                  },
+                                  "is_override": false
+                                }
+                              ]
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "I54:1657;29:2673",
+                            "name": "arrow_box",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "center",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "FIXED",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 32,
+                              "height": 24,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "I54:1657;29:2674",
+                                "name": "icon_arrow",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "10px",
+                                  "padding": "0",
+                                  "justify": "flex-start",
+                                  "align": "flex-start",
+                                  "sizing": {
+                                    "horizontal": "FILL",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 32,
+                                  "height": 10,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I54:1657;29:2675",
+                                    "name": "icon_arrow",
+                                    "type": "BOOLEAN_OPERATION",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 32,
+                                      "height": 10,
+                                      "background": "#424242",
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "40:783",
+                    "name": "right",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "column",
+                      "gap": "30px",
+                      "padding": "0",
+                      "justify": "flex-start",
+                      "align": "flex-start",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 900,
+                      "height": 597,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "33:2783",
+                        "name": "list",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "20px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 900,
+                          "height": 522,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:677",
+                            "name": "list",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "24px 20px",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 440,
+                              "height": 522,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "20px",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:678",
+                                "name": "내용",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "16px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "flex-start",
+                                  "sizing": {
+                                    "horizontal": "HUG",
+                                    "vertical": "HUG"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 400,
+                                  "height": 474,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:679",
+                                    "name": "상단",
+                                    "type": "FRAME",
+                                    "layout": {
+                                      "display": "flex",
+                                      "direction": "column",
+                                      "gap": "16px",
+                                      "padding": "0",
+                                      "justify": "flex-start",
+                                      "align": "flex-start",
+                                      "sizing": {
+                                        "horizontal": "HUG",
+                                        "vertical": "HUG"
+                                      }
+                                    },
+                                    "visual": {
+                                      "width": 400,
+                                      "height": 336,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  },
+                                  {
+                                    "id": "40:686",
+                                    "name": "txt",
+                                    "type": "FRAME",
+                                    "layout": {
+                                      "display": "flex",
+                                      "direction": "column",
+                                      "gap": "16px",
+                                      "padding": "0",
+                                      "justify": "flex-start",
+                                      "align": "flex-start",
+                                      "sizing": {
+                                        "horizontal": "FILL",
+                                        "vertical": "HUG"
+                                      }
+                                    },
+                                    "visual": {
+                                      "width": 400,
+                                      "height": 122,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:704",
+                            "name": "list",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "24px 20px",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 440,
+                              "height": 522,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "20px",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:705",
+                                "name": "내용",
+                                "type": "FRAME",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "column",
+                                  "gap": "16px",
+                                  "padding": "0",
+                                  "justify": "center",
+                                  "align": "flex-start",
+                                  "sizing": {
+                                    "horizontal": "HUG",
+                                    "vertical": "HUG"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 400,
+                                  "height": 474,
+                                  "background": null,
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "40:706",
+                                    "name": "상단",
+                                    "type": "FRAME",
+                                    "layout": {
+                                      "display": "flex",
+                                      "direction": "column",
+                                      "gap": "16px",
+                                      "padding": "0",
+                                      "justify": "flex-start",
+                                      "align": "flex-start",
+                                      "sizing": {
+                                        "horizontal": "HUG",
+                                        "vertical": "HUG"
+                                      }
+                                    },
+                                    "visual": {
+                                      "width": 400,
+                                      "height": 336,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  },
+                                  {
+                                    "id": "40:713",
+                                    "name": "txt",
+                                    "type": "FRAME",
+                                    "layout": {
+                                      "display": "flex",
+                                      "direction": "column",
+                                      "gap": "16px",
+                                      "padding": "0",
+                                      "justify": "flex-start",
+                                      "align": "flex-start",
+                                      "sizing": {
+                                        "horizontal": "FILL",
+                                        "vertical": "HUG"
+                                      }
+                                    },
+                                    "visual": {
+                                      "width": 400,
+                                      "height": 122,
+                                      "background": null,
+                                      "border": null,
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "40:800",
+                        "name": "btn_slide",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "20px",
+                          "padding": "0",
+                          "justify": "flex-start",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "FILL",
+                            "vertical": "HUG"
+                          }
+                        },
+                        "visual": {
+                          "width": 900,
+                          "height": 45,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "40:1035",
+                            "name": "page_#",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "8px",
+                              "padding": "10px 0px",
+                              "justify": "flex-start",
+                              "align": "center",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 67,
+                              "height": 45,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "2em",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:1036",
+                                "name": "01",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 20,
+                                  "height": 30,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "01",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 2,
+                                  "segments": [
+                                    {
+                                      "text": "01",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 700,
+                                        "fontSize": "1.125rem",
+                                        "lineHeight": 1.7,
+                                        "letterSpacing": "-0.02em",
+                                        "color": "#fff",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              },
+                              {
+                                "id": "40:1037",
+                                "name": "Rectangle 294",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 9,
+                                  "height": 9,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 0.5
+                                },
+                                "text": null,
+                                "children": []
+                              },
+                              {
+                                "id": "40:1038",
+                                "name": "04",
+                                "type": "TEXT",
+                                "layout": null,
+                                "visual": {
+                                  "width": 22,
+                                  "height": 30,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": {
+                                  "content": "04",
+                                  "tag_hint": "span",
+                                  "has_newline": false,
+                                  "char_length": 2,
+                                  "segments": [
+                                    {
+                                      "text": "04",
+                                      "style": {
+                                        "fontFamily": "Pretendard",
+                                        "fontWeight": 400,
+                                        "fontSize": "1.125rem",
+                                        "lineHeight": 1.7,
+                                        "letterSpacing": "-0.02em",
+                                        "color": "#fff",
+                                        "textAlign": "left"
+                                      },
+                                      "is_override": false
+                                    }
+                                  ]
+                                },
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "40:803",
+                            "name": "BAR",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "column",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "FILL",
+                                "vertical": "FIXED"
+                              }
+                            },
+                            "visual": {
+                              "width": 703,
+                              "height": 3,
+                              "background": "rgba(255,255,255,0.5)",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "40:804",
+                                "name": "Rectangle 296",
+                                "type": "RECTANGLE",
+                                "layout": null,
+                                "visual": {
+                                  "width": 59,
+                                  "height": 3,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "0",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "id": "210:2624",
+                            "name": "arrow",
+                            "type": "FRAME",
+                            "layout": {
+                              "display": "flex",
+                              "direction": "row",
+                              "gap": "10px",
+                              "padding": "0",
+                              "justify": "flex-start",
+                              "align": "flex-start",
+                              "sizing": {
+                                "horizontal": "HUG",
+                                "vertical": "HUG"
+                              }
+                            },
+                            "visual": {
+                              "width": 90,
+                              "height": 40,
+                              "background": null,
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": [
+                              {
+                                "id": "210:2625",
+                                "name": "ic_arrow_L",
+                                "type": "INSTANCE",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "row",
+                                  "gap": "10px",
+                                  "padding": "0px 0px 0px 16px",
+                                  "justify": "flex-start",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 40,
+                                  "height": 40,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I210:2625;54:1730",
+                                    "name": "arrow_R",
+                                    "type": "VECTOR",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 14,
+                                      "height": 14,
+                                      "background": null,
+                                      "border": "2px solid #212121",
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "210:2626",
+                                "name": "ic_arrow_R",
+                                "type": "INSTANCE",
+                                "layout": {
+                                  "display": "flex",
+                                  "direction": "row",
+                                  "gap": "10px",
+                                  "padding": "0px 16px 0px 0px",
+                                  "justify": "flex-end",
+                                  "align": "center",
+                                  "sizing": {
+                                    "horizontal": "FIXED",
+                                    "vertical": "FIXED"
+                                  }
+                                },
+                                "visual": {
+                                  "width": 40,
+                                  "height": 40,
+                                  "background": "#fff",
+                                  "border": null,
+                                  "borderRadius": "50%",
+                                  "opacity": 1.0
+                                },
+                                "text": null,
+                                "children": [
+                                  {
+                                    "id": "I210:2626;54:1732",
+                                    "name": "arrow_R",
+                                    "type": "VECTOR",
+                                    "layout": null,
+                                    "visual": {
+                                      "width": 14,
+                                      "height": 14,
+                                      "background": null,
+                                      "border": "2px solid #212121",
+                                      "borderRadius": "0",
+                                      "opacity": 1.0
+                                    },
+                                    "text": null,
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "65:604",
+                "name": "rolling btn",
+                "type": "FRAME",
+                "layout": {
+                  "display": "flex",
+                  "direction": "row",
+                  "gap": "15px",
+                  "padding": "8px 20px 8px 30px",
+                  "justify": "flex-start",
+                  "align": "center",
+                  "sizing": {
+                    "horizontal": "HUG",
+                    "vertical": "HUG"
+                  }
+                },
+                "visual": {
+                  "width": 204,
+                  "height": 51,
+                  "background": "rgba(33,33,33,0.8)",
+                  "border": null,
+                  "borderRadius": "2em",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "65:605",
+                    "name": "btn_rolling",
+                    "type": "INSTANCE",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "15px",
+                      "padding": "0",
+                      "justify": "center",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "HUG",
+                        "vertical": "HUG"
+                      }
+                    },
+                    "visual": {
+                      "width": 104,
+                      "height": 12,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "I65:605;54:1580",
+                        "name": "Rectangle 116",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 12,
+                          "height": 12,
+                          "background": "#fff",
+                          "border": null,
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I65:605;54:1581",
+                        "name": "Rectangle 117",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 8,
+                          "height": 8,
+                          "background": null,
+                          "border": "1px solid #fff",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I65:605;54:1582",
+                        "name": "Rectangle 118",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 8,
+                          "height": 8,
+                          "background": null,
+                          "border": "1px solid #fff",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I65:605;54:1583",
+                        "name": "Rectangle 119",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 8,
+                          "height": 8,
+                          "background": null,
+                          "border": "1px solid #fff",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      },
+                      {
+                        "id": "I65:605;54:1585",
+                        "name": "Rectangle 120",
+                        "type": "VECTOR",
+                        "layout": null,
+                        "visual": {
+                          "width": 8,
+                          "height": 8,
+                          "background": null,
+                          "border": "1px solid #fff",
+                          "borderRadius": "50%",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "65:606",
+                    "name": "btn_stop",
+                    "type": "FRAME",
+                    "layout": {
+                      "display": "flex",
+                      "direction": "row",
+                      "gap": "10px",
+                      "padding": "0",
+                      "justify": "center",
+                      "align": "center",
+                      "sizing": {
+                        "horizontal": "FIXED",
+                        "vertical": "FIXED"
+                      }
+                    },
+                    "visual": {
+                      "width": 35,
+                      "height": 35,
+                      "background": null,
+                      "border": null,
+                      "borderRadius": "50%",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": [
+                      {
+                        "id": "65:607",
+                        "name": "stop",
+                        "type": "FRAME",
+                        "layout": {
+                          "display": "flex",
+                          "direction": "row",
+                          "gap": "4px",
+                          "padding": "0",
+                          "justify": "center",
+                          "align": "center",
+                          "sizing": {
+                            "horizontal": "HUG",
+                            "vertical": "FIXED"
+                          }
+                        },
+                        "visual": {
+                          "width": 8,
+                          "height": 10,
+                          "background": null,
+                          "border": null,
+                          "borderRadius": "0",
+                          "opacity": 1.0
+                        },
+                        "text": null,
+                        "children": [
+                          {
+                            "id": "65:608",
+                            "name": "Rectangle 296",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 2,
+                              "height": 10,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          },
+                          {
+                            "id": "65:609",
+                            "name": "Rectangle 297",
+                            "type": "RECTANGLE",
+                            "layout": null,
+                            "visual": {
+                              "width": 2,
+                              "height": 10,
+                              "background": "#fff",
+                              "border": null,
+                              "borderRadius": "0",
+                              "opacity": 1.0
+                            },
+                            "text": null,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

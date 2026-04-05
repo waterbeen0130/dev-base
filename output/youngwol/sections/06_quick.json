@@ -1,0 +1,518 @@
+{
+  "meta": {
+    "section_index": 6,
+    "section_name": "quick",
+    "profile": "basic",
+    "page": "A_main",
+    "total_sections": 7
+  },
+  "tree": {
+    "id": "88:858",
+    "name": "quick",
+    "type": "INSTANCE",
+    "layout": {
+      "display": "flex",
+      "direction": "column",
+      "gap": "10px",
+      "padding": "0",
+      "justify": "flex-start",
+      "align": "flex-start",
+      "sizing": {
+        "horizontal": "FIXED",
+        "vertical": "HUG"
+      }
+    },
+    "visual": {
+      "width": 80,
+      "height": 350,
+      "background": null,
+      "border": null,
+      "borderRadius": "0",
+      "opacity": 1.0
+    },
+    "text": null,
+    "children": [
+      {
+        "id": "I88:858;76:31461",
+        "name": "btn_쇼핑몰",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "8px",
+          "padding": "8px 0px",
+          "justify": "flex-end",
+          "align": "center",
+          "sizing": {
+            "horizontal": "FILL",
+            "vertical": "FIXED"
+          }
+        },
+        "visual": {
+          "width": 80,
+          "height": 80,
+          "background": "#fff",
+          "border": "1px solid #e0e0e0",
+          "borderRadius": "8px",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "I88:858;76:31462",
+            "name": "quickicon_trip",
+            "type": "FRAME",
+            "layout": {
+              "display": "block",
+              "direction": "row",
+              "gap": "0",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "flex-start",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 34,
+              "height": 34,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I88:858;88:847",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 25,
+                  "height": 25,
+                  "background": "#22b24c",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "I88:858;76:31464",
+            "name": "영월쇼핑몰",
+            "type": "TEXT",
+            "layout": null,
+            "visual": {
+              "width": 59,
+              "height": 20,
+              "background": "#212121",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": {
+              "content": "영월쇼핑몰",
+              "tag_hint": "span",
+              "has_newline": false,
+              "char_length": 5,
+              "segments": [
+                {
+                  "text": "영월쇼핑몰",
+                  "style": {
+                    "fontFamily": "Pretendard",
+                    "fontWeight": 600,
+                    "fontSize": "0.875rem",
+                    "lineHeight": 1.4,
+                    "letterSpacing": "-0.04em",
+                    "color": "#212121",
+                    "textAlign": "left"
+                  },
+                  "is_override": false
+                }
+              ]
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "I88:858;76:31465",
+        "name": "btn_맛집",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "8px",
+          "padding": "8px 0px",
+          "justify": "flex-end",
+          "align": "center",
+          "sizing": {
+            "horizontal": "FILL",
+            "vertical": "FIXED"
+          }
+        },
+        "visual": {
+          "width": 80,
+          "height": 80,
+          "background": "#fff",
+          "border": "1px solid #e0e0e0",
+          "borderRadius": "8px",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "I88:858;76:31466",
+            "name": "quickicon_food",
+            "type": "FRAME",
+            "layout": {
+              "display": "block",
+              "direction": "row",
+              "gap": "0",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "flex-start",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 34,
+              "height": 34,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I88:858;88:898",
+                "name": "Group 145",
+                "type": "GROUP",
+                "layout": null,
+                "visual": {
+                  "width": 25,
+                  "height": 24,
+                  "background": null,
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": [
+                  {
+                    "id": "I88:858;88:878",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 4,
+                      "height": 24,
+                      "background": "#f58220",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I88:858;88:879",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 8,
+                      "height": 23,
+                      "background": "#f58220",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  },
+                  {
+                    "id": "I88:858;88:880",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "layout": null,
+                    "visual": {
+                      "width": 8,
+                      "height": 24,
+                      "background": "#f58220",
+                      "border": null,
+                      "borderRadius": "0",
+                      "opacity": 1.0
+                    },
+                    "text": null,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I88:858;76:31468",
+            "name": "영월맛집",
+            "type": "TEXT",
+            "layout": null,
+            "visual": {
+              "width": 47,
+              "height": 20,
+              "background": "#212121",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": {
+              "content": "영월맛집",
+              "tag_hint": "span",
+              "has_newline": false,
+              "char_length": 4,
+              "segments": [
+                {
+                  "text": "영월맛집",
+                  "style": {
+                    "fontFamily": "Pretendard",
+                    "fontWeight": 600,
+                    "fontSize": "0.875rem",
+                    "lineHeight": 1.4,
+                    "letterSpacing": "-0.04em",
+                    "color": "#212121",
+                    "textAlign": "left"
+                  },
+                  "is_override": false
+                }
+              ]
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "I88:858;76:31469",
+        "name": "btn_문롸관광",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "8px",
+          "padding": "8px 0px",
+          "justify": "flex-end",
+          "align": "center",
+          "sizing": {
+            "horizontal": "FILL",
+            "vertical": "FIXED"
+          }
+        },
+        "visual": {
+          "width": 80,
+          "height": 80,
+          "background": "#fff",
+          "border": "1px solid #e0e0e0",
+          "borderRadius": "8px",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "I88:858;76:31470",
+            "name": "icon_symbol",
+            "type": "FRAME",
+            "layout": {
+              "display": "block",
+              "direction": "row",
+              "gap": "0",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "flex-start",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 34,
+              "height": 34,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I88:858;88:932",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 30,
+                  "height": 28,
+                  "background": "#1197d5",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "I88:858;76:31472",
+            "name": "문화관광",
+            "type": "TEXT",
+            "layout": null,
+            "visual": {
+              "width": 47,
+              "height": 20,
+              "background": "#212121",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": {
+              "content": "문화관광",
+              "tag_hint": "span",
+              "has_newline": false,
+              "char_length": 4,
+              "segments": [
+                {
+                  "text": "문화관광",
+                  "style": {
+                    "fontFamily": "Pretendard",
+                    "fontWeight": 600,
+                    "fontSize": "0.875rem",
+                    "lineHeight": 1.4,
+                    "letterSpacing": "-0.04em",
+                    "color": "#212121",
+                    "textAlign": "left"
+                  },
+                  "is_override": false
+                }
+              ]
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "I88:858;76:31473",
+        "name": "btn_상담",
+        "type": "FRAME",
+        "layout": {
+          "display": "flex",
+          "direction": "column",
+          "gap": "8px",
+          "padding": "8px 0px",
+          "justify": "flex-end",
+          "align": "center",
+          "sizing": {
+            "horizontal": "FILL",
+            "vertical": "FIXED"
+          }
+        },
+        "visual": {
+          "width": 80,
+          "height": 80,
+          "background": null,
+          "border": null,
+          "borderRadius": "8px",
+          "opacity": 1.0
+        },
+        "text": null,
+        "children": [
+          {
+            "id": "I88:858;76:31474",
+            "name": "icon_cs",
+            "type": "FRAME",
+            "layout": {
+              "display": "block",
+              "direction": "row",
+              "gap": "0",
+              "padding": "0",
+              "justify": "flex-start",
+              "align": "flex-start",
+              "sizing": {
+                "horizontal": "FIXED",
+                "vertical": "FIXED"
+              }
+            },
+            "visual": {
+              "width": 30,
+              "height": 30,
+              "background": null,
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": null,
+            "children": [
+              {
+                "id": "I88:858;76:31475",
+                "name": "Vector",
+                "type": "VECTOR",
+                "layout": null,
+                "visual": {
+                  "width": 30,
+                  "height": 30,
+                  "background": "#fff",
+                  "border": null,
+                  "borderRadius": "0",
+                  "opacity": 1.0
+                },
+                "text": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "I88:858;76:31476",
+            "name": "1:1 상담",
+            "type": "TEXT",
+            "layout": null,
+            "visual": {
+              "width": 42,
+              "height": 20,
+              "background": "#fff",
+              "border": null,
+              "borderRadius": "0",
+              "opacity": 1.0
+            },
+            "text": {
+              "content": "1:1 상담",
+              "tag_hint": "span",
+              "has_newline": false,
+              "char_length": 6,
+              "segments": [
+                {
+                  "text": "1:1 상담",
+                  "style": {
+                    "fontFamily": "Pretendard",
+                    "fontWeight": 600,
+                    "fontSize": "0.875rem",
+                    "lineHeight": 1.4,
+                    "letterSpacing": "-0.04em",
+                    "color": "#fff",
+                    "textAlign": "left"
+                  },
+                  "is_override": false
+                }
+              ]
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}
