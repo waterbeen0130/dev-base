@@ -1,11 +1,8 @@
 {
   "meta": {
-    "source": "figma-mcp",
-    "extracted_at": "2026-04-05T04:25:37.532822+00:00",
-    "profile": "basic",
     "section_name": "A_main",
-    "section_id": "19:594",
-    "total_nodes": 794
+    "profile": "basic",
+    "total_nodes": 2018
   },
   "sections": [
     {
@@ -20,28 +17,28 @@
       "name": "mv",
       "slug": "mv",
       "file": "01_mv.json",
-      "node_count": 127
+      "node_count": 176
     },
     {
       "index": 2,
       "name": "sec_1 추천코스",
       "slug": "sec_1",
       "file": "02_sec_1.json",
-      "node_count": 261
+      "node_count": 265
     },
     {
       "index": 3,
       "name": "sec_2 지원절차",
       "slug": "sec_2",
       "file": "03_sec_2.json",
-      "node_count": 89
+      "node_count": 1212
     },
     {
       "index": 4,
       "name": "sec_3",
       "slug": "sec_3",
       "file": "04_sec_3.json",
-      "node_count": 191
+      "node_count": 239
     },
     {
       "index": 5,

@@ -1688,7 +1688,24 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "I54:1657;29:2676",
+                                        "name": "arrow",
+                                        "type": "VECTOR",
+                                        "layout": null,
+                                        "visual": {
+                                          "width": 30,
+                                          "height": 8,
+                                          "background": null,
+                                          "border": "2px solid #fff",
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": []
+                                      }
+                                    ]
                                   }
                                 ]
                               }
@@ -1827,7 +1844,227 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "40:680",
+                                        "name": "tit",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "row",
+                                          "gap": "10px",
+                                          "padding": "0",
+                                          "justify": "space-between",
+                                          "align": "center",
+                                          "sizing": {
+                                            "horizontal": "FIXED",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 40,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:681",
+                                            "name": "한눈에 보는 영월",
+                                            "type": "TEXT",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 207,
+                                              "height": 40,
+                                              "background": "#212121",
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": {
+                                              "content": "한눈에 보는 영월",
+                                              "tag_hint": "span",
+                                              "has_newline": false,
+                                              "char_length": 9,
+                                              "segments": [
+                                                {
+                                                  "text": "한눈에 보는 ",
+                                                  "style": {
+                                                    "fontFamily": "Gmarket Sans",
+                                                    "fontWeight": 400,
+                                                    "fontSize": "1.875rem",
+                                                    "lineHeight": 1.0,
+                                                    "letterSpacing": "-0.05em",
+                                                    "color": "#212121",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": false
+                                                },
+                                                {
+                                                  "text": "영월",
+                                                  "style": {
+                                                    "fontFamily": "Gmarket Sans",
+                                                    "fontWeight": 500,
+                                                    "fontSize": "1.875rem",
+                                                    "lineHeight": 1.3,
+                                                    "letterSpacing": "-0.05em",
+                                                    "color": "#212121",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": true
+                                                }
+                                              ]
+                                            },
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "79:12788",
+                                            "name": "btn_plus",
+                                            "type": "INSTANCE",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "center",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "FIXED",
+                                                "vertical": "FIXED"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 40,
+                                              "height": 40,
+                                              "background": "#212121",
+                                              "border": null,
+                                              "borderRadius": "50%",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "I79:12788;69:12225",
+                                                "name": "Group 142",
+                                                "type": "GROUP",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 16,
+                                                  "height": 16,
+                                                  "background": null,
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I79:12788;69:12226",
+                                                    "name": "Rectangle 34624181",
+                                                    "type": "RECTANGLE",
+                                                    "layout": null,
+                                                    "visual": {
+                                                      "width": 2,
+                                                      "height": 16,
+                                                      "background": "#fff",
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": []
+                                                  },
+                                                  {
+                                                    "id": "I79:12788;69:12227",
+                                                    "name": "Rectangle 34624182",
+                                                    "type": "RECTANGLE",
+                                                    "layout": null,
+                                                    "visual": {
+                                                      "width": 16,
+                                                      "height": 2,
+                                                      "background": "#fff",
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": []
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "id": "40:683",
+                                        "name": "img",
+                                        "type": "GROUP",
+                                        "layout": null,
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 280,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:684",
+                                            "name": "Rectangle 3",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 280,
+                                              "background": "#ddd",
+                                              "border": null,
+                                              "borderRadius": "10px",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "40:685",
+                                            "name": "Rectangle 417",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 316,
+                                              "background": "#d9d9d9",
+                                              "border": null,
+                                              "borderRadius": "10px",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "58:463",
+                                            "name": "GettyImages-a12292359 1",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 521,
+                                              "height": 347,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   },
                                   {
                                     "id": "40:686",
@@ -1854,7 +2091,372 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "40:687",
+                                        "name": "top",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "row",
+                                          "gap": "16px",
+                                          "padding": "0",
+                                          "justify": "space-between",
+                                          "align": "center",
+                                          "sizing": {
+                                            "horizontal": "FILL",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 30,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:688",
+                                            "name": "선암마을 한반도지형",
+                                            "type": "TEXT",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 198,
+                                              "height": 30,
+                                              "background": "#1d1d1d",
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": {
+                                              "content": "선암마을 한반도지형",
+                                              "tag_hint": "span",
+                                              "has_newline": false,
+                                              "char_length": 10,
+                                              "segments": [
+                                                {
+                                                  "text": "선암마을 한반도지형",
+                                                  "style": {
+                                                    "fontFamily": "Pretendard",
+                                                    "fontWeight": 700,
+                                                    "fontSize": "1.5625rem",
+                                                    "lineHeight": 1.2,
+                                                    "letterSpacing": "-0.01em",
+                                                    "color": "#1d1d1d",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": false
+                                                }
+                                              ]
+                                            },
+                                            "children": []
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "id": "40:691",
+                                        "name": "상세내용",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "column",
+                                          "gap": "12px",
+                                          "padding": "0",
+                                          "justify": "flex-start",
+                                          "align": "flex-start",
+                                          "sizing": {
+                                            "horizontal": "FILL",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 76,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:692",
+                                            "name": "위치",
+                                            "type": "FRAME",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "flex-start",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "FILL",
+                                                "vertical": "HUG"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 32,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "60:476",
+                                                "name": "icon_map",
+                                                "type": "INSTANCE",
+                                                "layout": {
+                                                  "display": "flex",
+                                                  "direction": "row",
+                                                  "gap": "10px",
+                                                  "padding": "0",
+                                                  "justify": "center",
+                                                  "align": "center",
+                                                  "sizing": {
+                                                    "horizontal": "FIXED",
+                                                    "vertical": "FIXED"
+                                                  }
+                                                },
+                                                "visual": {
+                                                  "width": 32,
+                                                  "height": 32,
+                                                  "background": "#0a5679",
+                                                  "border": null,
+                                                  "borderRadius": "50%",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I60:476;40:721",
+                                                    "name": "icon_map",
+                                                    "type": "FRAME",
+                                                    "layout": {
+                                                      "display": "flex",
+                                                      "direction": "row",
+                                                      "gap": "10px",
+                                                      "padding": "0",
+                                                      "justify": "flex-start",
+                                                      "align": "center",
+                                                      "sizing": {
+                                                        "horizontal": "FIXED",
+                                                        "vertical": "FIXED"
+                                                      }
+                                                    },
+                                                    "visual": {
+                                                      "width": 12,
+                                                      "height": 16,
+                                                      "background": null,
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": [
+                                                      {
+                                                        "id": "I60:476;40:722",
+                                                        "name": "icon_map",
+                                                        "type": "BOOLEAN_OPERATION",
+                                                        "layout": null,
+                                                        "visual": {
+                                                          "width": 12,
+                                                          "height": 16,
+                                                          "background": "#fff",
+                                                          "border": null,
+                                                          "borderRadius": "0",
+                                                          "opacity": 1.0
+                                                        },
+                                                        "text": null,
+                                                        "children": []
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "id": "40:697",
+                                                "name": "강원 영월군 한반도면 옹정리",
+                                                "type": "TEXT",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 200,
+                                                  "height": 25,
+                                                  "background": "#343434",
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": {
+                                                  "content": "강원 영월군 한반도면 옹정리",
+                                                  "tag_hint": "span",
+                                                  "has_newline": false,
+                                                  "char_length": 15,
+                                                  "segments": [
+                                                    {
+                                                      "text": "강원 영월군 한반도면 옹정리",
+                                                      "style": {
+                                                        "fontFamily": "Pretendard",
+                                                        "fontWeight": 600,
+                                                        "fontSize": "1.125rem",
+                                                        "lineHeight": 1.4,
+                                                        "letterSpacing": "0em",
+                                                        "color": "#343434",
+                                                        "textAlign": "left"
+                                                      },
+                                                      "is_override": false
+                                                    }
+                                                  ]
+                                                },
+                                                "children": []
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "id": "40:698",
+                                            "name": "전화",
+                                            "type": "FRAME",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "flex-start",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "HUG",
+                                                "vertical": "HUG"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 171,
+                                              "height": 32,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "60:484",
+                                                "name": "icon_tel",
+                                                "type": "INSTANCE",
+                                                "layout": {
+                                                  "display": "flex",
+                                                  "direction": "row",
+                                                  "gap": "10px",
+                                                  "padding": "0",
+                                                  "justify": "center",
+                                                  "align": "center",
+                                                  "sizing": {
+                                                    "horizontal": "FIXED",
+                                                    "vertical": "FIXED"
+                                                  }
+                                                },
+                                                "visual": {
+                                                  "width": 32,
+                                                  "height": 32,
+                                                  "background": "#0a5679",
+                                                  "border": null,
+                                                  "borderRadius": "50%",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I60:484;40:700",
+                                                    "name": "icon_tel",
+                                                    "type": "FRAME",
+                                                    "layout": {
+                                                      "display": "flex",
+                                                      "direction": "row",
+                                                      "gap": "10px",
+                                                      "padding": "0",
+                                                      "justify": "flex-start",
+                                                      "align": "center",
+                                                      "sizing": {
+                                                        "horizontal": "FIXED",
+                                                        "vertical": "FIXED"
+                                                      }
+                                                    },
+                                                    "visual": {
+                                                      "width": 14,
+                                                      "height": 16,
+                                                      "background": null,
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": [
+                                                      {
+                                                        "id": "I60:484;54:1607",
+                                                        "name": "Vector",
+                                                        "type": "VECTOR",
+                                                        "layout": null,
+                                                        "visual": {
+                                                          "width": 15,
+                                                          "height": 15,
+                                                          "background": "#fff",
+                                                          "border": null,
+                                                          "borderRadius": "0",
+                                                          "opacity": 1.0
+                                                        },
+                                                        "text": null,
+                                                        "children": []
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "id": "40:703",
+                                                "name": "033-370-0000",
+                                                "type": "TEXT",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 129,
+                                                  "height": 25,
+                                                  "background": "#343434",
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": {
+                                                  "content": "033-370-0000",
+                                                  "tag_hint": "span",
+                                                  "has_newline": false,
+                                                  "char_length": 12,
+                                                  "segments": [
+                                                    {
+                                                      "text": "033-370-0000",
+                                                      "style": {
+                                                        "fontFamily": "Pretendard",
+                                                        "fontWeight": 600,
+                                                        "fontSize": "1.125rem",
+                                                        "lineHeight": 1.4,
+                                                        "letterSpacing": "0em",
+                                                        "color": "#343434",
+                                                        "textAlign": "left"
+                                                      },
+                                                      "is_override": false
+                                                    }
+                                                  ]
+                                                },
+                                                "children": []
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
                                 ]
                               }
@@ -1937,7 +2539,259 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "79:12801",
+                                        "name": "tit",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "row",
+                                          "gap": "10px",
+                                          "padding": "0",
+                                          "justify": "space-between",
+                                          "align": "center",
+                                          "sizing": {
+                                            "horizontal": "FIXED",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 40,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "210:2618",
+                                            "name": "한눈에 보는 영월",
+                                            "type": "TEXT",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 207,
+                                              "height": 40,
+                                              "background": "#212121",
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": {
+                                              "content": "한눈에 보는 영월",
+                                              "tag_hint": "span",
+                                              "has_newline": false,
+                                              "char_length": 9,
+                                              "segments": [
+                                                {
+                                                  "text": "한눈에 보는 ",
+                                                  "style": {
+                                                    "fontFamily": "Gmarket Sans",
+                                                    "fontWeight": 400,
+                                                    "fontSize": "1.875rem",
+                                                    "lineHeight": 1.0,
+                                                    "letterSpacing": "-0.05em",
+                                                    "color": "#212121",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": false
+                                                },
+                                                {
+                                                  "text": "영월",
+                                                  "style": {
+                                                    "fontFamily": "Gmarket Sans",
+                                                    "fontWeight": 500,
+                                                    "fontSize": "1.875rem",
+                                                    "lineHeight": 1.3,
+                                                    "letterSpacing": "-0.05em",
+                                                    "color": "#212121",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": true
+                                                }
+                                              ]
+                                            },
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "79:12804",
+                                            "name": "btn_plus",
+                                            "type": "INSTANCE",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "center",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "FIXED",
+                                                "vertical": "FIXED"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 40,
+                                              "height": 40,
+                                              "background": "#212121",
+                                              "border": null,
+                                              "borderRadius": "50%",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "I79:12804;69:12225",
+                                                "name": "Group 142",
+                                                "type": "GROUP",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 16,
+                                                  "height": 16,
+                                                  "background": null,
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I79:12804;69:12226",
+                                                    "name": "Rectangle 34624181",
+                                                    "type": "RECTANGLE",
+                                                    "layout": null,
+                                                    "visual": {
+                                                      "width": 2,
+                                                      "height": 16,
+                                                      "background": "#fff",
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": []
+                                                  },
+                                                  {
+                                                    "id": "I79:12804;69:12227",
+                                                    "name": "Rectangle 34624182",
+                                                    "type": "RECTANGLE",
+                                                    "layout": null,
+                                                    "visual": {
+                                                      "width": 16,
+                                                      "height": 2,
+                                                      "background": "#fff",
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": []
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "id": "40:710",
+                                        "name": "img",
+                                        "type": "GROUP",
+                                        "layout": null,
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 280,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:711",
+                                            "name": "Rectangle 3",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 280,
+                                              "background": "#ddd",
+                                              "border": null,
+                                              "borderRadius": "10px",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "40:712",
+                                            "name": "Rectangle 417",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 316,
+                                              "background": "#d9d9d9",
+                                              "border": null,
+                                              "borderRadius": "10px",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "80:24361",
+                                            "name": "GettyImages-a12566363 (1) 1",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 632,
+                                              "height": 421,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "87:1123",
+                                            "name": "GettyImages-a12232546 1",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 453,
+                                              "height": 300,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          },
+                                          {
+                                            "id": "87:1154",
+                                            "name": "GettyImages-a12232547 2",
+                                            "type": "RECTANGLE",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 493,
+                                              "height": 329,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   },
                                   {
                                     "id": "40:713",
@@ -1964,7 +2818,372 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "40:714",
+                                        "name": "top",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "row",
+                                          "gap": "16px",
+                                          "padding": "0",
+                                          "justify": "space-between",
+                                          "align": "center",
+                                          "sizing": {
+                                            "horizontal": "FILL",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 30,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:715",
+                                            "name": "청령포",
+                                            "type": "TEXT",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 65,
+                                              "height": 30,
+                                              "background": "#1d1d1d",
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": {
+                                              "content": "청령포",
+                                              "tag_hint": "span",
+                                              "has_newline": false,
+                                              "char_length": 3,
+                                              "segments": [
+                                                {
+                                                  "text": "청령포",
+                                                  "style": {
+                                                    "fontFamily": "Pretendard",
+                                                    "fontWeight": 700,
+                                                    "fontSize": "1.5625rem",
+                                                    "lineHeight": 1.2,
+                                                    "letterSpacing": "-0.01em",
+                                                    "color": "#1d1d1d",
+                                                    "textAlign": "left"
+                                                  },
+                                                  "is_override": false
+                                                }
+                                              ]
+                                            },
+                                            "children": []
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "id": "40:718",
+                                        "name": "상세내용",
+                                        "type": "FRAME",
+                                        "layout": {
+                                          "display": "flex",
+                                          "direction": "column",
+                                          "gap": "12px",
+                                          "padding": "0",
+                                          "justify": "flex-start",
+                                          "align": "flex-start",
+                                          "sizing": {
+                                            "horizontal": "FILL",
+                                            "vertical": "HUG"
+                                          }
+                                        },
+                                        "visual": {
+                                          "width": 400,
+                                          "height": 76,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "40:719",
+                                            "name": "위치",
+                                            "type": "FRAME",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "flex-start",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "FILL",
+                                                "vertical": "HUG"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 400,
+                                              "height": 32,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "60:492",
+                                                "name": "icon_map",
+                                                "type": "INSTANCE",
+                                                "layout": {
+                                                  "display": "flex",
+                                                  "direction": "row",
+                                                  "gap": "10px",
+                                                  "padding": "0",
+                                                  "justify": "center",
+                                                  "align": "center",
+                                                  "sizing": {
+                                                    "horizontal": "FIXED",
+                                                    "vertical": "FIXED"
+                                                  }
+                                                },
+                                                "visual": {
+                                                  "width": 32,
+                                                  "height": 32,
+                                                  "background": "#0a5679",
+                                                  "border": null,
+                                                  "borderRadius": "50%",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I60:492;40:721",
+                                                    "name": "icon_map",
+                                                    "type": "FRAME",
+                                                    "layout": {
+                                                      "display": "flex",
+                                                      "direction": "row",
+                                                      "gap": "10px",
+                                                      "padding": "0",
+                                                      "justify": "flex-start",
+                                                      "align": "center",
+                                                      "sizing": {
+                                                        "horizontal": "FIXED",
+                                                        "vertical": "FIXED"
+                                                      }
+                                                    },
+                                                    "visual": {
+                                                      "width": 12,
+                                                      "height": 16,
+                                                      "background": null,
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": [
+                                                      {
+                                                        "id": "I60:492;40:722",
+                                                        "name": "icon_map",
+                                                        "type": "BOOLEAN_OPERATION",
+                                                        "layout": null,
+                                                        "visual": {
+                                                          "width": 12,
+                                                          "height": 16,
+                                                          "background": "#fff",
+                                                          "border": null,
+                                                          "borderRadius": "0",
+                                                          "opacity": 1.0
+                                                        },
+                                                        "text": null,
+                                                        "children": []
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "id": "40:724",
+                                                "name": "강원 영월군 남면 광천리 산67-1",
+                                                "type": "TEXT",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 227,
+                                                  "height": 25,
+                                                  "background": "#343434",
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": {
+                                                  "content": "강원 영월군 남면 광천리 산67-1",
+                                                  "tag_hint": "span",
+                                                  "has_newline": false,
+                                                  "char_length": 19,
+                                                  "segments": [
+                                                    {
+                                                      "text": "강원 영월군 남면 광천리 산67-1",
+                                                      "style": {
+                                                        "fontFamily": "Pretendard",
+                                                        "fontWeight": 600,
+                                                        "fontSize": "1.125rem",
+                                                        "lineHeight": 1.4,
+                                                        "letterSpacing": "0em",
+                                                        "color": "#343434",
+                                                        "textAlign": "left"
+                                                      },
+                                                      "is_override": false
+                                                    }
+                                                  ]
+                                                },
+                                                "children": []
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "id": "40:725",
+                                            "name": "전화",
+                                            "type": "FRAME",
+                                            "layout": {
+                                              "display": "flex",
+                                              "direction": "row",
+                                              "gap": "10px",
+                                              "padding": "0",
+                                              "justify": "flex-start",
+                                              "align": "center",
+                                              "sizing": {
+                                                "horizontal": "HUG",
+                                                "vertical": "HUG"
+                                              }
+                                            },
+                                            "visual": {
+                                              "width": 168,
+                                              "height": 32,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": [
+                                              {
+                                                "id": "60:488",
+                                                "name": "icon_tel",
+                                                "type": "INSTANCE",
+                                                "layout": {
+                                                  "display": "flex",
+                                                  "direction": "row",
+                                                  "gap": "10px",
+                                                  "padding": "0",
+                                                  "justify": "center",
+                                                  "align": "center",
+                                                  "sizing": {
+                                                    "horizontal": "FIXED",
+                                                    "vertical": "FIXED"
+                                                  }
+                                                },
+                                                "visual": {
+                                                  "width": 32,
+                                                  "height": 32,
+                                                  "background": "#0a5679",
+                                                  "border": null,
+                                                  "borderRadius": "50%",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": null,
+                                                "children": [
+                                                  {
+                                                    "id": "I60:488;40:700",
+                                                    "name": "icon_tel",
+                                                    "type": "FRAME",
+                                                    "layout": {
+                                                      "display": "flex",
+                                                      "direction": "row",
+                                                      "gap": "10px",
+                                                      "padding": "0",
+                                                      "justify": "flex-start",
+                                                      "align": "center",
+                                                      "sizing": {
+                                                        "horizontal": "FIXED",
+                                                        "vertical": "FIXED"
+                                                      }
+                                                    },
+                                                    "visual": {
+                                                      "width": 14,
+                                                      "height": 16,
+                                                      "background": null,
+                                                      "border": null,
+                                                      "borderRadius": "0",
+                                                      "opacity": 1.0
+                                                    },
+                                                    "text": null,
+                                                    "children": [
+                                                      {
+                                                        "id": "I60:488;54:1607",
+                                                        "name": "Vector",
+                                                        "type": "VECTOR",
+                                                        "layout": null,
+                                                        "visual": {
+                                                          "width": 15,
+                                                          "height": 15,
+                                                          "background": "#fff",
+                                                          "border": null,
+                                                          "borderRadius": "0",
+                                                          "opacity": 1.0
+                                                        },
+                                                        "text": null,
+                                                        "children": []
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "id": "40:730",
+                                                "name": "033-370-0001",
+                                                "type": "TEXT",
+                                                "layout": null,
+                                                "visual": {
+                                                  "width": 126,
+                                                  "height": 25,
+                                                  "background": "#343434",
+                                                  "border": null,
+                                                  "borderRadius": "0",
+                                                  "opacity": 1.0
+                                                },
+                                                "text": {
+                                                  "content": "033-370-0001",
+                                                  "tag_hint": "span",
+                                                  "has_newline": false,
+                                                  "char_length": 12,
+                                                  "segments": [
+                                                    {
+                                                      "text": "033-370-0001",
+                                                      "style": {
+                                                        "fontFamily": "Pretendard",
+                                                        "fontWeight": 600,
+                                                        "fontSize": "1.125rem",
+                                                        "lineHeight": 1.4,
+                                                        "letterSpacing": "0em",
+                                                        "color": "#343434",
+                                                        "textAlign": "left"
+                                                      },
+                                                      "is_override": false
+                                                    }
+                                                  ]
+                                                },
+                                                "children": []
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
                                 ]
                               }

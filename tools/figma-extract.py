@@ -587,7 +587,7 @@ def get_top_frames(data: dict[str, Any]) -> list[dict[str, Any]]:
     return frames
 
 
-def fetch_figma_node(file_key: str, node_id: str, depth: int = 8) -> dict[str, Any]:
+def fetch_figma_node(file_key: str, node_id: str, depth: int = 15) -> dict[str, Any]:
     """Fetch node data from Figma REST API."""
     import urllib.error
     import urllib.request

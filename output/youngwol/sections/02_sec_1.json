@@ -925,7 +925,41 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "68:1776",
+                                        "name": "Group",
+                                        "type": "GROUP",
+                                        "layout": null,
+                                        "visual": {
+                                          "width": 41,
+                                          "height": 25,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "68:1777",
+                                            "name": "Vector",
+                                            "type": "VECTOR",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 41,
+                                              "height": 25,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
                                 ]
                               }
@@ -1070,7 +1104,41 @@
                                       "opacity": 1.0
                                     },
                                     "text": null,
-                                    "children": []
+                                    "children": [
+                                      {
+                                        "id": "68:1786",
+                                        "name": "Group",
+                                        "type": "GROUP",
+                                        "layout": null,
+                                        "visual": {
+                                          "width": 41,
+                                          "height": 25,
+                                          "background": null,
+                                          "border": null,
+                                          "borderRadius": "0",
+                                          "opacity": 1.0
+                                        },
+                                        "text": null,
+                                        "children": [
+                                          {
+                                            "id": "68:1787",
+                                            "name": "Vector",
+                                            "type": "VECTOR",
+                                            "layout": null,
+                                            "visual": {
+                                              "width": 41,
+                                              "height": 25,
+                                              "background": null,
+                                              "border": null,
+                                              "borderRadius": "0",
+                                              "opacity": 1.0
+                                            },
+                                            "text": null,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
                                 ]
                               }
