@@ -276,12 +276,14 @@ class SemanticConverter:
             p["text-align"] = ta
         return p
 
-    def _emit(self, selector: str, props: dict[str, str]) -> None:
-        """Add CSS rule, merging into existing if same selector."""
+    def _emit(self, selector: str, props: dict[str, str], skip_if_exists: bool = False) -> None:
+        """Add CSS rule, merging into existing if same selector.
+        skip_if_exists=True: don't overwrite (for reused list item classes)."""
         if not props:
             return
         if selector in self.css_rules:
-            self.css_rules[selector].update(props)
+            if not skip_if_exists:
+                self.css_rules[selector].update(props)
         else:
             self.css_rules[selector] = dict(props)
 
@@ -486,14 +488,16 @@ class SemanticConverter:
         return props
 
     def _is_empty_node(self, node: dict) -> bool:
-        """Empty node: no text, no children, no image-map hit, not decorative with bg."""
+        """Empty node: no text, no children, no image-map hit, not decorative with bg/border."""
         if node.get("text") or node.get("children"):
             return False
         if self.image_map.get(node.get("id", "")):
             return False
-        # Decorative with background is a visual element (dot, divider)
         v = node.get("visual", {})
-        if v.get("background"):
+        # Keep nodes with visual styling (background, border, borderRadius)
+        if v.get("background") or v.get("border"):
+            return False
+        if v.get("borderRadius") and v["borderRadius"] != "0":
             return False
         return True
 
@@ -672,6 +676,9 @@ class SemanticConverter:
         container_css.update(self._fix_padding(self._layout_to_css(layout)))
         container_css.update(self._visual_to_css(visual, bool(layout)))
         container_css.update(pending_flex_css)
+        # Remove display:block from containers — only decorative/divider use block
+        if container_css.get("display") == "block" and children:
+            container_css.pop("display", None)
 
         # Content on top of background
         if node.get("_needs_z_index"):
@@ -690,7 +697,7 @@ class SemanticConverter:
             container_css["position"] = "relative"
             container_css["overflow"] = "hidden"
 
-        self._emit(f".{cls}", container_css)
+        self._emit(f".{cls}", container_css, skip_if_exists=reuse)
 
         # If this container has bg children, non-bg children need z-index
         if has_bg_child and depth <= 3:
