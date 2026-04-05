@@ -182,8 +182,10 @@ class SemanticConverter:
             return f"{parent_context}_{base_slug}", True
         return slug, False
 
-    def _cls(self, name: str, is_common: bool = False, parent_cls: str = "") -> str:
-        """Generate class. Common areas get no page prefix. Generic names remapped."""
+    def _cls(self, name: str, is_common: bool = False, parent_cls: str = "",
+             reuse: bool = False) -> str:
+        """Generate class. Common areas get no page prefix. Generic names remapped.
+        reuse=True: return same class without incrementing counter (for list siblings)."""
         slug = self._contextual_slug(name, parent_cls)
         common_names = {"header", "footer", "gnb", "logo", "copyright",
                         "btn_top", "btn_menu", "btn_close", "total_menu",
@@ -196,6 +198,8 @@ class SemanticConverter:
             base = slug
         else:
             base = f"{self.page}_{slug}"
+        if reuse:
+            return base
         count = self.cls_counter.get(base, 0)
         self.cls_counter[base] = count + 1
         return base if count == 0 else f"{base}_{count}"
@@ -211,16 +215,20 @@ class SemanticConverter:
         if d:
             p["flex-direction"] = d
         gap = layout.get("gap")
-        if gap and gap != "0":
+        if gap and gap != "0" and gap != "0px":
             p["gap"] = gap
         pad = layout.get("padding")
         if pad and pad != "0":
-            p["padding"] = pad
+            # Clean up 0px → 0, then check if all-zero
+            clean = re.sub(r'\b0px\b', '0', pad).strip()
+            parts = clean.split()
+            if any(v != "0" for v in parts):
+                p["padding"] = clean
         j = layout.get("justify")
-        if j:
+        if j and j != "flex-start":  # flex-start is default
             p["justify-content"] = j
         a = layout.get("align")
-        if a:
+        if a and a not in ("stretch", "flex-start"):  # stretch/flex-start are defaults
             p["align-items"] = a
         return p
 
@@ -242,15 +250,20 @@ class SemanticConverter:
             p["opacity"] = str(opacity)
         return p
 
+    # Default font declared in reset.css — skip to avoid redundancy
+    DEFAULT_FONTS = {"pretendard"}
+
     def _segment_to_css(self, style: dict) -> dict[str, str]:
         """Extract ALL text CSS from a single segment style. No omission."""
         p: dict[str, str] = {}
-        if style.get("fontFamily"):
-            p["font-family"] = f"'{style['fontFamily']}', sans-serif"
+        ff = style.get("fontFamily")
+        if ff and ff.lower() not in self.DEFAULT_FONTS:
+            p["font-family"] = f"'{ff}', sans-serif"
         if style.get("fontSize"):
             p["font-size"] = str(style["fontSize"])
-        if style.get("fontWeight"):
-            p["font-weight"] = str(style["fontWeight"])
+        fw = style.get("fontWeight")
+        if fw and str(fw) != "400":  # 400 is default, skip
+            p["font-weight"] = str(fw)
         if style.get("lineHeight") is not None:
             p["line-height"] = str(style["lineHeight"])
         ls = style.get("letterSpacing")
@@ -275,7 +288,7 @@ class SemanticConverter:
     # ── Detection helpers ──
 
     def _is_list(self, children: list[dict], parent_name: str = "") -> bool:
-        """Detect repeating list pattern — strict rules to avoid false positives."""
+        """Detect repeating list pattern — 3+ similar children (strict)."""
         if len(children) < 3:
             return False
         # Layout wrapper names are never lists
@@ -283,8 +296,9 @@ class SemanticConverter:
                          "info", "txt", "bg_img", "frame"}
         if _slug(parent_name) in wrapper_names:
             return False
-        types = [c.get("type") for c in children]
-        if len(set(types)) != 1 or types[0] not in ("FRAME", "INSTANCE"):
+        types = set(c.get("type") for c in children)
+        # Allow mix of FRAME/INSTANCE/GROUP — all are container types
+        if not types.issubset({"FRAME", "INSTANCE", "GROUP"}):
             return False
         counts = [len(c.get("children", [])) for c in children]
         if not counts or max(counts) - min(counts) > 2:
@@ -372,10 +386,15 @@ class SemanticConverter:
 
     def _should_unwrap(self, node: dict) -> bool:
         """Check if this wrapper node should be removed to reduce DOM depth.
-        Unwrap if: no meaningful styling, single child."""
+        Unwrap if: no meaningful visual styling, single child.
+        Layout props (gap/padding) are transferred to child.
+        Also unwrap multi-child wrappers that add no visual styling and only
+        have layout direction matching the parent (redundant flex container)."""
         if node.get("text"):
             return False
         children = node.get("children", [])
+        if len(children) == 0:
+            return True  # empty container, will be caught by _is_empty_node too
         if len(children) != 1:
             return False
         layout = node.get("layout")
@@ -385,13 +404,30 @@ class SemanticConverter:
             visual.get("border") or
             (visual.get("borderRadius") and visual["borderRadius"] != "0")
         )
-        # Layout-only wrappers with default direction and no gap/padding can be unwrapped
-        if layout and not has_styling:
-            gap = layout.get("gap", "0")
+        if has_styling:
+            return False
+        # Transfer layout props to single child before unwrapping
+        if layout:
+            child = children[0]
+            if not child.get("layout"):
+                child["layout"] = {}
+            child_layout = child["layout"]
+            # Transfer padding if child doesn't have its own
             pad = layout.get("padding", "0")
-            if gap == "0" and pad == "0":
-                return True
-        return not has_styling and not layout
+            if pad != "0" and child_layout.get("padding", "0") == "0":
+                child_layout["padding"] = pad
+            # Transfer gap
+            gap = layout.get("gap", "0")
+            if gap != "0" and child_layout.get("gap", "0") == "0":
+                child_layout["gap"] = gap
+            # Transfer direction
+            d = layout.get("direction")
+            if d and not child_layout.get("direction"):
+                child_layout["direction"] = d
+            # Transfer display
+            if not child_layout.get("display"):
+                child_layout["display"] = layout.get("display", "flex")
+        return True
 
     def _is_vector_group(self, node: dict) -> bool:
         """Detect groups that contain only vectors/rectangles (SVG/icon groups).
@@ -436,15 +472,36 @@ class SemanticConverter:
                 lr = int(float(parts[1]))  # right value
                 if lr >= 100:
                     # Keep top/bottom, zero out left/right
+                    tb = int(float(parts[0]))
                     if len(parts) == 2:
-                        props["padding"] = f"{parts[0]}px 0"
+                        props["padding"] = f"{tb}px 0" if tb > 0 else ""
                     elif len(parts) == 4:
-                        props["padding"] = f"{parts[0]}px 0 {parts[2]}px 0"
+                        bt = int(float(parts[2]))
+                        if tb == 0 and bt == 0:
+                            props.pop("padding", None)
+                        else:
+                            props["padding"] = f"{tb}px 0 {bt}px 0"
             except (ValueError, IndexError):
                 pass
         return props
 
+    def _is_empty_node(self, node: dict) -> bool:
+        """Empty node: no text, no children, no image-map hit, not decorative with bg."""
+        if node.get("text") or node.get("children"):
+            return False
+        if self.image_map.get(node.get("id", "")):
+            return False
+        # Decorative with background is a visual element (dot, divider)
+        v = node.get("visual", {})
+        if v.get("background"):
+            return False
+        return True
+
     def _render(self, node: dict, depth: int = 0, parent_cls: str = "") -> None:
+        # Skip empty nodes (common.md: empty div forbidden)
+        if depth > 0 and self._is_empty_node(node):
+            return
+
         # Unwrap unnecessary wrappers (reduce DOM depth)
         if depth > 0 and self._should_unwrap(node):
             children = node.get("children", [])
@@ -551,24 +608,34 @@ class SemanticConverter:
 
         # ── Text nodes ──
         if text:
-            cls = self._cls(name, parent_cls=parent_cls)
             tag = text.get("tag_hint", "span")
             segments = text.get("segments", [])
+            use_parent_sel = node.pop("_use_parent_selector", False)
+            parent_css_cls = node.pop("_parent_css_cls", "")
+            selector_suffix = node.pop("_selector_suffix", "")
 
-            # Container CSS (layout + visual, but NOT background-color if it equals text color)
-            container_css = {}
-            container_css.update(self._fix_padding(self._layout_to_css(layout)))
-            container_css.update(self._visual_to_css(visual, bool(layout)))
-            container_css.update(pending_flex_css)
-            # Base text style from first segment
+            # Build CSS properties
+            text_css: dict[str, str] = {}
+            text_css.update(self._fix_padding(self._layout_to_css(layout)))
+            text_css.update(self._visual_to_css(visual, bool(layout)))
+            text_css.update(pending_flex_css)
             if segments:
                 base_style = segments[0]["style"]
                 base_css = self._segment_to_css(base_style)
-                # Remove bg-color if same as text color (Figma text fill artifact)
-                if container_css.get("background-color") == base_css.get("color"):
-                    del container_css["background-color"]
-                container_css.update(base_css)
-            self._emit(f".{cls}", container_css)
+                if text_css.get("background-color") == base_css.get("color"):
+                    del text_css["background-color"]
+                text_css.update(base_css)
+
+            if use_parent_sel and parent_css_cls:
+                # common.md: use .parent tag selector — no individual class
+                css_selector = f".{parent_css_cls} {tag}{selector_suffix}"
+                self._emit(css_selector, text_css)
+                html_open = f"<{tag}>"
+            else:
+                text_reuse = node.pop("_reuse_cls", False)
+                cls = self._cls(name, parent_cls=parent_cls, reuse=text_reuse)
+                self._emit(f".{cls}", text_css)
+                html_open = f"<{tag} class=\"{cls}\">"
 
             # Render content with override spans
             if len(segments) > 1:
@@ -581,20 +648,26 @@ class SemanticConverter:
                     else:
                         diff = self._style_diff(base_style, seg["style"])
                         if diff:
-                            seg_cls = f"{cls}_s{i}"
-                            self._emit(f".{seg_cls}", diff)
-                            parts.append(f'<span class="{seg_cls}">{seg_text}</span>')
+                            if use_parent_sel and parent_css_cls:
+                                seg_selector = f".{parent_css_cls} {tag} span:nth-of-type({i})"
+                                self._emit(seg_selector, diff)
+                                parts.append(f"<span>{seg_text}</span>")
+                            else:
+                                seg_cls = f"{cls}_s{i}"
+                                self._emit(f".{seg_cls}", diff)
+                                parts.append(f'<span class="{seg_cls}">{seg_text}</span>')
                         else:
                             parts.append(seg_text)
                 inner = "".join(parts)
             else:
                 inner = text.get("content", "").replace("\n", "<br>")
 
-            self.html_lines.append(f"{indent}<{tag} class=\"{cls}\">{inner}</{tag}>")
+            self.html_lines.append(f"{indent}{html_open}{inner}</{tag}>")
             return
 
         # ── Container nodes ──
-        cls = self._cls(name, parent_cls=parent_cls)
+        reuse = node.pop("_reuse_cls", False)
+        cls = self._cls(name, parent_cls=parent_cls, reuse=reuse)
         container_css = {}
         container_css.update(self._fix_padding(self._layout_to_css(layout)))
         container_css.update(self._visual_to_css(visual, bool(layout)))
@@ -641,18 +714,69 @@ class SemanticConverter:
                     flex_css = self._flex_sizing_css(child, flex_targets)
                     if flex_css:
                         child["_flex_sizing_css"] = flex_css
+
+        # Analyze children tags for parent+tag selector strategy (common.md rule)
+        # Priority: 1) unique tag → .parent tag  2) multiple same tag → .parent tag:nth-of-type(N)
+        if children:
+            text_children = [(i, c) for i, c in enumerate(children) if c.get("text")]
+            tag_counts: dict[str, int] = {}
+            tag_indices: dict[str, int] = {}  # per-tag occurrence counter
+            for _, child in text_children:
+                ctag = child["text"].get("tag_hint", "span")
+                tag_counts[ctag] = tag_counts.get(ctag, 0) + 1
+            for _, child in text_children:
+                ctag = child["text"].get("tag_hint", "span")
+                count = tag_counts.get(ctag, 0)
+                if count == 1:
+                    # Unique tag → .parent tag
+                    child["_use_parent_selector"] = True
+                    child["_parent_css_cls"] = cls
+                    child["_selector_suffix"] = ""
+                elif count <= 4:
+                    # Multiple same tag → .parent tag:first-child / + tag
+                    idx = tag_indices.get(ctag, 0)
+                    tag_indices[ctag] = idx + 1
+                    child["_use_parent_selector"] = True
+                    child["_parent_css_cls"] = cls
+                    if idx == 0:
+                        child["_selector_suffix"] = ":first-of-type"
+                    else:
+                        child["_selector_suffix"] = f":nth-of-type({idx + 1})"
+
+        # Mark list children (and all descendants) to reuse same class
+        if is_list:
+            def _mark_reuse(n):
+                n["_reuse_cls"] = True
+                for c in n.get("children", []):
+                    _mark_reuse(c)
+            for child in children:
+                _mark_reuse(child)
+
         tag_open = f'<ul class="{cls}">' if is_list else f'<div class="{cls}">'
         tag_close = "</ul>" if is_list else "</div>"
 
+        lines_before = len(self.html_lines)
         self.html_lines.append(f"{indent}{tag_open}")
         for child in children:
             if is_list:
                 self.html_lines.append(f"{indent}  <li>")
+                li_before = len(self.html_lines)
                 self._render(child, depth + 2, cls)
-                self.html_lines.append(f"{indent}  </li>")
+                if len(self.html_lines) == li_before:
+                    # Empty li — remove it
+                    self.html_lines.pop()  # remove <li>
+                else:
+                    self.html_lines.append(f"{indent}  </li>")
             else:
                 self._render(child, depth + 1, cls)
-        self.html_lines.append(f"{indent}{tag_close}")
+
+        # If container has no rendered children, remove it (empty div forbidden)
+        if len(self.html_lines) == lines_before + 1:
+            self.html_lines.pop()  # remove the opening tag
+            # Also remove CSS rule for this empty container
+            self.css_rules.pop(f".{cls}", None)
+        else:
+            self.html_lines.append(f"{indent}{tag_close}")
 
     # ── Output ──
 
@@ -673,11 +797,51 @@ class SemanticConverter:
             return result
         return children
 
+    def _flatten_redundant_wrappers(self, node: dict) -> dict:
+        """Pre-process: collapse single-child wrappers with no visual styling.
+        Transfers layout props down and removes unnecessary nesting."""
+        children = node.get("children", [])
+        # Recurse first
+        node["children"] = [self._flatten_redundant_wrappers(c) for c in children]
+        children = node.get("children", [])
+
+        if len(children) != 1 or node.get("text"):
+            return node
+        child = children[0]
+        # Don't unwrap if this node has visual styling
+        v = node.get("visual", {})
+        if v.get("background") or v.get("border") or \
+           (v.get("borderRadius") and v["borderRadius"] != "0"):
+            return node
+        # Don't unwrap component templates or image-map hits
+        if self.image_map.get(node.get("id", "")):
+            return node
+        # Transfer layout to child
+        layout = node.get("layout")
+        if layout:
+            if not child.get("layout"):
+                child["layout"] = {}
+            cl = child["layout"]
+            for key in ("padding", "gap", "direction", "display"):
+                val = layout.get(key)
+                if val and val != "0" and not cl.get(key):
+                    cl[key] = val
+        # Replace node with child (unwrap)
+        return child
+
     def convert(self, data: dict) -> tuple[str, str, str]:
         """Returns (html, common.css, reset.css)."""
         meta = data["meta"]
         # Skip root wrappers (A_main > inner) to reduce DOM depth
         content_nodes = self._skip_root_wrappers(data["tree"])
+        # Pre-process: 1) remove empty nodes, 2) flatten redundant wrappers
+        def _prune_empty(node):
+            children = node.get("children", [])
+            node["children"] = [_prune_empty(c) for c in children
+                                if not self._is_empty_node(c)]
+            return node
+        content_nodes = [_prune_empty(n) for n in content_nodes]
+        content_nodes = [self._flatten_redundant_wrappers(n) for n in content_nodes]
         for node in content_nodes:
             self._render(node, depth=1)
 
