@@ -66,11 +66,12 @@ class SemanticConverter:
         "s4_list": "community_list",
     }
     GENERIC_NAME_PATTERN = re.compile(
-        r"^(el|txt|btn|list|item|box|wrap|frame|group|element)_?\d*$"
+        r"^(el|txt|btn|list|item|box|wrap|frame|group|element|tit|tab|b|img|icon|bg|top|bottom|left|right|center|info|sub|main|sec|block|area|row|col|cell|card|tag|label|desc|num|date|page|line|bar|dot|circle|arrow|link|menu|nav|panel|slot|zone|layer|cover|mask|clip_path_group)_?\d*$"
     )
     GENERIC_PARENT_STOPWORDS = {
         "cont", "inner", "wrapper", "wrap", "box", "group", "frame",
-        "list", "item", "el", "txt", "btn",
+        "list", "item", "el", "txt", "btn", "tit", "sub", "top", "bottom",
+        "left", "right", "center", "bg", "img", "main",
     }
     GENERIC_ROLE_MAP = {
         "el": "item",
@@ -160,11 +161,20 @@ class SemanticConverter:
         role = self._generic_role_slug(slug)
         return f"{parent_context}_{role}"
 
+    # Long/meaningless image name patterns to simplify
+    NOISY_IMAGE_PREFIXES = {"gettyimages", "unsplash", "shutterstock", "stock", "mask_group", "clip_path_group"}
+
     def _contextual_image_slug(self, name: str, parent_cls: str = "") -> tuple[str, bool]:
         """Build image slug with parent context for duplicate-prone names."""
         slug = self._remap_name(_slug(name))
         parent_context = self._parent_context_slug(parent_cls)
         base_slug = re.sub(r"_\d+$", "", slug)
+        # Simplify noisy stock photo / mask group names
+        for prefix in self.NOISY_IMAGE_PREFIXES:
+            if slug.startswith(prefix):
+                if parent_context:
+                    return f"{parent_context}_bg", True
+                return "bg", True
         should_contextualize = bool(parent_context) and (
             self._is_generic_slug(slug) or base_slug in self.IMAGE_CONTEXT_NAMES
         )
@@ -683,7 +693,7 @@ class SemanticConverter:
 </head>
 <body>
 
-{chr(10).join(self.html_lines)}
+{chr(10).join(l.replace(chr(0x2028), "").replace(chr(0x2029), "") for l in self.html_lines)}
 
 </body>
 </html>"""
