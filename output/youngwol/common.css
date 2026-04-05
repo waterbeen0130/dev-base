@@ -8,37 +8,38 @@
 .header_utils .search_btn { display: flex; justify-content: center; align-items: center; width: 60px; height: 60px; background: #1197d5; border-radius: 50%; }
 .header_utils .menu_btn { display: flex; justify-content: center; align-items: center; width: 60px; height: 60px; background: #212121; border-radius: 50%; }
 /* mv */
-.main_visual { position: relative; height: 770px; overflow: hidden; }
+.main_visual { position: relative; width: 100%; height: 770px; overflow: hidden; }
 .main_visual_bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-.main_visual_bg .img_area { height: 100%; }
-.main_visual_bg .img_area img { width: 100%; height: 100%; object-fit: cover; }
-.main_visual_wrap { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; max-width: 1600px; height: 100%; margin: 0 auto; padding: 0 20px; }
-.main_visual_content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-.main_visual_text_box { display: flex; flex-direction: column; align-items: flex-start; gap: 30px; color: #fff; }
-.main_visual_tag { display: inline-block; padding: 6px 24px; background-color: #0e80b5; border-radius: 2em; font-size: 1.25rem; }
-.main_visual_title { font-size: 3.125rem; line-height: 1.4; letter-spacing: -0.03em; }
-.main_visual_title strong { font-weight: 500; }
-.main_visual_more_btn { display: inline-flex; align-items: center; padding: 15px 30px; background-color: #fff; border-radius: 2em; color: #424242; font-size: 1.0625rem; font-weight: 600; text-decoration: none; }
-.main_visual_card_list { display: flex; gap: 20px; }
-.main_visual_card { width: 440px; padding: 24px 20px; background-color: #fff; border-radius: 20px; }
-.main_visual_card_head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.main_visual_card_head h3 { color: #212121; font-size: 1.875rem; letter-spacing: -0.05em; }
-.main_visual_card_head h3 strong { font-weight: 500; }
-.main_visual_card_plus_btn { width: 40px; height: 40px; background-color: #212121; border-radius: 50%; border: 0; cursor: pointer; position: relative; }
-.main_visual_card_plus_btn::before, .main_visual_card_plus_btn::after { content: ''; position: absolute; top: 50%; left: 50%; background-color: #fff; transform: translate(-50%, -50%); }
-.main_visual_card_plus_btn::before { width: 2px; height: 16px; }
-.main_visual_card_plus_btn::after { width: 16px; height: 2px; }
-.main_visual_card_body .img_area { overflow: hidden; border-radius: 10px; margin-bottom: 16px; }
-.main_visual_card_body .img_area img { width: 100%; display: block; }
-.main_visual_card_info { color: #616161; font-size: 1rem; line-height: 1.6; }
-.main_visual_card_info .main_visual_card_title { color: #212121; font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
-.main_visual_slider_control { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 20px; color: #fff; }
-.main_visual_indicator { font-size: 1.125rem; }
-.main_visual_indicator span { font-size: 1.875rem; font-weight: 700; }
-.main_visual_progress_bar { width: 200px; height: 2px; background-color: rgba(255, 255, 255, 0.3); }
-.main_visual_progress { width: 25%; height: 100%; background-color: #fff; }
-.main_visual_arrows { display: flex; gap: 10px; }
-.main_visual_arrow_btn { background: none; border: 0; padding: 0; cursor: pointer; }
+.main_visual_bg img { width: 100%; height: 100%; object-fit: cover; }
+.main_visual_content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; max-width: 1600px; margin: 0 auto; padding: 0 160px; height: 100%; }
+.main_visual_left { display: flex; flex-direction: column; align-items: flex-start; color: #fff; }
+.main_tag { background: #0e80b5; padding: 8px 24px 8px 16px; border-radius: 16px 100px 100px 0px; font-size: 1.25rem; }
+.main_title { font-size: 3.125rem; line-height: 1.4; margin-top: 16px; }
+.main_title strong { font-weight: 500; }
+.main_btn_more { display: flex; align-items: center; background: #fff; color: #424242; padding: 15px 30px; border-radius: 2em; margin-top: 30px; font-weight: 600; text-decoration: none; }
+.main_btn_more .icon_arrow { display: inline-block; width: 32px; height: 10px; background: url('img/ic_arrow_r.png') no-repeat center center; background-size: contain; margin-left: 8px; }
+.main_visual_right { display: flex; flex-direction: column; }
+.main_card_list { display: flex; gap: 20px; }
+.main_card { width: 440px; background: #fff; border-radius: 20px; padding: 24px 20px; }
+.main_card_header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.main_card_header h3 { font-size: 1.875rem; color: #212121; }
+.main_card_header h3 strong { font-weight: 500; }
+.main_card_header .btn_plus { display: block; width: 40px; height: 40px; background: #212121 url('img/ic_plus.svg') no-repeat center center; border-radius: 50%; }
+.main_card .img_area { width: 400px; height: 280px; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.main_card .img_area img { width: 100%; height: 100%; object-fit: cover; }
+.main_card_body { display: flex; flex-direction: column; }
+.main_card_body h4 { font-size: 1.25rem; font-weight: 600; color: #212121; }
+.main_card_body .address { position: relative; padding-left: 20px; margin-top: 8px; color: #666; }
+.main_card_body .address::before { content: ''; display: block; width: 16px; height: 16px; background: url('img/ic_location.png') no-repeat center center; background-size: contain; position: absolute; top: 2px; left: 0; }
+.main_card_body .phone { position: relative; padding-left: 20px; margin-top: 4px; color: #666; }
+.main_card_body .phone::before { content: ''; display: block; width: 16px; height: 16px; background: url('img/ic_phone.png') no-repeat center center; background-size: contain; position: absolute; top: 2px; left: 0; }
+.main_visual_controls { display: flex; align-items: center; gap: 16px; margin-top: 30px; align-self: flex-end; }
+.main_progress_bar { width: 120px; height: 2px; background-color: rgba(255,255,255,0.3); }
+.main_progress { width: 25%; height: 100%; background-color: #fff; }
+.main_page_indicator { font-size: 1rem; color: #fff; }
+.main_arrow_btns { display: flex; gap: 8px; }
+.main_arrow_btns button { background: none; border: 1px solid rgba(255,255,255,0.5); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; }
+.main_arrow_btns button img { width: 10px; height: 16px; }
 /* 추천코스 */
 .main_recommend { position:relative;  }
 .main_recommend .bg_img_area { position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; }
