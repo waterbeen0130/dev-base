@@ -438,6 +438,34 @@ class SemanticValidator:
                     self._add("img-naming", "MINOR",
                               f"snake_case 아님: {f}", 0, img_dir)
 
+    def check_large_side_padding(self, css: str, filepath: str):
+        """좌우 padding 100px 이상 → max-width + margin:auto 사용해야 함"""
+        for match in re.finditer(r'([^{]+)\{([^}]+)\}', css):
+            selector = match.group(1).strip()
+            props = match.group(2)
+            pad_match = re.search(r'padding\s*:\s*([^;]+)', props)
+            if not pad_match:
+                continue
+            pad_val = pad_match.group(1).strip()
+            parts = pad_val.replace("px", "").split()
+            # Check left/right values (2nd and 4th in shorthand)
+            lr_values = []
+            if len(parts) == 2:
+                lr_values = [parts[1]]
+            elif len(parts) == 4:
+                lr_values = [parts[1], parts[3]]
+            for v in lr_values:
+                try:
+                    if float(v) >= 100:
+                        has_maxwidth = "max-width" in props
+                        if not has_maxwidth:
+                            self._add("large-side-padding", "MAJOR",
+                                      f"좌우 padding {v}px — max-width + margin:auto로 변환 필요: {selector}",
+                                      0, filepath)
+                        break
+                except ValueError:
+                    pass
+
     # ===== Run All =====
 
     def validate(self, html_path: str, css_path: str, img_dir: str | None = None) -> list[Violation]:
@@ -480,6 +508,7 @@ class SemanticValidator:
             self.check_utility_classes(css, css_path)
             self.check_selector_format(css, css_path)
             self.check_excessive_individual_classes(css, css_path)
+            self.check_large_side_padding(css, css_path)
 
         if img_dir:
             self.check_image_naming(img_dir)
