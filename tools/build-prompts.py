@@ -36,8 +36,64 @@ def build_image_map_for_section(section_data: dict, full_image_map: dict) -> dic
     return {k: v for k, v in full_image_map.items() if k in section_ids}
 
 
+PROFILE_RULES = {
+    "basic": """## CSS 규칙 — Basic 프로젝트 (CRITICAL)
+- 각 셀렉터 한 줄 작성
+- 모든 요소에 개별 클래스 금지 → .parent span, .parent h2 부모+태그 선택자
+- 같은 태그 복수 시 :first-of-type / + span
+- **font-size: PC는 rem**, 모바일(768px 이하)은 고정 px
+- 기본 폰트 베이스: html,body{font-size:clamp(14px, 1.2vw, 16px);}
+- line-height: 무단위 비율 (1.3, 1.45) — px 금지
+- letter-spacing: em 단위 (-0.025em)
+- 색상: hex 전용, 투명도 시만 rgba
+- CSS Grid 금지 — flexbox만
+- font-family Pretendard이면 생략 (reset.css 기본)
+- font-weight 400이면 생략 (기본값)
+- justify-content:flex-start, align-items:flex-start/stretch 생략 (기본값)
+- padding/gap 0이면 생략
+- padding/margin: 고정 px, 100px 이상만 clamp() 허용
+- 768px 이하: padding/margin은 PC 값의 절반
+- width/height 고정px 금지 (컨테이너) — flex 비율 사용
+- 빈 div 금지, DOM 최대 5단계
+- 불필요 래퍼(자식 1개, 스타일 없음) 제거
+- 리스트 반복 3개+ → ul>li
+- 이미지: div.img_area > img
+- 짧은 텍스트에 <p> 금지 → <span>
+- 배경 이미지 위 콘텐츠 겹침 → position:relative + absolute
+- reset.css는 별도 파일 (link로 참조)""",
+
+    "landing": """## CSS 규칙 — Landing 프로젝트 (CRITICAL)
+- 각 셀렉터 한 줄 작성
+- 모든 요소에 개별 클래스 금지 → .parent span, .parent h2 부모+태그 선택자
+- 같은 태그 복수 시 :first-of-type / + span
+- **font-size: PC/모바일 모두 고정 px** (rem 사용 안 함)
+- line-height: 무단위 비율 (1.3, 1.45) — px 금지
+- letter-spacing: em 단위 (-0.025em)
+- 색상: hex 전용, 투명도 시만 rgba
+- CSS Grid 금지 — flexbox만
+- font-family Pretendard이면 생략 (reset.css 기본)
+- font-weight 400이면 생략 (기본값)
+- justify-content:flex-start, align-items:flex-start/stretch 생략 (기본값)
+- padding/gap 0이면 생략
+- padding/margin: PC/모바일 모두 고정 px
+- **Figma 좌우 padding → max-width 변환 필수**:
+  - Figma 좌우 padding을 CSS padding으로 직접 사용 금지
+  - 섹션은 full-width, 내부 래퍼에 max-width + margin:0 auto
+- width/height 고정px 금지 (컨테이너) — flex 비율 사용
+- 빈 div 금지, DOM 최대 5단계
+- 불필요 래퍼(자식 1개, 스타일 없음) 제거
+- 리스트 반복 3개+ → ul>li
+- 이미지: div.img_area > img
+- 짧은 텍스트에 <p> 금지 → <span>
+- 배경 이미지 위 콘텐츠 겹침 → position:relative + absolute
+- reset.css는 CSS 최상단에 포함 (별도 파일 없음)
+- GSAP 애니메이션: data-delay, data-direction 속성 유지
+- :root 변수: --point-color-1, --width, --padding 등""",
+}
+
+
 def build_prompt(section_path: str, section_data: dict, image_map: dict,
-                 page: str, template: str) -> str:
+                 page: str, profile: str) -> str:
     """Build a complete prompt for one section."""
     meta = section_data["meta"]
     name = meta["section_name"]
@@ -52,7 +108,9 @@ def build_prompt(section_path: str, section_data: dict, image_map: dict,
     if not hint:
         hint = f"CSS 프리픽스: {page}_"
 
-    # Build the prompt
+    # Profile-specific rules
+    css_rules = PROFILE_RULES.get(profile, PROFILE_RULES["basic"])
+
     prompt = f"""# 섹션 HTML/CSS 변환 요청 — {name}
 
 ## 절대 금지 (CRITICAL)
@@ -61,27 +119,11 @@ def build_prompt(section_path: str, section_data: dict, image_map: dict,
 - sec_1, sec_2 같은 범용 클래스명 금지 → 역할명 사용
 - JSON에 배경색(background)이 없으면 background-color를 추가하지 마라
 
-## CSS 규칙 (CRITICAL)
-- 각 셀렉터 한 줄 작성
-- 모든 요소에 개별 클래스 금지 → .parent span, .parent h2 부모+태그 선택자
-- 같은 태그 복수 시 :first-of-type / + span
-- font-size: rem (PC), line-height: 무단위 비율, letter-spacing: em
-- 색상: hex 전용, 투명도 시만 rgba
-- CSS Grid 금지 — flexbox만
-- font-family Pretendard이면 생략 (reset.css 기본)
-- font-weight 400이면 생략 (기본값)
-- justify-content:flex-start, align-items:flex-start/stretch 생략 (기본값)
-- padding/gap 0이면 생략
-- width/height 고정px 금지 (컨테이너) — flex 비율 사용
-- 빈 div 금지, DOM 최대 5단계
-- 불필요 래퍼(자식 1개, 스타일 없음) 제거
-- 리스트 반복 3개+ → ul>li
-- 이미지: div.img_area > img
-- 짧은 텍스트에 <p> 금지 → <span>
-- 배경 이미지 위 콘텐츠 겹침 → position:relative + absolute
+{css_rules}
 
 ## 섹션 정보
 - 페이지: {page}
+- 프로필: {profile}
 - {hint}
 
 ## 이미지 매핑
@@ -101,6 +143,7 @@ def main():
     parser.add_argument("--sections", required=True, help="Sections directory")
     parser.add_argument("--image-map", required=True, help="Image map JSON")
     parser.add_argument("--page", default="main", help="Page name for CSS prefix")
+    parser.add_argument("--profile", default="basic", help="Profile: basic or landing")
     parser.add_argument("--output", required=True, help="Output prompts directory")
     args = parser.parse_args()
 
@@ -110,8 +153,8 @@ def main():
     with open(os.path.join(args.sections, "manifest.json"), "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
+    profile = args.profile or manifest.get("meta", {}).get("profile", "basic")
     os.makedirs(args.output, exist_ok=True)
-    template = ""  # Could load from TEMPLATE_PATH if needed
 
     for section in manifest["sections"]:
         sec_file = section["file"]
@@ -127,7 +170,7 @@ def main():
             section_data=sec_data,
             image_map=sec_image_map,
             page=args.page,
-            template=template,
+            profile=profile,
         )
 
         prompt_file = os.path.join(args.output, f"{section['slug']}.md")
