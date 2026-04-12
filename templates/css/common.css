@@ -20,8 +20,47 @@
 .section_on [data-direction="top"]{top:0;}
 .section_on [data-direction="bottom"]{bottom:0;}
 
+/* --- Sub Page Common --- */
+.sub_wrap{padding-bottom:100px;}
+.sub_visual{padding:80px 0; background:#f0f0f0;}
+.cont{max-width:1200px; margin:0 auto; padding:0 20px;}
+.page_title{margin-bottom:40px; padding-bottom:20px; border-bottom:2px solid #333;}
+.page_title h3{font-size:2rem; font-weight:700;}
+.img_area{margin:20px 0;}
+.img_area img{max-width:100%;}
+.pagination{display:flex; justify-content:center; align-items:center; gap:5px; margin-top:40px;}
+.pagination a{display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:1px solid #ddd; text-decoration:none; color:#333;}
+.pagination a.num.active{background:#333; color:#fff; border-color:#333;}
+.pagination a.btn_page::before{content:''; display:block; width:6px; height:6px; border-left:1px solid #333; border-top:1px solid #333;}
+.pagination a.first::before{transform:rotate(-45deg);}
+.pagination a.prev::before{transform:rotate(-45deg);}
+.pagination a.next::before{transform:rotate(135deg);}
+.pagination a.last::before{transform:rotate(135deg);}
 
 
+/* --- Sub List Page --- */
+.sub_list_top{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;}
+.sub_list_top span{font-size:1rem;}
+.sub_list_top span strong{color:var(--point-color-1);}
+.sub_list_search{display:flex; gap:5px;}
+.sub_list_search input{border:1px solid #ccc; padding:8px 12px; height:38px;}
+.sub_list_search button{width:38px; height:38px; border:1px solid #333; background:#333;}
+.sub_list_list{border-top:2px solid #333;}
+.sub_list_list li{border-bottom:1px solid #eee;}
+.sub_list_list li a{display:flex; justify-content:space-between; align-items:center; padding:20px 10px; color:#333;}
+.sub_list_list li a strong{font-size:1.1rem; font-weight:500;}
+.sub_list_list li a span{font-size:0.9rem; color:#888;}
+
+/* --- Sub View Page --- */
+.sub_view_head{padding:20px; border-top:2px solid #333; border-bottom:1px solid #eee;}
+.sub_view_head h2{margin-bottom:10px; font-size:1.5rem; font-weight:600;}
+.sub_view_meta{display:flex; gap:15px;}
+.sub_view_meta span{font-size:0.9rem; color:#888;}
+.sub_view_body{min-height:300px; padding:40px 20px; border-bottom:1px solid #eee;}
+.sub_view_body p{line-height:1.6;}
+.sub_view_body p + p{margin-top:16px;}
+.sub_view_nav{display:flex; justify-content:flex-end; padding-top:20px;}
+.sub_view_nav a{display:inline-block; padding:10px 25px; background:#333; color:#fff;}
 
 
 @media screen and (max-width: 1200px){
@@ -36,6 +75,10 @@
 
 
 @media screen and (max-width: 768px){
+    .page_title h3{font-size:1.5rem;}
 
+    .sub_list_top{flex-direction:column; gap:15px; align-items:flex-start;}
+    .sub_list_list li a strong{font-size:1rem;}
 
+    .sub_view_head h2{font-size:1.2rem;}
 }

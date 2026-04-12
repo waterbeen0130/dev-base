@@ -133,7 +133,8 @@
     "mcp_tools": ["mcp__figma__get_figma_data", "mcp__figma__download_figma_images"]
   },
   "validation": {
-    "tool_path": "D:/dev-base/tools/validate.js",
+    "tool_path": "D:/dev-base/tools/validate-semantic.py",
+    "tool_invoke": "python3 D:/dev-base/tools/validate-semantic.py --html <file> --css <file>",
     "run_after_impl": true
   }
 }

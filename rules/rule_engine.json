@@ -223,7 +223,7 @@
       "workflow": {
         "step1": "get frame overview with shallow depth to identify sections",
         "step2": "for each section: call MCP with nodeId → AI interprets → generate HTML/CSS",
-        "step3": "validate with validate.js --type basic|landing"
+        "step3": "validate with validate-semantic.py (TODO: --type basic|landing 미지원, REQ-005+ 확장 필요)"
       },
       "forbid_full_page_single_call": true,
       "forbid_full_page_single_call_note": "processing entire page in one MCP call produces lower quality. always split into sections",
@@ -235,8 +235,9 @@
         "tool_usage": "echo '<mcp_response>' | python3 D:/dev-base/tools/figma-extract.py --stdin --name <section> --output ./extracted/ --json-only",
         "note": "optional: pipe MCP response to generate mapping.json for precise value validation"
       },
-      "validation_tool_path": "D:/dev-base/tools/validate.js",
-      "validation_usage": "node D:/dev-base/tools/validate.js --html <file> --css <file> --type basic|landing",
+      "validation_tool_path": "D:/dev-base/tools/validate-semantic.py",
+      "validation_usage": "python3 D:/dev-base/tools/validate-semantic.py --html <file> --css <file>",
+      "validation_usage_note": "TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원",
       "validation_checks": ["css_format", "html_tags", "project_type_rules"]
     },
     "coordinate_based_row": {

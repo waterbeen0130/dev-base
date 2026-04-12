@@ -14,7 +14,7 @@
 
 ### 피그마 정보 확인
 - File Key, Token, 메인 프레임 Node ID
-- 사이트맵 프레임에서 메뉴 구조 → 파일명 매핑 (한글 메뉴명 = 파일명)
+- 사이트맵 프레임에서 메뉴 구조 → 파일명 매핑 (메뉴명을 의미 있는 영문 snake_case로 변환)
 
 ---
 
@@ -127,8 +127,9 @@ sub_wrap
 ## 6. 파일명 규칙
 
 - 메인 페이지: `index.html`
-- 서브 페이지: **한글 메뉴명** 그대로 (예: `센터소개.html`, `시설현황.html`)
-- CSS 프리픽스: **영문 snake_case** (예: `intro_`, `facility_`, `instructor_`)
+- 서브 페이지: **영문 snake_case** (예: `intro.html`, `facility.html`, `instructor.html`)
+- body class: 파일명에 `page_` 프리픽스를 붙여 `<body class="page_{name}">` 필수
+- CSS 프리픽스: 파일명과 동일한 `{name}_{role}` 패턴 (예: `intro_`, `facility_`, `instructor_`)
 - `page_1.html`, `sub_01.html` 같은 의미 없는 파일명 금지
 
 ---

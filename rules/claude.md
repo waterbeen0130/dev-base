@@ -172,7 +172,7 @@ Task(subagent_type: "general-purpose", prompt: ...)
 - Figma MCP 응답의 노드 속성을 직접 해석하여 CSS 값 결정
 - 섹션 단위로 MCP 호출 (전체 페이지 한번에 처리 금지)
 - layoutMode/itemSpacing/padding/fills/style 등 Figma 속성 → CSS 변환 규칙 준수
-- 구현 후 validate.js로 규칙 검증 필수
+- 구현 후 validate-semantic.py로 규칙 검증 필수
 ```
 
 #### 에이전트별 규칙 파일 매핑
@@ -237,7 +237,8 @@ FIGMA_TOKEN="{token}" python3 D:/dev-base/tools/figma-extract.py \
 
 ### 4. HTML 작성 후 검증 (코드 작성 직후)
 ```bash
-node D:/dev-base/tools/validate.js --html {output.html} --css css/common.css --type basic
+# TODO: validator 확장 필요 (REQ-005+) — --type basic 미지원
+python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/common.css
 ```
 
 ---
@@ -250,7 +251,7 @@ node D:/dev-base/tools/validate.js --html {output.html} --css css/common.css --t
 ### 핵심 원칙
 - **섹션별 MCP 호출**: 전체 페이지를 한번에 처리하지 않고, 섹션(노드) 단위로 MCP 호출
 - **AI 직접 해석 허용**: MCP 응답은 섹션 단위이므로 AI가 직접 해석해도 정확도 유지
-- **검증은 validate.js**: 구현 완료 후 규칙 준수 여부를 자동 검증
+- **검증은 validate-semantic.py**: 구현 완료 후 규칙 준수 여부를 자동 검증
 
 ### 도구
 
@@ -258,7 +259,7 @@ node D:/dev-base/tools/validate.js --html {output.html} --css css/common.css --t
 |------|------|----------|
 | **Figma MCP** (`get_figma_data`) | 섹션별 Figma 노드 데이터 조회 | spec 작성 시 / 구현 시 |
 | **Figma MCP** (`download_figma_images`) | 이미지/아이콘 다운로드 | 구현 시 |
-| **validate.js** | HTML/CSS 규칙 검증 | 구현 완료 후 |
+| **validate-semantic.py** | HTML/CSS 규칙 검증 | 구현 완료 후 |
 | **figma-extract.py** (선택) | MCP 응답 → mapping.json 생성 (값 대조 검증용) | 정밀 검증 필요 시 |
 
 ### Phase 1: 섹션 구조 파악
@@ -290,8 +291,9 @@ node D:/dev-base/tools/validate.js --html {output.html} --css css/common.css --t
 ### Phase 3: 검증 (필수)
 
 ```bash
-# HTML/CSS 규칙 검증 (--type 필수)
-node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --type basic|landing
+# HTML/CSS 규칙 검증
+# TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원
+python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
 ```
 
 ### Phase 3+: 정밀 값 대조 검증 (선택)
@@ -302,7 +304,8 @@ MCP 응답을 저장하여 mapping.json을 생성하면 값 수준 대조 가능
 echo '<mcp_response>' | python3 D:/dev-base/tools/figma-extract.py --stdin --name "<section>" --output ./extracted/ --json-only
 
 # mapping 기반 값 대조
-node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --mapping ./extracted/<section>_mapping.json --type basic|landing
+# TODO: validator 확장 필요 (REQ-005+) — --mapping / --type 미지원, 현재는 일반 검증만 실행
+python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
 ```
 
 ### 퍼블리싱 프로젝트 템플릿
@@ -420,4 +423,4 @@ node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --map
 2. 탐지 결과를 사용자에게 요약 보고 (analysis report)
 3. 사용자 승인 시 enhancement PLN → Phase별 REQ 자동 생성
 4. Phase 의존성에 따라 순차/병렬 실행 (Phase 2+3 병렬, Phase 5+6 병렬)
-5. 완료 후 validate.js로 검증
+5. 완료 후 validate-semantic.py로 검증

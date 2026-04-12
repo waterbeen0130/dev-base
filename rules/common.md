@@ -76,7 +76,6 @@
 - **100px 미만 값은 반드시 고정 `px`**
 - `calc()` 단독 사용 금지 (clamp 내부에서만 허용)
 - `vw` 단독 사용 금지 (clamp 내부에서만 허용)
-- `max(calc())` 패턴 사용 금지
 - **반응형 섹션 좌우 여백**: 좌우 padding 대신 `max-width` + `margin:0 auto`로 콘텐츠 폭 제한. 상하 padding은 고정 `px` 사용
 - 768px 이하: padding/margin은 PC 값의 **절반**
 - 색상: **hex 전용** (`#fff`, `#090944`), 투명도 필요 시만 `rgba()` 허용
@@ -86,7 +85,7 @@
 - 기본 트랜지션: `transition: all 0.3s ease-out`
 - 셀렉터는 반드시 부모 컨테이너 하위로 스코핑 (`.main_cont_1 .txt_area`)
 - **유틸리티 클래스 금지** — `.font_serif`, `.weight_bold` 같은 범용 타이포그래피 클래스 금지. font-family, font-weight, color는 **부모/섹션 셀렉터에서 상속**
-- `:root` 변수 네이밍: `--point-color-1`, `--font-color-1`, `--width`, `--padding` 패턴 사용. `--landing-dark`, `--landing-navy` 같은 시맨틱 이름 금지
+- `:root` 변수 네이밍: 시맨틱 이름 사용 권장 (`--color_primary`, `--color_bg`, `--font_heading` 등). 색상 변수화 패턴은 `css-enhancement.md` §9 참조
 - **한국어 텍스트**: `word-break: keep-all` 적용 (문장 단위 줄바꿈)
 - **`aspect-ratio`**: 정사각형/비율 고정 요소에 `aspect-ratio:1/1` 또는 `aspect-ratio:W/H` 사용
 - **멀티라인 말줄임**: `overflow:hidden; display:-webkit-box; -webkit-line-clamp:N; -webkit-box-orient:vertical;`
@@ -162,23 +161,25 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type landing --
 ### HTML 페이지 파일명 규칙
 
 - **메인 페이지**: `index.html` 고정
-- **서브 페이지**: **해당 메뉴명(한글)을 그대로 파일명으로 사용** (예: `인사말.html`, `법인연혁.html`)
+- **서브 페이지**: 페이지 내용을 나타내는 **영문 snake_case** 파일명 (예: `greeting.html`, `history.html`)
 - 루트 디렉토리에 flat 배치 (폴더 중첩 없음)
 - `page_1.html`, `sub_01.html`, `page_a.html` 같은 **의미 없는 번호/문자 기반 파일명 금지**
-- `body` 태그에 페이지 프리픽스 클래스(`page_xxx`) **불필요** — 부여하지 않음
+- **body class 필수**: 파일명에서 `.html`을 제거한 값에 `page_` 프리픽스를 붙여 `<body class="page_{name}">` 형태로 부여
+  - `greeting.html` → `<body class="page_greeting">`
+  - `products.html` → `<body class="page_products">`
 
 #### CSS 프리픽스 규칙
 
 - 페이지 **고유 콘텐츠 영역에만** CSS 프리픽스를 사용한다
-- 프리픽스는 해당 페이지의 역할을 나타내는 **영문 snake_case**로 지정 (파일명이 한글이므로 별도 지정)
+- 프리픽스는 파일명(영문 snake_case)과 동일하게 `{name}_{role}` 패턴으로 지정
 - 서브페이지 공통 구조(`sub_wrap`, `sub_visual`, `navi`, `lnb`, `sub_cont` 등)에는 프리픽스 없이 공통 클래스 사용
 
-| 페이지 유형 | 파일명 예시 | CSS 프리픽스 | 프리픽스 적용 대상 |
-|------------|-----------|-------------|------------------|
-| 메인(홈) | `index.html` | `main_` | 메인 전용 섹션 |
-| 인사말 | `인사말.html` | `greeting_` | 인사말 고유 콘텐츠 |
-| 공지사항 | `공지사항.html` | `notice_` | 공지 고유 콘텐츠 |
-| 포토갤러리 | `포토갤러리.html` | `gallery_` | 갤러리 고유 콘텐츠 |
+| 페이지 유형 | 파일명 | body class | CSS 프리픽스 | 프리픽스 적용 대상 |
+|------------|--------|-----------|-------------|------------------|
+| 메인(홈) | `index.html` | `page_index` | `main_` | 메인 전용 섹션 |
+| 인사말 | `greeting.html` | `page_greeting` | `greeting_` | 인사말 고유 콘텐츠 |
+| 공지사항 | `notice.html` | `page_notice` | `notice_` | 공지 고유 콘텐츠 |
+| 포토갤러리 | `gallery.html` | `page_gallery` | `gallery_` | 갤러리 고유 콘텐츠 |
 
 > **규칙**: 서브페이지 공통 영역은 공통 클래스, 페이지 고유 영역만 프리픽스 적용
 
@@ -456,7 +457,7 @@ project/
 |------|------|
 | **Figma MCP** (`get_figma_data`) | 섹션별 노드 데이터 조회 (AI가 직접 해석) |
 | **Figma MCP** (`download_figma_images`) | 이미지/아이콘 다운로드 |
-| **validate.js** (`D:\dev-base\tools\validate.js`) | HTML/CSS 규칙 검증 |
+| **validate-semantic.py** (`D:\dev-base\tools\validate-semantic.py`) | HTML/CSS 규칙 검증 |
 | **figma-extract.py** (`D:\dev-base\tools\figma-extract.py`) | (선택) MCP 응답 → mapping.json 생성 (정밀 값 대조용) |
 
 #### 필수 워크플로우
@@ -468,15 +469,17 @@ project/
    - Figma 속성 → CSS 변환 규칙 준수 (layoutMode→flex-direction, itemSpacing→gap 등)
    - 전체 페이지를 한번에 처리하지 않음 — **반드시 섹션 단위**
 
-3. **검증**: 완성된 HTML/CSS를 validate.js로 규칙 검증
+3. **검증**: 완성된 HTML/CSS를 validate-semantic.py로 규칙 검증
    ```bash
-   node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --type basic|landing
+   # TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원
+   python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
    ```
 
 4. **(선택) 정밀 값 대조**: MCP 응답을 figma-extract.py에 파이프하여 mapping.json 생성 → 값 수준 대조
    ```bash
    echo '<mcp_response>' | python3 D:/dev-base/tools/figma-extract.py --stdin --name "<section>" --output ./extracted/ --json-only
-   node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --mapping ./extracted/<section>_mapping.json --type basic|landing
+   # TODO: validator 확장 필요 (REQ-005+) — --mapping / --type 미지원 (현재는 일반 검증만 실행)
+   python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
    ```
 
 #### Figma px → CSS 변환 원칙
@@ -571,7 +574,7 @@ project/
 #### 페이지 고유 영역 (프리픽스 적용)
 
 - 해당 페이지에서만 사용되는 콘텐츠 영역에만 `{page}_` 프리픽스 적용
-- 프리픽스는 영문 snake_case (파일명이 한글이므로 별도 지정)
+- 프리픽스는 파일명(영문 snake_case)과 동일한 `{name}_` 패턴 사용
 - 예: `.greeting_section`, `.notice_list`, `.gallery_card`
 
 #### 서브페이지 간 공통 패턴
@@ -583,7 +586,7 @@ project/
 ### 새 서브페이지 생성 시
 1. 같은 프로젝트에 기존 서브페이지가 있으면 공통 컴포넌트(header/footer/sub_visual/navi/lnb/page_title)를 **그대로 복사**
 2. 메뉴 active 상태, 브레드크럼/lnb 텍스트만 해당 페이지에 맞게 변경
-3. `body` 태그에 페이지 프리픽스 클래스 **부여하지 않음**
+3. `body` 태그에 페이지 프리픽스 클래스 `page_{name}`을 **반드시 부여** (파일명과 일치)
 4. CSS는 기존 common.css **하단에 추가** (기존 코드 수정 안 함)
 5. 기존 프로젝트가 없으면 `templates/sub_list.html` 또는 `templates/sub_view.html` 골격 사용
 

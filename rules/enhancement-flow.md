@@ -219,7 +219,7 @@ See: common.md (CSS formatting rules)
       │                                   [Execute Phase 7 (final)]
       │                                         │
       │                                         ▼
-      │                                   [Run validate.js]
+      │                                   [Run validate-semantic.py]
       │
       ├── User: "skip" ────────────────► [No enhancement]
       │
@@ -234,10 +234,12 @@ After all enhancement Phases complete:
 
 ```bash
 # Standard validation
-node D:/dev-base/tools/validate.js --html *.html --css css/common.css --type {project_type}
+# TODO: validator 확장 필요 (REQ-005+) — --type {project_type} 미지원
+python3 D:/dev-base/tools/validate-semantic.py --html *.html --css css/common.css
 
 # With mapping (if available from extraction phase)
-node D:/dev-base/tools/validate.js --html *.html --css css/common.css --mapping ./extracted/*_mapping.json --type {project_type}
+# TODO: validator 확장 필요 (REQ-005+) — --mapping / --type 미지원, 현재는 일반 검증만 실행
+python3 D:/dev-base/tools/validate-semantic.py --html *.html --css css/common.css
 ```
 
 Check:

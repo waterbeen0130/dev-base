@@ -40,7 +40,7 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - **공통 컴포넌트 타입**: 재사용 UI는 `listType_N`, `titleType_N` 패턴 사용
 - 셀렉터는 부모 컨테이너 하위로 스코핑 (`.main_cont_1 .txt_area`)
 - **유틸리티 클래스 금지** — `.font_serif`, `.weight_bold` 같은 범용 타이포그래피 클래스 금지. font-family, font-weight, color는 **부모/섹션 셀렉터에서 상속**
-- `:root` 변수 네이밍: `--point-color-1`, `--font-color-1`, `--width`, `--padding` 패턴 사용. `--landing-dark`, `--landing-navy` 같은 시맨틱 이름 금지
+- `:root` 변수 네이밍: 시맨틱 이름 사용 권장 (`--color_primary`, `--color_bg`, `--font_heading` 등). 색상 변수화 패턴은 `css-enhancement.md` §9 참조
 - ul/ol/li/p 같이 구조 태그에 의존한 스타일은 최소화하고, 필요 시 `section_ul`, `section_li`, `section_p` 형태의 명시적 클래스 스타일로 대체한다.
 - padding/margin/gap: 고정 `px` (기본)
 - **100px 이상 값에 한해 `clamp()` 허용**
@@ -194,7 +194,7 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - Figma 속성 → CSS 변환 규칙 준수 (layoutMode→flex-direction, itemSpacing→gap, fills→hex 색상 등)
 - MCP 응답에 없는 속성은 추측하지 않음
 - "그럴듯한" 값, "합리적인" 기본값을 임의로 넣는 것 절대 금지
-- 완성 후 validate.js로 규칙 검증 필수
+- 완성 후 validate-semantic.py로 규칙 검증 필수
 
 ## 텍스트 추출 품질
 - 피그마 `TEXT` 노드는 `characterStyleOverrides`와 `styleOverrideTable`를 함께 해석해서 오버라이드 단위로 분리 출력
@@ -296,8 +296,9 @@ HTML/CSS 변환 작업이 완료되면 **반드시** 검증 스크립트를 실�
 
 ### 실행 명령
 ```bash
-# HTML/CSS 규칙 검증 (--type: basic | landing)
-node D:/dev-base/tools/validate.js --html ./html/index.html --css ./html/css/common.css --type basic
+# HTML/CSS 규칙 검증
+# TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원
+python3 D:/dev-base/tools/validate-semantic.py --html ./html/index.html --css ./html/css/common.css
 ```
 
 ### 검증 워크플로우

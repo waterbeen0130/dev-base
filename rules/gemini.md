@@ -205,7 +205,8 @@ HTML/CSS 변환 완료 후 **반드시** 검증을 실행한다.
 
 ```bash
 # HTML/CSS 규칙 검증
-node D:/dev-base/tools/validate.js --html <output.html> --css <output.css> --type basic|landing
+# TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원
+python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
 ```
 
 ### 검증 항목 (FAIL 시 반드시 수정)
