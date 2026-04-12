@@ -1,0 +1,935 @@
+# AUTO-GENERATED MARKER GUIDE (for tools/build-rules.py — REQ-005 T02)
+# ---------------------------------------------------------------
+# This file is the SINGLE SOURCE OF TRUTH for all project rules.
+# Edit rules HERE, then run `python3 tools/build-rules.py` to regenerate:
+#   - rules/common.md
+#   - rules/basic.md
+#   - rules/landing.md
+#   - rules/validation_schema.json
+#   - tools/build-prompts.py PROFILE_RULES dict
+#
+# Generated artifacts MUST contain a header comment such as:
+#   <!-- AUTO-GENERATED FROM rules/rules.yaml — DO NOT EDIT -->
+# so editors know not to hand-modify them.
+# ---------------------------------------------------------------
+
+schema_version: 1
+generated_at: null  # T02 build-rules.py fills this when regenerating artifacts
+
+description: |
+  Single Source of Truth for all rules in this project.
+  Edit this file directly. tools/build-rules.py (REQ-005 T02) will regenerate
+  rules/common.md, basic.md, landing.md, validation_schema.json,
+  and tools/build-prompts.py PROFILE_RULES dict from this file.
+
+validation_types:
+  - regex_must_not_match    # CSS/HTML가 패턴에 매칭되면 위반
+  - regex_must_match        # CSS/HTML가 패턴에 매칭되어야 통과
+  - regex_should_match      # 권장 패턴 (warning 수준)
+  - ast_selector_count      # CSS 셀렉터 카운트 기반 검사
+  - value_equals_mapping    # Figma mapping.json 값과 1:1 일치 검사
+  - html_tag_required       # 특정 HTML 구조/태그 필수
+  - forbidden_substring     # 단순 substring 금지
+  - required_substring      # 단순 substring 필수
+  - naming_pattern          # 클래스/파일명 네이밍 패턴
+  - numeric_range           # 숫자 범위 검사 (e.g. 깊이 ≤ 5)
+  - custom                  # 커스텀 핸들러 (custom_handler 필드 필수)
+
+profiles:
+  - common
+  - basic
+  - landing
+  - figma
+  - enhancement
+
+severities:
+  - error        # 반드시 수정 (CRITICAL)
+  - warning      # 수정 권장 (MAJOR)
+  - info         # 권장 사항 (MINOR)
+  - deprecated   # 더 이상 사용하지 않는 룰 (T02가 출력 제외)
+
+categories:
+  - css.layout
+  - css.color
+  - css.format
+  - css.units
+  - css.naming
+  - css.variables
+  - css.selector
+  - css.typography
+  - css.border
+  - css.spacing
+  - html.structure
+  - html.semantic
+  - html.naming
+  - html.image
+  - html.text
+  - accessibility
+  - figma.mapping
+  - figma.fidelity
+  - process
+  - enhancement.workflow
+
+rules:
+
+  # ===== HTML structure / depth / naming =====
+
+  - id: max_dom_depth
+    description: "DOM 최대 깊이는 5단계를 초과하지 않는다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.structure
+    validation:
+      type: numeric_range
+      target: html
+      pattern: "depth<=5"
+    rationale: "과도한 wrapper 중첩 방지로 마크업 단순화"
+
+  - id: snake_case_naming
+    description: "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: naming_pattern
+      target: html
+      pattern: "^[a-z0-9_]+$"
+
+  - id: page_prefix_required
+    description: "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: naming_pattern
+      target: html
+      pattern: "^[a-z][a-z0-9]*_[a-z0-9_]+$"
+
+  - id: no_forbidden_class
+    description: "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: forbidden_substring
+      target: html
+      pattern: "sec_1|sec_2|section_01|box1|box2"
+    examples:
+      bad: "<section class=\"sec_1\">"
+      good: "<section class=\"about_intro\">"
+
+  - id: generic_class_name
+    description: "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "(sec_\\d+|section_\\d+|box\\d+)\""
+
+  - id: meaningful_page_name
+    description: "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지)."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "(page_\\d+|sub_\\d+|page_[a-z]$)"
+
+  - id: page_filename_class_prefix_match
+    description: "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: custom
+      target: html
+      custom_handler: page_filename_class_prefix_match
+
+  - id: body_page_class_unnecessary
+    description: "body 태그에 page_ 클래스를 부여하지 않는다 (불필요)."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "<body[^>]*class=\"page_"
+
+  - id: common_area_prefix
+    description: "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_common_area_prefix
+
+  # ===== CSS format / structure =====
+
+  - id: selector_single_line
+    description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_selector_format
+    examples:
+      bad: ".btn {\n  color: #fff;\n  padding: 10px;\n}"
+      good: ".btn{color:#fff;padding:10px}"
+
+  - id: no_duplicate_selector
+    description: "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.selector
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_duplicate_selectors
+
+  - id: media_query_format
+    description: "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_media_indent
+
+  - id: no_media_indent
+    description: "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_media_indent
+
+  - id: clamp_threshold
+    description: "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: css.units
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "clamp\\(\\s*([0-9]|[1-9][0-9])px"
+
+  - id: no_clamp_under_100
+    description: "padding/margin에 100px 미만 clamp()를 사용하지 않는다."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: css.units
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_clamp_under_100
+
+  - id: no_raw_calc
+    description: "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.units
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_raw_calc_vw
+
+  - id: no_raw_vw
+    description: "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.units
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_raw_calc_vw
+
+  - id: large_side_padding
+    description: "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.spacing
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_large_side_padding
+
+  - id: max_width_pattern
+    description: "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.spacing
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_max_width_pattern
+
+  # ===== Color =====
+
+  - id: hex_color_only
+    description: "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.color
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "(?<!rgba)\\brgb\\(|hsl\\("
+    examples:
+      bad: "color: rgb(255,255,255);"
+      good: "color: #fff;"
+
+  # ===== Layout =====
+
+  - id: no_css_grid
+    description: "CSS Grid는 사용하지 않는다 — flexbox 전용."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.layout
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "display\\s*:\\s*grid"
+    examples:
+      bad: ".container { display: grid; }"
+      good: ".container { display: flex; }"
+
+  - id: flexbox_layout
+    description: "레이아웃은 flexbox만 사용한다 (Grid/float 금지)."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.layout
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "display\\s*:\\s*grid|float\\s*:\\s*(left|right)"
+
+  - id: no_important
+    description: "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_important
+
+  # ===== Border / radius =====
+
+  - id: border_radius_no_999
+    description: "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.border
+    validation:
+      type: forbidden_substring
+      target: css
+      pattern: "999px"
+    examples:
+      bad: "border-radius: 999px;"
+      good: "border-radius: 2em;"
+
+  - id: no_999_border_radius
+    description: "(alias of border_radius_no_999) 999px border-radius 금지 — deprecated 중복."
+    severity: deprecated
+    applies_to: [common]
+    category: css.border
+    validation:
+      type: forbidden_substring
+      target: css
+      pattern: "999px"
+    rationale: "validation_schema.json에서 border_radius_no_999와 동일 — T02에서 단일화"
+
+  - id: border_from_stroke_only
+    description: "CSS border-* 속성은 Figma 노드에 visible stroke가 있을 때만 작성한다."
+    severity: error
+    applies_to: [common, figma]
+    category: css.border
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "border<-strokes"
+
+  - id: no_heuristic_border
+    description: "레이아웃 패턴이나 .card+.card 같은 인접 셀렉터로 border를 추측해 넣지 않는다."
+    severity: error
+    applies_to: [common, figma]
+    category: css.border
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "\\.[a-z0-9_-]+\\s*\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border"
+
+  - id: no_adjacent_selector_border
+    description: ".item+.item{border-left/top:...} 패턴 금지 — 대신 divider 노드를 DOM 요소로 사용한다."
+    severity: error
+    applies_to: [common, figma]
+    category: css.border
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)"
+
+  - id: divider_node_preserved
+    description: "fill만 가진 얇은 divider/bar 프레임은 반드시 DOM 요소로 보존한다 (절대 누락 금지)."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: divider_node_preserved
+
+  # ===== Typography =====
+
+  - id: line_height_ratio_only
+    description: "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.typography
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "line-height\\s*:\\s*[\\d.]+px"
+    examples:
+      bad: "line-height: 25.866px;"
+      good: "line-height: 1.45;"
+
+  - id: letter_spacing_unit
+    description: "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.typography
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_letter_spacing_unit
+
+  - id: font_size_pc_rem
+    description: "basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용."
+    severity: warning
+    applies_to: [basic]
+    category: css.typography
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_font_size_base
+
+  - id: font_size_landing_px
+    description: "landing 프로젝트: 모든 font-size는 PC/모바일 모두 고정 px만 사용 (rem 사용 금지)."
+    severity: warning
+    applies_to: [landing]
+    category: css.typography
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "font-size\\s*:\\s*[\\d.]+rem"
+
+  - id: word_break_korean
+    description: "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.typography
+    validation:
+      type: required_substring
+      target: css
+      pattern: "keep-all"
+
+  - id: font_size_base
+    description: "html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트)."
+    severity: warning
+    applies_to: [basic]
+    category: css.typography
+    validation:
+      type: required_substring
+      target: css
+      pattern: "font-size:clamp("
+
+  # ===== :root variables =====
+
+  - id: root_var_line_separated
+    description: ":root{} 안의 CSS 변수는 각 줄에 하나씩 선언한다 (한 줄에 여러 변수 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.variables
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_root_vars
+
+  - id: root_var_naming
+    description: ":root 변수는 --point-color-N, --width, --padding 같은 패턴을 따른다 (시맨틱 이름 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.variables
+    validation:
+      type: custom
+      target: css
+      custom_handler: root_var_naming
+
+  - id: root_vars_required
+    description: "landing 프로젝트는 :root에 --padding, --header_h, --width, --point-color-1 4개 변수가 모두 존재해야 한다."
+    severity: warning
+    applies_to: [landing]
+    category: css.variables
+    validation:
+      type: required_substring
+      target: css
+      pattern: "--padding,--header_h,--width,--point-color-1"
+
+  # ===== HTML semantic / text =====
+
+  - id: no_inline_style
+    description: "인라인 style 속성을 사용하지 않는다."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "style=\""
+
+  - id: no_empty_div
+    description: "빈 div(<div></div>) 사용 금지."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "<div[^>]*>\\s*</div>"
+
+  - id: inner_wrapper_limit
+    description: "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.structure
+    validation:
+      type: numeric_range
+      target: html
+      pattern: "inner_wrapper<=1"
+
+  - id: no_figure_figcaption
+    description: "<figure>/<figcaption> 사용 금지 — div.img_area + p/span 구조 사용."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "<figure|<figcaption"
+
+  - id: forbidden_tag
+    description: "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "<figure|<figcaption|<main\\b|<article\\b"
+
+  - id: nav_ul_li_structure
+    description: "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지)."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_nav_structure
+
+  - id: list_pattern_required
+    description: "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_list_pattern
+
+  - id: img_wrapped
+    description: "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.image
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_img_wrapper
+
+  - id: img_alt_concise
+    description: "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지)."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: accessibility
+    validation:
+      type: custom
+      target: html
+      custom_handler: img_alt_concise
+
+  - id: img_naming
+    description: "이미지 파일명은 snake_case 의미 있는 이름이어야 한다 (Figma node ID 그대로 금지)."
+    severity: error
+    applies_to: [common, figma]
+    category: html.image
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_image_naming
+
+  - id: minimal_aria
+    description: "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지)."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: accessibility
+    validation:
+      type: custom
+      target: html
+      custom_handler: minimal_aria
+
+  - id: p_tag_condition_enforced
+    description: "<p> 태그는 텍스트에 \\n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: html.text
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_p_tag_misuse
+
+  - id: p_tag_misuse
+    description: "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: html.text
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_p_tag_misuse
+
+  # ===== CSS selector hierarchy =====
+
+  - id: selector_scoped
+    description: "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양)."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.selector
+    validation:
+      type: custom
+      target: css
+      custom_handler: selector_scoped
+
+  - id: no_utility_classes
+    description: ".font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리."
+    severity: warning
+    applies_to: [common, basic, landing]
+    category: css.selector
+    validation:
+      type: regex_must_not_match
+      target: css
+      pattern: "\\.(font|weight|color|size)_"
+
+  - id: excessive_individual_classes
+    description: "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: css.selector
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_excessive_individual_classes
+
+  # ===== Reset / common css =====
+
+  - id: reset_css_separate
+    description: "basic 프로젝트: reset.css는 별도 파일로 분리한다."
+    severity: warning
+    applies_to: [basic]
+    category: css.format
+    validation:
+      type: required_substring
+      target: html
+      pattern: "reset.css"
+
+  - id: reset_duplicate
+    description: "common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중복 작성하지 않는다."
+    severity: warning
+    applies_to: [common, basic]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_reset_duplicate
+
+  # ===== Mobile-specific =====
+
+  - id: mobile_spacing_half
+    description: "basic 프로젝트 768px 이하: padding/margin은 PC 값의 약 절반 사용."
+    severity: info
+    applies_to: [basic]
+    category: css.spacing
+    validation:
+      type: custom
+      target: css
+      custom_handler: mobile_spacing_half
+
+  # ===== Landing-specific =====
+
+  - id: gsap_animation_css_present
+    description: "landing 프로젝트는 [data-delay] opacity/position 룰과 .section_on 토글 룰이 있어야 한다."
+    severity: warning
+    applies_to: [landing]
+    category: css.format
+    validation:
+      type: required_substring
+      target: css
+      pattern: "[data-delay]"
+
+  # ===== Figma text fidelity =====
+
+  - id: text_node_one_to_one
+    description: "각 Figma TEXT 노드는 자신의 HTML 요소(span/p/h*)에 1:1 매핑한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: text_node_one_to_one
+
+  - id: no_adjacent_text_merge
+    description: "인접한 두 TEXT 노드를 하나의 HTML 요소로 병합하지 않는다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: no_adjacent_text_merge
+
+  - id: text_newline_preserved
+    description: "node.characters의 \\n은 <br> 또는 블록 분리로 보존한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: text_newline_preserved
+
+  - id: newline_converted_to_br
+    description: "Figma TEXT 노드의 줄바꿈은 <br>로 변환한다."
+    severity: warning
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: newline_converted_to_br
+
+  - id: override_span_split_required
+    description: "characterStyleOverrides 구간은 별도 <span>으로 분리해 굵기/크기/색상 차이를 보존한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: override_span_split_required
+
+  - id: style_diff_span_required
+    description: "fontSize/fontWeight/fontFamily/color 중 하나라도 다르면 별도 <span>으로 분리한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: style_diff_span_required
+
+  - id: no_style_flatten
+    description: "한 텍스트 노드 내 혼합 스타일을 단일 스타일로 평탄화하지 않는다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: no_style_flatten
+
+  # ===== Figma layout fidelity =====
+
+  - id: layout_mode_reflected
+    description: "Figma layoutMode VERTICAL/HORIZONTAL은 CSS flex-direction에 반영한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "flex-direction<-layoutMode"
+
+  - id: item_spacing_reflected
+    description: "Figma itemSpacing은 CSS gap에 반영한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "gap<-itemSpacing"
+
+  - id: no_layout_info_loss
+    description: "Figma의 layoutMode/itemSpacing/padding 정보를 누락하지 않는다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: css
+      custom_handler: no_layout_info_loss
+
+  - id: visible_node_not_dropped
+    description: "node.visible===false 노드만 제외 가능. 그 외 visible 노드는 반드시 DOM 출력한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: html
+      custom_handler: visible_node_not_dropped
+
+  # ===== Figma value mapping (mapping.json 기반) =====
+
+  - id: figma_value_gap_match
+    description: "CSS gap 값은 Figma itemSpacing(extracted mapping)과 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "gap==mapping.itemSpacing"
+
+  - id: figma_value_padding_match
+    description: "CSS padding 값은 Figma padding(extracted mapping)과 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "padding==mapping.padding"
+
+  - id: figma_value_color_match
+    description: "CSS color/background는 Figma fills(extracted mapping)와 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "color==mapping.fills"
+
+  - id: figma_value_font_match
+    description: "CSS font-size/weight/line-height는 Figma TEXT 노드 style과 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "font==mapping.text.style"
+
+  - id: figma_value_border_match
+    description: "CSS border는 Figma strokes(extracted mapping)와 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "border==mapping.strokes"
+
+  - id: figma_value_radius_match
+    description: "CSS border-radius는 Figma cornerRadius(extracted mapping)와 정확히 일치해야 한다."
+    severity: error
+    applies_to: [common, figma]
+    category: figma.mapping
+    validation:
+      type: value_equals_mapping
+      target: css
+      pattern: "border-radius==mapping.cornerRadius"
+
+  # ===== Process / manual rules (auto_check=false) =====
+
+  - id: figma_values_pre_extracted
+    description: "PM 프로세스 룰: 모든 CSS 값은 사전에 추출된 Figma spec table을 추적할 수 있어야 한다 (자동 검증 불가)."
+    severity: warning
+    applies_to: [common, figma, process]
+    category: process
+    validation:
+      type: custom
+      target: html
+      custom_handler: manual_review
+
+  - id: no_plausible_value_fill
+    description: "PM 프로세스 룰: 알 수 없는 값은 추측해서 채우지 않고 플래그한다 (자동 검증 불가)."
+    severity: warning
+    applies_to: [common, figma, process]
+    category: process
+    validation:
+      type: custom
+      target: html
+      custom_handler: manual_review
+
+  - id: agent_distribution_enforced
+    description: "PM 프로세스 룰: 코드 구현은 Codex/Gemini CLI를 통해 외주하고 Claude Task로 위임하지 않는다 (자동 검증 불가)."
+    severity: warning
+    applies_to: [common, process]
+    category: process
+    validation:
+      type: custom
+      target: html
+      custom_handler: manual_review
+
+  - id: coordinate_row_layout
+    description: "Figma 좌표 비교 기반 row 레이아웃 검증 (수동 리뷰 필요, 자동 검증 불가)."
+    severity: info
+    applies_to: [common, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: css
+      custom_handler: manual_review
+
+  - id: aspect_ratio_preferred
+    description: "이미지/카드 영역에 aspect-ratio 사용을 권장한다 (수동 시각 비교 필요)."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: html.image
+    validation:
+      type: custom
+      target: css
+      custom_handler: manual_review
+
+  - id: multiline_ellipsis_pattern
+    description: "다중행 말줄임 패턴은 -webkit-line-clamp 등 표준 패턴을 사용한다 (수동 시각 비교 필요)."
+    severity: info
+    applies_to: [common, basic, landing]
+    category: css.typography
+    validation:
+      type: custom
+      target: css
+      custom_handler: manual_review

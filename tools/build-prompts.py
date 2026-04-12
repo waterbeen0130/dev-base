@@ -36,60 +36,114 @@ def build_image_map_for_section(section_data: dict, full_image_map: dict) -> dic
     return {k: v for k, v in full_image_map.items() if k in section_ids}
 
 
+# BEGIN AUTO-GEN PROFILE_RULES (rules/rules.yaml → tools/build-rules.py)
 PROFILE_RULES = {
-    "basic": """## CSS 규칙 — Basic 프로젝트 (CRITICAL)
-- 각 셀렉터 한 줄 작성
-- 모든 요소에 개별 클래스 금지 → .parent span, .parent h2 부모+태그 선택자
-- 같은 태그 복수 시 :first-of-type / + span
-- **font-size: PC는 rem**, 모바일(768px 이하)은 고정 px
-- 기본 폰트 베이스: html,body{font-size:clamp(14px, 1.2vw, 16px);}
-- line-height: 무단위 비율 (1.3, 1.45) — px 금지
-- letter-spacing: em 단위 (-0.025em)
-- 색상: hex 전용, 투명도 시만 rgba
-- CSS Grid 금지 — flexbox만
-- font-family Pretendard이면 생략 (reset.css 기본)
-- font-weight 400이면 생략 (기본값)
-- justify-content:flex-start, align-items:flex-start/stretch 생략 (기본값)
-- padding/gap 0이면 생략
-- padding/margin: 고정 px, 100px 이상만 clamp() 허용
-- 768px 이하: padding/margin은 PC 값의 절반
-- width/height 고정px 금지 (컨테이너) — flex 비율 사용
-- 빈 div 금지, DOM 최대 5단계
-- 불필요 래퍼(자식 1개, 스타일 없음) 제거
-- 리스트 반복 3개+ → ul>li
-- 이미지: div.img_area > img
-- 짧은 텍스트에 <p> 금지 → <span>
-- 배경 이미지 위 콘텐츠 겹침 → position:relative + absolute
-- reset.css는 별도 파일 (link로 참조)""",
-
-    "landing": """## CSS 규칙 — Landing 프로젝트 (CRITICAL)
-- 각 셀렉터 한 줄 작성
-- 모든 요소에 개별 클래스 금지 → .parent span, .parent h2 부모+태그 선택자
-- 같은 태그 복수 시 :first-of-type / + span
-- **font-size: PC/모바일 모두 고정 px** (rem 사용 안 함)
-- line-height: 무단위 비율 (1.3, 1.45) — px 금지
-- letter-spacing: em 단위 (-0.025em)
-- 색상: hex 전용, 투명도 시만 rgba
-- CSS Grid 금지 — flexbox만
-- font-family Pretendard이면 생략 (reset.css 기본)
-- font-weight 400이면 생략 (기본값)
-- justify-content:flex-start, align-items:flex-start/stretch 생략 (기본값)
-- padding/gap 0이면 생략
-- padding/margin: PC/모바일 모두 고정 px
-- **Figma 좌우 padding → max-width 변환 필수**:
-  - Figma 좌우 padding을 CSS padding으로 직접 사용 금지
-  - 섹션은 full-width, 내부 래퍼에 max-width + margin:0 auto
-- width/height 고정px 금지 (컨테이너) — flex 비율 사용
-- 빈 div 금지, DOM 최대 5단계
-- 불필요 래퍼(자식 1개, 스타일 없음) 제거
-- 리스트 반복 3개+ → ul>li
-- 이미지: div.img_area > img
-- 짧은 텍스트에 <p> 금지 → <span>
-- 배경 이미지 위 콘텐츠 겹침 → position:relative + absolute
-- reset.css는 CSS 최상단에 포함 (별도 파일 없음)
-- GSAP 애니메이션: data-delay, data-direction 속성 유지
-- :root 변수: --point-color-1, --width, --padding 등""",
+    "basic": [
+        "레이아웃은 flexbox만 사용한다 (Grid/float 금지).",
+        "CSS Grid는 사용하지 않는다 — flexbox 전용.",
+        "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용.",
+        "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다.",
+        "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).",
+        "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다.",
+        "basic 프로젝트: reset.css는 별도 파일로 분리한다.",
+        "common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중복 작성하지 않는다.",
+        "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지).",
+        "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용.",
+        "padding/margin에 100px 미만 clamp()를 사용하지 않는다.",
+        "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+        "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+        ":root{} 안의 CSS 변수는 각 줄에 하나씩 선언한다 (한 줄에 여러 변수 금지).",
+        ":root 변수는 --point-color-N, --width, --padding 같은 패턴을 따른다 (시맨틱 이름 금지).",
+        "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다.",
+        "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언).",
+        ".font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리.",
+        "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양).",
+        "html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트).",
+        "basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용.",
+        "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용.",
+        "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지.",
+        "다중행 말줄임 패턴은 -webkit-line-clamp 등 표준 패턴을 사용한다 (수동 시각 비교 필요).",
+        "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다.",
+        "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지.",
+        "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다.",
+        "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다.",
+        "basic 프로젝트 768px 이하: padding/margin은 PC 값의 약 절반 사용.",
+        "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지).",
+        "DOM 최대 깊이는 5단계를 초과하지 않는다.",
+        "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다.",
+        "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지).",
+        "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지).",
+        "빈 div(<div></div>) 사용 금지.",
+        "<figure>/<figcaption> 사용 금지 — div.img_area + p/span 구조 사용.",
+        "인라인 style 속성을 사용하지 않는다.",
+        "body 태그에 page_ 클래스를 부여하지 않는다 (불필요).",
+        "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다.",
+        "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.",
+        "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지).",
+        "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다.",
+        "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_).",
+        "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다.",
+        "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).",
+        "이미지/카드 영역에 aspect-ratio 사용을 권장한다 (수동 시각 비교 필요).",
+        "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외).",
+        "<p> 태그는 텍스트에 \n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용.",
+        "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용.",
+        "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지).",
+        "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지).",
+    ],
+    "landing": [
+        "레이아웃은 flexbox만 사용한다 (Grid/float 금지).",
+        "CSS Grid는 사용하지 않는다 — flexbox 전용.",
+        "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용.",
+        "landing 프로젝트는 [data-delay] opacity/position 룰과 .section_on 토글 룰이 있어야 한다.",
+        "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다.",
+        "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).",
+        "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다.",
+        "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지).",
+        "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용.",
+        "padding/margin에 100px 미만 clamp()를 사용하지 않는다.",
+        "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+        "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+        ":root{} 안의 CSS 변수는 각 줄에 하나씩 선언한다 (한 줄에 여러 변수 금지).",
+        ":root 변수는 --point-color-N, --width, --padding 같은 패턴을 따른다 (시맨틱 이름 금지).",
+        "landing 프로젝트는 :root에 --padding, --header_h, --width, --point-color-1 4개 변수가 모두 존재해야 한다.",
+        "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다.",
+        "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언).",
+        ".font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리.",
+        "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양).",
+        "landing 프로젝트: 모든 font-size는 PC/모바일 모두 고정 px만 사용 (rem 사용 금지).",
+        "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용.",
+        "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지.",
+        "다중행 말줄임 패턴은 -webkit-line-clamp 등 표준 패턴을 사용한다 (수동 시각 비교 필요).",
+        "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다.",
+        "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지.",
+        "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다.",
+        "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다.",
+        "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지).",
+        "DOM 최대 깊이는 5단계를 초과하지 않는다.",
+        "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다.",
+        "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지).",
+        "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지).",
+        "빈 div(<div></div>) 사용 금지.",
+        "<figure>/<figcaption> 사용 금지 — div.img_area + p/span 구조 사용.",
+        "인라인 style 속성을 사용하지 않는다.",
+        "body 태그에 page_ 클래스를 부여하지 않는다 (불필요).",
+        "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다.",
+        "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.",
+        "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지).",
+        "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다.",
+        "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_).",
+        "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다.",
+        "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).",
+        "이미지/카드 영역에 aspect-ratio 사용을 권장한다 (수동 시각 비교 필요).",
+        "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외).",
+        "<p> 태그는 텍스트에 \n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용.",
+        "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용.",
+        "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지).",
+        "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지).",
+    ],
 }
+# END AUTO-GEN PROFILE_RULES
 
 
 def build_prompt(section_path: str, section_data: dict, image_map: dict,
