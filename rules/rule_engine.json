@@ -182,11 +182,10 @@
       "forbidden_patterns": ["page_\\d+", "sub_\\d+", "page_[a-z]$"],
       "meaningful_name_required": true,
       "class_prefix_rule": "filename without .html extension becomes CSS class prefix",
-      "body_class_pattern": "page_{filename_without_ext}",
       "examples": {
-        "greeting": { "file": "greeting.html", "body_class": "page_greeting", "css_prefix": "greeting_" },
-        "products": { "file": "products.html", "body_class": "page_products", "css_prefix": "products_" },
-        "notice": { "file": "notice.html", "body_class": "page_notice", "css_prefix": "notice_" }
+        "greeting": { "file": "greeting.html", "css_prefix": "greeting_" },
+        "products": { "file": "products.html", "css_prefix": "products_" },
+        "notice": { "file": "notice.html", "css_prefix": "notice_" }
       }
     }
   },
@@ -427,7 +426,6 @@
     },
     "css_append_to_existing": true,
     "css_append_to_existing_note": "new sub page CSS must be appended to bottom of existing common.css, never modify existing rules",
-    "body_class_pattern": "page_{name}",
     "naming": {
       "list_section": "{page}_section",
       "list_container": "{page}_list",

@@ -164,9 +164,6 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type landing --
 - **서브 페이지**: 페이지 내용을 나타내는 **영문 snake_case** 파일명 (예: `greeting.html`, `history.html`)
 - 루트 디렉토리에 flat 배치 (폴더 중첩 없음)
 - `page_1.html`, `sub_01.html`, `page_a.html` 같은 **의미 없는 번호/문자 기반 파일명 금지**
-- **body class 필수**: 파일명에서 `.html`을 제거한 값에 `page_` 프리픽스를 붙여 `<body class="page_{name}">` 형태로 부여
-  - `greeting.html` → `<body class="page_greeting">`
-  - `products.html` → `<body class="page_products">`
 
 #### CSS 프리픽스 규칙
 
@@ -174,12 +171,12 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type landing --
 - 프리픽스는 파일명(영문 snake_case)과 동일하게 `{name}_{role}` 패턴으로 지정
 - 서브페이지 공통 구조(`sub_wrap`, `sub_visual`, `navi`, `lnb`, `sub_cont` 등)에는 프리픽스 없이 공통 클래스 사용
 
-| 페이지 유형 | 파일명 | body class | CSS 프리픽스 | 프리픽스 적용 대상 |
-|------------|--------|-----------|-------------|------------------|
-| 메인(홈) | `index.html` | `page_index` | `main_` | 메인 전용 섹션 |
-| 인사말 | `greeting.html` | `page_greeting` | `greeting_` | 인사말 고유 콘텐츠 |
-| 공지사항 | `notice.html` | `page_notice` | `notice_` | 공지 고유 콘텐츠 |
-| 포토갤러리 | `gallery.html` | `page_gallery` | `gallery_` | 갤러리 고유 콘텐츠 |
+| 페이지 유형 | 파일명 | CSS 프리픽스 | 프리픽스 적용 대상 |
+|------------|--------|-------------|------------------|
+| 메인(홈) | `index.html` | `main_` | 메인 전용 섹션 |
+| 인사말 | `greeting.html` | `greeting_` | 인사말 고유 콘텐츠 |
+| 공지사항 | `notice.html` | `notice_` | 공지 고유 콘텐츠 |
+| 포토갤러리 | `gallery.html` | `gallery_` | 갤러리 고유 콘텐츠 |
 
 > **규칙**: 서브페이지 공통 영역은 공통 클래스, 페이지 고유 영역만 프리픽스 적용
 
@@ -236,6 +233,51 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type landing --
 | 같은 태그 복수 (순서 구분 가능) | **금지** | `.parent a:first-child`, `.parent a + a` |
 | 아이콘/장식 span (빈 요소) | **허용** | `.check_icon` |
 | 상태 구분 (slide1 vs slide2) | **필수** | `.main_visual_slide1`, `.main_visual_slide2` |
+
+#### 불필요한 클래스 제거 원칙 (CRITICAL)
+
+> **문제는 셀렉터 깊이가 아니라, 모든 레벨에 고유 클래스를 붙이는 것이다.**
+> 섹션 스코핑(`.main_commu .main_post_list`)은 프로젝트 컨벤션상 필요하며, 이것은 금지 대상이 아니다.
+> 금지 대상은 `li`, `a`, 유일한 태그 등 **태그 선택자로 충분한 요소에 불필요한 클래스를 부여**하는 것이다.
+
+**셀렉터 구성 원칙**:
+1. **섹션 스코핑**: `.섹션 .컨테이너`로 시작 — 프로젝트 내 같은 클래스명 충돌 방지 (허용, 권장)
+2. **내부 요소**: 태그/구조 선택자 우선 — 클래스는 같은 태그 구분이 필요할 때만 최소 부여
+3. **금지**: 모든 레벨에 고유 클래스를 체인하는 것 (`.섹션 .컨테이너 .아이템클래스 .요소클래스`)
+
+```css
+/* correct - 섹션 스코핑 + 태그 선택자 (클래스는 컨테이너까지만, 내부는 태그) */
+.main_commu .main_post_list{display:flex; flex-wrap:wrap; gap:20px;}
+.main_commu .main_post_list li{width:calc(50% - 10px);}
+.main_commu .main_post_list li a{display:flex; flex-direction:column; padding:30px;}
+.main_commu .main_post_list li strong{font-size:1.25rem; font-weight:600;}
+.main_commu .main_post_list li .tag{font-size:0.9375rem; color:#1197d5;}
+.main_commu .main_post_list li .date{font-size:1rem; color:#757575;}
+
+/* wrong - 모든 레벨에 고유 클래스 체인 */
+.main_commu .main_post_item{display:flex;}          /* li에 불필요한 클래스 */
+.main_commu .main_post_item .post_tag{...}          /* span에 불필요한 클래스 */
+.main_commu .main_post_item .post_title{...}        /* strong에 불필요한 클래스 (유일한 태그) */
+.main_commu .main_post_item .post_date{...}         /* span에 장황한 클래스 (.date면 충분) */
+```
+
+**클래스가 필요한 곳 vs 불필요한 곳**:
+
+| 요소 | 클래스 필요? | 이유 |
+|------|-------------|------|
+| 섹션 (`.main_commu`) | **필수** | 페이지 내 스코프 구분 |
+| 컨테이너 (`.main_post_list`) | **필수** | 컴포넌트 식별 |
+| `li` | **불필요** | `.컨테이너 li`로 충분 |
+| `li > a` | **불필요** | `.컨테이너 li a`로 충분 |
+| 유일한 `strong` | **불필요** | `.컨테이너 li strong`으로 충분 |
+| 같은 태그 복수 (`span` ×2) | **최소 클래스** | `.tag`, `.date` (의미 구분용) |
+
+**리스트 항목(`li`) 내부 요소 규칙**:
+- `li` 자체에 클래스 부여 금지 — `.컨테이너 li`로 충분
+- `li > a`에 클래스 부여 금지 — `.컨테이너 li a`로 충분
+- 유일한 태그(`strong`, `h3` 등) → `.컨테이너 li strong` (클래스 불필요)
+- 같은 태그 복수(`span` 2개 등) → 최소 의미 클래스 `.tag`, `.date` 부여
+- `li` 안에 div 래퍼가 필요하면 `.img_area`, `.txt_area` 등 역할 클래스 사용
 
 ```css
 /* correct - parent + tag selector */
@@ -433,9 +475,46 @@ project/
 - 오버라이드에 `fontWeight`, `fills`(색상), `fontSize` 등이 포함될 수 있으므로 해당 구간에 `<strong>`, `<span>` + CSS를 적용한다
 
 ### Figma 레이아웃 매핑 규칙
-- `layoutMode: VERTICAL` → `flex-direction: column`
-- `layoutMode: HORIZONTAL` → `flex-direction: row`
-- `itemSpacing` → CSS `gap` 반영 필수
+
+> **피그마 Auto Layout을 CSS로 기계적 직역하지 않는다.**
+> 피그마는 거의 모든 프레임에 Auto Layout이 걸려 있지만, HTML/CSS에서는 블록 흐름만으로 충분한 경우가 많다.
+> 변환 전에 **flex가 실제로 필요한지** 판단한다.
+
+#### flex 사용 판단 기준 (CRITICAL)
+
+| 상황 | flex 필요? | CSS |
+|------|-----------|-----|
+| 자식 요소가 **가로 배치** | **필요** | `display:flex;` |
+| 자식 요소가 세로 배치 + **간격이 모두 동일** | **필요** | `display:flex; flex-direction:column; gap:Npx;` |
+| 자식 요소가 세로 배치 + **간격이 제각각** | **불필요** | `display:block;` + 각 자식에 `margin-top` 개별 지정 |
+| 자식이 1개뿐 | **불필요** | `display:block;` + `padding`으로 배치 |
+| 정렬/축소/확장 제어 필요 (`align-items`, `flex-grow` 등) | **필요** | `display:flex;` |
+
+#### gap vs margin 판단 기준 (CRITICAL)
+
+> **간격이 일정하지 않으면 `gap`을 사용하지 않는다.**
+> 실제 디자인에서 자식 간 상하 간격이 모두 동일한 경우는 드물다.
+> 피그마 `itemSpacing`을 무조건 `gap`으로 변환하는 것을 금지한다.
+
+- **`gap` 허용 조건**: 모든 자식 간 간격이 **동일한 값**일 때만 사용
+- **그 외**: 각 자식에 `margin-top` 또는 `margin-bottom`으로 **피그마에서 측정한 실제 간격**을 개별 지정
+- 상하 간격이 다른데 `gap`으로 통일하면 디자인과 불일치 발생 — 금지
+
+```css
+/* wrong - 간격이 다른데 gap으로 통일 */
+.card a{display:flex; flex-direction:column; gap:15px;}
+
+/* correct - 각 요소별 실제 간격 반영 */
+.card a{display:block;}
+.card li strong{margin-top:10px;}
+.card li .date{margin-top:22px;}
+```
+
+#### 피그마 속성 → CSS 변환표
+
+- `layoutMode: VERTICAL` → 위 판단 기준에 따라 `flex-direction:column` 또는 `display:block`
+- `layoutMode: HORIZONTAL` → `display:flex;` (가로 배치는 flex 필수)
+- `itemSpacing` → 위 gap 판단 기준에 따라 `gap` 또는 개별 `margin`
 - `padding*` → CSS `padding` 반영 필수
 - `counterAxisAlignItems` → `align-items`
 - `primaryAxisAlignItems` → `justify-content`
@@ -586,9 +665,8 @@ project/
 ### 새 서브페이지 생성 시
 1. 같은 프로젝트에 기존 서브페이지가 있으면 공통 컴포넌트(header/footer/sub_visual/navi/lnb/page_title)를 **그대로 복사**
 2. 메뉴 active 상태, 브레드크럼/lnb 텍스트만 해당 페이지에 맞게 변경
-3. `body` 태그에 페이지 프리픽스 클래스 `page_{name}`을 **반드시 부여** (파일명과 일치)
-4. CSS는 기존 common.css **하단에 추가** (기존 코드 수정 안 함)
-5. 기존 프로젝트가 없으면 `templates/sub_list.html` 또는 `templates/sub_view.html` 골격 사용
+3. CSS는 기존 common.css **하단에 추가** (기존 코드 수정 안 함)
+4. 기존 프로젝트가 없으면 `templates/sub_list.html` 또는 `templates/sub_view.html` 골격 사용
 
 ### 서브페이지 작업 워크플로우 (필수)
 

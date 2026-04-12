@@ -205,8 +205,8 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type basic --pu
 - **서브 페이지**: 페이지 내용에 맞는 의미 있는 영문명 (snake_case), flat 배치
 - `page_1.html`, `sub_01.html` 같은 의미 없는 파일명 금지
 - **파일명 → CSS 프리픽스 연동**: 파일명에서 `.html`을 제거한 값이 해당 페이지의 CSS 클래스 프리픽스
-  - `greeting.html` → body class `page_greeting` → CSS 프리픽스 `greeting_`
-  - `products.html` → body class `page_products` → CSS 프리픽스 `products_`
+  - `greeting.html` → CSS 프리픽스 `greeting_`
+  - `products.html` → CSS 프리픽스 `products_`
 
 ---
 
@@ -230,12 +230,32 @@ FIGMA_TOKEN="{token}" python3 D:/dev-base/tools/figma-extract.py \
 - `--tree` 출력에 나오는 노드만 HTML에 포함 (visible:false 자동 제외됨)
 - 출력 결과를 사용자에게 먼저 보여주고 확인 후 코드 작성
 
-### 3. HTML 작성 전 노드 대조 (코드 작성 직전)
+### 3. 매핑 생성 + 컴포넌트/캐스케이드 비교 (코드 작성 직전, CRITICAL)
+```bash
+# 매핑 JSON 생성 (parent_id + component 패턴 포함)
+FIGMA_TOKEN="{token}" python3 D:/dev-base/tools/figma-extract.py \
+  --node-id {node-id} --file-key {file-key} --output ./extracted/ --emit-mapping
+
+# 매핑 vs 현재 CSS 비교 리포트
+python3 D:/dev-base/tools/compare-css.py \
+  --mapping ./extracted/{name}_mapping.json \
+  --css css/common.css \
+  --scope "{관련 셀렉터 키워드}"
+```
+- `compare-css.py`가 자동 감지하는 것:
+  - **배지(badge)**: Frame(bg+radius+padding) + TEXT 자식 → `<span class="badge">` 래퍼 필요
+  - **카드(card)**: Frame(border/radius) + 이미지+텍스트 자식 → 컨테이너 CSS 확인
+  - **캐스케이드 충돌**: `.parent p` 같은 광범위 선택자가 테이블/카드 내부 `<p>`에 누수
+- 리포트의 `[HIGH]` 이슈가 0건이 될 때까지 CSS/HTML 수정
+- **리포트를 실행하지 않고 코드 작성하는 것은 금지**
+
+### 4. HTML 작성 전 노드 대조 (코드 작성 직전)
 - `--tree` 출력의 각 노드를 HTML 요소와 1:1 매핑 목록 작성
 - Figma layoutMode/gap/padding/fills 값을 CSS로 변환 (임의 값 사용 금지)
 - 매핑에 없는 요소를 HTML에 추가하지 않음
+- `compare-css.py` 리포트의 badge/card 컴포넌트는 반드시 래퍼 요소로 구현
 
-### 4. HTML 작성 후 검증 (코드 작성 직후)
+### 5. HTML 작성 후 검증 (코드 작성 직후)
 ```bash
 # TODO: validator 확장 필요 (REQ-005+) — --type basic 미지원
 python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/common.css

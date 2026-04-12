@@ -205,8 +205,8 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type basic --pu
 - **서브 페이지**: 페이지 내용에 맞는 의미 있는 영문명 (snake_case), flat 배치
 - `page_1.html`, `sub_01.html` 같은 의미 없는 파일명 금지
 - **파일명 → CSS 프리픽스 연동**: 파일명에서 `.html`을 제거한 값이 해당 페이지의 CSS 클래스 프리픽스
-  - `greeting.html` → body class `page_greeting` → CSS 프리픽스 `greeting_`
-  - `products.html` → body class `page_products` → CSS 프리픽스 `products_`
+  - `greeting.html` → CSS 프리픽스 `greeting_`
+  - `products.html` → CSS 프리픽스 `products_`
 
 ---
 
@@ -278,8 +278,8 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
 1. Figma MCP로 해당 섹션 데이터 조회
    → mcp__figma__get_figma_data(fileKey, nodeId=섹션ID)
 2. AI가 MCP 응답을 직접 해석하여 HTML/CSS 생성
-   - layoutMode → flex-direction
-   - itemSpacing → gap
+   - layoutMode → flex 필요 여부 먼저 판단 (세로+간격 제각각이면 block, 가로 배치면 flex)
+   - itemSpacing → 간격 동일하면 gap, 다르면 개별 margin
    - padding* → padding
    - fills → background/color (hex 변환)
    - style → font-size, font-weight, line-height(비율), letter-spacing(em)
@@ -396,11 +396,13 @@ python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <outpu
 - 숫자/통계 데이터는 `<span>` 또는 `<strong>` 사용
 
 ### CSS 선택자 계층 규칙 (필수)
-- **모든 요소에 개별 클래스 부여 금지** — 컨테이너 클래스만 유지하고 내부는 부모+태그 선택자
-- 컨테이너 내 유일한 태그 → `.parent h2`, `.parent strong`, `.parent p`
-- 같은 태그 복수, 의미 구분 필요 → 최소 클래스 `.parent .en`, `.parent .sub`
+- **불필요한 클래스 제거** — 문제는 깊이가 아니라 모든 레벨에 고유 클래스를 붙이는 것
+- **섹션 스코핑은 허용** — `.섹션 .컨테이너 li a`처럼 섹션+컨테이너로 시작하는 것은 충돌 방지를 위해 권장
+- **금지 대상**: `li`, `a`, 유일한 태그에 불필요한 클래스 부여 (`.섹션 .아이템클래스 .요소클래스` 체인)
+- 컨테이너 내 유일한 태그 → `.parent li strong`, `.parent h2` (클래스 불필요)
+- 같은 태그 복수, 의미 구분 필요 → 최소 클래스 `.parent li .tag`, `.parent li .date`
 - 같은 태그 복수, 순서 구분 가능 → `.parent a:first-child`, `.parent a + a`
-- 개별 클래스는 위 방법으로 불가능할 때만 최후 수단으로 사용
+- **리스트 항목**: `li`/`a`에 클래스 금지, `.컨테이너 li a`로 충분
 
 ---
 

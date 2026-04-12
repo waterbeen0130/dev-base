@@ -128,7 +128,6 @@ sub_wrap
 
 - 메인 페이지: `index.html`
 - 서브 페이지: **영문 snake_case** (예: `intro.html`, `facility.html`, `instructor.html`)
-- body class: 파일명에 `page_` 프리픽스를 붙여 `<body class="page_{name}">` 필수
 - CSS 프리픽스: 파일명과 동일한 `{name}_{role}` 패턴 (예: `intro_`, `facility_`, `instructor_`)
 - `page_1.html`, `sub_01.html` 같은 의미 없는 파일명 금지
 

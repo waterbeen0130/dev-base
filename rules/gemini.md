@@ -25,8 +25,8 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 - Figma MCP(`get_figma_data`)로 섹션별 노드 데이터를 조회하여 CSS 값 결정
 - 전체 페이지를 한번에 처리하지 않고 **섹션(노드) 단위로 호출**
 - Figma 속성 → CSS 변환 규칙:
-  - `layoutMode` → `flex-direction` (VERTICAL=column, HORIZONTAL=row)
-  - `itemSpacing` → `gap`
+  - `layoutMode` → flex 필요 여부 먼저 판단 (세로+간격 제각각이면 block, 가로면 flex)
+  - `itemSpacing` → 간격 동일하면 gap, 다르면 개별 margin
   - `padding*` → `padding` (shorthand)
   - `fills` → `background`/`color` (hex 변환, 투명도 시만 rgba)
   - `lineHeightPx` → `line-height` (무단위 비율로 변환)
@@ -63,11 +63,13 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 - 숫자/통계 데이터 → `<span>` 또는 `<strong>`
 
 ### CSS 선택자 계층 규칙 (필수 — 개별 클래스 남발 금지)
-- **모든 HTML 요소에 개별 클래스 부여 금지** — 컨테이너 클래스만 유지
-- 컨테이너 내 유일한 태그 → `.parent h2`, `.parent strong`
-- 같은 태그 복수, 의미 구분 필요 → 최소 클래스 `.parent .en`, `.parent .sub`
+- **불필요한 클래스 제거** — 문제는 깊이가 아니라 모든 레벨에 고유 클래스를 붙이는 것
+- **섹션 스코핑은 허용** — `.섹션 .컨테이너 li a`처럼 섹션+컨테이너로 시작하는 것은 충돌 방지를 위해 권장
+- **금지 대상**: `li`, `a`, 유일한 태그에 불필요한 클래스 부여 (`.섹션 .아이템클래스 .요소클래스` 체인)
+- 컨테이너 내 유일한 태그 → `.parent li strong`, `.parent h2` (클래스 불필요)
+- 같은 태그 복수, 의미 구분 필요 → 최소 클래스 `.parent li .tag`, `.parent li .date`
 - 같은 태그 복수, 순서 구분 가능 → `.parent a:first-child`, `.parent a + a`
-- 개별 클래스는 위 방법으로 불가능할 때만 최후 수단
+- **리스트 항목**: `li`/`a`에 클래스 금지, `.컨테이너 li a`로 충분
 
 ---
 
@@ -171,9 +173,9 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 - `.card+.card{border-left:...}` 인접 셀렉터 border 금지
 
 ### 레이아웃 매핑
-- `layoutMode: VERTICAL` → `flex-direction: column`
-- `layoutMode: HORIZONTAL` → `flex-direction: row`
-- `itemSpacing` → CSS `gap` (spec 테이블의 `css_gap` 값 사용)
+- `layoutMode: VERTICAL` → **flex 필요 여부 먼저 판단**: 세로 배치+간격 제각각이면 `display:block` + 개별 `margin`, 간격 동일하거나 정렬 제어 필요하면 `flex-direction:column`
+- `layoutMode: HORIZONTAL` → `display:flex` (가로 배치는 flex 필수)
+- `itemSpacing` → **간격 동일하면 `gap`**, 다르면 각 자식에 `margin-top`/`margin-bottom` 개별 지정 (피그마에서 실제 간격 측정 필수)
 - `padding*` → CSS `padding` (spec 테이블의 `css_padding` 값 사용)
 - 레이아웃 정보 누락 금지
 
