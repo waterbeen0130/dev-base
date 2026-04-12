@@ -1,2 +1,4 @@
 node_modules/
 .omx/
+tools/__pycache__/
+__pycache__/
