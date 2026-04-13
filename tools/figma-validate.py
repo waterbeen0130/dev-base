@@ -11,11 +11,18 @@ import argparse
 import json
 import re
 import sys
+import types
 from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Iterable
+
+
+if __name__ not in sys.modules:
+    module_proxy = types.ModuleType(__name__)
+    module_proxy.__dict__.update(globals())
+    sys.modules[__name__] = module_proxy
 
 
 VOID_TAGS = {
@@ -150,6 +157,7 @@ class CSSRule:
     selectors: list[str]
     declarations: dict[str, str]
     order: int
+    pseudo_element: str | None = None
 
 
 @dataclass
@@ -166,6 +174,14 @@ class ElementMatch:
     element: DOMElement
     normalized_text: str
     raw_text: str
+
+
+@dataclass(frozen=True)
+class FrameMatchContext:
+    depth: int
+    area: float | None
+    path_hint: str
+    blocked_rule_keys: tuple[tuple[int, tuple[str, ...]], ...] = ()
 
 
 def parse_args() -> argparse.Namespace:
@@ -451,6 +467,13 @@ def split_selectors(selector_text: str) -> list[str]:
     return [part.strip() for part in top_level_split(selector_text, ",") if part.strip()]
 
 
+def extract_pseudo_element(selector: str) -> str | None:
+    match = re.search(r"::?(before|after)\b", selector, flags=re.I)
+    if not match:
+        return None
+    return match.group(1).lower()
+
+
 def parse_css_rules(css_text: str) -> list[CSSRule]:
     css = re.sub(r"/\*.*?\*/", "", css_text, flags=re.S)
     rules: list[CSSRule] = []
@@ -532,7 +555,19 @@ def parse_css_rules(css_text: str) -> list[CSSRule]:
         selectors = split_selectors(selector_text)
         if selectors and declarations:
             order += 1
-            rules.append(CSSRule(selectors=selectors, declarations=declarations, order=order))
+            grouped_selectors: dict[str | None, list[str]] = {}
+            for selector in selectors:
+                pseudo_element = extract_pseudo_element(selector)
+                grouped_selectors.setdefault(pseudo_element, []).append(selector)
+            for pseudo_element, grouped in grouped_selectors.items():
+                rules.append(
+                    CSSRule(
+                        selectors=grouped,
+                        declarations=declarations,
+                        order=order,
+                        pseudo_element=pseudo_element,
+                    )
+                )
         index = block_end + 1
 
     return rules
@@ -724,6 +759,8 @@ def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule])
     properties: dict[str, PropertyValue] = {}
 
     for rule in rules:
+        if rule.pseudo_element is not None:
+            continue
         matched_selectors = [selector for selector in rule.selectors if matches_selector(element, selector)]
         if not matched_selectors:
             continue
@@ -899,7 +936,116 @@ def link_matches(element: DOMElement, url: str) -> bool:
     return element.tag == "a" and element.attrs.get("href", "").strip() == url and element.attrs.get("target", "").strip().lower() == "_blank"
 
 
+def selector_depth(selector: str) -> int:
+    tokenized = tokenize_selector(selector)
+    if tokenized is None:
+        return 0
+    return len(tokenized[0])
+
+
+def css_rule_key(rule: CSSRule) -> tuple[int, tuple[str, ...]]:
+    return (rule.order, tuple(rule.selectors))
+
+
+def normalize_bbox(bbox: object) -> dict[str, float] | None:
+    if not isinstance(bbox, dict):
+        return None
+    keys = ("x", "y", "w", "h")
+    normalized: dict[str, float] = {}
+    for key in keys:
+        value = bbox.get(key)
+        if not isinstance(value, (int, float)):
+            return None
+        normalized[key] = float(value)
+    return normalized
+
+
+def bbox_area(bbox: object) -> float | None:
+    normalized = normalize_bbox(bbox)
+    if not normalized:
+        return None
+    width = normalized["w"]
+    height = normalized["h"]
+    if width <= 0 or height <= 0:
+        return None
+    return width * height
+
+
+def bbox_contains(outer_bbox: object, inner_bbox: object) -> bool:
+    outer = normalize_bbox(outer_bbox)
+    inner = normalize_bbox(inner_bbox)
+    if not outer or not inner:
+        return False
+    return (
+        outer["x"] <= inner["x"]
+        and outer["y"] <= inner["y"]
+        and outer["x"] + outer["w"] >= inner["x"] + inner["w"]
+        and outer["y"] + outer["h"] >= inner["y"] + inner["h"]
+    )
+
+
+def frame_identifier(frame: dict, fallback_index: int | None = None) -> str:
+    node_id = frame.get("id")
+    if isinstance(node_id, str) and node_id.strip():
+        return node_id.strip()
+    if fallback_index is not None:
+        return f"frame@{fallback_index}"
+    return "frame@unknown"
+
+
+def infer_parent_lookup(frame_nodes: list[dict]) -> dict[str, str]:
+    frame_by_id = {frame_identifier(frame, index): frame for index, frame in enumerate(frame_nodes)}
+    parent_lookup: dict[str, str] = {}
+
+    for index, frame in enumerate(frame_nodes):
+        node_id = frame_identifier(frame, index)
+        parent_id = frame.get("parent_id")
+        if isinstance(parent_id, str) and parent_id.strip():
+            parent_lookup[node_id] = parent_id.strip()
+            continue
+
+        containing_parents: list[tuple[float, str]] = []
+        for other_index, other in enumerate(frame_nodes):
+            other_id = frame_identifier(other, other_index)
+            if other_id == node_id or not bbox_contains(other.get("bbox"), frame.get("bbox")):
+                continue
+            area = bbox_area(other.get("bbox"))
+            if area is None:
+                continue
+            containing_parents.append((area, other_id))
+
+        if containing_parents:
+            containing_parents.sort(key=lambda item: item[0])
+            guessed_parent_id = containing_parents[0][1]
+            if guessed_parent_id in frame_by_id:
+                parent_lookup[node_id] = guessed_parent_id
+
+    return parent_lookup
+
+
+def frame_parent_chain(frame_id: str, parent_lookup: dict[str, str]) -> list[str]:
+    chain: list[str] = []
+    seen: set[str] = set()
+    current = parent_lookup.get(frame_id)
+    while current and current not in seen:
+        chain.append(current)
+        seen.add(current)
+        current = parent_lookup.get(current)
+    return chain
+
+
+def frame_path_hint(frame: dict, parent_lookup: dict[str, str], fallback_index: int | None = None) -> str:
+    frame_id = frame_identifier(frame, fallback_index)
+    chain = frame_parent_chain(frame_id, parent_lookup)
+    if chain:
+        return f"frame {frame_id} (parent: {' -> '.join(chain)})"
+    return f"frame {frame_id}"
+
+
 def evaluate_frame_rule(rule: CSSRule, frame: dict) -> tuple[int, list[str]]:
+    if rule.pseudo_element is not None:
+        return 0, []
+
     score = 0
     notes: list[str] = []
     properties = {key: PropertyValue(value=value, selector=", ".join(rule.selectors), specificity=(0, 0, 0), order=rule.order, important=False) for key, value in rule.declarations.items()}
@@ -928,20 +1074,45 @@ def evaluate_frame_rule(rule: CSSRule, frame: dict) -> tuple[int, list[str]]:
     layout_mode = str(frame.get("layoutMode") or "").upper()
     if layout_mode == "HORIZONTAL" and flex_direction == "row":
         score += 1
+        notes.append("layout")
     if layout_mode == "VERTICAL" and flex_direction == "column":
         score += 1
+        notes.append("layout")
+
+    context = frame.get("_match_context")
+    if isinstance(context, FrameMatchContext) and score > 0:
+        selector_depths = [selector_depth(selector) for selector in rule.selectors]
+        selector_depths = [depth for depth in selector_depths if depth > 0]
+        if selector_depths:
+            target_depth = context.depth + 1
+            depth_delta = min(abs(depth - target_depth) for depth in selector_depths)
+            if depth_delta == 0:
+                score += 3
+                notes.append("depth")
+                if context.area is not None:
+                    score += 1
+                    notes.append("bbox")
+            elif depth_delta == 1:
+                score += 1
+                notes.append("depth-near")
 
     return score, notes
 
 
 def best_frame_rule(frame: dict, rules: list[CSSRule]) -> tuple[CSSRule | None, list[str]]:
+    context = frame.get("_match_context")
+    blocked_rule_keys = set(context.blocked_rule_keys) if isinstance(context, FrameMatchContext) else set()
     ranked: list[tuple[int, int, CSSRule, list[str]]] = []
     for rule in rules:
+        if css_rule_key(rule) in blocked_rule_keys:
+            continue
         score, notes = evaluate_frame_rule(rule, frame)
         if score <= 0:
             continue
         ranked.append((score, rule.order, rule, notes))
     if not ranked:
+        if isinstance(context, FrameMatchContext):
+            return None, [context.path_hint]
         return None, []
     ranked.sort(key=lambda item: (-item[0], item[1]))
     return ranked[0][2], ranked[0][3]
@@ -1023,10 +1194,44 @@ def validate_text_nodes(
 
 def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> list[Violation]:
     violations: list[Violation] = []
+    parent_lookup = infer_parent_lookup(frame_nodes)
 
-    for frame in frame_nodes:
-        best_rule, matched_notes = best_frame_rule(frame, css_rules)
+    ordered_frames: list[tuple[int, float, int, dict, str, FrameMatchContext]] = []
+    for index, frame in enumerate(frame_nodes):
+        frame_id = frame_identifier(frame, index)
+        area = bbox_area(frame.get("bbox")) or 0.0
+        chain = frame_parent_chain(frame_id, parent_lookup)
+        context = FrameMatchContext(
+            depth=len(chain),
+            area=area if area > 0 else None,
+            path_hint=frame_path_hint(frame, parent_lookup, index),
+        )
+        ordered_frames.append((len(chain), -area, index, frame, frame_id, context))
+
+    ordered_frames.sort(key=lambda item: (item[0], item[1], item[2]))
+    matched_rule_by_frame_id: dict[str, tuple[int, tuple[str, ...]]] = {}
+
+    for _, _, index, frame, frame_id, context in ordered_frames:
+        blocked_rule_keys = tuple(
+            matched_rule_by_frame_id[parent_id]
+            for parent_id in frame_parent_chain(frame_id, parent_lookup)
+            if parent_id in matched_rule_by_frame_id
+        )
+        contextualized_frame = dict(frame)
+        contextualized_frame["_match_context"] = FrameMatchContext(
+            depth=context.depth,
+            area=context.area,
+            path_hint=context.path_hint,
+            blocked_rule_keys=blocked_rule_keys,
+        )
+
+        best_rule, matched_notes = best_frame_rule(contextualized_frame, css_rules)
+        if best_rule is not None:
+            matched_rule_by_frame_id[frame_id] = css_rule_key(best_rule)
+
+        match_hint = matched_notes[0] if best_rule is None and matched_notes else None
         rule_label = ", ".join(best_rule.selectors) if best_rule else "미매칭"
+        rule_display = f"{rule_label} ({match_hint})" if match_hint else rule_label
         props = rule_properties(best_rule) if best_rule else {}
         padding = resolve_padding(props)
         gap_values = resolve_gap_values(props)
@@ -1040,7 +1245,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                     "fills color hex 일치",
                     frame,
                     expected_fill,
-                    f"{', '.join(backgrounds) if backgrounds else 'background 미발견'} @ {rule_label}",
+                    f"{', '.join(backgrounds) if backgrounds else 'background 미발견'} @ {rule_display}",
                 )
 
         meaningful_padding = [side for side in BOX_SIDES if frame.get(f"padding{side.capitalize()}") not in (None, 0)]
@@ -1060,7 +1265,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                     "frame padding/gap 반영",
                     frame,
                     ", ".join(missing_bits),
-                    f"{rule_label} ({', '.join(matched_notes) or 'signature 없음'})",
+                    f"{rule_display} ({', '.join(matched_notes) if best_rule else match_hint or 'signature 없음'})",
                 )
 
         clamp_targets: list[tuple[str, float | int]] = []
@@ -1083,7 +1288,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                     "clamp 적용",
                     frame,
                     f"{prop_name}={expected} requires clamp()",
-                    f"{render_value(actual_value)} @ {rule_label}",
+                    f"{render_value(actual_value)} @ {rule_display}",
                 )
 
         if str(frame.get("layoutMode") or "").upper() == "VERTICAL" and any(prop in props for prop in ("gap", "row-gap", "column-gap")):
@@ -1092,7 +1297,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                 "column flex gap 금지",
                 frame,
                 "gap 미사용",
-                f"{', '.join(f'{prop}={props[prop].value}' for prop in ('gap', 'row-gap', 'column-gap') if prop in props)} @ {rule_label}",
+                f"{', '.join(f'{prop}={props[prop].value}' for prop in ('gap', 'row-gap', 'column-gap') if prop in props)} @ {rule_display}",
             )
 
     return violations
