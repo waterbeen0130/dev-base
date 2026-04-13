@@ -933,3 +933,18 @@ rules:
       type: custom
       target: css
       custom_handler: manual_review
+
+  # ===== PLN-004: Figma spec-sheet workflow enforcement =====
+  # Metadata-level process rule (custom_handler=manual_review) — no auto-check;
+  # PM must confirm spec sheet was generated before HTML/CSS work begins.
+
+  - id: figma_spec_sheet_required
+    description: "Figma 기반 HTML/CSS 작업 시 tools/figma-section-spec.py로 spec sheet를 먼저 생성하고, raw API를 직접 해석하지 않는다. 구현 후 figma-validate.py + validate-semantic.py 둘 다 통과해야 commit 허용."
+    severity: error
+    applies_to: [common, figma, process]
+    category: process
+    validation:
+      type: custom
+      target: html
+      custom_handler: manual_review
+    rationale: "PLN-004: raw Figma JSON 직접 해석 시 컨텍스트 폭주로 누락/환각 발생 — 사전 정규화된 spec sheet만 보고 구현하도록 강제."

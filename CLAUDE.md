@@ -243,7 +243,38 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
 
 ---
 
-## 피그마 MCP 기반 워크플로우 (CRITICAL — 필수)
+## PLN-004 Figma 워크플로우 (CRITICAL — 반드시 이 순서 준수)
+
+> **raw Figma API / Figma MCP 응답을 직접 해석해 HTML/CSS를 작성하는 것을 금지한다.**
+> 반드시 사전 정규화된 `{section}_spec.md`만 보고 구현한다.
+
+### 5단계 플로우 (모든 Figma 기반 퍼블리싱 작업의 표준)
+
+1. **Spec sheet 생성** — 섹션별 정규화 JSON + 사람이 읽는 spec.md를 만든다.
+   ```bash
+   python3 tools/figma-section-spec.py --file-key K --node-id N --output extracted/
+   ```
+   결과: `extracted/{section}_spec.json` + `extracted/{section}_spec.md`
+
+2. **AI 구현 (spec.md만 참조)** — raw Figma JSON / MCP 응답을 직접 읽지 않는다.
+   `{section}_spec.md`에 명시된 layout/gap/padding/fills/typography 값만으로 HTML/CSS를 작성한다.
+
+3. **Figma 충실도 검증** — spec.json 기준 9개 카테고리 자동 검증을 실행한다.
+   ```bash
+   python3 tools/figma-validate.py --spec extracted/{section}_spec.json --html output.html --css output.css
+   ```
+
+4. **코드 컨벤션 검증** — 프로젝트 CSS/HTML 규칙 준수 여부를 검사한다.
+   ```bash
+   python3 tools/validate-semantic.py --html output.html --css output.css
+   ```
+
+5. **커밋 허용 조건** — 3번과 4번이 **모두 exit 0**이어야만 commit 한다.
+   하나라도 실패하면 구현을 수정하고 3→4를 재실행한다.
+
+---
+
+## 피그마 MCP 기반 워크플로우 (참고 — 위 5단계 플로우 내부의 보조 수단)
 
 > **Figma MCP(`mcp__figma__get_figma_data`)로 섹션별 데이터를 가져와 AI가 직접 해석한다.**
 > 섹션 단위 MCP 호출은 컨텍스트가 작아 AI가 정확하게 해석할 수 있다.

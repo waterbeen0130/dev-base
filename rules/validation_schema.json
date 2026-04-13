@@ -1104,6 +1104,22 @@
       ],
       "category": "process",
       "custom_handler": "manual_review",
+      "description": "Figma 기반 HTML/CSS 작업 시 tools/figma-section-spec.py로 spec sheet를 먼저 생성하고, raw API를 직접 해석하지 않는다. 구현 후 figma-validate.py + validate-semantic.py 둘 다 통과해야 commit 허용.",
+      "id": "figma_spec_sheet_required",
+      "rationale": "PLN-004: raw Figma JSON 직접 해석 시 컨텍스트 폭주로 누락/환각 발생 — 사전 정규화된 spec sheet만 보고 구현하도록 강제.",
+      "selector": "custom:manual_review",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "figma",
+        "process"
+      ],
+      "category": "process",
+      "custom_handler": "manual_review",
       "description": "PM 프로세스 룰: 모든 CSS 값은 사전에 추출된 Figma spec table을 추적할 수 있어야 한다 (자동 검증 불가).",
       "id": "figma_values_pre_extracted",
       "selector": "custom:manual_review",

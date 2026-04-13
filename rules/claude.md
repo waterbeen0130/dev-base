@@ -213,6 +213,18 @@ python3 D:/dev-base/tools/init-project.py "프로젝트경로" --type basic --pu
 ## Figma 추출 전 필수 실행 (CRITICAL — 생략 시 코드 작성 금지)
 
 > **이 체크리스트를 완료하지 않으면 HTML/CSS Write/Edit를 실행할 수 없다.**
+> **PLN-004 원칙**: `tools/figma-section-spec.py`로 spec sheet를 먼저 생성할 것 (필수).
+> raw Figma API 응답 / Figma MCP 응답을 직접 해석해 HTML/CSS를 작성하는 것은 **금지한다**.
+> 구현 완료 후 `tools/figma-validate.py`(Figma 충실도) 와 `tools/validate-semantic.py`(코드 컨벤션)가 **둘 다 exit 0**이어야 commit 허용.
+
+### 0. Spec sheet 생성 (PLN-004 — 최우선 단계, 필수)
+```bash
+python3 D:/dev-base/tools/figma-section-spec.py \
+  --file-key {file-key} --node-id {node-id} --output extracted/
+```
+- 결과물: `extracted/{section}_spec.md` + `extracted/{section}_spec.json`
+- **AI는 spec.md만 보고 구현한다** — raw Figma JSON/MCP 응답을 직접 해석해서 값을 추론하는 것 금지
+- spec sheet 없이 HTML/CSS Write/Edit 실행 금지
 
 ### 1. 규칙 파일 전체 Read (매 추출 작업마다 반드시 실행)
 ```
@@ -255,11 +267,18 @@ python3 D:/dev-base/tools/compare-css.py \
 - 매핑에 없는 요소를 HTML에 추가하지 않음
 - `compare-css.py` 리포트의 badge/card 컴포넌트는 반드시 래퍼 요소로 구현
 
-### 5. HTML 작성 후 검증 (코드 작성 직후)
+### 5. HTML 작성 후 검증 (코드 작성 직후 — PLN-004: 두 validator 모두 통과 필수)
 ```bash
-# TODO: validator 확장 필요 (REQ-005+) — --type basic 미지원
+# Figma 충실도 검증 (spec.json 기준 9 카테고리)
+python3 D:/dev-base/tools/figma-validate.py \
+  --spec extracted/{section}_spec.json --html {output.html} --css css/common.css
+
+# 코드 컨벤션 검증
 python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/common.css
 ```
+- **두 명령 모두 exit 0** 이어야 commit 허용
+- 하나라도 실패하면 구현을 수정하고 두 명령을 다시 실행
+- raw Figma API/MCP 응답을 직접 해석해 값 차이를 덮는 것은 금지
 
 ---
 
