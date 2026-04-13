@@ -164,6 +164,77 @@ def extract_bbox(node: dict) -> dict:
     }
 
 
+def build_character_segments(node: dict) -> list[dict]:
+    chars = node.get("characters", "")
+    if not isinstance(chars, str) or not chars:
+        return []
+
+    overrides = node.get("characterStyleOverrides", []) or []
+    table = node.get("styleOverrideTable", {}) or {}
+    base_style = {**(node.get("style") or {})}
+    base_fills = node.get("fills") or []
+
+    segments: list[dict] = []
+    previous_resolved = None
+
+    def resolve(override_id):
+        nonlocal previous_resolved
+        if override_id == 0 or override_id is None:
+            resolved = {**base_style, "fills": base_fills}
+        else:
+            override = table.get(str(override_id), {}) or {}
+            override_style = override.get("style") or {}
+            override_fills = override.get("fills")
+            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
+            resolved = {**base_for_merge, **override_style}
+            if override_fills is not None:
+                resolved["fills"] = override_fills
+        previous_resolved = resolved
+        return resolved
+
+    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
+
+    i = 0
+    while i < len(chars):
+        j = i
+        override_id = override_ids[i]
+        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
+            j += 1
+        resolved = resolve(override_id)
+        segments.append(
+            {
+                "start": i,
+                "end": j + 1,
+                "text": chars[i : j + 1],
+                "fontFamily": resolved.get("fontFamily"),
+                "fontSize": safe_round_3(resolved.get("fontSize")),
+                "fontWeight": safe_round_3(resolved.get("fontWeight")),
+                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
+                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
+                "color": extract_text_color(resolved.get("fills")),
+            }
+        )
+        i = j + 1
+
+    return segments
+
+
+def extract_corner_radius(node: dict, bbox: dict) -> dict:
+    cr = node.get("cornerRadius")
+    rcr = node.get("rectangleCornerRadii")
+    hint = None
+    w = bbox.get("w") or 0
+    h = bbox.get("h") or 0
+    if cr is not None and w and h:
+        if cr >= min(w, h) / 2:
+            hint = "50%"
+    return {
+        "cornerRadius": safe_round_3(cr),
+        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
+        "border_radius_hint": hint,
+    }
+
+
 def normalize_text_node(node: dict) -> dict:
     style = node.get("style") if isinstance(node.get("style"), dict) else {}
     font_size = style.get("fontSize")
@@ -182,14 +253,17 @@ def normalize_text_node(node: dict) -> dict:
         "color": extract_text_color(node.get("fills")),
         "textAlignHorizontal": style.get("textAlignHorizontal"),
         "textAlignVertical": style.get("textAlignVertical"),
+        "bbox": extract_bbox(node),
+        "character_segments": build_character_segments(node),
     }
 
 
 def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
+    bbox = extract_bbox(node)
     return {
         "id": node.get("id"),
         "name": node.get("name"),
-        "bbox": extract_bbox(node),
+        "bbox": bbox,
         "layoutMode": node.get("layoutMode"),
         "paddingTop": safe_round_3(node.get("paddingTop")),
         "paddingRight": safe_round_3(node.get("paddingRight")),
@@ -199,6 +273,7 @@ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
         "fills": extract_frame_fill(node.get("fills"), image_refs),
+        **extract_corner_radius(node, bbox),
     }
 
 
@@ -253,24 +328,29 @@ def walk_and_extract(root: dict) -> ExtractionResult:
     interactions: list[dict] = []
     image_refs: set[str] = set()
 
-    def walk(node: dict) -> None:
+    def walk(node: dict, *, parent_id=None) -> None:
         if not isinstance(node, dict):
             return
 
         interactions.extend(extract_url_interactions(node))
 
+        node_id = node.get("id")
         node_type = node.get("type")
         if node_type == "TEXT":
-            text_nodes.append(normalize_text_node(node))
+            normalized = normalize_text_node(node)
+            normalized["parent_id"] = parent_id
+            text_nodes.append(normalized)
         if node_type == "FRAME":
-            frame_nodes.append(normalize_frame_node(node, image_refs))
+            normalized = normalize_frame_node(node, image_refs)
+            normalized["parent_id"] = parent_id
+            frame_nodes.append(normalized)
 
         children = node.get("children")
         if isinstance(children, list):
             for child in children:
-                walk(child)
+                walk(child, parent_id=node_id)
 
-    walk(root)
+    walk(root, parent_id=None)
 
     return ExtractionResult(
         section=section,
@@ -420,6 +500,9 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "color",
         "textAlignHorizontal",
         "textAlignVertical",
+        "bbox",
+        "parent_id",
+        "character_segments",
     ]
     lines.append(render_table(text_columns, text_nodes))
     lines.append("")
@@ -438,6 +521,10 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "primaryAxisAlignItems",
         "counterAxisAlignItems",
         "fills",
+        "cornerRadius",
+        "rectangleCornerRadii",
+        "border_radius_hint",
+        "parent_id",
     ]
     lines.append(render_table(frame_columns, frame_nodes))
     lines.append("")
