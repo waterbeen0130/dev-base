@@ -37,6 +37,7 @@ VOID_TAGS = {
 
 BOX_SIDES = ("top", "right", "bottom", "left")
 FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
+INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
 
 
 @dataclass
@@ -719,7 +720,7 @@ def expand_font_shorthand(value: str) -> dict[str, str]:
     return result
 
 
-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
     properties: dict[str, PropertyValue] = {}
 
     for rule in rules:
@@ -751,6 +752,19 @@ def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dic
                 properties[prop] = candidate
 
     return properties
+
+
+def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+    direct_properties = compute_direct_element_properties(element, rules)
+    if element.parent is None:
+        return direct_properties
+
+    inherited_properties = {
+        name: value
+        for name, value in compute_element_properties(element.parent, rules).items()
+        if name in INHERITED_PROPERTIES
+    }
+    return {**inherited_properties, **direct_properties}
 
 
 def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
