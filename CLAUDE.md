@@ -256,6 +256,11 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
    ```
    결과: `extracted/{section}_spec.json` + `extracted/{section}_spec.md`
 
+   **spec.md / spec.json 역할**:
+   - `spec.md`: 사람이 읽기 편한 표 형식. AI 구현자가 값을 빠르게 파악하는 용도.
+   - `spec.json`: `figma-validate.py` 의 검증 레퍼런스. 구조화된 원본 데이터.
+   - AI 구현자는 두 파일 모두 접근 가능하며, 값이 불일치할 경우 `spec.json` 기준을 따른다 (검증 기준과 일치).
+
 2. **AI 구현 (spec.md만 참조)** — raw Figma JSON / MCP 응답을 직접 읽지 않는다.
    `{section}_spec.md`에 명시된 layout/gap/padding/fills/typography 값만으로 HTML/CSS를 작성한다.
 
@@ -264,10 +269,31 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
    python3 tools/figma-validate.py --spec extracted/{section}_spec.json --html output.html --css output.css
    ```
 
+   **`figma-validate.py` 9개 검증 카테고리** (코드 호출 순서: `validate_text_nodes` → `validate_frame_nodes` → `validate_interactions`):
+
+   | # | 카테고리 | 검증 대상 spec 필드 | 설명 |
+   |---|----------|---------------------|------|
+   | 1 | 텍스트 위변조 | `text_nodes[].characters` | spec의 text가 HTML에 존재해야 함 |
+   | 2 | 줄바꿈 보존 | `characters` 내 `\n`/`\u2028`/`\xa0` | 특수 공백/줄바꿈이 `<br>`/`&nbsp;` 로 보존 |
+   | 3 | 폰트 5필드 완결성 | `fontFamily`/`fontSize`/`fontWeight`/`lineHeightPx`/`color` | 매칭 셀렉터에 5개 모두 선언 |
+   | 4 | lineHeight 비율 일치 | `lineHeightRatio` | CSS `line-height` 무단위 비율 ±0.05 |
+   | 5 | fills color hex 일치 | `color` / `fills[].color` | CSS hex 값 대소문자 무시 일치 |
+   | 6 | frame padding/gap 반영 | `paddingTop/Right/Bottom/Left`, `itemSpacing` | frame 값이 CSS padding/gap에 반영 |
+   | 7 | clamp 적용 | padding/gap ≥100 | 해당 값은 `clamp()` 사용 필수 |
+   | 8 | column flex gap 금지 | `layoutMode == "VERTICAL"` | 해당 frame CSS에 `gap` 미사용 |
+   | 9 | interaction URL 일치 | `interactions[].url` | HTML `<a href="..." target="_blank">` 일치 |
+
 4. **코드 컨벤션 검증** — 프로젝트 CSS/HTML 규칙 준수 여부를 검사한다.
    ```bash
-   python3 tools/validate-semantic.py --html output.html --css output.css
+   python3 tools/validate-semantic.py --html output.html --css output.css --profile {basic|landing|all}
    ```
+
+   **`--profile` 선택 가이드**:
+   - `basic`: 서브페이지 템플릿 기반 basic 프로젝트
+   - `landing`: landing 프로젝트 (CDN JS, 고정 px 등)
+   - `all`: 프로젝트 타입 미지정 또는 공통 규칙만 검증하고 싶을 때 (단, basic/landing 전용 규칙이 섹션 단일 HTML에 오발사될 수 있음)
+
+   > 섹션 단위 HTML만 검증할 때는 해당 프로젝트 타입 프로파일을 명시해 전용 규칙 오발사를 피할 것.
 
 5. **커밋 허용 조건** — 3번과 4번이 **모두 exit 0**이어야만 commit 한다.
    하나라도 실패하면 구현을 수정하고 3→4를 재실행한다.
