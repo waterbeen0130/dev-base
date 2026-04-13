@@ -300,6 +300,68 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
 
 ---
 
+## PM 자동 검증 후처리 (PLN-004 보강 — REQ-015)
+
+> **호출 지점: 외주 에이전트 dispatch 완료 직후, PM commit 전에 반드시 1회 실행한다.**
+> `tools/post-impl-verify.py` 는 `figma-validate.py` 와 `validate-semantic.py` 를 순차 실행하고 PM용 후처리 분류를 출력한다.
+
+### 기본 호출 명령
+
+```bash
+python3 tools/post-impl-verify.py \
+  --spec extracted/{section}_spec.json \
+  --html output.html \
+  --css output.css \
+  --profile landing
+```
+
+### JSON 출력 예시
+
+```bash
+python3 tools/post-impl-verify.py \
+  --spec extracted/{section}_spec.json \
+  --html output.html \
+  --css output.css \
+  --profile landing \
+  --json
+```
+
+### exit code 해석
+
+| exit code | 의미 | PM 액션 |
+|---|---|---|
+| 0 | 전체 PASS | commit 진행 |
+| 1 | CRITICAL/MAJOR 존재 또는 semantic CRITICAL 존재 | 자동 재dispatch 1회 실행 |
+| 2 | IGNORE 카테고리만 존재 | PM 직접 로그 검토 후 수동 진행 여부 결정 |
+
+### 분류 기준
+
+- `CRITICAL`: `텍스트 위변조`, `폰트 5필드 완결성`, `fills color hex 일치`
+- `MAJOR`: `lineHeight 비율 일치`, `clamp 적용`, `frame padding/gap 반영`, `줄바꿈 보존`, `interaction URL 일치`, `column flex gap 금지`
+- `IGNORE`: frame matching `signature 없음`, pseudo-element 잔여 false-positive 의심 패턴
+
+### 자동 재dispatch 정책
+
+- exit `1` 이면 동일 spec/html/css 경로로 **자동 재dispatch는 1회만** 수행한다.
+- 재dispatch 판단은 `post-impl-verify.py` 의 `[CRITICAL]`, `[MAJOR]` 라벨 라인을 그대로 외주 피드백에 첨부한다.
+- 상위 운영 한도는 `.gran-maestro/config.json` 의 `retry.max_cli_retries=2` 를 따른다.
+- 1회 재dispatch 후에도 exit `1` 이면 PM이 직접 개입하고 더 이상 자동 반복하지 않는다.
+- exit `2` 는 false-positive 가능성이 있으므로 자동 재dispatch하지 않는다.
+
+### escalation 메시지 형식
+
+```text
+[POST-IMPL FAIL] REQ-{ID}/{TASK_ID}: {N}건 위반 잔여 (CRITICAL: {M}, MAJOR: {K}) — 사용자 검수 필요
+```
+
+### PM 실행 메모
+
+- PM은 외주 완료 알림을 받으면 위 명령을 먼저 실행하고, exit code 확인 후 다음 액션(commit 또는 재dispatch)을 선택한다.
+- `validate-semantic.py` 요약은 함께 출력되지만, post-impl 후처리의 1차 재dispatch 기준은 위 `CRITICAL`/`MAJOR` 분류와 semantic CRITICAL 여부다.
+- 재dispatch 브리프에는 위반 원문을 축약하지 말고 그대로 붙여서 수정 근거를 남긴다.
+
+---
+
 ## 피그마 MCP 기반 워크플로우 (참고 — 위 5단계 플로우 내부의 보조 수단)
 
 > **Figma MCP(`mcp__figma__get_figma_data`)로 섹션별 데이터를 가져와 AI가 직접 해석한다.**
