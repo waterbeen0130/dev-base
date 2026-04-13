@@ -56,3 +56,72 @@
 - 테이블에 없으면 "미추출" 플래그, 추측값 금지
 - Figma JSON 직접 해석 금지
 - "그럴듯한" 기본값 임의 입력 절대 금지
+
+## 레이아웃 규칙 (CRITICAL — 사용자 반복 지적, 절대 금지 사항)
+
+### Section 좌우 padding 절대 금지
+- `<section>` 요소에 `padding-left`/`padding-right` 부여 **절대 금지**
+- 컨텐츠 좌우 여백은 내부 wrapper의 `max-width` + `margin: 0 auto` 패턴으로만 처리
+- 예시:
+  ```css
+  .section_name { padding: 100px 0; }
+  .section_name_inner { max-width: 1280px; margin: 0 auto; }
+  ```
+  ```html
+  <section class="section_name">
+    <div class="section_name_inner">...</div>
+  </section>
+  ```
+- 이 규칙을 어기면 PM이 자동 재dispatch하므로, 처음부터 inner wrapper 패턴으로 작성하라
+
+## Spec 파일 경로 규칙 (sandbox 우회)
+
+- 외주 brief에 명시되는 spec.md/json 경로는 반드시 **프로젝트 내부 경로**여야 함 (예: `extracted/section_05_spec.md`)
+- gemini-dev sandbox는 workspace 외부 경로(`/mnt/d/dev-base/.gran-maestro/tmp/...`) Read를 거부
+- PM은 dispatch 전 spec 파일을 프로젝트 내부(`{project_root}/extracted/`)로 복사한 뒤 절대경로로 명시
+- worktree 외부 절대경로를 brief에 직접 박지 않음
+
+## figma-validate.py 9개 검증 카테고리 (구현 후 통과 필수)
+
+| # | 카테고리 | spec 필드 | 설명 |
+|---|----------|-----------|------|
+| 1 | 텍스트 위변조 | `text_nodes[].characters` | spec text가 HTML에 존재해야 함 |
+| 2 | 줄바꿈 보존 | `\n`/`\u2028`/`\xa0` | `<br>`/`&nbsp;` 보존 |
+| 3 | 폰트 5필드 완결성 | `fontFamily`/`fontSize`/`fontWeight`/`lineHeightPx`/`color` | 매칭 셀렉터에 5개 모두 선언 |
+| 4 | lineHeight 비율 일치 | `lineHeightRatio` | CSS 무단위 비율 ±0.05 |
+| 5 | fills color hex 일치 | `color`/`fills[].color` | hex 대소문자 무시 |
+| 6 | frame padding/gap 반영 | `paddingTop/Right/Bottom/Left`/`itemSpacing` | CSS padding/gap 반영 |
+| 7 | clamp 적용 | padding/gap ≥100 | `clamp()` 사용 필수 |
+| 8 | column flex gap 금지 | `layoutMode == "VERTICAL"` | gap 미사용 |
+| 9 | interaction URL 일치 | `interactions[].url` | `<a href="..." target="_blank">` |
+
+구현 완료 후 반드시 아래 두 검증을 모두 통과해야 commit 허용:
+```bash
+python3 D:/dev-base/tools/figma-validate.py --spec extracted/{section}_spec.json --html output.html --css output.css
+python3 D:/dev-base/tools/validate-semantic.py --html output.html --css output.css --profile {basic|landing|all}
+```
+
+## characterStyleOverrides 처리 (REQ-012 신설 필드)
+
+- spec.json TEXT 노드의 `character_segments[]` 필드를 반드시 확인
+- 단일 segment (오버라이드 없음): 일반 텍스트 그대로 사용
+- 복수 segment (캐릭터 단위 오버라이드): 해당 구간만 별도 `<em>` 또는 `<strong>` 태그로 분리하여 색상/굵기 차이 보존
+- 예시:
+  ```json
+  "character_segments": [
+    {"start": 0, "end": 3, "text": "오직 ", "color": "#312d2b"},
+    {"start": 3, "end": 5, "text": "남성", "color": "#916046"},
+    {"start": 5, "end": 10, "text": "만을 위한", "color": "#312d2b"}
+  ]
+  ```
+  → `오직 <em class="strong_color">남성</em>만을 위한`
+- 오버라이드 색상은 별도 클래스로 정의하고 인라인 style 사용 금지
+
+## cornerRadius 처리 (REQ-012 신설 필드)
+
+- spec.json FRAME 노드의 `border_radius_hint` 필드를 반드시 확인
+- `border_radius_hint == "50%"`: `border-radius: 50%` 적용 (원형 요소, 아이콘 백그라운드 등)
+- `border_radius_hint`가 없고 `cornerRadius`만 있을 때:
+  - 100px 미만 → `border-radius: {cornerRadius}px`
+  - 100px 이상 (특히 999px/9999px) → `border-radius: 2em` (pill 형태)
+- Figma의 999px/9999px를 그대로 CSS에 박지 않음 — 항상 `50%` 또는 `2em`으로 변환
