@@ -1326,6 +1326,13 @@ def _strip_css_comments(css_text: str) -> str:
     return re.sub(r"/\*.*?\*/", "", css_text, flags=re.DOTALL)
 
 
+def _mask_css_comments(css_text: str) -> str:
+    def _replacer(match: re.Match[str]) -> str:
+        return "".join("\n" if char == "\n" else " " for char in match.group(0))
+
+    return re.sub(r"/\*.*?\*/", _replacer, css_text, flags=re.DOTALL)
+
+
 def _extract_root_variables(css_text: str) -> list[tuple[str, str]]:
     root_match = re.search(r":root\s*\{(.*?)\}", css_text, re.DOTALL | re.IGNORECASE)
     if not root_match:
@@ -1375,6 +1382,47 @@ def _remove_ranges(source: str, ranges: list[tuple[int, int]]) -> str:
         cursor = end
     chunks.append(source[cursor:])
     return "".join(chunks)
+
+
+def _collect_comment_ranges(css_text: str) -> list[tuple[int, int]]:
+    return [(match.start(), match.end()) for match in re.finditer(r"/\*.*?\*/", css_text, flags=re.DOTALL)]
+
+
+def _collect_data_url_ranges(css_text: str) -> list[tuple[int, int]]:
+    pattern = re.compile(r"url\(\s*data:[^)]+\)", re.IGNORECASE | re.DOTALL)
+    return [(match.start(), match.end()) for match in pattern.finditer(css_text)]
+
+
+def _position_in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool:
+    return any(start <= position < end for start, end in ranges)
+
+
+def _iter_css_property_occurrences(css_text: str, property_name: str) -> list[tuple[str, str, int]]:
+    occurrences: list[tuple[str, str, int]] = []
+    masked_css = _mask_css_comments(css_text)
+    block_pattern = re.compile(r"([^{]+)\{([^{}]*)\}")
+    property_pattern = re.compile(rf"{re.escape(property_name)}\s*:\s*([^;{{}}]+)", re.IGNORECASE)
+
+    for block_match in block_pattern.finditer(masked_css):
+        raw_selector = block_match.group(1).strip()
+        if not raw_selector or raw_selector.startswith("@"):
+            continue
+        selectors = [_normalize_css_value(selector) for selector in raw_selector.split(",")]
+        selectors = [selector for selector in selectors if selector]
+        if not selectors:
+            continue
+
+        body_start = block_match.start(2)
+        body_masked = block_match.group(2)
+        for property_match in property_pattern.finditer(body_masked):
+            value_start = body_start + property_match.start(1)
+            value_end = body_start + property_match.end(1)
+            value = css_text[value_start:value_end].strip()
+            line = _line_from_pos(css_text, value_start)
+            for selector in selectors:
+                occurrences.append((selector, value, line))
+
+    return occurrences
 
 
 def _extract_spacing_px(raw_value: str) -> Optional[float]:
@@ -1683,6 +1731,176 @@ def multiline_ellipsis_pattern(rule: dict, ctx: ValidationContext) -> Validation
     return ValidationResult(rule["id"], rule["severity"], False, message="multi-line ellipsis missing standard line-clamp pattern", location=ctx.css_path)
 
 
+LINE_HEIGHT_TIDY_CANDIDATES = [1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.45, 1.5, 1.6, 1.667, 1.75, 1.8, 2.0]
+HEX8_LITERAL_RE = re.compile(r"#[0-9a-fA-F]{8}\b")
+
+
+def _check_no_hex8_literal(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    ignore_ranges = _collect_comment_ranges(ctx.css_text) + _collect_data_url_ranges(ctx.css_text)
+    matches = [match for match in HEX8_LITERAL_RE.finditer(ctx.css_text) if not _position_in_ranges(match.start(), ignore_ranges)]
+    if not matches:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    first = matches[0]
+    line = _line_from_pos(ctx.css_text, first.start())
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"8-digit hex literal forbidden: {first.group(0)} (count={len(matches)})",
+        location=f"{ctx.css_path}:{line}",
+    )
+
+
+def _check_line_height_tidy_ratio(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    candidate_set = {round(candidate, 3) for candidate in LINE_HEIGHT_TIDY_CANDIDATES}
+    violations: list[tuple[str, str, int]] = []
+
+    for match in re.finditer(r"line-height\s*:\s*([^;{}]+)", ctx.css_text, re.IGNORECASE):
+        value = match.group(1).strip()
+        line = _line_from_pos(ctx.css_text, match.start(1))
+
+        line_start = ctx.css_text.rfind("\n", 0, match.start()) + 1
+        line_end = ctx.css_text.find("\n", match.start())
+        if line_end < 0:
+            line_end = len(ctx.css_text)
+        source_line = ctx.css_text[line_start:line_end]
+
+        lowered = value.lower()
+        if "/* lh-exact */" in source_line:
+            continue
+        if lowered == "1" or lowered == "normal" or lowered.startswith("var(--"):
+            continue
+        if not re.match(r"^-?\d+(?:\.\d+)?$", value):
+            continue
+
+        raw = round(float(value), 3)
+        if raw in candidate_set:
+            continue
+
+        snapped = round(raw / 0.05) * 0.05
+        if abs(raw - snapped) <= 0.03:
+            suggestion = _normalize_number_token(round(snapped, 3))
+        else:
+            suggestion = _normalize_number_token(raw)
+        violations.append((_normalize_number_token(raw), suggestion, line))
+
+    if not violations:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    first_raw, first_suggestion, first_line = violations[0]
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"line-height ratio not tidy: {first_raw} (suggest {first_suggestion}), total={len(violations)}",
+        location=f"{ctx.css_path}:{first_line}",
+    )
+
+
+def _check_font_family_redundant(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    declarations = _iter_css_property_occurrences(ctx.css_text, "font-family")
+    grouped: dict[str, list[tuple[str, int]]] = {}
+    for selector, value, line in declarations:
+        normalized_value = _normalize_css_value(value)
+        grouped.setdefault(normalized_value, []).append((selector, line))
+
+    candidates: list[tuple[str, int, int]] = []
+    for font_chain, entries in grouped.items():
+        count = len(entries)
+        if count < 3:
+            continue
+        first_line = min(line for _, line in entries)
+        candidates.append((font_chain, count, first_line))
+
+    if not candidates:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    font_chain, count, first_line = sorted(candidates, key=lambda item: item[1], reverse=True)[0]
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"font-family chain repeated {count} times: {font_chain}",
+        location=f"{ctx.css_path}:{first_line}",
+    )
+
+
+def _check_empty_media_block(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    empty_lines: list[int] = []
+    for header, body, start, _ in _extract_media_blocks(ctx.css_text):
+        if re.search(r"@media\s+print\b", header, re.IGNORECASE):
+            continue
+        if _strip_css_comments(body).strip():
+            continue
+        empty_lines.append(_line_from_pos(ctx.css_text, start))
+
+    if not empty_lines:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"empty media block detected: {len(empty_lines)}",
+        location=f"{ctx.css_path}:{empty_lines[0]}",
+    )
+
+
+def _check_box_sizing_redundant(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    allowed_selectors = {"*", "*::before", "*::after", "*:before", "*:after"}
+    declarations = _iter_css_property_occurrences(ctx.css_text, "box-sizing")
+
+    universal_present = any(
+        selector in allowed_selectors and _normalize_css_value(value) == "border-box"
+        for selector, value, _ in declarations
+    )
+    if not universal_present:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    redundant = [
+        (selector, line)
+        for selector, value, line in declarations
+        if _normalize_css_value(value) == "border-box" and selector not in allowed_selectors
+    ]
+    if not redundant:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    first_selector, first_line = redundant[0]
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"box-sizing:border-box redundant outside universal reset ({len(redundant)}): {first_selector}",
+        location=f"{ctx.css_path}:{first_line}",
+    )
+
+
+def _check_landing_unit_mixed_scale(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    if ctx.profile != "landing":
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="profile_not_landing")
+
+    offenders: list[tuple[str, str, int]] = []
+    for selector, value, line in _iter_css_property_occurrences(ctx.css_text, "font-size"):
+        if selector not in {"html", "body"}:
+            continue
+        lowered = _normalize_css_value(value)
+        if any(token in lowered for token in ("clamp(", "vw", "rem", "calc(")):
+            offenders.append((selector, value, line))
+
+    if not offenders:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    first_selector, first_value, first_line = offenders[0]
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"landing font-size must be fixed px on html/body: {first_selector} -> {first_value}",
+        location=f"{ctx.css_path}:{first_line}",
+    )
+
+
 # ===== CUSTOM HANDLERS =====
 
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
@@ -1724,6 +1942,19 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_body_page_class": _adapt_legacy_check(check_body_page_class),
     "check_image_naming": _adapt_legacy_check(check_image_naming),
     "check_large_side_padding": _adapt_legacy_check(check_large_side_padding),
+    # REQ-019 new custom checks
+    "_check_no_hex8_literal": _safe_custom_handler(_check_no_hex8_literal),
+    "_check_line_height_tidy_ratio": _safe_custom_handler(_check_line_height_tidy_ratio),
+    "_check_font_family_redundant": _safe_custom_handler(_check_font_family_redundant),
+    "_check_empty_media_block": _safe_custom_handler(_check_empty_media_block),
+    "_check_box_sizing_redundant": _safe_custom_handler(_check_box_sizing_redundant),
+    "_check_landing_unit_mixed_scale": _safe_custom_handler(_check_landing_unit_mixed_scale),
+    "no_hex8_literal": _safe_custom_handler(_check_no_hex8_literal),
+    "line_height_tidy_ratio": _safe_custom_handler(_check_line_height_tidy_ratio),
+    "font_family_redundant": _safe_custom_handler(_check_font_family_redundant),
+    "empty_media_block": _safe_custom_handler(_check_empty_media_block),
+    "box_sizing_redundant": _safe_custom_handler(_check_box_sizing_redundant),
+    "landing_unit_mixed_scale": _safe_custom_handler(_check_landing_unit_mixed_scale),
     # rule-id based aliases from rules.yaml
     "nav_ul_li_structure": _adapt_legacy_check(check_nav_structure),
     "img_wrapped": _adapt_legacy_check(check_img_wrapper),
@@ -1812,6 +2043,36 @@ def _rule_applies(rule: dict, profile: str) -> bool:
     if profile in {"basic", "landing"} and "common" in applies:
         return True
     return False
+
+
+def _iter_parent_dirs(path: str) -> list[Path]:
+    if not path:
+        return []
+    candidate = Path(path).expanduser()
+    start = candidate if candidate.is_dir() else candidate.parent
+    return [start, *start.parents]
+
+
+def _resolve_profile_from_project_type(html_path: str, css_path: str) -> str:
+    search_roots: list[Path] = []
+    search_roots.extend(_iter_parent_dirs(html_path))
+    search_roots.extend(_iter_parent_dirs(css_path))
+    search_roots.extend(_iter_parent_dirs(os.getcwd()))
+
+    visited: set[str] = set()
+    for root in search_roots:
+        root_key = str(root.resolve()) if root.exists() else str(root)
+        if root_key in visited:
+            continue
+        visited.add(root_key)
+
+        marker = root / ".project-type"
+        if not marker.exists():
+            continue
+        value = marker.read_text(encoding="utf-8").strip().lower()
+        if value in {"basic", "landing"}:
+            return value
+    return "all"
 
 
 def run_validation(
@@ -1909,16 +2170,21 @@ def main() -> None:
     parser.add_argument("--css", required=True, help="CSS file path")
     parser.add_argument("--img", help="Image directory path")
     parser.add_argument("--fix", action="store_true", help="Auto-fix violations (not yet implemented)")
-    parser.add_argument("--profile", default="all", choices=["all", "basic", "landing"], help="Validation profile")
+    parser.add_argument(
+        "--profile",
+        choices=["all", "basic", "landing"],
+        help="Validation profile (default: auto from .project-type, fallback: all)",
+    )
     parser.add_argument("--mapping", help="mapping.json path (T02)")
     parser.add_argument("--rules", default="rules/rules.yaml", help="Rules YAML path")
     args = parser.parse_args()
+    resolved_profile = args.profile or _resolve_profile_from_project_type(args.html, args.css)
 
     results = run_validation(
         rules_path=args.rules,
         html_path=args.html,
         css_path=args.css,
-        profile=args.profile,
+        profile=resolved_profile,
         mapping_path=args.mapping,
         img_dir=args.img,
     )
