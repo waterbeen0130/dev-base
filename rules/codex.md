@@ -40,13 +40,13 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - **공통 컴포넌트 타입**: 재사용 UI는 `listType_N`, `titleType_N` 패턴 사용
 - 셀렉터는 부모 컨테이너 하위로 스코핑 (`.main_cont_1 .txt_area`)
 - **유틸리티 클래스 금지** — `.font_serif`, `.weight_bold` 같은 범용 타이포그래피 클래스 금지. font-family, font-weight, color는 **부모/섹션 셀렉터에서 상속**
-- `:root` 변수 네이밍: 시맨틱 이름 사용 권장 (`--color_primary`, `--color_bg`, `--font_heading` 등). 색상 변수화 패턴은 `css-enhancement.md` §9 참조
+- `:root` 변수 네이밍: `--point-color-N`, `--width`, `--padding` 패턴 사용 (시맨틱 이름 금지)
 - ul/ol/li/p 같이 구조 태그에 의존한 스타일은 최소화하고, 필요 시 `section_ul`, `section_li`, `section_p` 형태의 명시적 클래스 스타일로 대체한다.
 - padding/margin/gap: 고정 `px` (기본)
 - **100px 이상 값에 한해 `clamp()` 허용**
 - **100px 미만 값은 반드시 고정 `px`**
 - `calc()` 단독 사용 금지, `vw` 단독 사용 금지 (clamp 내부에서만 허용)
-- **반응형 섹션 패딩**: `max(calc(N/1920*100vw), Npx)` 패턴 사용
+- **반응형 섹션 패딩**: `clamp()` 사용 (100px 이상 값에 한해 허용)
 - 색상: **hex 전용**, 투명도 필요 시만 `rgba()` 허용
 - **CSS Grid 금지** — flexbox만 사용
 - **`!important` 금지** — override용 유틸리티 클래스에만 예외 허용
@@ -71,8 +71,8 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 /* correct - clamp for values >= 100px */
 .main_about{padding:clamp(60px, 8vw, 120px) 0;}
 
-/* correct - max() for responsive section padding */
-.main_about{padding:max(calc(110/1920*100vw), 55px) 0;}
+/* correct - clamp for responsive section padding (>=100px) */
+.main_about{padding:clamp(55px, 5.73vw, 110px) 0;}
 
 /* correct - aspect-ratio for square/ratio elements */
 .icon_wrap{width:40px; aspect-ratio:1/1;}

@@ -1907,7 +1907,37 @@ def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="not_implemented")
 
 
+def check_no_column_gap(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Detect `flex-direction:column` blocks that also use `gap`."""
+    violations: list[str] = []
+    for block_match in re.finditer(r"([^{}]+)\{([^{}]*)\}", ctx.css_text):
+        selector = block_match.group(1).strip()
+        body = block_match.group(2)
+        if not selector or selector.startswith("@"):
+            continue
+        has_column = bool(re.search(r"flex-direction\s*:\s*column", body))
+        if not has_column:
+            continue
+        gap_match = re.search(r"(?<!row-)(?<!column-)\bgap\s*:\s*([^;]+);", body)
+        if gap_match:
+            gap_value = gap_match.group(1).strip()
+            if gap_value not in {"0", "0px", "0 0", "0px 0px"}:
+                violations.append(f"{selector} → gap:{gap_value}")
+
+    if violations:
+        return ValidationResult(
+            rule["id"],
+            rule["severity"],
+            False,
+            message=f"flex-direction:column에 gap 사용 금지 (수직 여백은 margin 사용): {violations[0]}",
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
+    "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
+    "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
     # direct check_* compatibility
     "check_nav_structure": _adapt_legacy_check(check_nav_structure),
     "check_img_wrapper": _adapt_legacy_check(check_img_wrapper),

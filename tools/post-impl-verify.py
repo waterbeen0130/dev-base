@@ -74,29 +74,56 @@ def parse_figma_output(output: str, exit_code: int) -> dict[str, object]:
     violations = summary["violations"]
     missing_rows = summary["missing_rows"]
     in_missing_rows = False
+    known_categories = {
+        "텍스트 위변조",
+        "줄바꿈 보존",
+        "폰트 5필드 완결성",
+        "lineHeight 비율 일치",
+        "fills color hex 일치",
+        "frame padding/gap 반영",
+        "clamp 적용",
+        "column flex gap 금지",
+        "interaction URL 일치",
+    }
+    pending_row: dict[str, str] | None = None
 
-    for raw_line in output.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line == "카테고리 | 노드 | 기대값 | 실제값":
-            continue
-        if line == "누락된 spec 행":
-            in_missing_rows = True
-            continue
-        if line == "PASS | - | 위반 0건 | -":
-            continue
-        if in_missing_rows:
-            if line in {"id | characters", "없음"}:
-                continue
-            parts = [part.strip() for part in raw_line.split(" | ", 1)]
-            if len(parts) == 2:
-                missing_rows.append({"id": parts[0], "characters": parts[1]})
-            continue
-        if " | " not in raw_line:
-            continue
+    def _is_new_violation_row(raw_line: str) -> bool:
+        parts = raw_line.split(" | ")
+        if len(parts) < 3:
+            return False
+        return parts[0].strip() in known_categories
 
-        category, node, expected, actual = [part.strip() for part in raw_line.split(" | ", 3)]
+    def _starts_with_known_category(raw_line: str) -> bool:
+        first, *_ = raw_line.split(" | ", 1)
+        return first.strip() in known_categories
+
+    def _start_pending_row(raw_line: str) -> None:
+        nonlocal pending_row
+        pending_row = {"raw": raw_line}
+
+    def _append_pending_row(raw_line: str) -> None:
+        if pending_row is None:
+            return
+        current = pending_row.get("raw", "")
+        pending_row["raw"] = f"{current}\n{raw_line}" if current else raw_line
+
+    def _flush_pending_row() -> None:
+        nonlocal pending_row
+        if pending_row is None:
+            return
+
+        raw = pending_row.get("raw", "")
+        pending_row = None
+        if not raw:
+            return
+
+        parts = [part.strip() for part in raw.split(" | ", 3)]
+        if len(parts) < 4:
+            parts.extend([""] * (4 - len(parts)))
+        category, node, expected, actual = parts[:4]
+        if not any((category, node, expected, actual)):
+            return
+
         severity = "MAJOR"
         ignore_reason = classify_ignore_reason(category, node, expected, actual)
         if ignore_reason is not None:
@@ -121,6 +148,41 @@ def parse_figma_output(output: str, exit_code: int) -> dict[str, object]:
         if ignore_reason is not None:
             violation["reason"] = ignore_reason
         violations.append(violation)
+
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line == "카테고리 | 노드 | 기대값 | 실제값":
+            continue
+        if line == "누락된 spec 행":
+            _flush_pending_row()
+            in_missing_rows = True
+            continue
+        if line == "PASS | - | 위반 0건 | -":
+            continue
+        if in_missing_rows:
+            if line in {"id | characters", "없음"}:
+                continue
+            parts = [part.strip() for part in raw_line.split(" | ", 1)]
+            if len(parts) == 2:
+                missing_rows.append({"id": parts[0], "characters": parts[1]})
+            continue
+        if _is_new_violation_row(raw_line):
+            _flush_pending_row()
+            _start_pending_row(raw_line)
+            continue
+        if pending_row is not None and _starts_with_known_category(raw_line):
+            _flush_pending_row()
+            _start_pending_row(raw_line)
+            continue
+        if pending_row is not None:
+            _append_pending_row(raw_line)
+            continue
+        if " | " in raw_line:
+            _start_pending_row(raw_line)
+
+    _flush_pending_row()
 
     if exit_code not in {0, 1}:
         summary["runner_error"] = True

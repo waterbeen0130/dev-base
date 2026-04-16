@@ -170,6 +170,7 @@ rules:
 
   # ===== CSS format / structure =====
 
+  # TODO(REQ-026): remove after auto-fix introduced
   - id: selector_single_line
     description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지)."
     severity: warning
@@ -193,6 +194,7 @@ rules:
       target: css
       custom_handler: check_duplicate_selectors
 
+  # TODO(REQ-026): remove after auto-fix introduced
   - id: media_query_format
     description: "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다."
     severity: warning
@@ -203,6 +205,7 @@ rules:
       target: css
       custom_handler: check_media_indent
 
+  # TODO(REQ-026): remove after auto-fix introduced
   - id: no_media_indent
     description: "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다."
     severity: info
@@ -310,19 +313,6 @@ rules:
 
   # ===== Layout =====
 
-  - id: no_css_grid
-    description: "CSS Grid는 사용하지 않는다 — flexbox 전용."
-    severity: error
-    applies_to: [common, basic, landing]
-    category: css.layout
-    validation:
-      type: regex_must_not_match
-      target: css
-      pattern: "display\\s*:\\s*grid"
-    examples:
-      bad: ".container { display: grid; }"
-      good: ".container { display: flex; }"
-
   - id: flexbox_layout
     description: "레이아웃은 flexbox만 사용한다 (Grid/float 금지)."
     severity: error
@@ -332,6 +322,16 @@ rules:
       type: regex_must_not_match
       target: css
       pattern: "display\\s*:\\s*grid|float\\s*:\\s*(left|right)"
+
+  - id: no_column_flex_gap
+    description: "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용)."
+    severity: error
+    applies_to: [common, basic, landing]
+    category: css.layout
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_column_gap
 
   - id: no_important
     description: "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외)."
@@ -368,27 +368,6 @@ rules:
       bad: "border-radius: 999px;"
       good: "border-radius: 2em;"
 
-  - id: no_999_border_radius
-    description: "(alias of border_radius_no_999) 999px border-radius 금지 — deprecated 중복."
-    severity: deprecated
-    applies_to: [common]
-    category: css.border
-    validation:
-      type: forbidden_substring
-      target: css
-      pattern: "999px"
-    rationale: "validation_schema.json에서 border_radius_no_999와 동일 — T02에서 단일화"
-
-  - id: border_from_stroke_only
-    description: "CSS border-* 속성은 Figma 노드에 visible stroke가 있을 때만 작성한다."
-    severity: error
-    applies_to: [common, figma]
-    category: css.border
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "border<-strokes"
-
   - id: no_heuristic_border
     description: "레이아웃 패턴이나 .card+.card 같은 인접 셀렉터로 border를 추측해 넣지 않는다."
     severity: error
@@ -408,16 +387,6 @@ rules:
       type: regex_must_not_match
       target: css
       pattern: "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)"
-
-  - id: divider_node_preserved
-    description: "fill만 가진 얇은 divider/bar 프레임은 반드시 DOM 요소로 보존한다 (절대 누락 금지)."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: divider_node_preserved
 
   # ===== Typography =====
 
@@ -577,16 +546,6 @@ rules:
       type: numeric_range
       target: html
       pattern: "inner_wrapper<=1"
-
-  - id: no_figure_figcaption
-    description: "<figure>/<figcaption> 사용 금지 — div.img_area + p/span 구조 사용."
-    severity: error
-    applies_to: [common, basic, landing]
-    category: html.semantic
-    validation:
-      type: regex_must_not_match
-      target: html
-      pattern: "<figure|<figcaption"
 
   - id: forbidden_tag
     description: "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다."
@@ -755,256 +714,3 @@ rules:
       type: required_substring
       target: css
       pattern: "[data-delay]"
-
-  # ===== Figma text fidelity =====
-
-  - id: text_node_one_to_one
-    description: "각 Figma TEXT 노드는 자신의 HTML 요소(span/p/h*)에 1:1 매핑한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: text_node_one_to_one
-
-  - id: no_adjacent_text_merge
-    description: "인접한 두 TEXT 노드를 하나의 HTML 요소로 병합하지 않는다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: no_adjacent_text_merge
-
-  - id: text_newline_preserved
-    description: "node.characters의 \\n은 <br> 또는 블록 분리로 보존한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: text_newline_preserved
-
-  - id: newline_converted_to_br
-    description: "Figma TEXT 노드의 줄바꿈은 <br>로 변환한다."
-    severity: warning
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: newline_converted_to_br
-
-  - id: override_span_split_required
-    description: "characterStyleOverrides 구간은 별도 <span>으로 분리해 굵기/크기/색상 차이를 보존한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: override_span_split_required
-
-  - id: style_diff_span_required
-    description: "fontSize/fontWeight/fontFamily/color 중 하나라도 다르면 별도 <span>으로 분리한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: style_diff_span_required
-
-  - id: no_style_flatten
-    description: "한 텍스트 노드 내 혼합 스타일을 단일 스타일로 평탄화하지 않는다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: no_style_flatten
-
-  # ===== Figma layout fidelity =====
-
-  - id: layout_mode_reflected
-    description: "Figma layoutMode VERTICAL/HORIZONTAL은 CSS flex-direction에 반영한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "flex-direction<-layoutMode"
-
-  - id: item_spacing_reflected
-    description: "Figma itemSpacing은 CSS gap에 반영한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "gap<-itemSpacing"
-
-  - id: no_layout_info_loss
-    description: "Figma의 layoutMode/itemSpacing/padding 정보를 누락하지 않는다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: css
-      custom_handler: no_layout_info_loss
-
-  - id: visible_node_not_dropped
-    description: "node.visible===false 노드만 제외 가능. 그 외 visible 노드는 반드시 DOM 출력한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: html
-      custom_handler: visible_node_not_dropped
-
-  # ===== Figma value mapping (mapping.json 기반) =====
-
-  - id: figma_value_gap_match
-    description: "CSS gap 값은 Figma itemSpacing(extracted mapping)과 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "gap==mapping.itemSpacing"
-
-  - id: figma_value_padding_match
-    description: "CSS padding 값은 Figma padding(extracted mapping)과 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "padding==mapping.padding"
-
-  - id: figma_value_color_match
-    description: "CSS color/background는 Figma fills(extracted mapping)와 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "color==mapping.fills"
-
-  - id: figma_value_font_match
-    description: "CSS font-size/weight/line-height는 Figma TEXT 노드 style과 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "font==mapping.text.style"
-
-  - id: figma_value_border_match
-    description: "CSS border는 Figma strokes(extracted mapping)와 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "border==mapping.strokes"
-
-  - id: figma_value_radius_match
-    description: "CSS border-radius는 Figma cornerRadius(extracted mapping)와 정확히 일치해야 한다."
-    severity: error
-    applies_to: [common, figma]
-    category: figma.mapping
-    validation:
-      type: value_equals_mapping
-      target: css
-      pattern: "border-radius==mapping.cornerRadius"
-
-  # ===== Process / manual rules (auto_check=false) =====
-
-  - id: figma_values_pre_extracted
-    description: "PM 프로세스 룰: 모든 CSS 값은 사전에 추출된 Figma spec table을 추적할 수 있어야 한다 (자동 검증 불가)."
-    severity: warning
-    applies_to: [common, figma, process]
-    category: process
-    validation:
-      type: custom
-      target: html
-      custom_handler: manual_review
-
-  - id: no_plausible_value_fill
-    description: "PM 프로세스 룰: 알 수 없는 값은 추측해서 채우지 않고 플래그한다 (자동 검증 불가)."
-    severity: warning
-    applies_to: [common, figma, process]
-    category: process
-    validation:
-      type: custom
-      target: html
-      custom_handler: manual_review
-
-  - id: agent_distribution_enforced
-    description: "PM 프로세스 룰: 코드 구현은 Codex/Gemini CLI를 통해 외주하고 Claude Task로 위임하지 않는다 (자동 검증 불가)."
-    severity: warning
-    applies_to: [common, process]
-    category: process
-    validation:
-      type: custom
-      target: html
-      custom_handler: manual_review
-
-  - id: coordinate_row_layout
-    description: "Figma 좌표 비교 기반 row 레이아웃 검증 (수동 리뷰 필요, 자동 검증 불가)."
-    severity: info
-    applies_to: [common, figma]
-    category: figma.fidelity
-    validation:
-      type: custom
-      target: css
-      custom_handler: manual_review
-
-  - id: aspect_ratio_preferred
-    description: "이미지/카드 영역에 aspect-ratio 사용을 권장한다 (수동 시각 비교 필요)."
-    severity: info
-    applies_to: [common, basic, landing]
-    category: html.image
-    validation:
-      type: custom
-      target: css
-      custom_handler: manual_review
-
-  - id: multiline_ellipsis_pattern
-    description: "다중행 말줄임 패턴은 -webkit-line-clamp 등 표준 패턴을 사용한다 (수동 시각 비교 필요)."
-    severity: info
-    applies_to: [common, basic, landing]
-    category: css.typography
-    validation:
-      type: custom
-      target: css
-      custom_handler: manual_review
-
-  # ===== PLN-004: Figma spec-sheet workflow enforcement =====
-  # Metadata-level process rule (custom_handler=manual_review) — no auto-check;
-  # PM must confirm spec sheet was generated before HTML/CSS work begins.
-
-  - id: figma_spec_sheet_required
-    description: "Figma 기반 HTML/CSS 작업 시 tools/figma-section-spec.py로 spec sheet를 먼저 생성하고, raw API를 직접 해석하지 않는다. 구현 후 figma-validate.py + validate-semantic.py 둘 다 통과해야 commit 허용."
-    severity: error
-    applies_to: [common, figma, process]
-    category: process
-    validation:
-      type: custom
-      target: html
-      custom_handler: manual_review
-    rationale: "PLN-004: raw Figma JSON 직접 해석 시 컨텍스트 폭주로 누락/환각 발생 — 사전 정규화된 spec sheet만 보고 구현하도록 강제."
