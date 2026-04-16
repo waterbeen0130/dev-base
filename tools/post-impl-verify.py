@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 
 
 CRITICAL_CATEGORIES = {
@@ -37,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--css", required=True, help="Path to generated CSS")
     parser.add_argument("--profile", default="all", help="validate-semantic profile")
     parser.add_argument("--json", action="store_true", dest="json_output", help="Emit JSON output")
+    parser.add_argument("--no-repair", action="store_true", help="Disable one-pass auto-repair loop")
     return parser.parse_args()
 
 
@@ -262,6 +264,53 @@ def build_commands(args: argparse.Namespace) -> tuple[list[str], list[str]]:
     return figma_command, semantic_command
 
 
+def run_auto_repair(args: argparse.Namespace) -> dict[str, object]:
+    tools_dir = Path(__file__).resolve().parent
+    report_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(prefix="auto-repair-", suffix=".json", delete=False) as temp_file:
+            report_path = Path(temp_file.name)
+        repair_command = [
+            sys.executable,
+            str(tools_dir / "repair-from-violations.py"),
+            "--html",
+            str(Path(args.html)),
+            "--css",
+            str(Path(args.css)),
+            "--report",
+            str(report_path),
+        ]
+        repair_exit_code, repair_output = run_validator(repair_command)
+        payload: dict[str, object] = {}
+        if report_path.exists():
+            payload = json.loads(report_path.read_text(encoding="utf-8"))
+        payload["exit_code"] = repair_exit_code
+        payload["raw_output"] = repair_output
+        return payload
+    except Exception as exc:  # pragma: no cover - defensive
+        return {
+            "total_fixed": 0,
+            "by_category": {},
+            "files_modified": [],
+            "unfixable_count": 0,
+            "dry_run": False,
+            "exit_code": 2,
+            "raw_output": str(exc),
+        }
+    finally:
+        if report_path and report_path.exists():
+            report_path.unlink(missing_ok=True)
+
+
+def needs_auto_repair(figma_result: dict[str, object], semantic_result: dict[str, object]) -> bool:
+    return (
+        int(figma_result["critical"]) > 0
+        or int(figma_result["major"]) > 0
+        or int(semantic_result["counts"]["critical"]) > 0
+        or int(semantic_result["counts"]["major"]) > 0
+    )
+
+
 def determine_exit_code(figma_result: dict[str, object], semantic_result: dict[str, object]) -> int:
     if bool(figma_result["runner_error"]) or bool(semantic_result["blocking"]):
         return 1
@@ -276,8 +325,24 @@ def render_text_output(
     figma_result: dict[str, object],
     semantic_result: dict[str, object],
     overall_exit_code: int,
+    auto_repair_result: dict[str, object] | None = None,
 ) -> str:
-    lines = [
+    lines: list[str] = []
+    if auto_repair_result is not None:
+        by_category = auto_repair_result.get("by_category", {})
+        category_summary = "none"
+        if isinstance(by_category, dict):
+            non_zero = [f"{key}:{value}" for key, value in by_category.items() if int(value) > 0]
+            if non_zero:
+                category_summary = ", ".join(non_zero)
+        lines.append(
+            "[auto-repair] "
+            f"{auto_repair_result.get('total_fixed', 0)} violations fixed "
+            f"(category: {category_summary})"
+        )
+
+    lines.extend(
+        [
         (
             "figma-validate: "
             f"{figma_result['status']} "
@@ -293,7 +358,8 @@ def render_text_output(
             f"exit={semantic_result['exit_code']}, "
             f"{'blocking' if semantic_result['blocking'] else 'non-blocking'})"
         ),
-    ]
+        ]
+    )
 
     for violation in figma_result["violations"]:
         message = (
@@ -325,11 +391,21 @@ def main() -> int:
 
     figma_result = parse_figma_output(figma_output, figma_exit_code)
     semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
+    auto_repair_result: dict[str, object] | None = None
+
+    if not args.no_repair and needs_auto_repair(figma_result, semantic_result):
+        auto_repair_result = run_auto_repair(args)
+        figma_exit_code, figma_output = run_validator(figma_command)
+        semantic_exit_code, semantic_output = run_validator(semantic_command)
+        figma_result = parse_figma_output(figma_output, figma_exit_code)
+        semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
+
     overall_exit_code = determine_exit_code(figma_result, semantic_result)
 
     payload = {
         "figma_validate": figma_result,
         "validate_semantic": semantic_result,
+        "auto_repair": auto_repair_result,
         "summary": {
             "critical": figma_result["critical"],
             "major": figma_result["major"],
@@ -342,7 +418,7 @@ def main() -> int:
     if args.json_output:
         print(json.dumps(payload, ensure_ascii=False))
     else:
-        print(render_text_output(figma_result, semantic_result, overall_exit_code))
+        print(render_text_output(figma_result, semantic_result, overall_exit_code, auto_repair_result))
 
     return int(overall_exit_code)
 

@@ -170,20 +170,6 @@ rules:
 
   # ===== CSS format / structure =====
 
-  # TODO(REQ-026): remove after auto-fix introduced
-  - id: selector_single_line
-    description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지)."
-    severity: warning
-    applies_to: [common, basic, landing]
-    category: css.format
-    validation:
-      type: custom
-      target: css
-      custom_handler: check_selector_format
-    examples:
-      bad: ".btn {\n  color: #fff;\n  padding: 10px;\n}"
-      good: ".btn{color:#fff;padding:10px}"
-
   - id: no_duplicate_selector
     description: "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언)."
     severity: warning
@@ -193,28 +179,6 @@ rules:
       type: custom
       target: css
       custom_handler: check_duplicate_selectors
-
-  # TODO(REQ-026): remove after auto-fix introduced
-  - id: media_query_format
-    description: "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다."
-    severity: warning
-    applies_to: [common, basic, landing]
-    category: css.format
-    validation:
-      type: custom
-      target: css
-      custom_handler: check_media_indent
-
-  # TODO(REQ-026): remove after auto-fix introduced
-  - id: no_media_indent
-    description: "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다."
-    severity: info
-    applies_to: [common, basic, landing]
-    category: css.format
-    validation:
-      type: custom
-      target: css
-      custom_handler: check_media_indent
 
   - id: empty_media_block
     description: "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외)."

@@ -173,3 +173,21 @@
 - 결정 이유: `manual_review` 전용 프로세스 규칙으로 자동 실행 불가하여 활성 규칙셋에서 제외.
 - 영향 범위: rules/rules.yaml, rules/validation_schema.json
 - 대체 방법: PR 체크리스트/프로세스 게이트
+
+## selector_single_line
+- 상태: replaced_by:auto_fix
+- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `multiline_selector` 치환으로 결정론적 자동 수정이 가능해져 룰 엔진 경고 규칙을 제거.
+- 영향 범위: rules/rules.yaml
+- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`multiline_selector`)
+
+## media_query_format
+- 상태: replaced_by:auto_fix
+- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `media_indent` 치환으로 @media 내부 포맷 정리가 자동화되어 중복 규칙 제거.
+- 영향 범위: rules/rules.yaml
+- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`media_indent`)
+
+## no_media_indent
+- 상태: replaced_by:auto_fix
+- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `media_indent` 치환과 역할이 중복되어 룰 엔진 항목을 정리.
+- 영향 범위: rules/rules.yaml
+- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`media_indent`)

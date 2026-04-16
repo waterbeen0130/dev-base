@@ -1,0 +1,22 @@
+.card {
+  border-radius: 999px;
+  color: rgb(0, 0, 0);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 0 0 1px #112233FF;
+}
+.title {
+  font-size: 20px;
+  letter-spacing: 4px;
+}
+.btn,
+.btn_link
+{
+  padding: 10px 20px;
+}
+@media screen and (max-width: 768px) {
+  .card {
+    margin: 0;
+  }
+}
+.dup{color:#111}
+.dup{background:#fff}
