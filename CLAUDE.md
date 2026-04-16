@@ -138,35 +138,23 @@ Task(subagent_type: "general-purpose", prompt: ...)
 
 ### 외주 브리프 규칙 주입 (CRITICAL — 필수)
 
-> **외주 브리프(phase2-impl.md) 작성 시, 에이전트별 규칙 파일 내용을 반드시 포함해야 한다.**
-> 에이전트는 `D:\dev-base\rules\` 폴더에 직접 접근할 수 없으므로, PM이 브리프 안에 규칙을 주입해야 한다.
+> **외주 브리프(phase2-impl.md) 작성 시, Rule-ID 참조 블록을 반드시 포함해야 한다.**
+> 에이전트는 `rules/rules.yaml`에서 필요한 규칙 ID를 조회해 적용한다.
 
 #### 퍼블리싱 프로젝트 전용 브리프 템플릿
-- **퍼블리싱 프로젝트**: `D:\dev-base\rules\templates\publishing\impl-request.md` 를 기본 템플릿으로 사용 (규칙이 이미 포함됨)
-- **기타 프로젝트**: 플러그인 기본 `templates/impl-request.md` 사용 + 아래 규칙 섹션을 수동 주입
+- **퍼블리싱 프로젝트**: `D:\dev-base\rules\templates\publishing\impl-request.md` 를 기본 템플릿으로 사용 (`rules_version: 2`, `rule_ids` 포함)
+- **기타 프로젝트**: 플러그인 기본 `templates/impl-request.md` 사용 + 아래 Rule-ID 섹션을 수동 주입
 
 #### 브리프 `## 규칙` 섹션에 반드시 포함할 내용
 
 ```markdown
 ## 코딩 규칙 (CRITICAL — 반드시 준수)
 
-### 규칙 파일 읽기 (필수)
-아래 규칙 파일을 반드시 읽고 모든 내용을 준수하라:
-- `D:/dev-base/rules/common.md` — 공통 CSS/HTML 규칙
-- `D:/dev-base/rules/{agent}.md` — 에이전트별 규칙 (gemini.md / codex.md)
-
-### CSS 핵심 규칙 (인라인 — 규칙 파일 접근 불가 시 대비)
-- 각 셀렉터 규칙은 **한 줄로** 작성 (여러 줄 펼침 금지)
-- 같은 셀렉터 중복 선언 금지 — 하나로 합침
-- 미디어쿼리: 내부 규칙은 줄바꿈 분리, 들여쓰기 없음
-- 색상: hex 전용 (#fff, #090944), 투명도 필요 시만 rgba()
-- CSS Grid 금지 — flexbox만 사용
-- line-height: 무단위 비율만 (1.3, 1.45) — computed px 금지
-- letter-spacing: em 단위 (-0.025em)
-- border-radius: 원형 50%, pill 2em — 999px 금지
-- 클래스: snake_case, {페이지}_{역할} 패턴
-- 모든 요소에 개별 클래스 부여 금지 — 부모+태그 선택자 우선
-- 짧은 라벨에 <p> 금지 — <span> 사용
+### Rule-ID 참조 (필수)
+- `rules_version: 2`
+- `rule_ids: [all]` 또는 필요한 규칙 ID 목록
+- 에이전트는 `rules/rules.yaml`에서 rule_ids에 포함된 규칙을 조회해 적용
+- 규칙 충돌 시 `rules/rules.yaml`의 `precedence`를 따른다
 
 ### Figma Spec 값 사용 규칙 (인라인)
 - Figma 섹션 작업은 반드시 `figma-section-spec.py`로 생성된 spec.md/spec.json만 참조

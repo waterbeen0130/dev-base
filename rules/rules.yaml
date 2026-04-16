@@ -48,6 +48,21 @@ severities:
   - info         # 권장 사항 (MINOR)
   - deprecated   # 더 이상 사용하지 않는 룰 (T02가 출력 제외)
 
+precedence:
+  description: |
+    Rule 충돌 시 우선순위는 priority(낮을수록 우선)로 결정한다.
+    priority가 같으면 severity 강도(error > warning > info > deprecated)로 비교한다.
+    둘 다 같으면 id 오름차순으로 안정적으로 정렬한다.
+  priority_defaults:
+    error: 100
+    warning: 200
+    info: 300
+    deprecated: 900
+  conflict_resolution_order:
+    - priority_asc
+    - severity_rank_desc
+    - id_asc
+
 categories:
   - css.layout
   - css.color
@@ -77,6 +92,7 @@ rules:
   - id: max_dom_depth
     description: "DOM 최대 깊이는 5단계를 초과하지 않는다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.structure
     validation:
@@ -88,6 +104,7 @@ rules:
   - id: snake_case_naming
     description: "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -98,6 +115,7 @@ rules:
   - id: page_prefix_required
     description: "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -108,6 +126,7 @@ rules:
   - id: no_forbidden_class
     description: "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -121,6 +140,7 @@ rules:
   - id: generic_class_name
     description: "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -131,6 +151,7 @@ rules:
   - id: meaningful_page_name
     description: "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지)."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -141,6 +162,7 @@ rules:
   - id: page_filename_class_prefix_match
     description: "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -151,6 +173,7 @@ rules:
   - id: body_page_class_unnecessary
     description: "body 태그에 page_ 클래스를 부여하지 않는다 (불필요)."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -161,6 +184,7 @@ rules:
   - id: common_area_prefix
     description: "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
@@ -173,6 +197,7 @@ rules:
   - id: no_duplicate_selector
     description: "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.selector
     validation:
@@ -183,6 +208,7 @@ rules:
   - id: empty_media_block
     description: "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.format
     validation:
@@ -193,6 +219,7 @@ rules:
   - id: clamp_threshold
     description: "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: css.units
     validation:
@@ -203,6 +230,7 @@ rules:
   - id: no_clamp_under_100
     description: "padding/margin에 100px 미만 clamp()를 사용하지 않는다."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: css.units
     validation:
@@ -213,6 +241,7 @@ rules:
   - id: no_raw_calc
     description: "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.units
     validation:
@@ -223,6 +252,7 @@ rules:
   - id: no_raw_vw
     description: "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.units
     validation:
@@ -233,6 +263,7 @@ rules:
   - id: large_side_padding
     description: "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.spacing
     validation:
@@ -243,6 +274,7 @@ rules:
   - id: max_width_pattern
     description: "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.spacing
     validation:
@@ -255,6 +287,7 @@ rules:
   - id: hex_color_only
     description: "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: css.color
     validation:
@@ -268,6 +301,7 @@ rules:
   - id: no_hex8_literal
     description: "8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.color
     validation:
@@ -280,6 +314,7 @@ rules:
   - id: flexbox_layout
     description: "레이아웃은 flexbox만 사용한다 (Grid/float 금지)."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: css.layout
     validation:
@@ -290,6 +325,7 @@ rules:
   - id: no_column_flex_gap
     description: "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용)."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: css.layout
     validation:
@@ -300,6 +336,7 @@ rules:
   - id: no_important
     description: "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.format
     validation:
@@ -310,6 +347,7 @@ rules:
   - id: box_sizing_redundant
     description: "universal reset(*, *::before, *::after) 외 box-sizing:border-box 중복 선언을 금지한다."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: css.format
     validation:
@@ -322,6 +360,7 @@ rules:
   - id: border_radius_no_999
     description: "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: css.border
     validation:
@@ -335,6 +374,7 @@ rules:
   - id: no_heuristic_border
     description: "레이아웃 패턴이나 .card+.card 같은 인접 셀렉터로 border를 추측해 넣지 않는다."
     severity: error
+    priority: 100
     applies_to: [common, figma]
     category: css.border
     validation:
@@ -345,6 +385,7 @@ rules:
   - id: no_adjacent_selector_border
     description: ".item+.item{border-left/top:...} 패턴 금지 — 대신 divider 노드를 DOM 요소로 사용한다."
     severity: error
+    priority: 100
     applies_to: [common, figma]
     category: css.border
     validation:
@@ -357,6 +398,7 @@ rules:
   - id: line_height_ratio_only
     description: "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -370,6 +412,7 @@ rules:
   - id: line_height_tidy_ratio
     description: "line-height 무단위 비율은 정돈 후보 목록(1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.45, 1.5, 1.6, 1.667, 1.75, 1.8, 2.0) 중 하나를 사용한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -380,6 +423,7 @@ rules:
   - id: letter_spacing_unit
     description: "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -390,6 +434,7 @@ rules:
   - id: font_size_pc_rem
     description: "basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용."
     severity: warning
+    priority: 200
     applies_to: [basic]
     category: css.typography
     validation:
@@ -400,6 +445,7 @@ rules:
   - id: font_size_landing_px
     description: "landing 프로젝트: 모든 font-size는 PC/모바일 모두 고정 px만 사용 (rem 사용 금지)."
     severity: warning
+    priority: 200
     applies_to: [landing]
     category: css.typography
     validation:
@@ -410,6 +456,7 @@ rules:
   - id: landing_unit_mixed_scale
     description: "landing 프로파일에서 html/body font-size에 clamp|vw|rem|calc 혼용을 금지한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -420,6 +467,7 @@ rules:
   - id: font_family_redundant
     description: "동일 font-family fallback 체인이 *, body, 개별 selector에 과다 반복되면 중복으로 간주한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -430,6 +478,7 @@ rules:
   - id: word_break_korean
     description: "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.typography
     validation:
@@ -440,6 +489,7 @@ rules:
   - id: font_size_base
     description: "html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트)."
     severity: warning
+    priority: 200
     applies_to: [basic]
     category: css.typography
     validation:
@@ -452,6 +502,7 @@ rules:
   - id: root_var_line_separated
     description: ":root{} 안의 CSS 변수는 각 줄에 하나씩 선언한다 (한 줄에 여러 변수 금지)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.variables
     validation:
@@ -462,6 +513,7 @@ rules:
   - id: root_var_naming
     description: ":root 변수는 --point-color-N, --width, --padding 같은 패턴을 따른다 (시맨틱 이름 금지)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.variables
     validation:
@@ -472,6 +524,7 @@ rules:
   - id: root_vars_required
     description: "landing 프로젝트는 :root에 --padding, --header_h, --width, --point-color-1 4개 변수가 모두 존재해야 한다."
     severity: warning
+    priority: 200
     applies_to: [landing]
     category: css.variables
     validation:
@@ -484,6 +537,7 @@ rules:
   - id: no_inline_style
     description: "인라인 style 속성을 사용하지 않는다."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.semantic
     validation:
@@ -494,6 +548,7 @@ rules:
   - id: no_empty_div
     description: "빈 div(<div></div>) 사용 금지."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.semantic
     validation:
@@ -504,6 +559,7 @@ rules:
   - id: inner_wrapper_limit
     description: "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.structure
     validation:
@@ -514,6 +570,7 @@ rules:
   - id: forbidden_tag
     description: "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.semantic
     validation:
@@ -524,6 +581,7 @@ rules:
   - id: nav_ul_li_structure
     description: "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지)."
     severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.semantic
     validation:
@@ -534,6 +592,7 @@ rules:
   - id: list_pattern_required
     description: "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.semantic
     validation:
@@ -544,6 +603,7 @@ rules:
   - id: img_wrapped
     description: "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.image
     validation:
@@ -554,6 +614,7 @@ rules:
   - id: img_alt_concise
     description: "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지)."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: accessibility
     validation:
@@ -564,6 +625,7 @@ rules:
   - id: img_naming
     description: "이미지 파일명은 snake_case 의미 있는 이름이어야 한다 (Figma node ID 그대로 금지)."
     severity: error
+    priority: 100
     applies_to: [common, figma]
     category: html.image
     validation:
@@ -574,6 +636,7 @@ rules:
   - id: minimal_aria
     description: "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지)."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: accessibility
     validation:
@@ -584,6 +647,7 @@ rules:
   - id: p_tag_condition_enforced
     description: "<p> 태그는 텍스트에 \\n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: html.text
     validation:
@@ -594,6 +658,7 @@ rules:
   - id: p_tag_misuse
     description: "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: html.text
     validation:
@@ -606,6 +671,7 @@ rules:
   - id: selector_scoped
     description: "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양)."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.selector
     validation:
@@ -616,6 +682,7 @@ rules:
   - id: no_utility_classes
     description: ".font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리."
     severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.selector
     validation:
@@ -626,6 +693,7 @@ rules:
   - id: excessive_individual_classes
     description: "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다."
     severity: info
+    priority: 300
     applies_to: [common, basic, landing]
     category: css.selector
     validation:
@@ -638,6 +706,7 @@ rules:
   - id: reset_css_separate
     description: "basic 프로젝트: reset.css는 별도 파일로 분리한다."
     severity: warning
+    priority: 200
     applies_to: [basic]
     category: css.format
     validation:
@@ -648,6 +717,7 @@ rules:
   - id: reset_duplicate
     description: "common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중복 작성하지 않는다."
     severity: warning
+    priority: 200
     applies_to: [common, basic]
     category: css.format
     validation:
@@ -660,6 +730,7 @@ rules:
   - id: mobile_spacing_half
     description: "basic 프로젝트 768px 이하: padding/margin은 PC 값의 약 절반 사용."
     severity: info
+    priority: 300
     applies_to: [basic]
     category: css.spacing
     validation:
@@ -672,6 +743,7 @@ rules:
   - id: gsap_animation_css_present
     description: "landing 프로젝트는 [data-delay] opacity/position 룰과 .section_on 토글 룰이 있어야 한다."
     severity: warning
+    priority: 200
     applies_to: [landing]
     category: css.format
     validation:
