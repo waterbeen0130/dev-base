@@ -12,11 +12,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
+import re
 import sys
 import tempfile
+from collections import Counter, defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 from urllib import error, parse, request
 
 
@@ -35,11 +39,22 @@ class ExtractionResult:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Extract normalized section spec from Figma node")
-    parser.add_argument("--file-key", required=True, help="Figma file key")
-    parser.add_argument("--node-id", required=True, help="Figma node id (e.g. 842:37)")
+    parser.add_argument("--file-key", help="Figma file key")
+    parser.add_argument("--node-id", help="Figma node id (e.g. 842:37)")
+    parser.add_argument("--from-spec", help="Offline mode: existing *_spec.json path (no Figma API call)")
     parser.add_argument("--output", required=True, help="Output directory")
     parser.add_argument("--name", help="Output filename prefix (default: section_<node-id>)")
-    return parser.parse_args()
+    parser.add_argument("--codegen", action="store_true", help="Generate deterministic base HTML/CSS and tokens.json")
+    args = parser.parse_args()
+
+    if args.from_spec:
+        if args.file_key or args.node_id:
+            fail("--from-spec cannot be combined with --file-key/--node-id")
+    else:
+        if not args.file_key or not args.node_id:
+            fail("--file-key and --node-id are required unless --from-spec is provided")
+
+    return args
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -499,6 +514,582 @@ def atomic_write_json(path: str, data: dict) -> None:
             os.unlink(tmp_path)
 
 
+def load_spec_payload(path_str: str) -> dict:
+    path = Path(path_str)
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        fail(f"Failed to read spec JSON: {path}\n{exc}")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        fail(f"Invalid spec JSON: {path}\n{exc}")
+    if not isinstance(payload, dict):
+        fail(f"Invalid spec JSON root (expected object): {path}")
+    if not isinstance(payload.get("section"), dict):
+        fail(f"Invalid spec JSON: missing section object ({path})")
+    if not isinstance(payload.get("text_nodes"), list) or not isinstance(payload.get("frame_nodes"), list):
+        fail(f"Invalid spec JSON: expected text_nodes/frame_nodes arrays ({path})")
+    return payload
+
+
+def extraction_result_from_payload(payload: dict) -> ExtractionResult:
+    images = payload.get("images")
+    image_refs = set(images.keys()) if isinstance(images, dict) else set()
+    return ExtractionResult(
+        section=payload.get("section", {}),
+        text_nodes=payload.get("text_nodes", []),
+        frame_nodes=payload.get("frame_nodes", []),
+        vector_nodes=payload.get("vector_nodes", []),
+        interactions=payload.get("interactions", []),
+        image_refs=image_refs,
+    )
+
+
+def read_project_type(project_root: str | None = None) -> str | None:
+    root = Path(project_root or os.getcwd())
+    marker = root / ".project-type"
+    try:
+        value = marker.read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        return None
+    if value in {"basic", "landing"}:
+        return value
+    return None
+
+
+def tidy_line_height_ratio(raw_ratio: float) -> float:
+    snap_step = 0.05
+    tolerance = 0.03
+    snapped = round(raw_ratio / snap_step) * snap_step
+    if abs(raw_ratio - snapped) <= tolerance:
+        return round(snapped, 2)
+    return round(raw_ratio, 3)
+
+
+def preprocess_payload(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return payload
+
+    text_nodes = payload.get("text_nodes")
+    if not isinstance(text_nodes, list):
+        text_nodes = []
+
+    hints = payload.get("hints")
+    if not isinstance(hints, dict):
+        hints = {}
+    hints["boxSizing"] = "global-reset-only"
+
+    project_type = read_project_type()
+    if project_type:
+        hints["projectType"] = project_type
+
+    font_counter = Counter()
+    for node in text_nodes:
+        if not isinstance(node, dict):
+            continue
+        family = node.get("fontFamily")
+        if isinstance(family, str) and family.strip():
+            font_counter[family.strip()] += 1
+    if font_counter:
+        hints["fontFamilyGlobal"] = sorted(font_counter.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+    # NOTE: 8-digit color normalization from DSC-002 is skipped here because this extractor
+    # already emits normalized 6-digit hex for extracted colors.
+    for node in text_nodes:
+        if not isinstance(node, dict):
+            continue
+        raw_ratio = compute_line_height_ratio(node.get("lineHeightPx"), node.get("fontSize"))
+        if raw_ratio is None:
+            continue
+        node.setdefault("lineHeightRatioRaw", raw_ratio)
+        node.setdefault("lineHeightRatioNormalized", tidy_line_height_ratio(raw_ratio))
+
+    payload["hints"] = hints
+    return payload
+
+
+def default_name_from_spec_path(path_str: str) -> str:
+    stem = Path(path_str).stem
+    if stem.endswith("_spec"):
+        return stem[: -len("_spec")]
+    return stem or "section"
+
+
+def section_slug(section_name: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "_", section_name.strip().lower())
+    normalized = re.sub(r"_+", "_", normalized).strip("_")
+    return normalized or "section"
+
+
+def node_identifier(node: dict, prefix: str, index: int) -> str:
+    node_id = node.get("id")
+    if isinstance(node_id, str) and node_id.strip():
+        return node_id.strip()
+    return f"{prefix}@{index}"
+
+
+def normalize_hex_color(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if not value.startswith("#"):
+        return None
+    digits = value[1:]
+    if re.fullmatch(r"[0-9a-fA-F]{3}", digits):
+        digits = "".join(ch * 2 for ch in digits)
+    elif not re.fullmatch(r"[0-9a-fA-F]{6}", digits):
+        return None
+    return f"#{digits.lower()}"
+
+
+def normalize_bbox_for_codegen(bbox: object) -> dict[str, float] | None:
+    if not isinstance(bbox, dict):
+        return None
+    keys = ("x", "y", "w", "h")
+    normalized: dict[str, float] = {}
+    for key in keys:
+        value = bbox.get(key)
+        if not isinstance(value, (int, float)):
+            return None
+        normalized[key] = float(value)
+    return normalized
+
+
+def bbox_area_for_codegen(bbox: object) -> float | None:
+    normalized = normalize_bbox_for_codegen(bbox)
+    if not normalized:
+        return None
+    if normalized["w"] <= 0 or normalized["h"] <= 0:
+        return None
+    return normalized["w"] * normalized["h"]
+
+
+def bbox_contains_for_codegen(outer_bbox: object, inner_bbox: object) -> bool:
+    outer = normalize_bbox_for_codegen(outer_bbox)
+    inner = normalize_bbox_for_codegen(inner_bbox)
+    if not outer or not inner:
+        return False
+    return (
+        outer["x"] <= inner["x"]
+        and outer["y"] <= inner["y"]
+        and outer["x"] + outer["w"] >= inner["x"] + inner["w"]
+        and outer["y"] + outer["h"] >= inner["y"] + inner["h"]
+    )
+
+
+def infer_frame_parent_lookup(frame_nodes: list[dict]) -> dict[str, str | None]:
+    parent_lookup: dict[str, str | None] = {}
+    frame_ids = [node_identifier(frame, "frame", index) for index, frame in enumerate(frame_nodes)]
+    frame_id_set = set(frame_ids)
+
+    for index, frame in enumerate(frame_nodes):
+        frame_id = frame_ids[index]
+        declared_parent = frame.get("parent_id")
+        if isinstance(declared_parent, str) and declared_parent.strip():
+            parent = declared_parent.strip()
+            parent_lookup[frame_id] = parent if parent in frame_id_set else None
+            continue
+
+        candidates: list[tuple[float, str]] = []
+        for other_index, other in enumerate(frame_nodes):
+            other_id = frame_ids[other_index]
+            if other_id == frame_id:
+                continue
+            if not bbox_contains_for_codegen(other.get("bbox"), frame.get("bbox")):
+                continue
+            area = bbox_area_for_codegen(other.get("bbox"))
+            if area is None:
+                continue
+            candidates.append((area, other_id))
+
+        if candidates:
+            candidates.sort(key=lambda item: item[0])
+            parent_lookup[frame_id] = candidates[0][1]
+        else:
+            parent_lookup[frame_id] = None
+
+    return parent_lookup
+
+
+def infer_text_parent_lookup(text_nodes: list[dict], frame_nodes: list[dict]) -> dict[str, str | None]:
+    parent_lookup: dict[str, str | None] = {}
+    frame_ids = [node_identifier(frame, "frame", index) for index, frame in enumerate(frame_nodes)]
+    frame_id_set = set(frame_ids)
+
+    for index, text_node in enumerate(text_nodes):
+        text_id = node_identifier(text_node, "text", index)
+        declared_parent = text_node.get("parent_id")
+        if isinstance(declared_parent, str) and declared_parent.strip():
+            parent = declared_parent.strip()
+            parent_lookup[text_id] = parent if parent in frame_id_set else None
+            continue
+
+        candidates: list[tuple[float, str]] = []
+        for frame_index, frame in enumerate(frame_nodes):
+            frame_id = frame_ids[frame_index]
+            if not bbox_contains_for_codegen(frame.get("bbox"), text_node.get("bbox")):
+                continue
+            area = bbox_area_for_codegen(frame.get("bbox"))
+            if area is None:
+                continue
+            candidates.append((area, frame_id))
+
+        if candidates:
+            candidates.sort(key=lambda item: item[0])
+            parent_lookup[text_id] = candidates[0][1]
+        else:
+            parent_lookup[text_id] = None
+
+    return parent_lookup
+
+
+def normalize_text_for_html(raw_text: object) -> str:
+    text = raw_text if isinstance(raw_text, str) else ""
+    escaped = html.escape(text, quote=False)
+    escaped = escaped.replace("\xa0", "&nbsp;")
+    escaped = escaped.replace("\r\n", "\n").replace("\r", "\n")
+    return escaped.replace("\n", "<br>")
+
+
+def format_number(value: object, precision: int = 3) -> str:
+    if not isinstance(value, (int, float)):
+        return "0"
+    numeric = float(value)
+    if abs(numeric) < 1e-9:
+        return "0"
+    if numeric.is_integer():
+        return str(int(numeric))
+    text = f"{numeric:.{precision}f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def format_px(value: object, precision: int = 3) -> str:
+    return f"{format_number(value, precision)}px"
+
+
+def maybe_clamp_length(value: object) -> str | None:
+    if not isinstance(value, (int, float)):
+        return None
+    numeric = float(value)
+    if abs(numeric) >= 100:
+        minimum = numeric * 0.6
+        maximum = numeric * 1.2
+        return f"clamp({format_px(minimum)},{format_px(numeric)},{format_px(maximum)})"
+    return format_px(numeric)
+
+
+def border_radius_value(frame: dict) -> str | None:
+    bbox = frame.get("bbox") if isinstance(frame.get("bbox"), dict) else {}
+    width = bbox.get("w")
+    height = bbox.get("h")
+    corner_radius = frame.get("cornerRadius")
+    hint = frame.get("border_radius_hint")
+    if hint == "50%":
+        return "50%"
+    if isinstance(corner_radius, (int, float)):
+        cr = float(corner_radius)
+        if isinstance(width, (int, float)) and isinstance(height, (int, float)) and width == height and cr >= width / 2:
+            return "50%"
+        if int(round(cr)) in {999, 9999}:
+            return "2em"
+        return format_px(cr)
+    return None
+
+
+ALIGN_MAP = {
+    "MIN": "flex-start",
+    "MAX": "flex-end",
+    "CENTER": "center",
+    "SPACE_BETWEEN": "space-between",
+    "STRETCH": "stretch",
+}
+
+
+def join_css_rule(selector: str, declarations: list[str]) -> str:
+    return f"{selector}{{{''.join(f'{decl};' for decl in declarations)}}}"
+
+
+def build_class_maps(result: ExtractionResult, section_name: str) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    slug = section_slug(section_name)
+    frame_classes = {
+        node_identifier(frame, "frame", index): f"{slug}_f{index}" for index, frame in enumerate(result.frame_nodes)
+    }
+    text_classes = {
+        node_identifier(text, "text", index): f"{slug}_t{index}" for index, text in enumerate(result.text_nodes)
+    }
+    vector_classes = {
+        node_identifier(vector, "vector", index): f"{slug}_v{index}" for index, vector in enumerate(result.vector_nodes)
+    }
+    return frame_classes, text_classes, vector_classes
+
+
+def generate_base_html(result: ExtractionResult, section_name: str) -> str:
+    slug = section_slug(section_name)
+    frame_classes, text_classes, vector_classes = build_class_maps(result, section_name)
+
+    frame_lookup = {
+        node_identifier(frame, "frame", index): frame for index, frame in enumerate(result.frame_nodes)
+    }
+    text_lookup = {
+        node_identifier(text, "text", index): text for index, text in enumerate(result.text_nodes)
+    }
+    vector_lookup = {
+        node_identifier(vector, "vector", index): vector for index, vector in enumerate(result.vector_nodes)
+    }
+
+    frame_parent_lookup = infer_frame_parent_lookup(result.frame_nodes)
+    text_parent_lookup = infer_text_parent_lookup(result.text_nodes, result.frame_nodes)
+
+    children: dict[str | None, list[tuple[tuple[float, float, int, int], str, str]]] = defaultdict(list)
+
+    def order_key(node: dict, node_index: int, rank: int) -> tuple[float, float, int, int]:
+        bbox = normalize_bbox_for_codegen(node.get("bbox"))
+        if not bbox:
+            return (1e12, 1e12, rank, node_index)
+        return (bbox["y"], bbox["x"], rank, node_index)
+
+    for index, frame in enumerate(result.frame_nodes):
+        frame_id = node_identifier(frame, "frame", index)
+        parent = frame_parent_lookup.get(frame_id)
+        children[parent].append((order_key(frame, index, 0), "frame", frame_id))
+
+    frame_id_set = set(frame_lookup.keys())
+    for index, text_node in enumerate(result.text_nodes):
+        text_id = node_identifier(text_node, "text", index)
+        parent = text_parent_lookup.get(text_id)
+        if parent not in frame_id_set:
+            parent = None
+        children[parent].append((order_key(text_node, index, 1), "text", text_id))
+
+    for index, vector_node in enumerate(result.vector_nodes):
+        vector_id = node_identifier(vector_node, "vector", index)
+        declared_parent = vector_node.get("parent_id")
+        parent = declared_parent.strip() if isinstance(declared_parent, str) and declared_parent.strip() in frame_id_set else None
+        children[parent].append((order_key(vector_node, index, 2), "vector", vector_id))
+
+    for key in list(children.keys()):
+        children[key].sort(key=lambda item: item[0])
+
+    root_frame_id = None
+    section_id = result.section.get("id")
+    if isinstance(section_id, str) and section_id in frame_lookup:
+        root_frame_id = section_id
+
+    visited: set[tuple[str, str]] = set()
+    lines: list[str] = [f'<div class="{slug}">']
+
+    def render(kind: str, node_id: str, depth: int) -> None:
+        marker = (kind, node_id)
+        if marker in visited:
+            return
+        visited.add(marker)
+
+        indent = "  " * depth
+        if kind == "frame":
+            class_name = frame_classes.get(node_id, "")
+            lines.append(f'{indent}<div class="{class_name}">')
+            for _, child_kind, child_id in children.get(node_id, []):
+                render(child_kind, child_id, depth + 1)
+            lines.append(f"{indent}</div>")
+            return
+
+        if kind == "text":
+            class_name = text_classes.get(node_id, "")
+            text_node = text_lookup.get(node_id, {})
+            content = normalize_text_for_html(text_node.get("characters"))
+            lines.append(f'{indent}<span class="{class_name}">{content}</span>')
+            return
+
+        if kind == "vector":
+            class_name = vector_classes.get(node_id, "")
+            vector_node = vector_lookup.get(node_id, {})
+            alt_text = vector_node.get("name") if isinstance(vector_node.get("name"), str) else node_id
+            lines.append(f'{indent}<img class="{class_name}" src="" alt="{html.escape(alt_text, quote=True)}"/>')
+
+    if root_frame_id:
+        render("frame", root_frame_id, 1)
+
+    for _, kind, node_id in children.get(None, []):
+        render(kind, node_id, 1)
+
+    for frame_id in sorted(frame_lookup.keys()):
+        render("frame", frame_id, 1)
+    for text_id in sorted(text_lookup.keys()):
+        render("text", text_id, 1)
+    for vector_id in sorted(vector_lookup.keys()):
+        render("vector", vector_id, 1)
+
+    lines.append("</div>")
+    return "\n".join(lines) + "\n"
+
+
+def generate_base_css(result: ExtractionResult, section_name: str) -> str:
+    frame_classes, text_classes, vector_classes = build_class_maps(result, section_name)
+    lines: list[str] = []
+
+    for index, frame in enumerate(result.frame_nodes):
+        frame_id = node_identifier(frame, "frame", index)
+        selector = f".{frame_classes[frame_id]}"
+        declarations: list[str] = []
+
+        layout_mode = frame.get("layoutMode")
+        mode = layout_mode.upper() if isinstance(layout_mode, str) else "NONE"
+        spacing = frame.get("itemSpacing")
+
+        if mode == "HORIZONTAL":
+            declarations.append("display:flex")
+            declarations.append("flex-direction:row")
+            if isinstance(spacing, (int, float)):
+                declarations.append(f"gap:{format_px(spacing)}")
+        elif mode == "VERTICAL":
+            declarations.append("display:flex")
+            declarations.append("flex-direction:column")
+        else:
+            declarations.append("display:block")
+
+        main_align = frame.get("primaryAxisAlignItems")
+        if isinstance(main_align, str) and main_align in ALIGN_MAP and mode in {"HORIZONTAL", "VERTICAL"}:
+            declarations.append(f"justify-content:{ALIGN_MAP[main_align]}")
+
+        cross_align = frame.get("counterAxisAlignItems")
+        if isinstance(cross_align, str) and cross_align in ALIGN_MAP and mode in {"HORIZONTAL", "VERTICAL"}:
+            declarations.append(f"align-items:{ALIGN_MAP[cross_align]}")
+
+        paddings = [frame.get("paddingTop"), frame.get("paddingRight"), frame.get("paddingBottom"), frame.get("paddingLeft")]
+        if any(value is not None for value in paddings):
+            padding_values = [maybe_clamp_length(value) if value is not None else "0" for value in paddings]
+            declarations.append(f"padding:{' '.join(padding_values)}")
+
+        fill_color = normalize_hex_color(frame.get("fills"))
+        if fill_color:
+            declarations.append(f"background-color:{fill_color}")
+
+        opacity = frame.get("opacity")
+        if isinstance(opacity, (int, float)):
+            declarations.append(f"opacity:{format_number(opacity)}")
+
+        border_radius = border_radius_value(frame)
+        if border_radius:
+            declarations.append(f"border-radius:{border_radius}")
+
+        lines.append(join_css_rule(selector, declarations))
+
+        if mode == "VERTICAL" and isinstance(spacing, (int, float)) and spacing != 0:
+            lines.append(join_css_rule(f"{selector} > * + *", [f"margin-top:{format_px(spacing)}"]))
+
+    for index, text_node in enumerate(result.text_nodes):
+        text_id = node_identifier(text_node, "text", index)
+        selector = f".{text_classes[text_id]}"
+        declarations: list[str] = []
+
+        color = normalize_hex_color(text_node.get("color"))
+        if color:
+            declarations.append(f"color:{color}")
+
+        font_family = text_node.get("fontFamily")
+        if isinstance(font_family, str) and font_family.strip():
+            declarations.append(f'font-family:"{font_family.strip()}"')
+
+        font_size = text_node.get("fontSize")
+        if isinstance(font_size, (int, float)):
+            declarations.append(f"font-size:{format_px(font_size)}")
+
+        font_weight = text_node.get("fontWeight")
+        if isinstance(font_weight, (int, float)):
+            declarations.append(f"font-weight:{int(round(float(font_weight)))}")
+
+        ratio = compute_line_height_ratio(text_node.get("lineHeightPx"), font_size)
+        if ratio is None and isinstance(text_node.get("lineHeightRatio"), (int, float)):
+            ratio = float(text_node["lineHeightRatio"])
+        if isinstance(ratio, (int, float)):
+            declarations.append(f"line-height:{format_number(round(float(ratio), 2), precision=2)}")
+
+        letter_spacing = text_node.get("letterSpacing")
+        if isinstance(letter_spacing, (int, float)) and isinstance(font_size, (int, float)) and float(font_size) != 0:
+            em_value = float(letter_spacing) / float(font_size)
+            declarations.append(f"letter-spacing:{format_number(round(em_value, 3), precision=3)}em")
+
+        text_align_horizontal = text_node.get("textAlignHorizontal")
+        if isinstance(text_align_horizontal, str):
+            align = {"LEFT": "left", "CENTER": "center", "RIGHT": "right", "JUSTIFIED": "justify"}.get(text_align_horizontal)
+            if align:
+                declarations.append(f"text-align:{align}")
+
+        opacity = text_node.get("opacity")
+        if isinstance(opacity, (int, float)):
+            declarations.append(f"opacity:{format_number(opacity)}")
+
+        lines.append(join_css_rule(selector, declarations))
+
+    for index, vector_node in enumerate(result.vector_nodes):
+        vector_id = node_identifier(vector_node, "vector", index)
+        selector = f".{vector_classes[vector_id]}"
+        declarations: list[str] = ["display:block"]
+
+        bbox = vector_node.get("bbox")
+        if isinstance(bbox, dict):
+            width = bbox.get("w")
+            height = bbox.get("h")
+            if isinstance(width, (int, float)):
+                declarations.append(f"width:{format_px(width)}")
+            if isinstance(height, (int, float)):
+                declarations.append(f"height:{format_px(height)}")
+
+        lines.append(join_css_rule(selector, declarations))
+
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def generate_tokens(result: ExtractionResult) -> dict:
+    color_counter: Counter[str] = Counter()
+
+    for frame in result.frame_nodes:
+        color = normalize_hex_color(frame.get("fills"))
+        if color:
+            color_counter[color] += 1
+
+    for text_node in result.text_nodes:
+        color = normalize_hex_color(text_node.get("color"))
+        if color:
+            color_counter[color] += 1
+
+    for vector_node in result.vector_nodes:
+        color = normalize_hex_color(vector_node.get("fills_color"))
+        if color:
+            color_counter[color] += 1
+
+    colors: dict[str, str] = {}
+    for index, color in enumerate(sorted([hex_color for hex_color, count in color_counter.items() if count >= 3]), start=1):
+        colors[f"--color-{index}"] = color
+
+    typography_groups: dict[tuple[float, int], list[dict]] = defaultdict(list)
+    for node in result.text_nodes:
+        font_size = node.get("fontSize")
+        font_weight = node.get("fontWeight")
+        if not isinstance(font_size, (int, float)) or not isinstance(font_weight, (int, float)):
+            continue
+        key = (float(font_size), int(round(float(font_weight))))
+        typography_groups[key].append(node)
+
+    typography: dict[str, str] = {}
+    token_index = 1
+    for key in sorted(typography_groups.keys()):
+        nodes = typography_groups[key]
+        if len(nodes) < 2:
+            continue
+        font_size, font_weight = key
+        exemplar = nodes[0]
+        declaration_parts = [f"font-weight: {font_weight};", f"font-size: {format_px(font_size)};"]
+        ratio = compute_line_height_ratio(exemplar.get("lineHeightPx"), font_size)
+        if isinstance(ratio, (int, float)):
+            declaration_parts.append(f"line-height: {format_number(round(float(ratio), 2), precision=2)};")
+        typography[f"--font-{token_index}"] = " ".join(declaration_parts)
+        token_index += 1
+
+    return {"colors": colors, "typography": typography}
+
+
 def md_cell(value) -> str:
     if value is None:
         text = ""
@@ -628,32 +1219,63 @@ def default_name(node_id: str) -> str:
 
 def main() -> int:
     args = parse_args()
-    token = require_figma_token()
+    if args.from_spec:
+        payload = load_spec_payload(args.from_spec)
+        payload["schema_version"] = payload.get("schema_version", 1)
+        if not isinstance(payload.get("vector_nodes"), list):
+            payload["vector_nodes"] = []
+        if not isinstance(payload.get("interactions"), list):
+            payload["interactions"] = []
+        images = payload.get("images")
+        payload["images"] = {key: images[key] for key in sorted(images.keys())} if isinstance(images, dict) else {}
+        payload = preprocess_payload(payload)
+        extracted = extraction_result_from_payload(payload)
+        source_node_id = payload.get("section", {}).get("id")
+        node_id = source_node_id if isinstance(source_node_id, str) and source_node_id.strip() else "from-spec"
+        default_output_name = default_name_from_spec_path(args.from_spec)
+    else:
+        token = require_figma_token()
+        root = fetch_node_document(args.file_key, args.node_id, token)
+        extracted = walk_and_extract(root)
+        images = fetch_images_map(args.file_key, token, extracted.image_refs)
+        payload = {
+            "schema_version": 1,
+            "section": extracted.section,
+            "text_nodes": extracted.text_nodes,
+            "frame_nodes": extracted.frame_nodes,
+            "vector_nodes": extracted.vector_nodes,
+            "interactions": extracted.interactions,
+            "images": {key: images[key] for key in sorted(images.keys())},
+        }
+        payload = preprocess_payload(payload)
+        extracted = extraction_result_from_payload(payload)
+        node_id = args.node_id
+        default_output_name = default_name(args.node_id)
 
-    root = fetch_node_document(args.file_key, args.node_id, token)
-    extracted = walk_and_extract(root)
-    images = fetch_images_map(args.file_key, token, extracted.image_refs)
-
-    payload = {
-        "schema_version": 1,
-        "section": extracted.section,
-        "text_nodes": extracted.text_nodes,
-        "frame_nodes": extracted.frame_nodes,
-        "vector_nodes": extracted.vector_nodes,
-        "interactions": extracted.interactions,
-        "images": {key: images[key] for key in sorted(images.keys())},
-    }
-
-    name = args.name.strip() if isinstance(args.name, str) and args.name.strip() else default_name(args.node_id)
+    name = args.name.strip() if isinstance(args.name, str) and args.name.strip() else default_output_name
     os.makedirs(args.output, exist_ok=True)
     json_path = os.path.join(args.output, f"{name}_spec.json")
     md_path = os.path.join(args.output, f"{name}_spec.md")
 
     atomic_write_json(json_path, payload)
-    atomic_write_text(md_path, render_markdown(payload, args.node_id))
+    atomic_write_text(md_path, render_markdown(payload, node_id))
 
     print(json_path)
     print(md_path)
+
+    if args.codegen:
+        html_path = os.path.join(args.output, f"{name}_base.html")
+        css_path = os.path.join(args.output, f"{name}_base.css")
+        tokens_path = os.path.join(args.output, "tokens.json")
+
+        atomic_write_text(html_path, generate_base_html(extracted, name))
+        atomic_write_text(css_path, generate_base_css(extracted, name))
+        atomic_write_json(tokens_path, generate_tokens(extracted))
+
+        print(html_path)
+        print(css_path)
+        print(tokens_path)
+
     return 0
 
 
