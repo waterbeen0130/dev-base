@@ -1,0 +1,814 @@
+{
+  "schema_version": 1,
+  "section": {
+    "id": "842:84",
+    "name": "Section_03",
+    "bbox": {
+      "x": 0,
+      "y": 2283.5,
+      "w": 1920,
+      "h": 1189
+    }
+  },
+  "text_nodes": [
+    {
+      "id": "842:88",
+      "name": "VS",
+      "characters": "VS",
+      "fontFamily": "Cormorant Garamond",
+      "fontSize": 81,
+      "fontWeight": 700,
+      "lineHeightPx": 102.06,
+      "lineHeightRatio": 1.26,
+      "letterSpacing": -2.43,
+      "color": "#c3b2a9",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:92",
+      "name": "채우기만 하는 공장형 이식",
+      "characters": "채우기만 하는\n공장형 이식",
+      "fontFamily": "Pretendard",
+      "fontSize": 47,
+      "fontWeight": 800,
+      "lineHeightPx": 57.34,
+      "lineHeightRatio": 1.22,
+      "letterSpacing": -0.94,
+      "color": "#312d2b",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:98",
+      "name": "혹시 몰라 더 심는 것에 맞춘 초점",
+      "characters": "혹시 몰라 더 심는 것에 맞춘 초점",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#454545",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:103",
+      "name": "불필요한 채취 가능성 증가",
+      "characters": "불필요한 채취 가능성 증가",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#454545",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:108",
+      "name": "고객에게 돌아가는 부담",
+      "characters": "고객에게 돌아가는 부담",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#454545",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:110",
+      "name": "VS",
+      "characters": "VS",
+      "fontFamily": "Cormorant Garamond",
+      "fontSize": 135,
+      "fontWeight": 700,
+      "lineHeightPx": 170.1,
+      "lineHeightRatio": 1.26,
+      "letterSpacing": -4.05,
+      "color": "#c3b2a9",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:119",
+      "name": "를 살리는",
+      "characters": "를 살리는",
+      "fontFamily": "Pretendard",
+      "fontSize": 40,
+      "fontWeight": 400,
+      "lineHeightPx": 50.4,
+      "lineHeightRatio": 1.26,
+      "letterSpacing": -1.2,
+      "color": "#f8e8df",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:120",
+      "name": "MASTER 이식",
+      "characters": "MASTER 이식",
+      "fontFamily": "Pretendard",
+      "fontSize": 62,
+      "fontWeight": 200,
+      "lineHeightPx": 63.86,
+      "lineHeightRatio": 1.03,
+      "letterSpacing": -1.86,
+      "color": "#d9d9d9",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:126",
+      "name": "필요한 모수를 철저히 계산하는 데이터 상담",
+      "characters": "필요한 모수를 철저히 계산하는 데이터 상담",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#ebd6c7",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:131",
+      "name": "후두부 자원까지 고려한 채취",
+      "characters": "후두부 자원까지 고려한 채취",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#ebd6c7",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:136",
+      "name": "1년 뒤의 생착을 고려한 이식 계획",
+      "characters": "1년 뒤의 생착을 고려한 이식 계획",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 22,
+      "fontWeight": 500,
+      "lineHeightPx": 22.75,
+      "lineHeightRatio": 1.034,
+      "letterSpacing": -0.44,
+      "color": "#ebd6c7",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:137",
+      "name": "누구나 모제림을 흉내 낼 순 있지만, 1997년부터 축적된 오리지널의 시스템은 따라할 수 없습니다. 모제림은 수술 경험 없는 신입 원장을 철저히 배제하고, 수술 시작부터 끝까지 마스터 집도의가 직접 책임집니다.",
+      "characters": "누구나 모제림을 흉내 낼 순 있지만, 1997년부터 축적된 오리지널의 시스템은 따라할 수 없습니다.\n모제림은 수술 경험 없는 신입 원장을 철저히 배제하고, 수술 시작부터 끝까지 마스터 집도의가 직접 책임집니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 19,
+      "fontWeight": 500,
+      "lineHeightPx": 29.64,
+      "lineHeightRatio": 1.56,
+      "letterSpacing": -0.38,
+      "color": "#787472",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    }
+  ],
+  "frame_nodes": [
+    {
+      "id": "842:84",
+      "name": "Section_03",
+      "bbox": {
+        "x": 0,
+        "y": 2283.5,
+        "w": 1920,
+        "h": 1189
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 220,
+      "paddingRight": 246,
+      "paddingBottom": 67,
+      "paddingLeft": 246,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:85",
+      "name": "Layer_1",
+      "bbox": {
+        "x": 1446,
+        "y": 2351,
+        "w": 311,
+        "h": 311
+      },
+      "layoutMode": null,
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": "#ffffff"
+    },
+    {
+      "id": "842:87",
+      "name": "Frame 506",
+      "bbox": {
+        "x": 367.5,
+        "y": 2503.5,
+        "w": 1185,
+        "h": 902
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 64,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:89",
+      "name": "Frame 529",
+      "bbox": {
+        "x": 367.5,
+        "y": 2628,
+        "w": 1185,
+        "h": 529
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": -17,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:90",
+      "name": "Frame 532",
+      "bbox": {
+        "x": 367.5,
+        "y": 2628,
+        "w": 495,
+        "h": 529
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:91",
+      "name": "div.compare-col",
+      "bbox": {
+        "x": 367.5,
+        "y": 2628,
+        "w": 495,
+        "h": 529
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 60,
+      "paddingRight": 60,
+      "paddingBottom": 60,
+      "paddingLeft": 60,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:93",
+      "name": "Frame 542",
+      "bbox": {
+        "x": 427.5,
+        "y": 2839,
+        "w": 375,
+        "h": 258
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:94",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 427.5,
+        "y": 2839,
+        "w": 375,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:95",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 427.5,
+        "y": 2857.28,
+        "w": 22.48,
+        "h": 32.44
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:97",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 463.98,
+        "y": 2862,
+        "w": 302,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:99",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 427.5,
+        "y": 2933,
+        "w": 375,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:100",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 427.5,
+        "y": 2951.28,
+        "w": 22.48,
+        "h": 32.44
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:102",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 463.98,
+        "y": 2956,
+        "w": 245,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:104",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 427.5,
+        "y": 3027,
+        "w": 375,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:105",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 427.5,
+        "y": 3045.78,
+        "w": 22.48,
+        "h": 32.44
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:107",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 463.98,
+        "y": 3050.5,
+        "w": 219,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:109",
+      "name": "Frame 533",
+      "bbox": {
+        "x": 845.5,
+        "y": 2817,
+        "w": 155,
+        "h": 151
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 10,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:111",
+      "name": "Frame 534",
+      "bbox": {
+        "x": 983.5,
+        "y": 2670,
+        "w": 569,
+        "h": 445
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": "MAX",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:112",
+      "name": "Section_03",
+      "bbox": {
+        "x": 983.5,
+        "y": 2498,
+        "w": 569,
+        "h": 617
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 112,
+      "paddingRight": 69,
+      "paddingBottom": 80,
+      "paddingLeft": 62,
+      "itemSpacing": 41,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": "#463c37"
+    },
+    {
+      "id": "842:113",
+      "name": "Frame 528",
+      "bbox": {
+        "x": 1052,
+        "y": 2610,
+        "w": 425,
+        "h": 126
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 19,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:114",
+      "name": "Frame 7",
+      "bbox": {
+        "x": 1157.5,
+        "y": 2610,
+        "w": 214,
+        "h": 58
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 45,
+      "primaryAxisAlignItems": "MAX",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:115",
+      "name": "Frame 527",
+      "bbox": {
+        "x": 1157.5,
+        "y": 2610,
+        "w": 214,
+        "h": 58
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 5,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:116",
+      "name": "Frame 522",
+      "bbox": {
+        "x": 1157.5,
+        "y": 2610,
+        "w": 58,
+        "h": 48
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": -11,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:121",
+      "name": "Frame 541",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2777,
+        "w": 438,
+        "h": 258
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:122",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2777,
+        "w": 438,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:123",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2801.168,
+        "w": 17.664,
+        "h": 20.664
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:125",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 1077.164,
+        "y": 2800,
+        "w": 401,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:127",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2871,
+        "w": 438,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:128",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2895.168,
+        "w": 17.664,
+        "h": 20.664
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:130",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 1077.164,
+        "y": 2894,
+        "w": 266,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:132",
+      "name": "div.compare-item",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2965,
+        "w": 438,
+        "h": 70
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": 18,
+      "paddingRight": null,
+      "paddingBottom": 18,
+      "paddingLeft": null,
+      "itemSpacing": 14,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:133",
+      "name": "div.cmp-icon:margin",
+      "bbox": {
+        "x": 1045.5,
+        "y": 2989.668,
+        "w": 17.664,
+        "h": 20.664
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 3,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:135",
+      "name": "div.cmp-text",
+      "bbox": {
+        "x": 1077.164,
+        "y": 2988.5,
+        "w": 307,
+        "h": 23
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 2.375,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    }
+  ],
+  "interactions": [],
+  "images": {}
+}

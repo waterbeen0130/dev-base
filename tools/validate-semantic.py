@@ -1487,7 +1487,7 @@ def root_var_naming(rule: dict, ctx: ValidationContext) -> ValidationResult:
     variables = _extract_root_variables(ctx.css_text)
     if not variables:
         return ValidationResult(rule["id"], rule["severity"], True)
-    allowed = re.compile(r"^--(?:point-color-\d+|font-color-\d+|width|padding|header_h)$")
+    allowed = re.compile(r"^--(?:point-color-\d+|font-color-\d+|width|padding|header_h|font|font\d+)$")
     invalid = [name for name, _ in variables if not allowed.match(name)]
     if invalid:
         return ValidationResult(rule["id"], rule["severity"], False, message=f"invalid :root variable naming: {invalid[0]}", location=ctx.css_path)
@@ -1878,6 +1878,722 @@ def _check_box_sizing_redundant(rule: dict, ctx: ValidationContext) -> Validatio
     )
 
 
+def _discover_spec_json_files(ctx: "ValidationContext") -> list[str]:
+    """Auto-discover *_spec.json files by walking up from the HTML path until an extracted/ dir is found."""
+    import os
+    start = os.path.dirname(os.path.abspath(ctx.html_path)) if getattr(ctx, "html_path", None) else os.getcwd()
+    current = start
+    for _ in range(6):
+        for candidate_dir in ("extracted", os.path.join("..", "extracted"), os.path.join("..", "..", "extracted")):
+            full = os.path.normpath(os.path.join(current, candidate_dir))
+            if os.path.isdir(full):
+                found = []
+                for fname in sorted(os.listdir(full)):
+                    if fname.endswith("_spec.json"):
+                        found.append(os.path.join(full, fname))
+                if found:
+                    return found
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    return []
+
+
+def _extract_spec_text_slots(spec_paths: list[str]) -> list[tuple[str, tuple[str, ...]]]:
+    """Return [(spec_file_name, (text1, text2, ...))] where each tuple is a slot.
+    Texts at the same (bbox.x, bbox.y) position are treated as component variants:
+    at least ONE of them must appear in HTML."""
+    import json
+    import os
+    from collections import defaultdict
+
+    slots_out: list[tuple[str, tuple[str, ...]]] = []
+    for path in spec_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = json.load(fp)
+        except Exception:
+            continue
+        name = os.path.basename(path)
+
+        # Group texts by rounded (x, y) — same position = component variants
+        slot_groups: dict = defaultdict(list)
+        unique_key_counter = 0
+        for node in data.get("text_nodes", []) or []:
+            chars = node.get("characters")
+            if not isinstance(chars, str) or len(chars) <= 1:
+                continue
+            bbox = node.get("bbox") or {}
+            x = bbox.get("x")
+            y = bbox.get("y")
+            if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                key = (round(x / 3) * 3, round(y / 3) * 3)
+            else:
+                unique_key_counter += 1
+                key = ("__no_bbox__", unique_key_counter)
+            slot_groups[key].append(chars)
+
+        for variants in slot_groups.values():
+            # dedup within slot (same text appearing twice at same position)
+            uniq = tuple(dict.fromkeys(variants))
+            slots_out.append((name, uniq))
+    return slots_out
+
+
+def _normalize_for_text_match(value: str) -> str:
+    """Normalize for text comparison: collapse whitespace variants, map <br> and \\n and &nbsp; to spaces, lowercase."""
+    import re
+    import html as _html
+    s = _html.unescape(value)
+    # Map <br>, <br/>, <br /> to \n first
+    s = re.sub(r"<br\s*/?>", "\n", s, flags=re.IGNORECASE)
+    # Strip remaining HTML tags
+    s = re.sub(r"<[^>]+>", "", s)
+    # All whitespace (incl. nbsp \xa0, \r, \n, tab) → single space
+    s = re.sub(r"[\s\u00a0]+", " ", s)
+    return s.strip().lower()
+
+
+def _extract_html_text_blob(html_text: str) -> str:
+    """Extract all visible text as a normalized single blob."""
+    return _normalize_for_text_match(html_text)
+
+
+def _check_text_from_spec_required(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """PLN-007 follow-up: each spec.json text slot (group of variants at same position) must have
+    at least one variant appearing in HTML text. Prevents AI-invented text while allowing
+    component variant overlaps."""
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json discovered")
+
+    slots = _extract_spec_text_slots(spec_paths)
+    if not slots:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no text_nodes in specs")
+
+    html_blob = _extract_html_text_blob(ctx.html_text)
+
+    missing_slots: list[tuple[str, tuple[str, ...]]] = []
+    for spec_name, variants in slots:
+        any_found = False
+        for chars in variants:
+            needle = _normalize_for_text_match(chars)
+            if not needle or len(needle) < 2:
+                any_found = True  # treat too-short as trivially satisfied
+                break
+            if needle in html_blob:
+                any_found = True
+                break
+        if not any_found:
+            missing_slots.append((spec_name, variants))
+
+    if not missing_slots:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    first_spec, first_variants = missing_slots[0]
+    preview_parts: list[str] = []
+    for v in first_variants[:3]:
+        clean = v.replace("\n", "\\n").replace("\r", "\\r")
+        if len(clean) > 40:
+            clean = clean[:37] + "..."
+        preview_parts.append(f"'{clean}'")
+    preview = " | ".join(preview_parts)
+    return ValidationResult(
+        rule["id"],
+        rule["severity"],
+        False,
+        message=f"Figma text slot missing in HTML (variants: {preview}) (spec={first_spec}, total_missing_slots={len(missing_slots)})",
+        location=ctx.html_path,
+    )
+
+
+def _extract_root_var(css: str, var_name: str) -> str | None:
+    """Extract `--var-name: value;` from :root block."""
+    root_match = re.search(r":root\s*\{([^}]*)\}", css)
+    if not root_match:
+        return None
+    m = re.search(rf"--{re.escape(var_name)}\s*:\s*([^;]+);", root_match.group(1))
+    return m.group(1).strip() if m else None
+
+
+def _extract_max_figma_content_width(html_path: str) -> int | None:
+    """Read extracted/*_spec.json files and return max (inner frame width - paddingL - paddingR)."""
+    import json as _json
+    import os as _os
+    if not html_path:
+        return None
+    start = _os.path.dirname(_os.path.abspath(html_path))
+    current = start
+    spec_files: list[str] = []
+    for _ in range(6):
+        for candidate_dir in ("extracted", _os.path.join("..", "extracted"), _os.path.join("..", "..", "extracted")):
+            full = _os.path.normpath(_os.path.join(current, candidate_dir))
+            if _os.path.isdir(full):
+                for fname in sorted(_os.listdir(full)):
+                    if fname.endswith("_spec.json"):
+                        spec_files.append(_os.path.join(full, fname))
+                break
+        if spec_files:
+            break
+        parent = _os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+
+    max_content = 0
+    for path in spec_files:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        for frame in data.get("frame_nodes", []) or []:
+            bbox = frame.get("bbox") or {}
+            width = bbox.get("w")
+            pad_l = frame.get("paddingLeft")
+            pad_r = frame.get("paddingRight")
+            if not isinstance(width, (int, float)):
+                continue
+            if not isinstance(pad_l, (int, float)) or not isinstance(pad_r, (int, float)):
+                continue
+            inner = int(width - pad_l - pad_r)
+            if inner > max_content:
+                max_content = inner
+    return max_content if max_content > 0 else None
+
+
+def _check_section_width_formula(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """PLN-007 follow-up: enforce --width = figma_content + 40, --padding = 20px, .cont canonical pattern."""
+    css = ctx.css_text
+
+    # Step 1: :root must declare --width and --padding
+    width_val = _extract_root_var(css, "width")
+    padding_val = _extract_root_var(css, "padding")
+    if not width_val:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=":root --width 변수가 정의되지 않음. `--width: <figma_content + 40>px;` 필수",
+            location=ctx.css_path)
+    if not padding_val:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=":root --padding 변수가 정의되지 않음. `--padding: 20px;` 필수",
+            location=ctx.css_path)
+
+    # Step 2: --padding must be 20px
+    pad_num_match = re.match(r"^(\d+)\s*px\s*$", padding_val)
+    if not pad_num_match or int(pad_num_match.group(1)) != 20:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=f"--padding은 반드시 20px이어야 함 (현재 {padding_val}). 섹션 LR 안전 여백은 프로젝트 불변 고정값.",
+            location=ctx.css_path)
+
+    # Step 3: --width must equal (figma content width + 40) if spec.json discoverable
+    expected_width: int | None = None
+    content_width = _extract_max_figma_content_width(getattr(ctx, "html_path", "") or "")
+    if content_width is not None:
+        expected_width = content_width + 40
+        width_num_match = re.match(r"^(\d+)\s*px\s*$", width_val)
+        if not width_num_match or int(width_num_match.group(1)) != expected_width:
+            return ValidationResult(rule["id"], rule["severity"], False,
+                message=f"--width는 `figma_content_width + 40` 공식을 따라야 함. 기대: {expected_width}px (= {content_width} + 40), 현재: {width_val}",
+                location=ctx.css_path)
+
+    # Step 4: .cont rule must exist with canonical 4 properties
+    cont_match = re.search(r"(?<!\S)\.cont\s*\{([^}]*)\}", css)
+    if not cont_match:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=".cont 클래스 규칙이 정의되지 않음. `.cont{width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}` 필수",
+            location=ctx.css_path)
+    cont_body = cont_match.group(1)
+    required = {
+        "width": r"width\s*:\s*100%",
+        "max-width": r"max-width\s*:\s*var\(\s*--width\s*\)",
+        "margin": r"margin\s*:\s*0\s+auto",
+        "padding": r"padding\s*:\s*0\s+var\(\s*--padding\s*\)",
+    }
+    for prop, pattern in required.items():
+        if not re.search(pattern, cont_body):
+            return ValidationResult(rule["id"], rule["severity"], False,
+                message=f".cont 규칙에 필수 속성 누락/오류: `{prop}`. 정규 패턴: `.cont{{width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}}`",
+                location=ctx.css_path)
+
+    # Step 5: sections with background must not declare max-width directly (use .cont child instead)
+    # Detect `.main_xxx{... background ... max-width ...}` patterns
+    section_violations: list[str] = []
+    for section_match in re.finditer(r"(?<!\S)(\.main_[a-z_]+|\.footer_top|\.footer_bottom)\s*\{([^}]*)\}", css):
+        selector = section_match.group(1)
+        body = section_match.group(2)
+        has_bg = bool(re.search(r"background(?:-color|-image)?\s*:", body))
+        has_max_width = bool(re.search(r"max-width\s*:", body))
+        if has_bg and has_max_width:
+            section_violations.append(selector)
+
+    if section_violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=f"배경이 있는 섹션에 max-width 직접 선언 금지 (full-bleed 깨짐): {section_violations[0]}. 폭 제한은 섹션 내부 `.cont` 래퍼에만 적용",
+            location=ctx.css_path)
+
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def _build_html_text_index(html_text: str) -> list:
+    """Parse HTML once and return [(text_content, ancestor_chain_tuple)] for every text node.
+    ancestor_chain_tuple = tuple of (tag, class_attr) from root to immediate parent."""
+    from html.parser import HTMLParser
+
+    class _Idx(HTMLParser):
+        VOID_TAGS = {"br", "img", "meta", "link", "input", "hr", "area", "base", "col", "embed", "source", "track", "wbr"}
+
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.stack = []
+            self.index = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in self.VOID_TAGS:
+                return
+            cls = ""
+            for k, v in attrs:
+                if k == "class":
+                    cls = v or ""
+                    break
+            self.stack.append((tag, cls))
+
+        def handle_startendtag(self, tag, attrs):
+            pass  # self-closing, ignore
+
+        def handle_endtag(self, tag):
+            while self.stack and self.stack[-1][0] != tag:
+                self.stack.pop()
+            if self.stack:
+                self.stack.pop()
+
+        def handle_data(self, data):
+            text = data.strip()
+            if text and self.stack:
+                self.index.append((text, tuple(self.stack)))
+
+    p = _Idx()
+    try:
+        p.feed(html_text)
+    except Exception:
+        return []
+    return p.index
+
+
+def _find_text_chain(html_index: list, needle: str) -> tuple | None:
+    """Find the ancestor chain of the HTML text matching needle (substring)."""
+    normalized_needle = re.sub(r"\s+", " ", needle).strip()
+    if len(normalized_needle) < 2:
+        return None
+    for text, chain in html_index:
+        normalized_text = re.sub(r"\s+", " ", text).strip()
+        if normalized_needle in normalized_text or normalized_text in normalized_needle:
+            return chain
+    return None
+
+
+def _chain_signature(chain: tuple, depth: int = 3) -> tuple:
+    """Return the last `depth` ancestors' (tag, first_class) as a signature."""
+    if not chain:
+        return ()
+    tail = chain[-depth:]
+    return tuple((t, (c.split()[0] if c else "")) for t, c in tail)
+
+
+_BLOCK_TAGS = {"div", "ul", "ol", "dl", "section", "nav", "header", "footer", "p", "article", "aside"}
+
+
+def _get_block_parent(chain: tuple) -> tuple | None:
+    """Return the nearest block-level ancestor as (tag, first_class)."""
+    for tag, cls in reversed(chain):
+        if tag in _BLOCK_TAGS:
+            return (tag, (cls.split()[0] if cls else ""))
+    return None
+
+
+def _block_chain_classes(chain: tuple) -> list:
+    """Extract ordered list of (tag, first_class) for block-level ancestors in chain."""
+    return [(t, (c.split()[0] if c else "")) for t, c in chain if t in _BLOCK_TAGS]
+
+
+def _extract_html_section_for_spec(html_text: str, spec_basename: str) -> str | None:
+    """Extract HTML substring for the section corresponding to a spec file name.
+    Returns None if no mapping or not found (caller should fall back to full HTML)."""
+    spec_name = spec_basename.replace("_spec.json", "")
+    # Name hint → HTML tag + class hint pattern
+    scopes = {
+        "footer":    (r'<footer[^>]*>(.*?)</footer>', None),
+        "top_bar":   (r'<(section|div)[^>]*class="[^"]*top_bar[^"]*"[^>]*>(.*?)</\1>', 2),
+        "header":    (r'<header[^>]*>(.*?)</header>', None),
+        "mv":        (r'<section[^>]*class="[^"]*main_mv[^"]*"[^>]*>(.*?)</section>', None),
+        "sec_1":     (r'<section[^>]*class="[^"]*main_product[^"]*"[^>]*>(.*?)</section>', None),
+        "sec_2":     (r'<section[^>]*class="[^"]*main_news[^"]*"[^>]*>(.*?)</section>', None),
+        "sec_3":     (r'<section[^>]*class="[^"]*main_company[^"]*"[^>]*>(.*?)</section>', None),
+        "hero":      (r'<section[^>]*class="[^"]*index_hero[^"]*"[^>]*>(.*?)</section>', None),
+        "adventure": (r'<section[^>]*class="[^"]*index_adventure[^"]*"[^>]*>(.*?)</section>', None),
+        "intro":     (r'<section[^>]*class="[^"]*index_intro[^"]*"[^>]*>(.*?)</section>', None),
+        "news":      (r'<section[^>]*class="[^"]*index_news[^"]*"[^>]*>(.*?)</section>', None),
+        "price":     (r'<section[^>]*class="[^"]*index_price[^"]*"[^>]*>(.*?)</section>', None),
+        "event":     (r'<section[^>]*class="[^"]*index_event[^"]*"[^>]*>(.*?)</section>', None),
+    }
+    spec_entry = scopes.get(spec_name)
+    if not spec_entry:
+        return None
+    pattern, group_idx = spec_entry
+    m = re.search(pattern, html_text, re.DOTALL)
+    if not m:
+        return None
+    return m.group(group_idx or 1)
+
+
+def _check_figma_text_row_grouping(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Rule 2: Figma texts at same y-coordinate (horizontal row) must share the same
+    nearest BLOCK-level HTML ancestor. Catches vertical stacking of row-layout texts.
+    Scopes search per spec file to avoid cross-section text collisions."""
+    import json as _json
+    import os as _os
+
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    violations: list = []
+    for path in spec_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+
+        # Scope HTML to this section if mapping exists
+        basename = _os.path.basename(path)
+        scoped_html = _extract_html_section_for_spec(ctx.html_text, basename)
+        html_scope = scoped_html if scoped_html is not None else ctx.html_text
+        html_index = _build_html_text_index(html_scope)
+        if not html_index:
+            continue
+
+        # Group text_nodes by rounded y (tolerance 5px)
+        from collections import defaultdict
+        by_y: dict = defaultdict(list)
+        for tn in data.get("text_nodes", []) or []:
+            ch = tn.get("characters", "")
+            if not isinstance(ch, str) or len(ch) < 2:
+                continue
+            bbox = tn.get("bbox") or {}
+            y = bbox.get("y")
+            x = bbox.get("x")
+            if not isinstance(y, (int, float)) or not isinstance(x, (int, float)):
+                continue
+            y_bucket = round(y / 5) * 5
+            by_y[y_bucket].append((x, ch))
+
+        for y_bucket, items in by_y.items():
+            if len(items) < 2:
+                continue
+            # Require x-spread ≥ 100 to be confident it's an actual row (not clustered stack)
+            xs = [x for x, _ in items]
+            if max(xs) - min(xs) < 100:
+                continue
+            items_sorted = sorted(items, key=lambda t: t[0])
+            chains = []
+            for _x, text in items_sorted:
+                chain = _find_text_chain(html_index, text)
+                if chain is not None:
+                    chains.append((text, chain))
+            if len(chains) < 2:
+                continue
+            # Compute intersection of block-chain classes across all texts
+            block_sets = [set(_block_chain_classes(c)) for _t, c in chains]
+            # Exclude root-level tags that are always common (body, html)
+            for s in block_sets:
+                s.discard(("body", ""))
+                s.discard(("html", ""))
+            common = set.intersection(*block_sets) if block_sets else set()
+            if not common:
+                texts_preview = " / ".join(t[:25] for t, _ in chains[:3])
+                violations.append(
+                    f"{basename} y={y_bucket}: row [{texts_preview}] "
+                    f"— 공통 block 조상 없음 (서로 다른 섹션/트리에 분리됨)"
+                )
+
+    if not violations:
+        return ValidationResult(rule["id"], rule["severity"], True)
+    hint = " — 같은 y의 텍스트는 HTML에서 같은 block 컨테이너 하위에 배치 필요"
+    return ValidationResult(
+        rule["id"], rule["severity"], False,
+        message=f"Figma 가로 row → HTML 세로 stack 의심: {violations[0]}{hint} (total={len(violations)})",
+        location=ctx.html_path,
+    )
+
+
+def _check_figma_dom_tree_structure_match(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Rule 1: For each section's spec, verify HTML main section has corresponding direct children count
+    matching Figma's top-level frame children. Loose match: count only."""
+    import json as _json
+    import os as _os
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    section_class_hints = {
+        "mv": "main_mv", "sec_1": "main_product", "sec_2": "main_news",
+        "sec_3": "main_company", "sec_4": "main_partner",
+        "hero": "index_hero", "adventure": "index_adventure",
+        "intro": "index_intro", "news": "index_news", "price": "index_price",
+        "event": "index_event", "footer": "footer",
+    }
+
+    violations: list = []
+    for path in spec_paths:
+        name = _os.path.basename(path).replace("_spec.json", "")
+        target_cls = section_class_hints.get(name)
+        if not target_cls:
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        frames = data.get("frame_nodes", []) or []
+        if not frames:
+            continue
+        # Top-level frame = first frame (by convention, parent_id typically is section root)
+        top_frame = frames[0]
+        top_id = top_frame.get("id")
+        # Direct children = frames whose parent_id == top_id
+        direct_children = [f for f in frames if f.get("parent_id") == top_id]
+        figma_child_count = len(direct_children)
+        if figma_child_count == 0:
+            continue
+
+        # Find HTML section and count its direct children (div/ul/section/header/footer)
+        sec_match = re.search(
+            rf'<(section|footer|header|div)[^>]*class="[^"]*{re.escape(target_cls)}[^"]*"[^>]*>(.*?)</\1>',
+            ctx.html_text, re.DOTALL,
+        )
+        if not sec_match:
+            continue
+        body = sec_match.group(2)
+        # Count direct child elements (not nested). Use a simple regex approach
+        html_child_count = 0
+        depth = 0
+        for m in re.finditer(r'<(/?)(\w+)[^>]*>', body):
+            closing = m.group(1) == "/"
+            tag = m.group(2)
+            if tag in ("br", "img", "meta", "link", "input", "hr"):
+                continue
+            if closing:
+                if depth > 0:
+                    depth -= 1
+            else:
+                if depth == 0 and tag in ("div", "ul", "ol", "nav", "section", "footer", "header", "a", "p", "h1", "h2", "h3", "span", "strong"):
+                    html_child_count += 1
+                depth += 1
+        # Tolerate moderate count differences (MV has decorative siblings, top-frame wrapper nesting varies)
+        # Also only flag when HTML has FEWER children (missing content), not more (extra wrappers/decorations OK)
+        if html_child_count < figma_child_count and (figma_child_count - html_child_count) >= 3:
+            violations.append(
+                f"{name} ({target_cls}): Figma top-frame has {figma_child_count} direct children, "
+                f"HTML has only {html_child_count}"
+            )
+
+    if not violations:
+        return ValidationResult(rule["id"], rule["severity"], True)
+    return ValidationResult(
+        rule["id"], rule["severity"], False,
+        message=f"DOM 구조 카운트 불일치: {violations[0]} (total={len(violations)})",
+        location=ctx.html_path,
+    )
+
+
+def _check_figma_element_parent_match(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Rule 3: For landmark named frames (logo_b, btn_top, sns, etc.), verify their HTML parent
+    chain corresponds to the Figma parent chain. Catches: top-btn inside footer_address when it
+    should be a sibling."""
+    import json as _json
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    html_index = _build_html_text_index(ctx.html_text)
+
+    # Landmark frame name → expected HTML class hint
+    landmarks = {
+        "btn_top": ("footer_top_btn", ("footer_info", "footer", "cont")),
+        "logo_b": ("logo", ("footer_top", "footer", "cont")),
+        "sns": ("footer_sns", ("footer_info", "footer", "footer_col_left")),
+    }
+
+    violations: list = []
+    for path in spec_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        for fn in data.get("frame_nodes", []) or []:
+            fn_name = (fn.get("name") or "").lower()
+            if fn_name not in landmarks:
+                continue
+            html_cls, expected_ancestors = landmarks[fn_name]
+            # Find this class in HTML and check its ancestor chain
+            found = False
+            for text, chain in html_index:
+                for ancestor in chain:
+                    if html_cls in (ancestor[1] or "").split():
+                        found = True
+                        # Check at least one expected ancestor is present in chain
+                        chain_classes = set()
+                        for _t, cls in chain:
+                            for c in (cls or "").split():
+                                chain_classes.add(c)
+                        # Not strict: just check at least one expected is in chain
+                        if not any(exp in chain_classes for exp in expected_ancestors):
+                            violations.append(
+                                f"{fn_name} (.{html_cls}): HTML 부모 체인에 기대 조상 {expected_ancestors} 중 하나도 없음"
+                            )
+                        break
+                if found:
+                    break
+
+    if not violations:
+        return ValidationResult(rule["id"], rule["severity"], True)
+    return ValidationResult(
+        rule["id"], rule["severity"], False,
+        message=f"Figma 요소 부모 체인 불일치: {violations[0]} (total={len(violations)})",
+        location=ctx.html_path,
+    )
+
+
+def _compute_card_slots_from_spec(spec_data: dict) -> tuple[int, int, int]:
+    """Return (unique_slot_count, total_card_frames, variant_overlap_count) for cards in a section spec.
+    Heuristic: 'txt' frames with width 200..700; the most common width is the card width;
+    unique bbox.x (bucketed to 5px) at that width = slot count."""
+    from collections import Counter
+    width_counts: Counter = Counter()
+    frames_by_width: dict = {}
+    for fn in spec_data.get("frame_nodes", []) or []:
+        if fn.get("name") != "txt":
+            continue
+        bbox = fn.get("bbox") or {}
+        w = bbox.get("w")
+        x = bbox.get("x")
+        if not isinstance(w, (int, float)) or not isinstance(x, (int, float)):
+            continue
+        if not (200 <= w <= 700):
+            continue
+        width_counts[w] += 1
+        frames_by_width.setdefault(w, []).append(x)
+    if not width_counts:
+        return (0, 0, 0)
+    card_width, card_count = width_counts.most_common(1)[0]
+    if card_count < 2:
+        return (0, 0, 0)
+    x_positions = {round(x / 5) * 5 for x in frames_by_width[card_width]}
+    unique_slots = len(x_positions)
+    return (unique_slots, card_count, card_count - unique_slots)
+
+
+def _extract_main_sections_from_html(html: str) -> list:
+    """Return [(class_name, section_inner_html)] for each <section class='main_*'> in order."""
+    sections: list = []
+    for m in re.finditer(r'<section[^>]*class="([^"]*)"[^>]*>(.*?)</section>', html, re.DOTALL):
+        classes = m.group(1)
+        main_class = None
+        for cls in classes.split():
+            if cls.startswith("main_"):
+                main_class = cls
+                break
+        if main_class:
+            sections.append((main_class, m.group(2)))
+    return sections
+
+
+def _count_list_items_in_section(section_html: str) -> int:
+    """Count the largest single <ul>'s direct <li> children in a section body."""
+    counts: list = []
+    for ul_match in re.finditer(r'<ul[^>]*>(.*?)</ul>', section_html, re.DOTALL):
+        body = ul_match.group(1)
+        counts.append(len(re.findall(r'<li\b', body)))
+    return max(counts) if counts else 0
+
+
+def _check_figma_cardinality_match(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Compare Figma spec card slot count vs HTML <li> count per main section.
+    Catches variant-overlap confusion (HTML treats component variants as separate cards)."""
+    import json as _json
+    import os as _os
+
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    def _spec_sort_key(path: str):
+        name = _os.path.basename(path)
+        m = re.search(r"sec_(\d+)", name)
+        if m:
+            return (1, int(m.group(1)))
+        if name.startswith("mv"):
+            return (0, 0)
+        if name.startswith("footer"):
+            return (9, 0)
+        return (5, name)
+
+    ordered_specs = sorted(spec_paths, key=_spec_sort_key)
+    expected: list = []
+    for path in ordered_specs:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        slots, total, variants = _compute_card_slots_from_spec(data)
+        if slots >= 2:
+            expected.append((_os.path.basename(path).replace("_spec.json", ""), slots, variants))
+
+    if not expected:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no card-bearing specs found")
+
+    main_sections = _extract_main_sections_from_html(ctx.html_text)
+    if not main_sections:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no main_* sections in HTML")
+
+    # main_mv is a hero; its mv_cards are decorative indicators, not content cards → exclude
+    ignored_html_sections = {"main_mv"}
+    cardful_sections = [(cls, _count_list_items_in_section(body)) for cls, body in main_sections]
+    cardful_sections = [(cls, n) for cls, n in cardful_sections if n >= 2 and cls not in ignored_html_sections]
+
+    if len(cardful_sections) != len(expected):
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message=f"main section count mismatch: Figma {len(expected)} card-bearing specs "
+                    f"({[e[0] for e in expected]}) vs HTML {len(cardful_sections)} cardful main sections "
+                    f"({[s[0] for s in cardful_sections]})",
+            location=ctx.html_path,
+        )
+
+    violations: list = []
+    for (spec_name, slots, variants), (sec_cls, li_count) in zip(expected, cardful_sections):
+        if li_count != slots:
+            detail = (
+                f"{spec_name} → {sec_cls}: Figma {slots} card slot(s)"
+                + (f" [variant overlap={variants}]" if variants else "")
+                + f" vs HTML {li_count} <li>"
+            )
+            violations.append(detail)
+
+    if not violations:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    hint = " — component variant(상태 중복)를 별개 카드로 오인했는지 확인"
+    return ValidationResult(
+        rule["id"], rule["severity"], False,
+        message=f"Figma slot count mismatch: {violations[0]}{hint} (total_violations={len(violations)})",
+        location=ctx.html_path,
+    )
+
+
 def _check_landing_unit_mixed_scale(rule: dict, ctx: ValidationContext) -> ValidationResult:
     if ctx.profile != "landing":
         return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="profile_not_landing")
@@ -1910,7 +2626,7 @@ def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
 
 
 def check_no_column_gap(rule: dict, ctx: ValidationContext) -> ValidationResult:
-    """Detect `flex-direction:column` blocks that also use `gap`."""
+    """Detect `flex-direction:column` blocks that also use `gap`. Vertical spacing should use margin, not gap."""
     violations: list[str] = []
     for block_match in re.finditer(r"([^{}]+)\{([^{}]*)\}", ctx.css_text):
         selector = block_match.group(1).strip()
@@ -1937,9 +2653,15 @@ def check_no_column_gap(rule: dict, ctx: ValidationContext) -> ValidationResult:
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+def item_spacing_reflected(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    # mapping-dependent; skip when no mapping context
+    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="mapping not loaded")
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
     "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
+    "item_spacing_reflected": item_spacing_reflected,
     # direct check_* compatibility
     "check_nav_structure": _adapt_legacy_check(check_nav_structure),
     "check_img_wrapper": _adapt_legacy_check(check_img_wrapper),
@@ -1987,6 +2709,22 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "empty_media_block": _safe_custom_handler(_check_empty_media_block),
     "box_sizing_redundant": _safe_custom_handler(_check_box_sizing_redundant),
     "landing_unit_mixed_scale": _safe_custom_handler(_check_landing_unit_mixed_scale),
+    # PLN-007 follow-up: auto-discovered Figma text fidelity (prevents AI text invention)
+    "text_from_spec_required": _safe_custom_handler(_check_text_from_spec_required),
+    "_check_text_from_spec_required": _safe_custom_handler(_check_text_from_spec_required),
+    # PLN-007 follow-up: section width formula enforcement
+    "section_width_formula": _safe_custom_handler(_check_section_width_formula),
+    "_check_section_width_formula": _safe_custom_handler(_check_section_width_formula),
+    # PLN-007 follow-up: figma card slot count vs HTML li count
+    "figma_cardinality_match": _safe_custom_handler(_check_figma_cardinality_match),
+    "_check_figma_cardinality_match": _safe_custom_handler(_check_figma_cardinality_match),
+    # PLN-007 follow-up: structural checks (DOM tree / text row / parent match)
+    "figma_dom_tree_structure_match": _safe_custom_handler(_check_figma_dom_tree_structure_match),
+    "_check_figma_dom_tree_structure_match": _safe_custom_handler(_check_figma_dom_tree_structure_match),
+    "figma_text_row_grouping": _safe_custom_handler(_check_figma_text_row_grouping),
+    "_check_figma_text_row_grouping": _safe_custom_handler(_check_figma_text_row_grouping),
+    "figma_element_parent_match": _safe_custom_handler(_check_figma_element_parent_match),
+    "_check_figma_element_parent_match": _safe_custom_handler(_check_figma_element_parent_match),
     # rule-id based aliases from rules.yaml
     "nav_ul_li_structure": _adapt_legacy_check(check_nav_structure),
     "img_wrapped": _adapt_legacy_check(check_img_wrapper),

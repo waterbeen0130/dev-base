@@ -1,0 +1,50 @@
+{
+  "text_nodes": [
+    {
+      "id": "15:10",
+      "name": "hero-copy",
+      "characters": "BBox match",
+      "fontFamily": "Noto Sans KR",
+      "fontSize": 18,
+      "fontWeight": 400,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 1.5,
+      "letterSpacing": 0,
+      "color": "#222222",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "TOP"
+    }
+  ],
+  "frame_nodes": [
+    {
+      "id": "15:1",
+      "name": "hero_shell",
+      "bbox": {"x": 100, "y": 200, "w": 940, "h": 460},
+      "layoutMode": "VERTICAL",
+      "paddingTop": 40,
+      "paddingRight": 40,
+      "paddingBottom": 40,
+      "paddingLeft": 40,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "fills": "#f5f5f5"
+    },
+    {
+      "id": "15:2",
+      "name": "hero_content",
+      "parent_id": "15:1",
+      "bbox": {"x": 140, "y": 240, "w": 860, "h": 380},
+      "layoutMode": "VERTICAL",
+      "paddingTop": 40,
+      "paddingRight": 40,
+      "paddingBottom": 40,
+      "paddingLeft": 40,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "fills": "#f5f5f5"
+    }
+  ],
+  "interactions": []
+}

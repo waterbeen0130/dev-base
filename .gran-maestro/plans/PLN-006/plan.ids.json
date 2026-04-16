@@ -1,0 +1,10 @@
+[
+  { "id": "PAC-1", "text": "figma-section-spec.py 수정 후 목포 134:6708 재추출 시 characters와 character_segments text가 완전 일치", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "Figma instance override 텍스트(Easy→Adventure/Extreme 등)가 spec.json에 실제 override 값으로 기록", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "figma-section-spec.py에 instance 해석 fixture 기반 회귀 검증 추가 및 PASS", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "목포플레이파크에 .gran-maestro 퍼블리싱 템플릿 설치 완료", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-5", "text": "에이스디펜스에 .gran-maestro 퍼블리싱 템플릿 설치 완료", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-6", "text": "목포 메인페이지 섹션별 재추출 후 figma-validate + validate-semantic + post-impl-verify 모두 exit 0", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-7", "text": "에이스디펜스 메인페이지 5단계 플로우 1회 성공", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-8", "text": "기존 PLN-003~005 산출물이 새 스펙 포맷 회귀 검증 통과", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] }
+]

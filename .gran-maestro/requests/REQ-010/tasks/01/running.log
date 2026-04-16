@@ -1,0 +1,1966 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01
+model: gpt-5.4
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019d84ba-a8c7-7791-9e00-be0090628f15
+--------
+user
+# Task: REQ-010 / 01 — figma-validate.py CSS 상속 처리 추가 (갭 #2)
+
+## Paths
+- SPEC: /mnt/d/dev-base/.gran-maestro/requests/REQ-010/tasks/01/spec.md
+- WORKTREE: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01
+- REGRESSION_FIXTURES: /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/
+- DRYRUN_REPORT: /mnt/d/dev-base/.gran-maestro/requests/REQ-009/tasks/02/dryrun/e2e-dryrun-report.md
+
+## 문제
+
+`figma-validate.py`의 `compute_element_properties()` (tools/figma-validate.py:722) 는 현재 element에 직접 매칭되는 CSS 규칙만 수집한다. 그 결과 아래 구조에서 false-positive 위반이 발생:
+
+```html
+<li class="x_list_item"><span>Hello</span></li>
+```
+```css
+.x_list_item { font-family: "Noto"; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333; }
+```
+
+text_node `"Hello"`는 `<span>`에 매칭되고, span에 직접 선언된 font-* 규칙이 없으므로 "폰트 5필드 완결성 missing: font-family, font-size, font-weight, line-height, color" 5건 위반이 나온다. 실제 브라우저는 부모 li로부터 상속받아 정상 렌더링.
+
+## 해결
+
+CSS 상속 속성 6종(`font-family`, `font-size`, `font-weight`, `line-height`, `color`, `letter-spacing`)에 대해 ancestor walk를 수행하고, 자식에 직접 값이 없으면 가장 가까운 ancestor의 값을 사용.
+
+### 구현 지침
+
+1. **반드시 먼저 Read**:
+   - `tools/figma-validate.py` 전체 (특히 `DOMElement` 클래스 정의, `compute_element_properties()` 구현, `validate_text_nodes()` 호출부)
+   - `tools/figma-validate.py:722` 근처 `compute_element_properties` 시그니처와 리턴 구조 파악
+
+2. **parent 링크 확인**:
+   - `DOMElement`가 이미 `parent` 필드를 갖고 있다면 그대로 사용.
+   - 없다면 `parse_html_document()` 또는 DOM 빌드 지점에서 자식 element에 parent 참조를 세팅. (가장 안전한 위치에서 1회 세팅)
+
+3. **compute_element_properties 수정**:
+   - 기존 시그니처 `(element, rules) -> dict[str, PropertyValue]` 유지.
+   - 내부 로직:
+     ```
+     direct = {기존처럼 element에 매칭되는 rules 합성}
+     inherited = {}
+     if element.parent:
+         parent_props = compute_element_properties(element.parent, rules)
+         inherited = {k: v for k, v in parent_props.items() if k in INHERITED_PROPERTIES}
+     # direct가 inherited를 override
+     return {**inherited, **direct}
+     ```
+   - `INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}`
+   - 재귀는 루트까지 자연스럽게 종료됨 (root.parent = None).
+
+4. **무한 재귀 / 성능 주의**:
+   - 한 번의 validate 호출에서 같은 element에 대해 여러 번 계산될 수 있음. 필요 시 element별 메모이제이션(`_computed_cache: dict[id, dict]`) 추가. 단, 간단한 DOM에서는 성능이 문제되지 않으므로 캐시는 선택.
+
+5. **기타 속성 비변경**:
+   - 상속 속성 6종 외(background, padding, gap, margin 등)는 현재 동작 유지. 이들은 CSS 상속 속성이 아니므로 ancestor walk 결과에서 제외 필수.
+
+### 검증
+
+1. **새 pass 케이스 추가** — `.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/` 신설 (복사 생성):
+   - `section_spec.json`: base와 동일하되 text_node `characters`를 span에 넣을 수 있게 사용
+   - `index.html`: text를 `<li><span>Hello</span></li>` 형태로 감쌈
+   - `style.css`: font-family/size/weight/line-height/color 를 `li` 또는 `.base_section ul li` 에 선언
+   - 기대: `figma-validate.py` exit 0 (위반 0건)
+   - 이 케이스는 `run_regression.sh` 에서 별도 처리할 필요 없이, base와 같은 exit 0 처리 or 단독 실행으로 확인
+2. **기존 12개 시나리오 무회귀 확인**:
+   ```bash
+   bash /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh
+   ```
+   → base=exit 0, 12개 시나리오=exit 1 (각 해당 카테고리 위반 탐지) 유지
+3. **py_compile**:
+   ```bash
+   python3 -m py_compile tools/figma-validate.py
+   ```
+
+### 금지
+- 9개 검증 카테고리 로직 변경 금지
+- 상속 속성 6종 외 속성에 ancestor walk 적용 금지
+- 다른 파일 수정 금지 (regression fixture 추가는 예외)
+- git commit 금지
+
+### 완료 보고 (5~8줄)
+- 변경된 `compute_element_properties()` 핵심 diff 요약
+- `DOMElement.parent` 세팅 방식
+- 회귀 12개 결과 (exit codes)
+- 신규 scenario 13 결과
+- `py_compile` 결과
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_code_intel starting
+mcp: omx_memory starting
+mcp: omx_state starting
+mcp: omx_trace starting
+mcp: omx_trace ready
+mcp: omx_code_intel ready
+mcp: omx_memory ready
+mcp: omx_state ready
+mcp startup: ready: omx_trace, omx_code_intel, omx_memory, omx_state
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청 범위는 `tools/figma-validate.py`의 CSS 상속 처리 보강과 회귀 fixture 추가입니다. 먼저 OMX 상태와 작업 관련 파일을 복원한 뒤, `figma-validate.py` 구조와 회귀 시나리오 구성을 확인하겠습니다.
+tool omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"})
+omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"}) success in 49ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"active_modes\":[]}"
+    }
+  ]
+}
+tool omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"})
+omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"}) success in 4ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false\n}"
+    }
+  ]
+}
+tool omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"})
+omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01"}) success in 2ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false,\n  \"content\": \"\"\n}"
+    }
+  ]
+}
+codex
+OMX 쪽 복원 상태는 비어 있습니다. 이제 `figma-validate.py` 전체를 순서대로 읽으면서 `DOMElement`, HTML 파서, `compute_element_properties`, `validate_text_nodes` 연결부를 확인하겠습니다.
+exec
+/bin/bash -lc 'wc -l tools/figma-validate.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+1145 tools/figma-validate.py
+exec
+/bin/bash -lc 'rg -n "class DOMElement|def parse_html_document|def compute_element_properties|def validate_text_nodes" tools/figma-validate.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+51:class DOMElement:
+722:def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+877:def parse_html_document(html_text: str) -> SimpleHTMLDocumentParser:
+940:def validate_text_nodes(
+exec
+/bin/bash -lc "sed -n '1,260p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Validate generated HTML/CSS against normalized Figma section specs.
+
+Usage:
+  python3 tools/figma-validate.py --spec extracted/section_spec.json --html output.html --css output.css
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from dataclasses import dataclass, field
+from html import unescape
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Iterable
+
+
+exec
+/bin/bash -lc "sed -n '261,520p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+        if char == delimiter and depth == 0:
+            parts.append("".join(buf).strip())
+            buf = []
+            continue
+        buf.append(char)
+    tail = "".join(buf).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
+def split_whitespace_tokens(value: str) -> list[str]:
+    tokens: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    quote = ""
+    for char in value.strip():
+        if quote:
+            buf.append(char)
+            if char == quote:
+exec
+/bin/bash -lc "sed -n '781,1040p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+        colors.extend(extract_hex_colors(properties["background-color"].value))
+    if "background" in properties:
+        colors.extend(extract_hex_colors(properties["background"].value))
+    return colors
+
+
+def collect_text_candidates(root: DOMElement) -> list[ElementMatch]:
+    candidates: list[ElementMatch] = []
+    for element in iter_elements(root):
+        if element.tag in {"document", "html", "head", "body", "script", "style"}:
+            continue
+        raw = element.text_content()
+        normalized = normalize_text_for_match(raw)
+        if normalized:
+            candidates.append(ElementMatch(element=element, normalized_text=normalized, raw_text=raw))
+    return candidates
+
+
+def match_text_node(text_value: str, candidates: list[ElementMatch]) -> ElementMatch | None:
+    normalized = normalize_text_for_match(text_value)
+exec
+/bin/bash -lc "sed -n '521,780p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+                selector_end += 1
+                continue
+            if depth == 0 and char == "{":
+                break
+            selector_end += 1
+        if selector_end >= length:
+            break
+        selector_text = css[index:selector_end].strip()
+        block_end = find_matching_brace(css, selector_end)
+        declarations = parse_declarations(css[selector_end + 1:block_end])
+        selectors = split_selectors(selector_text)
+        if selectors and declarations:
+            order += 1
+            rules.append(CSSRule(selectors=selectors, declarations=declarations, order=order))
+        index = block_end + 1
+
+    return rules
+
+
+def iter_elements(root: DOMElement) -> Iterable[DOMElement]:
+exec
+/bin/bash -lc "sed -n '1041,1145p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+            if spacing not in (None, 0) and not any(value_matches_px(value, spacing) for value in gap_values):
+                missing_bits.append(f"gap={spacing}")
+            if missing_bits:
+                add_violation(
+                    violations,
+                    "frame padding/gap 반영",
+                    frame,
+                    ", ".join(missing_bits),
+                    f"{rule_label} ({', '.join(matched_notes) or 'signature 없음'})",
+                )
+
+        clamp_targets: list[tuple[str, float | int]] = []
+        for side in BOX_SIDES:
+            expected = frame.get(f"padding{side.capitalize()}")
+            if isinstance(expected, (int, float)) and expected >= 100:
+                clamp_targets.append((f"padding-{side}", expected))
+        if isinstance(spacing, (int, float)) and spacing >= 100:
+            clamp_targets.append(("gap", spacing))
+
+        for prop_name, expected in clamp_targets:
+codex
+`DOMElement.parent`는 이미 파서에서 세팅되고 있습니다. 다음은 회귀 fixture 구조를 읽고, 새 scenario 13을 기존 패턴에 맞춰 추가할 수 있게 base/시나리오 구성을 확인하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+#!/usr/bin/env bash
+# REQ-008-02 regression runner for tools/figma-validate.py
+set +e
+cd "$(dirname "$0")"
+ROOT=".."
+
+echo "=== base ==="
+python3 "$ROOT/tools/figma-validate.py" --spec base/section_spec.json --html base/index.html --css base/style.css
+echo "exit=$?"
+
+for dir in scenarios/*/; do
+  name=$(basename "$dir")
+  echo "=== $name ==="
+  python3 "$ROOT/tools/figma-validate.py" --spec "$dir/section_spec.json" --html "$dir/index.html" --css "$dir/style.css"
+  echo "exit=$?"
+done
+exec
+/bin/bash -lc 'find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures -maxdepth 3 -type f | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/regression-report.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/01-font-family-missing/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/01-font-family-missing/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/01-font-family-missing/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/02-line-height-missing/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/02-line-height-missing/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/02-line-height-missing/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/03-color-wrong/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/03-color-wrong/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/03-color-wrong/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/04-text-mutation/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/04-text-mutation/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/04-text-mutation/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/05-newline-lost/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/05-newline-lost/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/05-newline-lost/style.css
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-010/tasks/01/spec.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+# Implementation Spec
+
+- Request ID: REQ-010
+- Task ID: 01
+- Created: 2026-04-13
+- Status: pending
+- Assigned Agent: [config: codex-dev] → [도메인: backend/tools] → 최종: codex-dev
+- Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01
+- Complexity: Lite
+
+## §0 Context Manifest
+
+- tools/figma-validate.py
+- .gran-maestro/requests/REQ-009/tasks/02/dryrun/e2e-dryrun-report.md (갭 #2 재현 기록)
+
+## 1. 요약 (Summary)
+
+`figma-validate.py`의 `compute_element_properties()` 가 CSS 상속을 계산하지 않아 `<li><span>text</span></li>` 처럼 텍스트를 자식 요소에 둔 구조에서 폰트 5필드 false-positive가 발생한다. CSS 상속 속성 6종을 ancestor walk로 반영해 false-positive를 제거한다.
+
+## 2. 범위 (Scope)
+codex
+구현 방식은 명확합니다. 수정 전 기준 동작을 고정하기 위해 base fixture와 기존 실패 시나리오 패턴을 읽고, 이후 `compute_element_properties()`에 상속 6종만 얹는 최소 변경으로 진행하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/section_spec.json" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+{
+  "text_nodes": [
+    {
+      "id": "1:10",
+      "name": "title",
+      "characters": "반갑습니다",
+      "fontFamily": "Noto Sans KR",
+      "fontSize": 32,
+      "fontWeight": 700,
+      "lineHeightPx": 48,
+      "lineHeightRatio": 1.5,
+      "letterSpacing": -0.8,
+      "color": "#090944",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "TOP"
+    },
+    {
+      "id": "1:11",
+      "name": "desc",
+      "characters": "첫째 줄\n둘째 줄",
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/style.css" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/index.html" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+.base_section { display: flex; flex-direction: column; padding: clamp(60px, 8vw, 120px) 40px; background: #f5f5f5; }
+.base_section .base_title { font-family: "Noto Sans KR", sans-serif; font-size: 32px; font-weight: 700; line-height: 1.5; color: #090944; letter-spacing: -0.025em; }
+.base_section .base_desc { font-family: "Noto Sans KR", sans-serif; font-size: 18px; font-weight: 400; line-height: 1.5; color: #333333; }
+.base_row { display: flex; flex-direction: row; padding: 20px; gap: 16px; background: #ffffff; align-items: center; }
+.base_row .base_link { font-family: "Noto Sans KR", sans-serif; font-size: 16px; font-weight: 500; line-height: 1.5; color: #090944; }
+.base_row .base_badge { font-family: "Noto Sans KR", sans-serif; font-size: 12px; font-weight: 700; line-height: 1.5; color: #ffffff; }
+ succeeded in 0ms:
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>base</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section class="base_section">
+<h2 class="base_title">반갑습니다</h2>
+<p class="base_desc">첫째 줄<br>둘째 줄</p>
+<div class="base_row">
+<a class="base_link" href="https://example.com" target="_blank">바로가기</a>
+<span class="base_badge">NEW</span>
+</div>
+</section>
+</body>
+</html>
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/01-font-family-missing/style.css" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+.base_section { display: flex; flex-direction: column; padding: clamp(60px, 8vw, 120px) 40px; background: #f5f5f5; }
+.base_section .base_title { font-size: 32px; font-weight: 700; line-height: 1.5; color: #090944; letter-spacing: -0.025em; }
+.base_section .base_desc { font-family: "Noto Sans KR", sans-serif; font-size: 18px; font-weight: 400; line-height: 1.5; color: #333333; }
+.base_row { display: flex; flex-direction: row; padding: 20px; gap: 16px; background: #ffffff; align-items: center; }
+.base_row .base_link { font-family: "Noto Sans KR", sans-serif; font-size: 16px; font-weight: 500; line-height: 1.5; color: #090944; }
+.base_row .base_badge { font-family: "Noto Sans KR", sans-serif; font-size: 12px; font-weight: 700; line-height: 1.5; color: #ffffff; }
+codex
+변경 대상이 worktree 밖 fixture 경로까지 걸쳐 있어서, 적용 범위 안의 추가 `AGENTS.md`가 있는지 먼저 확인하겠습니다. 그 뒤 바로 패치를 넣겠습니다.
+exec
+/bin/bash -lc 'find /mnt/d/dev-base/.gran-maestro -name AGENTS.md -print | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01exec
+/bin/bash -lc 'python3 /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py --spec /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/section_spec.json --html /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/index.html --css /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/style.css' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+카테고리 | 노드 | 기대값 | 실제값
+PASS | - | 위반 0건 | -
+
+누락된 spec 행
+없음
+ succeeded in 298ms:
+
+codex
+작업 계획은 세 단계입니다.
+
+1. `compute_element_properties()`에 상속 속성 6종만 ancestor 합성을 추가합니다.
+2. 신규 pass fixture `13-inherited-font-ok`를 base 패턴에서 파생해 추가합니다.
+3. `py_compile`, 신규 scenario 단독 실행, 전체 regression runner로 검증하고 결과를 정리합니다.
+Plan update
+Implement inherited CSS property resolution for text validation, add a passing regression fixture, then verify compile + regression behavior.
+  → Patch tools/figma-validate.py to inherit only the six allowed text properties during property computation
+  • Add regression fixture scenario 13 for inherited font properties through a parent li/span structure
+  • Run py_compile and regression validations, then summarize evidence
+codex
+이제 `figma-validate.py`를 패치합니다. 변경은 상속 속성 집합 상수 추가와 `compute_element_properties()` 내부 합성 로직 분리로 제한하겠습니다.
+file update
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py
+@@ -39,2 +39,3 @@
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+@@ -721,3 +722,3 @@
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+@@ -755,2 +756,15 @@
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+apply_patch(auto_approved=true) exited 0 in 151ms:
+Success. Updated the following files:
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+코드 패치는 들어갔습니다. 다음은 fixture 추가인데, 지정 경로가 현재 writable root 밖일 수 있어 먼저 접근 가능 여부를 확인하고 가능한 범위에서 바로 생성하겠습니다.
+exec
+/bin/bash -lc "pwd && ls -la && find . -maxdepth 3 -type d | sort | sed -n '1,220p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 6ms:
+.
+./.claude
+./.claude/hooks
+./.gran-maestro
+./.gran-maestro/agile
+./.gran-maestro/agile/AGI-001
+./.gran-maestro/discussion
+./.gran-maestro/discussion/DSC-001
+./.gran-maestro/ideation
+./.gran-maestro/ideation/IDN-001
+./.gran-maestro/intent
+./.gran-maestro/plans
+./.gran-maestro/plans/PLN-001
+./.gran-maestro/plans/PLN-002
+./.gran-maestro/requests
+./.gran-maestro/requests/REQ-001
+./.gran-maestro/requests/REQ-002
+./.gran-maestro/state
+./.gran-maestro/state/default
+./.omx
+exec
+/bin/bash -lc 'test -w /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios && echo writable || echo not-writable' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+not-writable
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+작업 트리 안에 동일한 `.gran-maestro/requests/...` 미러가 있습니다. 외부 원본은 쓰기 불가라서, 검증에 사용 가능한 worktree 내부 미러 fixture를 갱신하는 방향으로 진행합니다.
+exec
+/bin/bash -lc 'find .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures -maxdepth 3 -type f | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+find: ‘.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures’: No such file or directory
+exec
+/bin/bash -lc "sed -n '1,220p' .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 exited 2 in 0ms:
+sed: can't read .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh: No such file or directory
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+exec
+/bin/bash -lc "find .gran-maestro -maxdepth 4 -type d | sort | sed -n '1,260p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+.gran-maestro
+.gran-maestro/agile
+.gran-maestro/agile/AGI-001
+.gran-maestro/agile/AGI-001/index
+.gran-maestro/agile/AGI-001/objective
+.gran-maestro/agile/AGI-001/objective/details
+.gran-maestro/agile/AGI-001/sprints
+.gran-maestro/agile/AGI-001/sprints/S00
+.gran-maestro/agile/AGI-001/sprints/S01
+.gran-maestro/agile/AGI-001/sprints/S02
+.gran-maestro/agile/AGI-001/sprints/S03
+.gran-maestro/agile/AGI-001/sprints/S04
+.gran-maestro/discussion
+.gran-maestro/discussion/DSC-001
+.gran-maestro/discussion/DSC-001/rounds
+.gran-maestro/discussion/DSC-001/rounds/00
+.gran-maestro/ideation
+.gran-maestro/ideation/IDN-001
+.gran-maestro/ideation/IDN-001/prompts
+.gran-maestro/intent
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+exec
+/bin/bash -lc 'find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02 -maxdepth 2 -type d | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/prompts
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios
+exec
+/bin/bash -lc "find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02 -maxdepth 2 -type f | sort | sed -n '1,260p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/prompts/phase2-impl.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/regression-report.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/spec.md
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+exec
+/bin/bash -lc "find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks -maxdepth 2 \\( -type d -o -type l -o -type f \\) | sort | sed -n '1,260p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/01
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/01/prompts
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/01/running.log
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/01/spec.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/prompts
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/spec.md
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+회귀 러너 경로도 약간 이상해서 실제 해상 경로를 확인해보겠습니다. 실패하면 동일 입력으로 직접 반복 실행해 결과를 수집하겠습니다.
+exec
+/bin/bash -lc 'bash /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 162ms:
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 04-text-mutation ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 05-newline-lost ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 06-gap-wrong ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 07-frame-missing ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 08-padding-wrong ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 09-line-box-mismatch ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+외부 fixture 원본은 쓰기 불가라서, repo 내 worktree 경로에 동일한 상대 경로로 scenario 13을 추가합니다. 검증도 그 신규 scenario와 외부 기존 12개 fixture를 worktree의 `figma-validate.py`로 직접 실행하는 방식으로 대체하겠습니다.
+exec
+/bin/bash -lc 'mkdir -p .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+
+file update:
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+file update
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>13-inherited-font-ok</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section class="base_section">
+<ul class="base_list">
+<li class="x_list_item"><span>Hello</span></li>
+</ul>
+</section>
+</body>
+</html>
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+.base_section { padding: 40px; background: #f5f5f5; }
+.base_list { margin: 0; padding: 0; list-style: none; }
+.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+{
+  "text_nodes": [
+    {
+      "id": "13:1",
+      "name": "inherited-text",
+      "characters": "Hello",
+      "fontFamily": "Noto Sans KR",
+      "fontSize": 14,
+      "fontWeight": 400,
+      "lineHeightPx": 21,
+      "lineHeightRatio": 1.5,
+      "letterSpacing": 0,
+      "color": "#333333",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "TOP"
+    }
+  ],
+  "frame_nodes": [],
+  "interactions": []
+}
+apply_patch(auto_approved=true) exited 0 in 743ms:
+Success. Updated the following files:
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+Plan update
+  ✓ Patch tools/figma-validate.py to inherit only the six allowed text properties during property computation
+  ✓ Add regression fixture scenario 13 for inherited font properties through a parent li/span structure
+  → Run py_compile and regression validations, then summarize evidence
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+검증 단계로 들어갑니다. `py_compile`, 신규 scenario 13 단독 실행, 그리고 외부 12개 fixture를 worktree 도구에 직접 물리는 회귀 루프를 순서대로 돌리겠습니다.
+exec
+/bin/bash -lc 'python3 -m py_compile tools/figma-validate.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+
+exec
+/bin/bash -lc 'python3 tools/figma-validate.py --spec .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json --html .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html --css .gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 0ms:
+카테고리 | 노드 | 기대값 | 실제값
+PASS | - | 위반 0건 | -
+
+누락된 spec 행
+없음
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+
+root = Path('/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures')
+tool = Path('/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py')
+entries = [('base', root / 'base')]
+entries.extend((path.name, path) for path in sorted((root / 'scenarios').iterdir()) if path.is_dir())
+for name, path in entries:
+    proc = subprocess.run([
+        'python3', str(tool),
+        '--spec', str(path / 'section_spec.json'),
+        '--html', str(path / 'index.html'),
+        '--css', str(path / 'style.css'),
+    ], capture_output=True, text=True)
+    print(f'=== {name} ===')
+    print(f'exit={proc.returncode}')
+    lines = [line for line in proc.stdout.strip().splitlines() if line]
+    if lines:
+        for line in lines[:4]:
+            print(line)
+    if proc.stderr.strip():
+        print('stderr:', proc.stderr.strip())
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 1.13s:
+=== base ===
+exit=0
+카테고리 | 노드 | 기대값 | 실제값
+PASS | - | 위반 0건 | -
+누락된 spec 행
+없음
+=== 01-font-family-missing ===
+exit=1
+카테고리 | 노드 | 기대값 | 실제값
+폰트 5필드 완결성 | 1:10 (title) | font-family, font-size, font-weight, line-height, color | missing: font-family @ html > body > section.base_section > h2.base_title
+누락된 spec 행
+없음
+=== 02-line-height-missing ===
+exit=1
+카테고리 | 노드 | 기대값 | 실제값
+폰트 5필드 완결성 | 1:11 (desc) | font-family, font-size, font-weight, line-height, color | missing: line-height @ html > body > section.base_section > p.base_desc
+lineHeight 비율 일치 | 1:11 (desc) | 1.5 ±0.05 | - @ html > body > section.base_section > p.base_desc
+누락된 spec 행
+=== 03-color-wrong ===
+exit=1
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+기존 regression runner는 도구 경로를 잘못 가리켜 그대로는 `exit=2`가 납니다. 그래서 동일 fixture 세트를 worktree의 `tools/figma-validate.py`에 직접 연결해 base/12개 결과를 수집 중입니다.
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+Plan update
+  ✓ Patch tools/figma-validate.py to inherit only the six allowed text properties during property computation
+  ✓ Add regression fixture scenario 13 for inherited font properties through a parent li/span structure
+  ✓ Run py_compile and regression validations, then summarize evidence
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01 succeeded in 683ms:
+ M tools/figma-validate.py
+?? .gran-maestro/requests/REQ-008/
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+codex
+- [`compute_element_properties()`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py:734)은 직접 매칭 계산을 `compute_direct_element_properties()`로 분리한 뒤, 부모의 계산 결과에서 `font-family`, `font-size`, `font-weight`, `line-height`, `color`, `letter-spacing`만 상속해 `{**inherited, **direct}`로 합성하도록 바꿨습니다.
+- `DOMElement.parent`는 이미 [`SimpleHTMLDocumentParser._open()`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py:128)에서 자식 생성 시 설정되고 있어서 추가 파서 수정은 하지 않았습니다.
+- 신규 pass fixture는 worktree 내부 [`13-inherited-font-ok`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html:1)로 추가했습니다. 외부 `/mnt/d/dev-base/.gran-maestro/requests/...` 경로는 현재 세션에서 쓰기 불가였습니다.
+- scenario 13 단독 실행 결과는 `exit 0`, 보고서도 `PASS | - | 위반 0건 | -`로 확인됐습니다.
+- 기존 12개 회귀 fixture는 외부 `run_regression.sh`가 `../tools/figma-validate.py`를 잘못 가리켜 그대로는 전부 `exit=2`였고, 동일 fixture들을 worktree의 `tools/figma-validate.py`에 직접 연결해 재검증한 결과 `base=exit 0`, `01~12 전부 exit 1`로 무회귀였습니다.
+- `python3 -m py_compile tools/figma-validate.py`는 `exit 0`입니다.
+file update:
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+new file mode 100755
+index 0000000000000000000000000000000000000000..dc7dd5ebcd001a089368938e5bc5c66c1555a9e6
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html
+@@ -0,0 +1,15 @@
++<!doctype html>
++<html lang="ko">
++<head>
++<meta charset="utf-8">
++<title>13-inherited-font-ok</title>
++<link rel="stylesheet" href="style.css">
++</head>
++<body>
++<section class="base_section">
++<ul class="base_list">
++<li class="x_list_item"><span>Hello</span></li>
++</ul>
++</section>
++</body>
++</html>
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+new file mode 100755
+index 0000000000000000000000000000000000000000..34b7f3c3f90d7f829bed2aed48e39848a5123b51
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/section_spec.json
+@@ -0,0 +1,20 @@
++{
++  "text_nodes": [
++    {
++      "id": "13:1",
++      "name": "inherited-text",
++      "characters": "Hello",
++      "fontFamily": "Noto Sans KR",
++      "fontSize": 14,
++      "fontWeight": 400,
++      "lineHeightPx": 21,
++      "lineHeightRatio": 1.5,
++      "letterSpacing": 0,
++      "color": "#333333",
++      "textAlignHorizontal": "LEFT",
++      "textAlignVertical": "TOP"
++    }
++  ],
++  "frame_nodes": [],
++  "interactions": []
++}
+diff --git a/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+new file mode 100755
+index 0000000000000000000000000000000000000000..5dae8125c49e4a83e902db67b55f861a45970478
+--- /dev/null
++++ b/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/style.css
+@@ -0,0 +1,3 @@
++.base_section { padding: 40px; background: #f5f5f5; }
++.base_list { margin: 0; padding: 0; list-style: none; }
++.x_list_item { font-family: "Noto Sans KR", sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; color: #333333; letter-spacing: 0; }
+diff --git a/tools/figma-validate.py b/tools/figma-validate.py
+index d0ae6c32d6589097538d83e6611532555562316c..516d9913fe3a14558c28f65efc8c20e3112a8026
+--- a/tools/figma-validate.py
++++ b/tools/figma-validate.py
+@@ -37,6 +37,7 @@
+ 
+ BOX_SIDES = ("top", "right", "bottom", "left")
+ FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
++INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+ 
+ 
+ @dataclass
+@@ -719,7 +720,7 @@
+     return result
+ 
+ 
+-def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++def compute_direct_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
+     properties: dict[str, PropertyValue] = {}
+ 
+     for rule in rules:
+@@ -753,6 +754,19 @@
+     return properties
+ 
+ 
++def compute_element_properties(element: DOMElement, rules: list[CSSRule]) -> dict[str, PropertyValue]:
++    direct_properties = compute_direct_element_properties(element, rules)
++    if element.parent is None:
++        return direct_properties
++
++    inherited_properties = {
++        name: value
++        for name, value in compute_element_properties(element.parent, rules).items()
++        if name in INHERITED_PROPERTIES
++    }
++    return {**inherited_properties, **direct_properties}
++
++
+ def resolve_padding(properties: dict[str, PropertyValue]) -> dict[str, str]:
+     resolved: dict[str, str] = {}
+     shorthand = properties.get("padding")
+
+tokens used
+51,309
+- [`compute_element_properties()`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py:734)은 직접 매칭 계산을 `compute_direct_element_properties()`로 분리한 뒤, 부모의 계산 결과에서 `font-family`, `font-size`, `font-weight`, `line-height`, `color`, `letter-spacing`만 상속해 `{**inherited, **direct}`로 합성하도록 바꿨습니다.
+- `DOMElement.parent`는 이미 [`SimpleHTMLDocumentParser._open()`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/tools/figma-validate.py:128)에서 자식 생성 시 설정되고 있어서 추가 파서 수정은 하지 않았습니다.
+- 신규 pass fixture는 worktree 내부 [`13-inherited-font-ok`](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-010-01/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok/index.html:1)로 추가했습니다. 외부 `/mnt/d/dev-base/.gran-maestro/requests/...` 경로는 현재 세션에서 쓰기 불가였습니다.
+- scenario 13 단독 실행 결과는 `exit 0`, 보고서도 `PASS | - | 위반 0건 | -`로 확인됐습니다.
+- 기존 12개 회귀 fixture는 외부 `run_regression.sh`가 `../tools/figma-validate.py`를 잘못 가리켜 그대로는 전부 `exit=2`였고, 동일 fixture들을 worktree의 `tools/figma-validate.py`에 직접 연결해 재검증한 결과 `base=exit 0`, `01~12 전부 exit 1`로 무회귀였습니다.
+- `python3 -m py_compile tools/figma-validate.py`는 `exit 0`입니다.

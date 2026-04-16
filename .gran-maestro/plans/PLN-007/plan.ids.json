@@ -1,0 +1,13 @@
+[
+  { "id": "PAC-1", "text": "validate-semantic.py가 no_hex8_literal, line_height_tidy_ratio, font_family_redundant, empty_media_block, box_sizing_redundant, landing_unit_mixed_scale 6개 규칙을 검출하고 --profile landing|basic flag에 따라 분기 동작한다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "figma-section-spec.py가 main() payload 생성 직후 preprocess_payload(payload)를 호출하고, spec.json 각 text 노드에 lineHeightRatio(정돈) + lineHeightRatioRaw(원본)가 병기된다 (정돈 알고리즘: step 0.05, tolerance 0.03, 후보 목록 1.0/1.1/1.2/1.25/1.3/1.4/1.45/1.5/1.6/1.667/1.75/1.8/2.0)", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "spec.json fills[].color의 8자리 hex가 rgba(r,g,b,a.aaa) + original_value + normalization_reason 3필드로 정규화된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "post-impl-verify.py exit code가 재정의되어 retryable-MINOR(no_hex8_literal/line_height_tidy_ratio/empty_media_block/landing_unit_mixed_scale) 발견 시 exit 1 + 자동 재dispatch 1회, advisory-MINOR만 있으면 exit 2를 반환한다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "프로젝트 루트 .project-type 파일이 basic 또는 landing 값을 담고, 모든 도구가 이 파일을 읽어 profile 자동 결정(flag 미지정 시)한다", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-6", "text": "rules/templates/publishing/impl-request.md에 L1 short brief(≤800 토큰)가 금지 패턴 5개 + Figma→CSS 변환표 6행 + 검증 명령어 1줄 + '원본 픽셀 충실도보다 CSS 컨벤션 준수가 최우선' 선언을 포함한다", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-7", "text": "tools/init-project.py --type {basic|landing} 실행 시 .project-type 파일이 자동 생성된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-8", "text": "design_intent_override 세션당 3건 초과 시 post-impl-verify가 경고를 출력한다", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-9", "text": "두 기존 결과물(에이스디펜스/목포플레이파크)에 새 파이프라인을 dry-run으로 돌렸을 때 목포 hex8 1건·비정돈 line-height 4건·빈 미디어쿼리 3건·font-family 중복 ≥10건이 모두 MAJOR로 검출된다", "grade": "SHOULD", "tags": ["TIER-A"] },
+  { "id": "PAC-10", "text": "기존 figma-section-spec.py 호출 경로(PLN-005 REQ-012~015 산출물)가 여전히 정상 동작하고 spec.md 표 형식 호환성이 유지된다", "grade": "SHOULD", "tags": ["IMPACT", "TIER-A"] },
+  { "id": "PAC-11", "text": "기존 post-impl-verify.py exit code 0/1/2 사용처(CLAUDE.md §PM 검증 후처리)가 재정의 후에도 동일한 PM 액션 의미를 유지한다", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] }
+]

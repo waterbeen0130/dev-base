@@ -1,0 +1,39 @@
+{
+  "id": "REQ-025",
+  "title": "E: Spec-only 원칙 강제 (CLAUDE.md 충돌 제거 + MCP 직접 해석 경로 삭제)",
+  "original_request": "Figma→Code 파이프라인 개선 REQ 2/5 — H6 해소",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-15T23:22:26.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-008",
+  "linked_debug": "DBG-001",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "Spec-only 원칙 강제 — CLAUDE.md + impl-request.md 편집",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "DBG-001",
+      "PLN-008"
+    ],
+    "blocks": [
+      "REQ-026"
+    ]
+  },
+  "stitch_screens": [],
+  "updated_at": "2026-04-16T01:02:27.000Z"
+}

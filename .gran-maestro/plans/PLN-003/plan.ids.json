@@ -1,0 +1,8 @@
+[
+  { "id": "PAC-1", "text": "depth 5 제한을 유지하면서 텍스트 노드가 하나도 누락되지 않는다. 영월 output에서 공지사항 등 리스트 내부 텍스트가 모두 보존된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "Figma 고정 width px 값이 flex 비율(%, flex:1, flex:0 0 N%)로 자동 변환된다. common.css에 width 고정px(이미지/아이콘 제외)가 0건이다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "main_el_N, main_txt_N 같은 범용 클래스명이 부모 컨텍스트/역할 기반 의미 있는 이름으로 대체된다. validate-semantic.py의 범용클래스명 경고가 50% 이상 감소한다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-4", "text": "같은 이름 노드의 이미지 파일명이 부모 컨텍스트를 반영한 의미 있는 이름을 갖는다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-5", "text": "기존 validate-semantic.py 34개 규칙이 모두 PASS 유지된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "기존 반값여행_제천(a_main) output이 이번 변경으로 기능 퇴행하지 않는다.", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] }
+]

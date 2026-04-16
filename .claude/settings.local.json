@@ -1,4 +1,8 @@
 {
+  "env": {
+    "FIGMA_TOKEN": "figd_[REDACTED]",
+    "FIGMA_TOKEN_PERSONAL": "figd_[REDACTED]"
+  },
   "permissions": {
     "allow": [
       "Bash(git add:*)",

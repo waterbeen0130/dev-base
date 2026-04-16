@@ -1,0 +1,42 @@
+{
+  "id": "REQ-014",
+  "title": "외주 brief 표준 강화 — publishing 템플릿 5종 인라인 주입 (PLN-005 4/5)",
+  "original_request": "PLN-005 B-3 — rules/templates/publishing/impl-request.md에 (1) section padding 금지, (2) spec 파일 프로젝트 내부 경로, (3) 9개 figma-validate 카테고리, (4) characterStyleOverrides 처리, (5) cornerRadius 처리 5종을 인라인 주입.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-13T05:26:49.000Z",
+  "spec_ready_at": "2026-04-13T07:10:00.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-005",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "publishing/impl-request.md 5종 인라인 주입",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006"
+      ],
+      "blockedBy": [],
+      "blocks": [],
+      "commit": "83d872f"
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-013"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "accepted_at": "2026-04-13T07:30:00.000Z",
+  "squash_commit": "c8608b7"
+}

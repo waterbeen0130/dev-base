@@ -1,0 +1,220 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - heading "logo" [level=1] [ref=e4]:
+        - link "logo" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "logo" [ref=e6]
+      - navigation [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "영월반값여행" [ref=e10] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e11]:
+            - link "반값여행 신청" [ref=e12] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e13]:
+            - link "고객지원" [ref=e14] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e15]:
+            - link "영월사랑상품권" [ref=e16] [cursor=pointer]:
+              - /url: "#"
+      - generic:
+        - img "메뉴"
+  - generic [ref=e17]:
+    - img "mv el" [ref=e19]
+    - img "mv el" [ref=e21]
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e27]: 숙박부터 체험까지
+          - generic [ref=e28]: 영월 반값여행 에서지금 떠나는 특별한 할인 여행
+        - generic [ref=e30]: 자세히 보기
+      - generic [ref=e33]:
+        - generic [ref=e34]: "01"
+        - generic [ref=e35]: "04"
+  - generic [ref=e37]:
+    - img "bg_img" [ref=e39]
+    - generic [ref=e40]:
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e44]: 영월반값여행
+            - generic [ref=e46]: 추천코스
+          - generic [ref=e47]: 자연과 문화, 다채로움이 있는 여행
+        - list [ref=e49]:
+          - listitem [ref=e50]:
+            - generic [ref=e52]: "#핫플"
+          - listitem [ref=e53]:
+            - generic [ref=e55]: "#자연과 힐링"
+          - listitem [ref=e56]:
+            - generic [ref=e58]: "#문화와 역사"
+          - listitem [ref=e59]:
+            - generic [ref=e61]: "#액티비티"
+          - listitem [ref=e62]:
+            - generic [ref=e64]: "#반려견 동반여행"
+      - list [ref=e65]:
+        - listitem [ref=e66]:
+          - generic [ref=e67]:
+            - img "course bg" [ref=e69]
+            - generic [ref=e70]:
+              - generic [ref=e71]: 선암마을 한반도지형
+              - generic [ref=e72]: 하늘에서 보면 한반도 모양으로 생긴 강 지형
+        - listitem [ref=e73]:
+          - generic [ref=e74]:
+            - img "course bg" [ref=e76]
+            - generic [ref=e77]:
+              - generic [ref=e78]: 청령포
+              - generic [ref=e79]: 단종이 유배되었던 역사적인 장소
+        - listitem [ref=e80]:
+          - generic [ref=e81]:
+            - img "course bg" [ref=e83]
+            - generic [ref=e84]:
+              - generic [ref=e85]: 별마로 천문대
+              - generic [ref=e86]: 영월에서 가장 유명한 야경 관광지
+        - listitem [ref=e87]:
+          - generic [ref=e88]:
+            - img "course bg" [ref=e90]
+            - generic [ref=e91]:
+              - generic [ref=e92]: 고씨굴
+              - generic [ref=e93]: 천연기념물로 지정된 석회암 동굴
+        - listitem [ref=e94]:
+          - generic [ref=e95]:
+            - img "in_img" [ref=e97]
+            - generic [ref=e98]:
+              - generic [ref=e99]: 동강
+              - generic [ref=e100]: 영월군을 흐르는 대표적인 자연 관광지
+  - generic [ref=e101]:
+    - img "bg_img" [ref=e103]
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]: 영월반값여행
+          - generic [ref=e108]: 지원절차
+        - paragraph [ref=e109]: 영월에서 힐링하고 여행경비 돌려받으세요.
+      - generic [ref=e110]:
+        - list [ref=e111]:
+          - listitem [ref=e112]:
+            - generic [ref=e113]:
+              - img "img" [ref=e115]
+              - generic [ref=e116]:
+                - generic [ref=e118]: "01"
+                - paragraph [ref=e119]:
+                  - text: 사전신청
+                  - text: 여행계획 접수하기
+          - listitem [ref=e120]:
+            - generic [ref=e121]:
+              - img "img" [ref=e123]
+              - generic [ref=e124]:
+                - generic [ref=e126]: "02"
+                - paragraph [ref=e127]:
+                  - text: 지자체 승인
+                  - text: 문자발송 안내
+          - listitem [ref=e128]:
+            - generic [ref=e129]:
+              - img "img" [ref=e131]
+              - generic [ref=e132]:
+                - generic [ref=e134]: "03"
+                - paragraph [ref=e135]:
+                  - text: 영월 여행하며
+                  - text: 영수증과 이용사진 촬영
+          - listitem [ref=e136]:
+            - generic [ref=e137]:
+              - img "img" [ref=e139]
+              - generic [ref=e140]:
+                - generic [ref=e142]: "04"
+                - generic [ref=e143]: 여행경비 지원금 신청
+          - listitem [ref=e144]:
+            - generic [ref=e145]:
+              - img "img" [ref=e147]
+              - generic [ref=e148]:
+                - generic [ref=e150]: "05"
+                - generic [ref=e151]: 여행경비 지원금 수령
+        - generic [ref=e153]: 자세히 보기
+  - generic [ref=e154]:
+    - generic [ref=e155]:
+      - generic [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]: 영월반값여행
+            - generic [ref=e161]: 커뮤니티
+          - generic [ref=e162]:
+            - generic [ref=e164]: 공지사항
+            - generic [ref=e165]: 자주하는질문
+        - generic [ref=e166]: 영월반값여행의 새로운 소식을 만나보세요
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - generic [ref=e171]: 2024.08.26
+          - generic [ref=e174]: 2024.08.26
+        - generic [ref=e175]:
+          - generic [ref=e178]: 2024.08.26
+          - generic [ref=e181]: 2024.08.26
+    - generic [ref=e182]:
+      - generic [ref=e183]:
+        - generic [ref=e185]:
+          - generic [ref=e186]: 영월반값여행
+          - generic [ref=e187]: 여러분을 초대합니다
+        - generic [ref=e188]: 영월반값여행의 특별한 이야기가 시작됩니다
+      - generic [ref=e189]:
+        - generic [ref=e190]:
+          - img "apply img" [ref=e192]
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: 영월반값여행 사전신청
+              - paragraph [ref=e196]: 사전신청에 대하여 자세히 안내해 드립니다.많은 성원과 참여바랍니다.
+            - generic [ref=e198]: 신청하기
+        - generic [ref=e200]:
+          - generic [ref=e201]:
+            - generic [ref=e202]: 제로페이와 함께
+            - paragraph [ref=e203]:
+              - text: 제로페이 모바일하동사랑상품권,
+              - text: 사용방법에 대하여 자세히 안내해 드립니다.
+          - generic [ref=e205]: 바로보기
+  - contentinfo [ref=e206]:
+    - generic [ref=e207]:
+      - generic [ref=e208]:
+        - navigation [ref=e209]:
+          - list [ref=e210]:
+            - listitem [ref=e211]:
+              - link "반값여행소개" [ref=e212] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e213]:
+              - link "참여안내" [ref=e214] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e215]:
+              - link "참가신청" [ref=e216] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e217]:
+              - link "경비신청" [ref=e218] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e219]:
+              - link "고객지원" [ref=e220] [cursor=pointer]:
+                - /url: "#"
+        - text: Family Site
+      - generic [ref=e221]:
+        - text: "[26240] 강원특별자치도 영월군 영월읍 하송로 64 영월군청"
+        - text: "운영사 : 강원특별자치도 원주시 혁신로 50, 5층 / (주)트래블파트너스 대표 김영수"
+        - text: "영월반값여행 콜센터 : 033-370-2540~1 / 평일 09:00~17:00 운영"
+        - text: ※신청·승인·지급 등 모든 절차는 평일에만 운영되며, 주말 및 공휴일은 운영 및 처리 기간 산정에서 제외됩니다.
+      - generic [ref=e222]: COPYRIGHT ⓒ YEONGWOL-GUN. ALL RIGHTS RESERVED.
+  - list [ref=e223]:
+    - listitem [ref=e224]:
+      - link "영월쇼핑몰 영월쇼핑몰" [ref=e225] [cursor=pointer]:
+        - /url: "#"
+        - img "영월쇼핑몰" [ref=e227]
+        - generic [ref=e228]: 영월쇼핑몰
+    - listitem [ref=e229]:
+      - link "영월맛집 영월맛집" [ref=e230] [cursor=pointer]:
+        - /url: "#"
+        - img "영월맛집" [ref=e232]
+        - generic [ref=e233]: 영월맛집
+    - listitem [ref=e234]:
+      - link "문화관광 문화관광" [ref=e235] [cursor=pointer]:
+        - /url: "#"
+        - img "문화관광" [ref=e237]
+        - generic [ref=e238]: 문화관광
+    - listitem [ref=e239]:
+      - link "1:1 상담 1:1 상담" [ref=e240] [cursor=pointer]:
+        - /url: "#"
+        - img "1:1 상담" [ref=e242]
+        - generic [ref=e243]: 1:1 상담

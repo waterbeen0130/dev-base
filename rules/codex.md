@@ -148,6 +148,34 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - DOM 최대 깊이: **5단계**
 - 빈 div 금지, 익명 래퍼 금지
 
+### 섹션 폭 공식 (CRITICAL — 프로젝트 전체 불변, section_width_formula 룰로 강제)
+
+```css
+:root{
+  --width: <figma_content_width + 40>px;   /* 프로젝트별 계산 */
+  --padding: 20px;                          /* 불변 고정 */
+}
+
+.cont{width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}
+
+/* 배경이 있는 섹션은 full-bleed. max-width 직접 선언 금지. */
+.main_xxx{padding:<tb>px 0; background:#...;}
+.main_xxx .cont{/* 내부 레이아웃 */}
+```
+
+**계산 근거 (box-sizing:border-box 기준)**:
+- `.cont` 실제 content = `var(--width) - 2*var(--padding)` = Figma content width
+- 예: Figma content 1440 → `--width: 1480px`, `--padding: 20px`, content area = 1440 ✓
+- 예: Figma content 1200 → `--width: 1240px`, `--padding: 20px`, content area = 1200 ✓
+
+**Figma content width 추출 방법**: `extracted/{section}_spec.json` 의 최상위 `inner` 프레임에서 `bbox.w - paddingLeft - paddingRight`.
+
+**금지 사항**:
+- 섹션(`.main_*`, `.footer_top`, `.footer_bottom`)에 `max-width` 직접 선언 금지 (background 잘림)
+- 섹션에 Figma inner padding(240 등) 직접 이식 금지 (`.cont`의 padding 20으로 통일)
+- `--padding`을 20px 이외 값으로 바꾸기 금지
+- `--max-width` 별도 변수 생성 금지 (`--width` 하나로 통일)
+
 ---
 
 ## Figma 노드 보존 규칙
@@ -180,14 +208,121 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - **혼합 스타일을 하나의 스타일로 병합(flatten)하는 것을 금지**한다
 - 분할된 span에는 인라인 `style` 대신 class를 부여한다
 
-## Figma 레이아웃 매핑 규칙
-- `layoutMode: VERTICAL` → `flex-direction: column`
-- `layoutMode: HORIZONTAL` → `flex-direction: row`
-- `itemSpacing` → CSS `gap` 반영 필수
-- `padding*` → CSS `padding` 반영 필수
-- `counterAxisAlignItems` → `align-items`
-- `primaryAxisAlignItems` → `justify-content`
-- 레이아웃 정보 누락 금지
+## Figma → CSS 결정 트리 (CRITICAL — 매번 같은 입력에 같은 출력 보장)
+
+### 1. 정렬 축 매핑 (layoutMode에 따른 축 전환)
+
+```
+layoutMode == HORIZONTAL:
+  primaryAxis(수평)  → justify-content
+  counterAxis(수직)  → align-items
+
+layoutMode == VERTICAL:
+  primaryAxis(수직)  → justify-content  (flex-direction:column 전제)
+  counterAxis(수평)  → align-items
+
+layoutMode == NONE:
+  CSS 정렬 속성 미사용 (children absolute)
+```
+
+값 매핑 (양쪽 축 공통):
+| Figma | CSS |
+|---|---|
+| `MIN` | `flex-start` |
+| `CENTER` | `center` |
+| `MAX` | `flex-end` |
+| `SPACE_BETWEEN` | `space-between` (primary axis only) |
+| `textAlignHorizontal: LEFT/CENTER/RIGHT/JUSTIFIED` | `text-align: left/center/right/justify` |
+| `textAlignVertical` | 무시 (부모 `align-items` 로 대체) |
+
+### 2. gap vs margin 결정 (간격 균일성 수치 판정)
+
+**Step 1 — 간격 균일성 측정**:
+```
+adjacent_children 간 실측 간격 → max - min:
+  ≤ 1px  → "완전 균일"  (gap 사용)
+  ≤ 3px  → "거의 균일"  (gap 허용, pixel snap 오차)
+  > 3px  → "비균일"    (개별 margin 강제)
+```
+
+**Step 2 — layoutMode별 분기**:
+
+```
+HORIZONTAL:
+  균일      → display:flex; flex-direction:row; gap:{itemSpacing}px;
+  비균일    → display:flex; flex-direction:row;
+              + .parent > * + * {margin-left:{X}px;}  (자식별 다른 값이면 nth-child)
+
+VERTICAL:
+  균일 + 정렬필요(align-items)  → display:flex; flex-direction:column;
+                                  + .parent > * + * {margin-top:{itemSpacing}px;}
+                                  (common.md no_column_gap 룰: column에 gap 금지)
+  균일 + 정렬불필요              → display:block;
+                                  + .parent > * + * {margin-top:{itemSpacing}px;}
+  비균일                         → display:block;
+                                  + 자식별 margin-top 개별 지정
+```
+
+**Step 3 — 관용구 고정**:
+- 표준: `.parent > * + * {margin-top:Xpx;}` (첫 자식 제외)
+- 방향: 항상 `margin-top` (다음 자식 위쪽에 부착), `margin-bottom` 금지
+- 예외: 마지막 자식 특수 `margin-bottom` 필요 시만 허용
+
+**금지**:
+- `flex-direction:column` + `gap` 조합 (common.md `no_column_gap` 룰)
+- 100px 미만 값에 `clamp()` 사용 (common.md `no_clamp_under_100`)
+
+### 3. 아이템 개수 결정 (카드/리스트 카운트)
+
+**Step 1 — 리스트 컨테이너 식별**:
+```
+parent frame.layoutMode ∈ {HORIZONTAL, VERTICAL}
++ children 중 같은 componentId (또는 같은 size) 인스턴스 ≥ 2개
+→ "list container"
+```
+
+**Step 2 — 카드 후보 수집**:
+```
+list container의 direct children:
+- type == INSTANCE
+- width / height 동일 (±2px)
+- 또는 name 패턴 동일 (list_img, list_card, card 등)
+```
+
+**Step 3 — Variant dedup (CRITICAL)**:
+```
+같은 bbox.x (±3px) AND 같은 parent_id 접두사 → component variant overlap
+→ 첫 인스턴스만 카드로 카운트, 나머지 상태 variant는 skip
+
+Figma parent_id 규칙:
+  "I{instance_id};{variant_id};..." 형태에서 접두사가 같으면 같은 컴포넌트 set
+  예: I251:6821;251:6276;... 과 I251:6821;251:6277;... 은 다른 카드
+      I251:6821;251:6276;220:10976 과 I251:6821;251:6276;230:1244 는 같은 카드의 variant
+```
+
+**Step 4 — HTML 변환**:
+```
+카드 수 N → <ul class="XXX_list"><li>...</li> × N</ul>
+각 <li>는 visible default variant 하나만 렌더링
+```
+
+**Step 5 — 검증**:
+```
+validate-semantic.py의 figma_cardinality_match 룰이
+HTML <li> 수 == Step 3 결과 N 을 자동 대조 (불일치 시 CRITICAL)
+```
+
+### 4. padding 매핑 (section_width_formula 규칙 참조)
+
+```
+섹션 Frame.paddingLeft/Right (예: 240px)
+→ 섹션에 직접 적용 금지
+→ :root {--width: <content_w + 40>; --padding: 20px;}
+→ .cont {max-width: var(--width); padding: 0 var(--padding); margin: 0 auto; width: 100%;}
+
+섹션 Frame.paddingTop/Bottom
+→ 섹션에 직접 적용 OK (배경이 full-bleed이므로 수직은 섹션이 담당)
+```
 
 ### Figma MCP 데이터 사용 규칙 (CRITICAL)
 - Figma MCP 응답을 섹션별로 받아 직접 해석하여 CSS 값 결정

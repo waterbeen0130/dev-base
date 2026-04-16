@@ -1,0 +1,19 @@
+=== 검증 결과: 11건 위반 ===
+CRITICAL: 1 | MAJOR: 10 | MINOR: 0
+
+[MAJOR] page_prefix_required — body class missing for page prefix rule ()
+[CRITICAL] generic_class_name — forbidden pattern matched: (sec_\d+|section_\d+|box\d+)" (dryrun/index.html:9)
+[MAJOR] page_filename_class_prefix_match — class prefix mismatch: expected 'index_*', got 'section_03' (dryrun/index.html)
+[MAJOR] max_width_pattern — 좌우 padding 246px — max-width + margin:auto 사용 권장 (dryrun/style.css:1)
+[MAJOR] font_size_pc_rem — html,body에 font-size:clamp(14px, 1.2vw, 16px) 미적용 (dryrun/style.css)
+[MAJOR] word_break_korean — required substring missing: keep-all ()
+[MAJOR] font_size_base — required substring missing: font-size:clamp( ()
+[MAJOR] root_var_line_separated — :root에 --width 변수 미선언; :root에 --padding 변수 미선언 (dryrun/style.css)
+[MAJOR] root_vars_required — required substring missing: --padding, --header_h, --width, --point-color-1 ()
+[MAJOR] reset_css_separate — required substring missing: reset.css ()
+[MAJOR] gsap_animation_css_present — required substring missing: [data-delay] ()
+
+(skipped custom/enum checks: 16)
+
+❌ CRITICAL 위반이 있습니다. 반드시 수정하세요.
+EXIT=2

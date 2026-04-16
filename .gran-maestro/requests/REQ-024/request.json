@@ -1,0 +1,50 @@
+{
+  "id": "REQ-024",
+  "title": "A: 규칙 슬림 + 충돌 제거 (rules.yaml 97→60, validator 연결 보강)",
+  "original_request": "Figma→Code 파이프라인 개선 REQ 1/5 — 중복/충돌 룰 제거, validate-semantic.py 룰 엔진 연결 누락 보강",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-15T23:22:26.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-008",
+  "linked_debug": "DBG-001",
+  "dag_auto_chain": true,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "규칙 슬림 + 충돌 제거 + validator 연결 보강",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "commit_hash": "6ef604d",
+      "worktree": ".gran-maestro/worktrees/REQ-024-T01",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006"
+      ],
+      "self_check": {
+        "test": "PASS",
+        "tsc": "PASS",
+        "pytest": "32 passed, 33 skipped",
+        "ts_001_006": "PASS (parser fix 포함)",
+        "semantic_regression": "0 (C:4/M:15/MINOR:1 main과 동일)"
+      }
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "DBG-001",
+      "PLN-008"
+    ],
+    "blocks": [
+      "REQ-025"
+    ]
+  },
+  "stitch_screens": [],
+  "updated_at": "2026-04-16T00:46:19.000Z"
+}

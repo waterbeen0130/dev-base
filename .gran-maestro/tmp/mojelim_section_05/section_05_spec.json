@@ -1,0 +1,737 @@
+{
+  "schema_version": 1,
+  "section": {
+    "id": "842:206",
+    "name": "Section_05",
+    "bbox": {
+      "x": 0,
+      "y": 4189.5,
+      "w": 1920,
+      "h": 1185
+    }
+  },
+  "text_nodes": [
+    {
+      "id": "842:209",
+      "name": "오직 남성만을 위한",
+      "characters": "오직 남성만을 위한",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 45,
+      "fontWeight": 500,
+      "lineHeightPx": 65.25,
+      "lineHeightRatio": 1.45,
+      "letterSpacing": -0.9,
+      "color": "#312d2b",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:216",
+      "name": "DEEP 플랜",
+      "characters": "DEEP 플랜",
+      "fontFamily": "Pretendard",
+      "fontSize": 69,
+      "fontWeight": 800,
+      "lineHeightPx": 100.05,
+      "lineHeightRatio": 1.45,
+      "letterSpacing": -1.38,
+      "color": "#312d2b",
+      "textAlignHorizontal": "CENTER",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:218",
+      "name": "남성 모발이식은 비어 보이는 부분을 채우는 것만으로 완성되지 않습니다. 이마 비율, M자 라인의 각도, 관자놀이 연결, 측면 밸런스, 기존 모발의 흐름까지 함께 봐야 더 자연스럽고 더 풍성해 보일 수 있습니다. 모제림은 단순히 모수를 나누는 것이 아니라, 얼굴형과 인상까지 고려해 남성에게 어울리는 비절개 디자인을 설계합니다.",
+      "characters": "남성 모발이식은 비어 보이는 부분을 채우는 것만으로 완성되지 않습니다. 이마 비율, M자 라인의 각도, 관자놀이 연결, 측면 밸런스, 기존 모발의 흐름까지 함께 봐야 더 자연스럽고 더 풍성해 보일 수 있습니다. 모제림은 단순히 모수를 나누는 것이 아니라, 얼굴형과 인상까지 고려해 남성에게 어울리는 비절개 디자인을 설계합니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 18,
+      "fontWeight": 500,
+      "lineHeightPx": 29.88,
+      "lineHeightRatio": 1.66,
+      "letterSpacing": -0.36,
+      "color": "#787472",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:225",
+      "name": "1.",
+      "characters": "1.",
+      "fontFamily": "Carattere",
+      "fontSize": 63,
+      "fontWeight": 400,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 0.429,
+      "letterSpacing": 0.6,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:226",
+      "name": "이마 비율 고려",
+      "characters": "이마 비율 고려",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 27,
+      "fontWeight": 600,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 1.0,
+      "letterSpacing": -0.54,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:227",
+      "name": "황금 비율 기준으로 개인 이마 구조를 정밀 분석해 최적의 헤어라인 위치를 결정합니다.",
+      "characters": "황금 비율 기준으로 개인 이마 구조를 정밀 분석해\n최적의 헤어라인 위치를 결정합니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 17,
+      "fontWeight": 500,
+      "lineHeightPx": 25.9,
+      "lineHeightRatio": 1.524,
+      "letterSpacing": 0,
+      "color": "#787472",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:232",
+      "name": "2.",
+      "characters": "2.",
+      "fontFamily": "Carattere",
+      "fontSize": 63,
+      "fontWeight": 400,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 0.429,
+      "letterSpacing": 0.6,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:233",
+      "name": "M자 라인 설계",
+      "characters": "M자 라인 설계",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 27,
+      "fontWeight": 600,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 1.0,
+      "letterSpacing": -0.54,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:234",
+      "name": "각도와 깊이를 입체적으로 설계해 자연스러운 M자 라인을 완성합니다.",
+      "characters": "각도와 깊이를 입체적으로 설계해 자연스러운\nM자 라인을 완성합니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 17,
+      "fontWeight": 500,
+      "lineHeightPx": 25.9,
+      "lineHeightRatio": 1.524,
+      "letterSpacing": 0,
+      "color": "#787472",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:240",
+      "name": "3.",
+      "characters": "3.",
+      "fontFamily": "Carattere",
+      "fontSize": 63,
+      "fontWeight": 400,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 0.429,
+      "letterSpacing": 0.6,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:241",
+      "name": "관자놀이 · 측면 보정",
+      "characters": "관자놀이 · 측면 보정",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 27,
+      "fontWeight": 600,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 1.0,
+      "letterSpacing": -0.54,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:242",
+      "name": "측면 밸런스와 기존 모발의 흐름을 함께 계산해 어색함 없는 연결을 구현합니다.",
+      "characters": "측면 밸런스와 기존 모발의 흐름을 함께 계산해\n어색함 없는 연결을 구현합니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 17,
+      "fontWeight": 500,
+      "lineHeightPx": 25.9,
+      "lineHeightRatio": 1.524,
+      "letterSpacing": 0,
+      "color": "#787472",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:247",
+      "name": "4.",
+      "characters": "4.",
+      "fontFamily": "Carattere",
+      "fontSize": 63,
+      "fontWeight": 400,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 0.429,
+      "letterSpacing": 0.6,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:248",
+      "name": "얼굴형 맞춤 디자인",
+      "characters": "얼굴형 맞춤 디자인",
+      "fontFamily": "Noto Serif KR",
+      "fontSize": 27,
+      "fontWeight": 600,
+      "lineHeightPx": 27,
+      "lineHeightRatio": 1.0,
+      "letterSpacing": -0.54,
+      "color": "#916046",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:249",
+      "name": "얼굴형 · 인상 · 연령대까지 종합적으로 고려한 남성 전용 맞춤 비절개 디자인을 제공합니다.",
+      "characters": "얼굴형 · 인상 · 연령대까지 종합적으로 고려한\n남성 전용 맞춤 비절개 디자인을 제공합니다.",
+      "fontFamily": "Pretendard",
+      "fontSize": 17,
+      "fontWeight": 500,
+      "lineHeightPx": 25.9,
+      "lineHeightRatio": 1.524,
+      "letterSpacing": 0,
+      "color": "#787472",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "CENTER"
+    },
+    {
+      "id": "842:250",
+      "name": "FUE hair",
+      "characters": "FUE hair",
+      "fontFamily": "Pretendard",
+      "fontSize": 231.6,
+      "fontWeight": 800,
+      "lineHeightPx": 192.228,
+      "lineHeightRatio": 0.83,
+      "letterSpacing": 0,
+      "color": "#eae5de",
+      "textAlignHorizontal": "RIGHT",
+      "textAlignVertical": "CENTER"
+    }
+  ],
+  "frame_nodes": [
+    {
+      "id": "842:206",
+      "name": "Section_05",
+      "bbox": {
+        "x": 0,
+        "y": 4189.5,
+        "w": 1920,
+        "h": 1185
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 173,
+      "paddingRight": 246,
+      "paddingBottom": 183,
+      "paddingLeft": 246,
+      "itemSpacing": 68,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:207",
+      "name": "Frame 523",
+      "bbox": {
+        "x": 234,
+        "y": 4362.5,
+        "w": 1452,
+        "h": 325
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 57,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:208",
+      "name": "Frame 512",
+      "bbox": {
+        "x": 234,
+        "y": 4362.5,
+        "w": 448.639,
+        "h": 178
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 51,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:210",
+      "name": "Frame 521",
+      "bbox": {
+        "x": 234,
+        "y": 4478.5,
+        "w": 448.639,
+        "h": 62
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:211",
+      "name": "Frame 522",
+      "bbox": {
+        "x": 234,
+        "y": 4478.5,
+        "w": 126.639,
+        "h": 62
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 10,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:212",
+      "name": "Frame 544",
+      "bbox": {
+        "x": 234,
+        "y": 4445.5,
+        "w": 64.639,
+        "h": 95
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": -15,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:217",
+      "name": "Frame 513",
+      "bbox": {
+        "x": 234,
+        "y": 4597.5,
+        "w": 893,
+        "h": 90
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 31,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:219",
+      "name": "Frame 548",
+      "bbox": {
+        "x": 234,
+        "y": 4755.5,
+        "w": 1452,
+        "h": 436
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 18,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:220",
+      "name": "Frame 546",
+      "bbox": {
+        "x": 234,
+        "y": 4755.5,
+        "w": 1452,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 26,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:221",
+      "name": "Frame 545",
+      "bbox": {
+        "x": 234,
+        "y": 4755.5,
+        "w": 713,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": 29,
+      "itemSpacing": 33,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:222",
+      "name": "Section_05_1",
+      "bbox": {
+        "x": 263,
+        "y": 4779,
+        "w": 162,
+        "h": 162
+      },
+      "layoutMode": null,
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": "22f5b17d1a339edfc30be28eca6518ef4e5169ce"
+    },
+    {
+      "id": "842:223",
+      "name": "Frame 549",
+      "bbox": {
+        "x": 458,
+        "y": 4809,
+        "w": 323,
+        "h": 102
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 23,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:224",
+      "name": "Frame 550",
+      "bbox": {
+        "x": 458,
+        "y": 4809,
+        "w": 201,
+        "h": 27
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 7,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:228",
+      "name": "Frame 546",
+      "bbox": {
+        "x": 973,
+        "y": 4755.5,
+        "w": 713,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": 29,
+      "itemSpacing": 33,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:229",
+      "name": "Section_05_2",
+      "bbox": {
+        "x": 1002,
+        "y": 4779,
+        "w": 162,
+        "h": 162
+      },
+      "layoutMode": null,
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": "57fc4ec97cb18f6dac53f92798b3de28b1014933"
+    },
+    {
+      "id": "842:230",
+      "name": "Frame 549",
+      "bbox": {
+        "x": 1197,
+        "y": 4809,
+        "w": 296,
+        "h": 102
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 23,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:231",
+      "name": "Frame 550",
+      "bbox": {
+        "x": 1197,
+        "y": 4809,
+        "w": 212,
+        "h": 27
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 7,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:235",
+      "name": "Frame 548",
+      "bbox": {
+        "x": 234,
+        "y": 4982.5,
+        "w": 1452,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 26,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:236",
+      "name": "Frame 545",
+      "bbox": {
+        "x": 234,
+        "y": 4982.5,
+        "w": 713,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": 29,
+      "itemSpacing": 33,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:237",
+      "name": "Section_05_3",
+      "bbox": {
+        "x": 263,
+        "y": 5006,
+        "w": 162,
+        "h": 162
+      },
+      "layoutMode": null,
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": "68f4d68e578108bf8d5b11fdd009bcb7914bcac8"
+    },
+    {
+      "id": "842:238",
+      "name": "Frame 549",
+      "bbox": {
+        "x": 458,
+        "y": 5036,
+        "w": 305,
+        "h": 102
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 23,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:239",
+      "name": "Frame 550",
+      "bbox": {
+        "x": 458,
+        "y": 5036,
+        "w": 272,
+        "h": 27
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 7,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    },
+    {
+      "id": "842:243",
+      "name": "Frame 546",
+      "bbox": {
+        "x": 973,
+        "y": 4982.5,
+        "w": 713,
+        "h": 209
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": 29,
+      "itemSpacing": 33,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "CENTER",
+      "fills": null
+    },
+    {
+      "id": "842:244",
+      "name": "Section_05_4",
+      "bbox": {
+        "x": 1002,
+        "y": 5006,
+        "w": 162,
+        "h": 162
+      },
+      "layoutMode": null,
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": null,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": "5577e0b567c1539588c9abf6639dbd4f6607ce0f"
+    },
+    {
+      "id": "842:245",
+      "name": "Frame 549",
+      "bbox": {
+        "x": 1197,
+        "y": 5036,
+        "w": 299,
+        "h": 102
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 23,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": null,
+      "fills": null
+    },
+    {
+      "id": "842:246",
+      "name": "Frame 550",
+      "bbox": {
+        "x": 1197,
+        "y": 5036,
+        "w": 262,
+        "h": 27
+      },
+      "layoutMode": "HORIZONTAL",
+      "paddingTop": null,
+      "paddingRight": null,
+      "paddingBottom": null,
+      "paddingLeft": null,
+      "itemSpacing": 7,
+      "primaryAxisAlignItems": null,
+      "counterAxisAlignItems": "MAX",
+      "fills": null
+    }
+  ],
+  "interactions": [],
+  "images": {}
+}

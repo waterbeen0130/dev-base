@@ -1,0 +1,41 @@
+{
+  "id": "REQ-027",
+  "title": "D: Rule-ID 체크리스트 + 위반 JSON 브리프 방식 전환",
+  "original_request": "Figma→Code 파이프라인 개선 REQ 4/5 — H1/H5 해소",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-15T23:22:26.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-008",
+  "linked_debug": "DBG-001",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "Rule-ID + priority 체계 확정 + impl-request.md 인라인 규칙 제거",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "DBG-001",
+      "PLN-008",
+      "REQ-024",
+      "REQ-026"
+    ],
+    "blocks": [
+      "REQ-028"
+    ]
+  },
+  "stitch_screens": [],
+  "updated_at": "2026-04-16T01:38:10.000Z"
+}

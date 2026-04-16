@@ -1,0 +1,13 @@
+{
+  "id": "PLN-004",
+  "title": "Figma 추출 누락 방지 — 자동 정규화/검증 워크플로우 강화",
+  "status": "completed",
+  "created_at": "2026-04-12T08:40:42.000Z",
+  "completed_at": "2026-04-13T01:39:57.000Z",
+  "cynefin_domain": "complicated",
+  "linked_requests": [
+    "REQ-007",
+    "REQ-008",
+    "REQ-009"
+  ]
+}

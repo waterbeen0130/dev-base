@@ -1,0 +1,24 @@
+{
+  "id": "REQ-028",
+  "title": "C: figma-section-spec.py Deterministic Codegen + 디자인 토큰",
+  "original_request": "Figma→Code 파이프라인 개선 REQ 5/5 — IR 기반 기계 변환 + tokens.json",
+  "status": "phase1_analysis",
+  "current_phase": 0,
+  "created_at": "2026-04-15T23:22:26.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-008",
+  "linked_debug": "DBG-001",
+  "dag_auto_chain": true,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "DBG-001",
+      "PLN-008",
+      "DSC-002"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "updated_at": "2026-04-16T01:38:10.000Z"
+}

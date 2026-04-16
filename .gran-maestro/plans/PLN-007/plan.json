@@ -1,0 +1,19 @@
+{
+  "id": "PLN-007",
+  "title": "Figma→퍼블리싱 파이프라인 규칙 완벽 준수 체계 구축",
+  "status": "active",
+  "created_at": "2026-04-15T05:41:43.000Z",
+  "linked_requests": ["REQ-019","REQ-020","REQ-021","REQ-022","REQ-023"],
+  "status": "in_progress",
+  "cynefin_domain": "complicated",
+  "linked_discussions": ["DSC-002"],
+  "linked_intent": "INTENT-004",
+  "next_action": {
+    "expected_skill": "mst:request",
+    "source_skill": "mst:plan",
+    "source_id": "PLN-007",
+    "auto_mode": true,
+    "project_root": "/mnt/d/dev-base",
+    "created_at": "2026-04-15T05:41:43.000Z"
+  }
+}

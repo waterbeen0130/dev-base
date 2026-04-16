@@ -1,4 +1,9 @@
 node_modules/
-.omx/
-tools/__pycache__/
 __pycache__/
+tools/__pycache__/
+.omx/
+
+# secrets
+.env
+.env.local
+.env.*.local

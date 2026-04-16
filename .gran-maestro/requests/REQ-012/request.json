@@ -1,0 +1,26 @@
+{
+  "id": "REQ-012",
+  "title": "tools/figma-section-spec.py 보강 — characterStyleOverrides + cornerRadius + bbox/parent_id (PLN-005 2/5)",
+  "original_request": "PLN-005 B-1 — figma-section-spec.py가 spec.json에 character_segments[], cornerRadius/border_radius_hint, bbox/parent_id 출력하도록 필드 추가.",
+  "status": "done",
+  "current_phase": 5,
+  "accepted_at": "2026-04-13T05:35:00.000Z",
+  "squash_commit": "195e7b7",
+  "spec_ready_at": "2026-04-13T05:30:00.000Z",
+  "created_at": "2026-04-13T05:26:49.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-005",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "figma-section-spec.py에 character_segments + cornerRadius + bbox/parent_id 필드 추가",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005", "AC-006"]
+    }
+  ],
+  "dependencies": { "blockedBy": [], "relatedTo": [], "blocks": ["REQ-013"] },
+  "stitch_screens": []
+}

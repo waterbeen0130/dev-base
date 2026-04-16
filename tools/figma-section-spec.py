@@ -28,6 +28,7 @@ class ExtractionResult:
     section: dict
     text_nodes: list[dict]
     frame_nodes: list[dict]
+    vector_nodes: list[dict]
     interactions: list[dict]
     image_refs: set[str]
 
@@ -235,6 +236,32 @@ def extract_corner_radius(node: dict, bbox: dict) -> dict:
     }
 
 
+def extract_opacity(node: dict) -> float | None:
+    """Extract effective opacity from node-level + first visible fill alpha.
+    Returns combined opacity (node × fill) rounded to 3 decimals, or None when both are 1.0/missing."""
+    node_op = node.get("opacity")
+    node_op = float(node_op) if isinstance(node_op, (int, float)) else 1.0
+    fill_op = 1.0
+    fills = node.get("fills")
+    if isinstance(fills, list):
+        for fill in fills:
+            if not isinstance(fill, dict) or fill.get("visible") is False:
+                continue
+            f_op = fill.get("opacity")
+            if isinstance(f_op, (int, float)):
+                fill_op = float(f_op)
+            color = fill.get("color")
+            if isinstance(color, dict):
+                a = color.get("a")
+                if isinstance(a, (int, float)) and a < 1.0:
+                    fill_op *= float(a)
+            break
+    combined = node_op * fill_op
+    if combined >= 0.999:
+        return None
+    return round(combined, 3)
+
+
 def normalize_text_node(node: dict) -> dict:
     style = node.get("style") if isinstance(node.get("style"), dict) else {}
     font_size = style.get("fontSize")
@@ -251,6 +278,7 @@ def normalize_text_node(node: dict) -> dict:
         "lineHeightRatio": compute_line_height_ratio(line_height_px, font_size),
         "letterSpacing": safe_round_3(style.get("letterSpacing")),
         "color": extract_text_color(node.get("fills")),
+        "opacity": extract_opacity(node),
         "textAlignHorizontal": style.get("textAlignHorizontal"),
         "textAlignVertical": style.get("textAlignVertical"),
         "bbox": extract_bbox(node),
@@ -273,6 +301,7 @@ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
         "fills": extract_frame_fill(node.get("fills"), image_refs),
+        "opacity": extract_opacity(node),
         **extract_corner_radius(node, bbox),
     }
 
@@ -316,6 +345,29 @@ def extract_url_interactions(node: dict) -> list[dict]:
     return found
 
 
+VECTOR_NODE_TYPES = {
+    "VECTOR",
+    "BOOLEAN_OPERATION",
+    "STAR",
+    "LINE",
+    "ELLIPSE",
+    "REGULAR_POLYGON",
+}
+
+
+def normalize_vector_node(node: dict) -> dict:
+    """Capture vector-style graphic nodes so AI consumers don't silently miss
+    logo/decorative elements (e.g. '1%' rendered as paths instead of text)."""
+    return {
+        "id": node.get("id"),
+        "name": node.get("name"),
+        "type": node.get("type"),
+        "bbox": extract_bbox(node),
+        "fills_color": extract_text_color(node.get("fills")),
+        "opacity": extract_opacity(node),
+    }
+
+
 def walk_and_extract(root: dict) -> ExtractionResult:
     section = {
         "id": root.get("id"),
@@ -325,6 +377,7 @@ def walk_and_extract(root: dict) -> ExtractionResult:
 
     text_nodes: list[dict] = []
     frame_nodes: list[dict] = []
+    vector_nodes: list[dict] = []
     interactions: list[dict] = []
     image_refs: set[str] = set()
 
@@ -340,10 +393,14 @@ def walk_and_extract(root: dict) -> ExtractionResult:
             normalized = normalize_text_node(node)
             normalized["parent_id"] = parent_id
             text_nodes.append(normalized)
-        if node_type == "FRAME":
+        elif node_type == "FRAME":
             normalized = normalize_frame_node(node, image_refs)
             normalized["parent_id"] = parent_id
             frame_nodes.append(normalized)
+        elif node_type in VECTOR_NODE_TYPES:
+            normalized = normalize_vector_node(node)
+            normalized["parent_id"] = parent_id
+            vector_nodes.append(normalized)
 
         children = node.get("children")
         if isinstance(children, list):
@@ -356,6 +413,7 @@ def walk_and_extract(root: dict) -> ExtractionResult:
         section=section,
         text_nodes=text_nodes,
         frame_nodes=frame_nodes,
+        vector_nodes=vector_nodes,
         interactions=interactions,
         image_refs=image_refs,
     )
@@ -392,7 +450,13 @@ def fetch_images_map(file_key: str, token: str, image_refs: set[str]) -> dict[st
         return {}
 
     data = api_get_json(f"/v1/files/{parse.quote(file_key)}/images", token)
-    images = data.get("images")
+    # Figma API wraps the ref→url map under `meta.images`; fall back to `images`
+    # for forward compatibility in case the shape ever changes.
+    meta = data.get("meta")
+    if isinstance(meta, dict) and isinstance(meta.get("images"), dict):
+        images = meta["images"]
+    else:
+        images = data.get("images")
     if not isinstance(images, dict):
         return {}
 
@@ -473,6 +537,13 @@ def render_markdown(payload: dict, node_id: str) -> str:
     lines: list[str] = []
     lines.append(f"> AUTO-GENERATED FROM Figma node {node_id} — DO NOT EDIT MANUALLY")
     lines.append("> 이 spec의 모든 행을 빠짐없이 CSS로 표현하세요")
+    lines.append(">")
+    lines.append("> ⚠️ 텍스트 byte-exact 필수: text_nodes 표의 characters 열은 Figma 원본을 그대로 보존해야 합니다.")
+    lines.append("> - 줄바꿈 \\n/\\r/\\r\\n → <br/>로 변환 (공백 없이)")
+    lines.append("> - non-breaking space \\xa0 → &nbsp;")
+    lines.append("> - 반복 텍스트는 횟수·공백까지 그대로 유지 (AI 축약 금지)")
+    lines.append("> - 끝 공백·선행 개행도 보존")
+    lines.append("> - 표의 characters가 길어 markdown pipe(|) 렌더링 문제로 잘린 것처럼 보이면 반드시 _spec.json의 text_nodes[].characters를 직접 읽으세요")
     lines.append("")
 
     lines.append("## section")
@@ -498,6 +569,7 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "lineHeightRatio",
         "letterSpacing",
         "color",
+        "opacity",
         "textAlignHorizontal",
         "textAlignVertical",
         "bbox",
@@ -521,12 +593,20 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "primaryAxisAlignItems",
         "counterAxisAlignItems",
         "fills",
+        "opacity",
         "cornerRadius",
         "rectangleCornerRadii",
         "border_radius_hint",
         "parent_id",
     ]
     lines.append(render_table(frame_columns, frame_nodes))
+    lines.append("")
+
+    vector_nodes = payload.get("vector_nodes", [])
+    lines.append(f"## vector_nodes ({len(vector_nodes)})")
+    lines.append("> ⚠️ Non-text graphic nodes (logos, icons, decorative shapes). MUST be exported as image and inserted as `<img>` — never reconstruct as text/HTML.")
+    vector_columns = ["id", "name", "type", "bbox", "fills_color", "opacity", "parent_id"]
+    lines.append(render_table(vector_columns, vector_nodes))
     lines.append("")
 
     lines.append(f"## interactions ({len(interactions)})")
@@ -559,6 +639,7 @@ def main() -> int:
         "section": extracted.section,
         "text_nodes": extracted.text_nodes,
         "frame_nodes": extracted.frame_nodes,
+        "vector_nodes": extracted.vector_nodes,
         "interactions": extracted.interactions,
         "images": {key: images[key] for key in sorted(images.keys())},
     }

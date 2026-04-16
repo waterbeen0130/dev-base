@@ -1,0 +1,14 @@
+[
+  {"id":"PAC-1","text":"(Part A) 모제림 Hero/Section_02/Section_04 figma-validate.py + validate-semantic.py(--profile landing) 핵심 위반 0건","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-2","text":"(Part A) 사용자 브라우저 시각 검수 통과","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-3","text":"(B-1) figma-section-spec.py가 character_segments[] 필드를 모든 TEXT 노드에 출력","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-4","text":"(B-1) 모든 FRAME 노드에 cornerRadius/rectangleCornerRadii + 50% 클램프 시 border_radius_hint","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-5","text":"(B-1) 모든 노드에 bbox + parent_id","grade":"SHOULD","tags":["TIER-B"]},
+  {"id":"PAC-6","text":"(B-2) figma-validate.py가 ::before/::after 색상을 본 요소와 분리 처리, li false-positive 0건","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-7","text":"(B-2) [IMPACT] REQ-008/02 회귀 12개 fixture 무회귀","grade":"MUST","tags":["TIER-A","IMPACT"]},
+  {"id":"PAC-8","text":"(B-2) frame 매칭 false-positive 50% 이상 감소","grade":"SHOULD","tags":["TIER-B"]},
+  {"id":"PAC-9","text":"(B-3) publishing impl-request.md 템플릿에 5종 (section padding 금지, spec 경로, 9개 카테고리, characterStyleOverrides, cornerRadius) 인라인 주입","grade":"MUST","tags":["TIER-A"]},
+  {"id":"PAC-10","text":"(B-3) [IMPACT] 기존 brief 사용 사례(REQ-008/009/010) 호환","grade":"MUST","tags":["TIER-A","IMPACT"]},
+  {"id":"PAC-11","text":"(B-4) PM 워크플로우 가이드 또는 post-impl-verify.py로 외주 완료 직후 자동 검증","grade":"SHOULD","tags":["TIER-B"]},
+  {"id":"PAC-12","text":"(B-4) 자동 재dispatch 1회 최소 + escalation 메시지","grade":"SHOULD","tags":["TIER-B"]}
+]

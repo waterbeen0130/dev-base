@@ -1,0 +1,59 @@
+{
+  "id": "REQ-004",
+  "title": "rules/ P1 즉시 수정 3건 (validate.js 참조 통일 / 모순 6개 결단 / 템플릿 재작성)",
+  "original_request": "EXP-001 탐색 결과 기반 P1 3건: (1) tools/validate.js 참조를 실구현 validate-semantic.py로 일괄 치환, (2) 직접 모순 6개 결단 후 일원화 (max(calc()) 권장, --color_primary 권장, 영문+body class+prefix 정책으로 통일), (3) templates/sub_list.html + sub_view.html 재작성 (ul>li, .cont, 부모+태그, 클래스 최소화)",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-12T05:05:56.000Z",
+  "auto_approve": false,
+  "source_plan": null,
+  "source_explore": "EXP-001",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "validate.js 참조 일괄 치환 → validate-semantic.py",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    },
+    {
+      "id": "02",
+      "title": "rules/ 모순 6개 결단 및 일원화",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ]
+    },
+    {
+      "id": "03",
+      "title": "templates/sub_list.html + sub_view.html 재작성 (규칙 준수)",
+      "status": "done",
+      "agent": "gemini-dev",
+      "spec": "tasks/03/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "accepted_at": "2026-04-12T05:30:00.000Z",
+  "squash_commit": "93b6d06"
+}

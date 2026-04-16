@@ -1,0 +1,54 @@
+{
+  "id": "REQ-003",
+  "title": "json-to-html.py 핵심 품질 문제 4건 해결",
+  "original_request": "json-to-html.py의 depth limiter 텍스트 무손실 + flex 비율 변환 + 클래스명 개선 + 이미지 중복 개선",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-05T04:10:54.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-003",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "json-to-html.py 핵심 품질 개선 4건",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006"
+      ],
+      "commit_hash": "e172145c3a42d7619a43838aa8e11a12ad4397ea"
+    },
+    {
+      "id": "T02",
+      "title": "통합 검증 + 회귀 테스트",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-INT-001",
+        "AC-INT-002",
+        "AC-INT-003",
+        "AC-INT-004",
+        "AC-INT-005",
+        "AC-INT-006"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-002"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "linked_objective": "AGI-001",
+  "updated_at": "2026-04-05T04:24:12.000Z"
+}

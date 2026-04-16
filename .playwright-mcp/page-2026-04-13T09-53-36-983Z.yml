@@ -1,0 +1,124 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]: 디테일을 살리는
+    - heading "모제림 비절개 MASTER" [level=1] [ref=e6]
+    - generic [ref=e7]: FUE hair transplantation
+    - link "대량이식 실제 결과 보기" [ref=e8] [cursor=pointer]:
+      - /url: "#"
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - text: 풍성한 볼륨을 가르는 건
+          - strong [ref=e13]:
+            - text: 단
+            - emphasis [ref=e14]: 1%
+            - text: 의 디테일
+        - paragraph [ref=e15]:
+          - text: 비절개는 많이 심는다고 무조건 더 풍성해지는 수술이 아닙니다.
+          - text: 채취 깊이, 모낭 손상, 방향, 각도, 밀도 배치처럼
+          - text: 보이지 않는 디테일이 결과를 가릅니다.
+        - generic [ref=e16]:
+          - button "1,000모" [ref=e17] [cursor=pointer]
+          - button "2,000모" [ref=e18] [cursor=pointer]
+          - button "3,000모" [ref=e19] [cursor=pointer]
+        - generic [ref=e20]:
+          - strong [ref=e21]: 1,000모 대 성공 케이스
+          - paragraph [ref=e22]:
+            - text: M자 초기 · 헤어라인 보정에 적합합니다.
+            - text: 최소 채취로 최대 자연스러움을 구현합니다.
+        - link "4,000+ 성공 케이스 확인하기 →" [ref=e23] [cursor=pointer]:
+          - /url: https://cafe.naver.com/mojelims
+          - text: 4,000+ 성공 케이스 확인하기
+          - generic [ref=e24]: →
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - img "비포 23-06-03"
+            - generic: 23-06-03
+          - generic [ref=e28]:
+            - img "애프터 24-06-01"
+            - generic:
+              - text: 24-06-01
+              - strong: after
+          - img [ref=e30]
+        - generic [ref=e32]:
+          - generic [ref=e33]: 30대
+          - generic [ref=e34]: 비절개 모발이식 600모낭 · 364일 경과
+    - paragraph [ref=e35]:
+      - text: ※ 본 게시물은 모제림성형외과의원에서 수술·시술 받은 환자의 동의하에 작성되었습니다.
+      - text: ※ 수술·시술 후에는 통증, 출혈, 모낭염, 색소침착 등 부작용이 생길 수 있고 멍, 붓기 등 개인에 따라 결과 및 효과의 차이가 있을 수 있습니다.
+      - text: ※ 수술 전후 비교사진은 실물과 다를 수 있습니다.
+  - generic [ref=e36]:
+    - generic [ref=e37]: VS
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - strong [ref=e40]:
+          - text: 채우기만 하는
+          - text: 공장형 이식
+        - list [ref=e41]:
+          - listitem [ref=e42]: ✕ 혹시 몰라 더 심는 것에 맞춘 초점
+          - listitem [ref=e43]: ✕ 불필요한 채취 가능성 증가
+          - listitem [ref=e44]: ✕ 고객에게 돌아가는 부담
+      - generic [ref=e45]: VS
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - img "1%" [ref=e48]
+          - text: 를 살리는
+        - strong [ref=e49]: MASTER 이식
+        - list [ref=e50]:
+          - listitem [ref=e51]: ✓ 필요한 모수를 철저히 계산하는 데이터 상담
+          - listitem [ref=e52]: ✓ 후두부 자원까지 고려한 채취
+          - listitem [ref=e53]: ✓ 1년 뒤의 생착을 고려한 이식 계획
+    - paragraph [ref=e54]:
+      - text: 누구나 모제림을 흉내 낼 순 있지만, 1997년부터 축적된 오리지널의 시스템은 따라할 수 없습니다.
+      - text: 모제림은 수술 경험 없는 신입 원장을 철저히 배제하고, 수술 시작부터 끝까지 마스터 집도의가 직접 책임집니다.
+  - generic [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]: 수술 당일이 아닌,
+      - strong [ref=e58]:
+        - emphasis [ref=e59]: "1"
+        - text: 년 뒤를 생각하기에
+    - generic [ref=e60]: a hair transplant plan
+    - paragraph [ref=e61]:
+      - text: 모발이식은 후두부 자원을 사용하는 수술인 만큼, 채취 단계부터 신중해야 합니다.
+      - text: 모제림은 괜히 더 많이 채취하는 방식보다, 모낭 손상을 줄이고 꼭 필요한 모수만 정교하게 계산하는 방식을 중요하게 생각합니다.
+      - text: 결국 결과를 남기는 건 수술 당일의 숫자가 아니라, 1년 뒤 건강하게 살아남은 모발이기 때문입니다.
+  - generic [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - text: 오직
+        - emphasis [ref=e65]: 남성
+        - text: 만을 위한
+      - strong [ref=e66]: DEEP 플랜
+      - paragraph [ref=e67]:
+        - text: 남성 모발이식은 비어 보이는 부분을 채우는 것만으로 완성되지 않습니다.
+        - text: 이마 비율, M자 라인의 각도, 관자놀이 연결, 측면 밸런스, 기존 모발의 흐름까지 함께 봐야 더 자연스럽고 더 풍성해 보일 수 있습니다.
+        - text: 모제림은 단순히 모수를 나누는 것이 아니라, 얼굴형과 인상까지 고려해 남성에게 어울리는 비절개 디자인을 설계합니다.
+      - generic [ref=e68]:
+        - generic [ref=e71]:
+          - emphasis [ref=e72]: "1."
+          - strong [ref=e73]: 이마 비율 고려
+          - paragraph [ref=e74]:
+            - text: 황금 비율 기준으로 개인 이마 구조를 정밀 분석해
+            - text: 최적의 헤어라인 위치를 결정합니다.
+        - generic [ref=e77]:
+          - emphasis [ref=e78]: "2."
+          - strong [ref=e79]: M자 라인 설계
+          - paragraph [ref=e80]:
+            - text: 각도와 깊이를 입체적으로 설계해 자연스러운
+            - text: M자 라인을 완성합니다.
+      - generic [ref=e81]:
+        - generic [ref=e84]:
+          - emphasis [ref=e85]: "3."
+          - strong [ref=e86]: 관자놀이 · 측면 보정
+          - paragraph [ref=e87]:
+            - text: 측면 밸런스와 기존 모발의 흐름을 함께 계산해
+            - text: 어색함 없는 연결을 구현합니다.
+        - generic [ref=e90]:
+          - emphasis [ref=e91]: "4."
+          - strong [ref=e92]: 얼굴형 맞춤 디자인
+          - paragraph [ref=e93]:
+            - text: 얼굴형 · 인상 · 연령대까지 종합적으로 고려한
+            - text: 남성 전용 맞춤 비절개 디자인을 제공합니다.
+    - generic: FUE hair

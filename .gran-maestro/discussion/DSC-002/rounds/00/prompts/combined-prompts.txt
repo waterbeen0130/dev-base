@@ -1,0 +1,115 @@
+===SPLIT: architect(codex)-prompt.md===
+# Architect(validator/tooling) 관점 의견 요청 — DSC-002 Round 0
+
+## 공유 컨텍스트
+/mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/shared-context.md 파일을 Read하세요.
+
+## 추가 참조 파일 (반드시 Read)
+- /mnt/d/dev-base/tools/validate-semantic.py — 현재 규칙 검증기
+- /mnt/d/dev-base/tools/figma-section-spec.py — Figma 정규화 스펙 생성기
+- /mnt/d/dev-base/tools/post-impl-verify.py — 후처리 검증/분류
+- /mnt/d/dev-base/tools/figma-validate.py — Figma 충실도 검증
+- /mnt/d/dev-base/rules/common.md — 공통 CSS/HTML 규칙
+- /mnt/d/dev-base/rules/basic.md
+- /mnt/d/dev-base/rules/landing.md
+- /mnt/d/위링/2026-04-15 에이스디펜스/html/css/common.css 와 page/index.html
+- /mnt/d/위링/2026-04-15 목포플레이파크/html/css/common.css 와 page/index.html
+
+## 당신의 역할
+validator/tooling architect 관점에서 분석합니다. 실제 스크립트 코드와 위반 결과물을 모두 읽고 구체적 구현 제안을 내십시오.
+
+## 질문
+1. `validate-semantic.py`에 어떤 검사 규칙을 추가해야 공유 컨텍스트에 나열된 6가지 위반을 모두 catch하는가? 각 규칙에 대해: 이름, 구현 방법(정규식/AST/단순 치환), 심각도(CRITICAL/MAJOR/MINOR), false-positive 억제 전략.
+2. `figma-section-spec.py`의 어느 지점에 전처리 단계를 넣으면 lineHeightPx→정돈 비율, hex8→rgba, box-sizing 중복 제거 힌트가 spec.json에 자동 반영되는가? 정돈 비율 알고리즘 구체안 (반올림 단위, 허용 임계치).
+3. `post-impl-verify.py`의 분류를 어떻게 재정의해야 MINOR 위반도 적절히 재dispatch 되는가? 재시도 루프 비용과 품질의 균형을 맞추는 구체적 기준(exit code / iteration cap)은?
+4. 세 스크립트 변경의 의존성/구현 우선순위는? 한 가지만 먼저 배포한다면 어느 것이 가장 효과가 큰가?
+
+## 출력 요구사항
+- /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/architect(codex).md 에 저장
+- 2000자 이내
+- 구체적 코드 스니펫 또는 diff-level 변경 제안 포함
+
+===SPLIT: frontend(gemini)-prompt.md===
+# Frontend-rules 관점 의견 요청 — DSC-002 Round 0
+
+## 공유 컨텍스트
+/mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/shared-context.md 파일을 Read하세요.
+
+## 추가 참조 파일 (반드시 Read)
+- /mnt/d/dev-base/rules/common.md
+- /mnt/d/dev-base/rules/basic.md
+- /mnt/d/dev-base/rules/landing.md
+- /mnt/d/dev-base/rules/gemini.md
+- /mnt/d/dev-base/rules/templates/publishing/impl-request.md (존재 시)
+- /mnt/d/위링/2026-04-15 에이스디펜스/html/css/common.css
+- /mnt/d/위링/2026-04-15 목포플레이파크/html/css/common.css
+
+## 당신의 역할
+CSS 규칙 전문가 겸 외주 브리프 설계자 관점. 실제 위반 결과물이 나온 이유를 에이전트 행동 관점에서 진단하고, 브리프를 어떻게 재작성하면 다시는 같은 위반이 나지 않을지 구체 제안하십시오.
+
+## 질문
+1. 두 결과물의 6가지 위반이 발생한 에이전트 측 인지 실패 원인은 무엇인가? (규칙 인식 실패 / Figma 충실도 우선 / 단위체계 혼동 등 각각 어떤 위반에 해당하는지 매핑)
+2. `rules/templates/publishing/impl-request.md`를 어떻게 재작성해야 브리프 비대화 없이 위반을 원천 차단할 수 있는가? 구체적 섹션 구조, 금지 패턴 인라인 예시 개수, Figma 속성→CSS 변환표 포함 여부와 형식.
+3. Figma 원본 충실도와 규칙 준수가 충돌할 때 우선순위 규칙을 어떻게 브리프에 명시해야 에이전트가 망설임 없이 결정하는가? (예: "lineHeightPx 52/fontSize 40=1.3은 1.3으로 기입, 47/fontSize 40=1.175는 가장 가까운 정돈 비율인 1.2로 반올림")
+4. landing/basic 프로젝트 타입 자동 판정 힌트를 어디에 심어야 에이전트가 올바른 단위체계를 선택하는가? (파일명? HTML 첫 줄 주석? spec.md 헤더?)
+
+## 출력 요구사항
+- /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/frontend(gemini).md 에 저장
+- 2000자 이내
+- 브리프 재작성안은 실제 마크다운 샘플 포함
+
+===SPLIT: risk(claude)-prompt.md===
+# Risk 관점 의견 요청 — DSC-002 Round 0
+
+## 공유 컨텍스트
+/mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/shared-context.md 파일을 Read하세요.
+
+## 추가 참조 파일 (반드시 Read)
+- /mnt/d/dev-base/rules/common.md
+- /mnt/d/dev-base/tools/validate-semantic.py
+- /mnt/d/dev-base/tools/figma-section-spec.py
+- /mnt/d/dev-base/tools/post-impl-verify.py
+- /mnt/d/위링/2026-04-15 목포플레이파크/html/css/common.css
+- /mnt/d/위링/2026-04-15 에이스디펜스/html/css/common.css
+
+## 당신의 역할
+리스크/트레이드오프 분석가 관점. 세 레이어 병행 강화안이 만들 수 있는 부작용과 숨은 비용을 냉정하게 평가하고, 엣지 케이스에서 파이프라인이 무너질 지점을 찾으십시오.
+
+## 질문
+1. 다음 4개 트레이드오프 각각에서 **수용 가능한 한계선**을 제안하십시오. 한계를 넘으면 어떤 증상이 나타나는가? (a) 검증기 강화→false-positive, (b) 규칙 주입 강화→브리프 비대화, (c) 전처리기 강화→Figma 원본 충실도 훼손, (d) 재dispatch 강화→비용.
+2. "lineHeightPx→정돈 비율 자동 반올림"이 잘못 작동할 수 있는 실제 엣지 케이스 3개를 들고, 각각에 대한 가드레일 제안.
+3. 브리프 비대화 리스크를 회피하면서 규칙을 완벽히 전달하는 **계층화된 주입 전략**(short brief + external rules reference + runtime check 세 단계) 설계안.
+4. 세 레이어 병행 추진 시 발생할 **상호 충돌**(예: 전처리기가 정돈한 값을 검증기가 여전히 거부) 시나리오와 방지책.
+
+## 출력 요구사항
+- /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/risk(claude).md 에 저장
+- 2000자 이내
+- 각 리스크에 대해 증상/징후/가드레일 3줄 세트 권장
+
+===SPLIT: critique-claude-prompt.md===
+# Critic 평가 요청 — DSC-002 Round 0
+
+## 대기 지시
+다음 명령을 실행하고 결과를 기다리세요:
+python3 /home/waterbeen/.claude/plugins/cache/gran-maestro/mst/0.56.1/scripts/mst.py wait-files /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/architect\(codex\).md /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/frontend\(gemini\).md /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/risk\(claude\).md
+
+마지막 줄이 ALL_READY면 다음 단계를 수행합니다.
+TIMEOUT이면 완료된 파일들만으로 진행합니다.
+
+## 공유 컨텍스트
+/mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/shared-context.md 를 Read하세요.
+
+## 역할
+세 참여자의 의견을 모두 Read한 뒤, 비판적 시각에서 각 의견의 허점/엣지 케이스/반론/누락을 식별합니다. 단순 요약 금지 — 반드시 약점을 지목하십시오.
+
+## 체크 포인트
+1. 세 의견이 실제 증거(두 프로젝트 CSS 라인 번호)와 일관되는가? 증거 없이 일반론으로 흐른 부분은?
+2. 세 레이어 간 책임 경계가 모호하거나 중복되는 지점은?
+3. "완벽 준수"를 주장하면서도 catch하지 못하는 위반 유형이 있는가?
+4. 제안된 우선순위에 반대 근거가 있는가?
+5. 각 의견이 다른 의견과 충돌하는 지점과, 어느 쪽이 설득력 있는지.
+
+## 출력 요구사항
+- /mnt/d/dev-base/.gran-maestro/discussion/DSC-002/rounds/00/critique-claude.md 에 저장
+- 2000자 이내
+- 각 참여자별 섹션 + 종합 발산점 목록

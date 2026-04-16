@@ -1,0 +1,20 @@
+{
+  "text_nodes": [
+    {
+      "id": "14:1",
+      "name": "bullet-copy",
+      "characters": "샘플 텍스트",
+      "fontFamily": "Noto Sans KR",
+      "fontSize": 16,
+      "fontWeight": 400,
+      "lineHeightPx": 24,
+      "lineHeightRatio": 1.5,
+      "letterSpacing": 0,
+      "color": "#312d2b",
+      "textAlignHorizontal": "LEFT",
+      "textAlignVertical": "TOP"
+    }
+  ],
+  "frame_nodes": [],
+  "interactions": []
+}

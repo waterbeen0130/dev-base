@@ -1,0 +1,40 @@
+카테고리 | 노드 | 기대값 | 실제값
+clamp 적용 | 842:84 (Section_03) | padding-top=220 requires clamp() | 220px @ .section_03
+clamp 적용 | 842:84 (Section_03) | padding-right=246 requires clamp() | 246px @ .section_03
+clamp 적용 | 842:84 (Section_03) | padding-left=246 requires clamp() | 246px @ .section_03
+frame padding/gap 반영 | 842:87 (Frame 506) | gap=64 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:89 (Frame 529) | gap=-17 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:90 (Frame 532) | gap=24 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:91 (div.compare-col) | gap=24 | .section_03_col (padding-top, padding-right, padding-bottom, padding-left)
+frame padding/gap 반영 | 842:93 (Frame 542) | gap=24 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:94 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:95 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:97 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:99 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:100 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:102 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:104 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:105 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:107 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:109 (Frame 533) | gap=10 | 미매칭 (signature 없음)
+fills color hex 일치 | 842:112 (Section_03) | #463c37 | background 미발견 @ .section_03_inner
+frame padding/gap 반영 | 842:112 (Section_03) | padding-top=112, padding-right=69, padding-bottom=80, padding-left=62, gap=41 | .section_03_inner (signature 없음)
+clamp 적용 | 842:112 (Section_03) | padding-top=112 requires clamp() | - @ .section_03_inner
+frame padding/gap 반영 | 842:113 (Frame 528) | gap=19 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:114 (Frame 7) | gap=45 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:115 (Frame 527) | gap=5 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:116 (Frame 522) | gap=-11 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:121 (Frame 541) | gap=24 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:122 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:123 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:125 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:127 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:128 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:130 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:132 (div.compare-item) | padding-top=18, padding-bottom=18, gap=14 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:133 (div.cmp-icon:margin) | padding-top=3 | .section_03_inner (signature 없음)
+frame padding/gap 반영 | 842:135 (div.cmp-text) | gap=2.375 | .section_03_inner (signature 없음)
+
+누락된 spec 행
+없음
+EXIT=1

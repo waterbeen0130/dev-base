@@ -1,0 +1,10 @@
+[
+  { "id": "PAC-1", "text": "신규 섹션 퍼블리싱 작업 1회 수행 시 post-impl-verify exit 0 도달까지 수동 수정 횟수가 1~2회로 측정된다 (기존 5~6회 대비).", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-2", "text": "rules.yaml에 남은 규칙 수가 60개 이하이고 중복·충돌 규칙이 제거되었음이 grep으로 확인된다.", "grade": "MUST", "tags": ["TIER-B"] },
+  { "id": "PAC-3", "text": "CLAUDE.md에서 'MCP 직접 해석' 경로가 삭제되고 'spec만 참조' 원칙이 단일 경로로 남아있음이 확인된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "tools/repair-from-violations.py가 존재하며 post-impl-verify.py에서 1회 자동 repair-loop이 실행된 후 재검증되는 동작이 로그로 확인된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "rules/templates/publishing/impl-request.md에 인라인 장문 규칙 섹션이 제거되고 rule_ids: 참조 방식으로 대체되었음이 확인된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "figma-section-spec.py 실행 결과에 extracted/{section}_base.html, extracted/{section}_base.css, extracted/tokens.json이 생성된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-7", "text": "기존 퍼블리싱 결과물이 post-impl-verify 체인에서 여전히 exit 0을 유지하는 회귀가 없음이 확인된다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-8", "text": "기존 외주 브리프로 진행된 최근 REQ 결과물이 새 파이프라인에서 경고·차단 없이 재검증 통과한다.", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] }
+]

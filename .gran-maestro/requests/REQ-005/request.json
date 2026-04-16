@@ -1,0 +1,63 @@
+{
+  "id": "REQ-005",
+  "title": "rules.yaml SSOT 도입 + build-rules.py 자동 생성기 (P2)",
+  "original_request": "rules.yaml SSOT 도입 (REQ-005) — 자연어 .md / JSON 스키마 / Python validator / build-prompts.py 4곳에 분산된 규칙을 단일 YAML로 통합하고, 그로부터 .md / validation_schema.json / PROFILE_RULES를 자동 생성하는 build-rules.py 작성",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-12T05:37:05.000Z",
+  "auto_approve": false,
+  "source_plan": null,
+  "source_explore": "EXP-001",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "rules.yaml 스키마 설계 + 기존 규칙 전수 마이그레이션",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ]
+    },
+    {
+      "id": "02",
+      "title": "build-rules.py 자동 생성기 작성 (yaml → .md / .json / build-prompts.py PROFILE_RULES)",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005"
+      ]
+    },
+    {
+      "id": "03",
+      "title": "왕복 검증 — yaml → 생성물 ↔ 기존 산출물 diff 회귀 테스트",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/03/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-004"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "accepted_at": "2026-04-12T05:55:00.000Z",
+  "squash_commit": "46c5c5d"
+}

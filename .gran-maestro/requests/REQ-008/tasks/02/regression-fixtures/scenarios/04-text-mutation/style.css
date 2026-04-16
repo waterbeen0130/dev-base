@@ -1,0 +1,6 @@
+.base_section { display: flex; flex-direction: column; padding: clamp(60px, 8vw, 120px) 40px; background: #f5f5f5; }
+.base_section .base_title { font-family: "Noto Sans KR", sans-serif; font-size: 32px; font-weight: 700; line-height: 1.5; color: #090944; letter-spacing: -0.025em; }
+.base_section .base_desc { font-family: "Noto Sans KR", sans-serif; font-size: 18px; font-weight: 400; line-height: 1.5; color: #333333; }
+.base_row { display: flex; flex-direction: row; padding: 20px; gap: 16px; background: #ffffff; align-items: center; }
+.base_row .base_link { font-family: "Noto Sans KR", sans-serif; font-size: 16px; font-weight: 500; line-height: 1.5; color: #090944; }
+.base_row .base_badge { font-family: "Noto Sans KR", sans-serif; font-size: 12px; font-weight: 700; line-height: 1.5; color: #ffffff; }

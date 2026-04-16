@@ -1,0 +1,27 @@
+{
+  "id": "REQ-017",
+  "title": "목포플레이파크 메인 페이지 섹션별 재추출 + 5단계 검증 루프 완주",
+  "original_request": "PLN-006 2단계: REQ-016 완료 후 목포플레이파크 프로젝트에 .gran-maestro를 설치하고, Figma MCP 섹션별 호출 → spec → HTML/CSS → figma-validate → validate-semantic → post-impl-verify 를 모두 exit 0 으로 통과시키는 것을 목표로 메인 페이지를 재작업한다.",
+  "status": "pending_dependency",
+  "current_phase": 0,
+  "created_at": "2026-04-15T01:37:21.334927+00:00",
+  "auto_approve": true,
+  "source_plan": "PLN-006",
+  "dag_auto_chain": true,
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "목포 섹션별 재추출 + 5단계 검증 루프",
+      "status": "pending",
+      "agent": "gemini-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005", "AC-006", "AC-007"]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": ["REQ-016"],
+    "relatedTo": [],
+    "blocks": ["REQ-018"]
+  },
+  "stitch_screens": []
+}

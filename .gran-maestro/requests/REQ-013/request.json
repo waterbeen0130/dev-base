@@ -1,0 +1,70 @@
+{
+  "id": "REQ-013",
+  "title": "tools/figma-validate.py 보강 — pseudo-element 분리 + frame 매칭 휴리스틱 (PLN-005 3/5)",
+  "original_request": "PLN-005 B-2 — figma-validate.py가 ::before/::after 색상을 본 요소와 분리 처리하고, frame 매칭 휴리스틱을 개선하여 false-positive 50% 이상 감소.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-13T05:26:49.000Z",
+  "spec_ready_at": "2026-04-13T06:10:00.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-005",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "figma-validate.py: pseudo-element 분리 + frame 매칭 휴리스틱 개선 + 신규 fixture 14/15",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ],
+      "blockedBy": [],
+      "blocks": [
+        "02"
+      ],
+      "commit": "36e1e19"
+    },
+    {
+      "id": "02",
+      "title": "통합 검증: 회귀 13 + 신규 2 + Section_05 false-positive 측정",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ],
+      "blockedBy": [
+        "01"
+      ],
+      "blocks": [],
+      "note": "PM-direct verification (no code change)"
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-012"
+    ],
+    "blocks": [
+      "REQ-014",
+      "REQ-015"
+    ]
+  },
+  "stitch_screens": [],
+  "background_task_ids": [
+    {
+      "task_id": "bkclepj3i",
+      "task_num": "01",
+      "agent": "codex-dev",
+      "status": "completed"
+    }
+  ],
+  "accepted_at": "2026-04-13T07:00:00.000Z",
+  "squash_commit": "6a71697"
+}

@@ -1,0 +1,61 @@
+{
+  "id": "REQ-006",
+  "title": "validate-semantic.py 범용 엔진 리팩터링 + 누락 룰 핸들러 구현 (P3)",
+  "original_request": "validate-semantic.py를 rules.yaml의 11 enum validation type을 동적으로 디스패치하는 범용 엔진으로 리팩터링하고, custom handler가 가리키는 미구현 함수들을 채워 검증 커버리지를 100%까지 끌어올린다.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-12T06:15:20.000Z",
+  "auto_approve": false,
+  "source_plan": null,
+  "source_explore": "EXP-001",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "validate-semantic.py 동적 디스패치 엔진 리팩터링 (11 enum validator 구현)",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004"
+      ]
+    },
+    {
+      "id": "02",
+      "title": "custom handler 채우기 (rules.yaml의 미구현 check_* 함수 구현)",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    },
+    {
+      "id": "03",
+      "title": "실제 output/* 산출물 회귀 검증 + 오탐/미탐 측정",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/03/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-005"
+    ],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "accepted_at": "2026-04-12T06:30:00.000Z",
+  "squash_commit": "5b3324e"
+}

@@ -1,0 +1,48 @@
+{
+  "id": "REQ-007",
+  "title": "tools/figma-section-spec.py 사전 정규화 도구 작성 (PLN-004 1/3)",
+  "original_request": "Figma node-id를 입력으로 받아 모든 TEXT/FRAME/interaction 데이터를 spec.md(사람용) + spec.json(도구용) 두 형식으로 정규화 출력하는 도구. AI는 raw API 직접 해석 금지, spec sheet만 보고 코드 작성.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-12T09:04:06.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-004",
+  "dag_auto_chain": true,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "figma-section-spec.py 핵심 로직 (TEXT/FRAME/interaction 추출 + spec.md/json 출력)",
+      "status": "done",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ]
+    },
+    {
+      "id": "02",
+      "title": "회귀 검증 — Section_02 reference case에 대해 12개 누락 항목이 spec sheet에 모두 등장하는지 확인",
+      "status": "done",
+      "agent": "claude-dev",
+      "spec": "tasks/02/spec.md",
+      "covers_ac": [
+        "AC-004"
+      ]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "REQ-008",
+      "REQ-009"
+    ],
+    "blocks": [
+      "REQ-008"
+    ]
+  },
+  "stitch_screens": [],
+  "accepted_at": "2026-04-12T18:20:00.000Z",
+  "squash_commit": "4720dca"
+}

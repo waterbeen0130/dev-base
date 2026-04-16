@@ -1,0 +1,14 @@
+{
+  "id": "REQ-021",
+  "title": "REQ-C: post-impl-verify.py exit code 재정의 + MINOR 분리 + 재dispatch 트리거 (Layer C)",
+  "original_request": "Figma→퍼블리싱 파이프라인 규칙 완벽 준수 — Layer C: post-impl-verify.py exit code 0/1/2 재정의. retryable-MINOR 분리(no_hex8_literal/line_height_tidy_ratio/empty_media_block/landing_unit_mixed_scale). iteration cap 2회. 재dispatch 브리프 포맷.",
+  "status": "pending_dependency",
+  "current_phase": 0,
+  "created_at": "2026-04-15T05:41:43.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-007",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": { "blockedBy": ["REQ-020"], "relatedTo": [], "blocks": [] },
+  "linked_discussions": ["DSC-002"]
+}

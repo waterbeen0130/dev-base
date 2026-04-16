@@ -1,0 +1,23 @@
+카테고리 | 노드 | 기대값 | 실제값
+frame padding/gap 반영 | 842:206 (Section_05) | gap=68 | .fue (padding-top, padding-right, padding-bottom, padding-left)
+frame padding/gap 반영 | 842:207 (Frame 523) | gap=57 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:208 (Frame 512) | gap=51 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:211 (Frame 522) | gap=10 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:212 (Frame 544) | gap=-15 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:217 (Frame 513) | gap=31 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:219 (Frame 548) | gap=18 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:221 (Frame 545) | gap=33 | .fue .fue_card (padding-left)
+frame padding/gap 반영 | 842:223 (Frame 549) | gap=23 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:224 (Frame 550) | gap=7 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:228 (Frame 546) | gap=33 | .fue .fue_card (padding-left)
+frame padding/gap 반영 | 842:230 (Frame 549) | gap=23 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:231 (Frame 550) | gap=7 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:236 (Frame 545) | gap=33 | .fue .fue_card (padding-left)
+frame padding/gap 반영 | 842:238 (Frame 549) | gap=23 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:239 (Frame 550) | gap=7 | 미매칭 (signature 없음)
+frame padding/gap 반영 | 842:243 (Frame 546) | gap=33 | .fue .fue_card (padding-left)
+frame padding/gap 반영 | 842:245 (Frame 549) | gap=23 | .hero .hero_content (signature 없음)
+frame padding/gap 반영 | 842:246 (Frame 550) | gap=7 | 미매칭 (signature 없음)
+
+누락된 spec 행
+없음

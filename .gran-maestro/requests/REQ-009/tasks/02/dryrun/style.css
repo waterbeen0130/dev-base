@@ -1,0 +1,17 @@
+.section_03 {padding: 220px 246px 67px; background: #fff;}
+.section_03_inner {display: flex; flex-direction: column; align-items: center;}
+.section_03_compare {display: flex; align-items: center; margin-bottom: 64px;}
+.section_03_col {display: flex; flex-direction: column; align-items: center; padding: 60px;}
+.section_03_col li {margin-bottom: 24px;}
+.section_03_vs {font-family: "Cormorant Garamond", serif; font-weight: 700; color: #c3b2a9; text-align: center;}
+.section_03_vs_sm {font-size: 81px; line-height: 1.26; letter-spacing: -0.03em;}
+.section_03_vs_lg {font-size: 135px; line-height: 1.26; letter-spacing: -0.03em;}
+.section_03_title {font-family: "Pretendard", sans-serif; text-align: center; white-space: pre-line;}
+.section_03_title_left {font-size: 47px; font-weight: 800; line-height: 1.22; letter-spacing: -0.02em; color: #312d2b;}
+.section_03_title_right {display: flex; flex-direction: column; align-items: center;}
+.section_03_title_sub {font-family: "Pretendard", sans-serif; font-size: 40px; font-weight: 400; line-height: 1.26; letter-spacing: -0.03em; color: #f8e8df;}
+.section_03_title_main {font-family: "Pretendard", sans-serif; font-size: 62px; font-weight: 200; line-height: 1.03; letter-spacing: -0.03em; color: #d9d9d9;}
+.section_03_list {display: flex; flex-direction: column;}
+.section_03_list li {font-family: "Noto Serif KR", serif; font-size: 22px; font-weight: 500; line-height: 1.034; letter-spacing: -0.02em; color: #454545;}
+.section_03_list_right li {color: #ebd6c7;}
+.section_03_note {font-family: "Pretendard", sans-serif; font-size: 19px; font-weight: 500; line-height: 1.56; letter-spacing: -0.02em; color: #787472; text-align: center; white-space: pre-line;}

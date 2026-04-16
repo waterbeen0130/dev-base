@@ -1,0 +1,24 @@
+{
+  "id": "DSC-002",
+  "topic": "Figma→퍼블리싱 파이프라인 규칙 완벽 준수 방법",
+  "source_ideation": null,
+  "focus": null,
+  "status": "converged",
+  "max_rounds": 3,
+  "current_round": 0,
+  "created_at": "2026-04-15T05:41:43.000Z",
+  "dispatch_started_at": "2026-04-15T05:42:00.000Z",
+  "participants": [
+    { "key": "architect(codex)", "role": "architect", "perspective": "validator/tooling 구현 관점", "type": "opinion", "status": "done", "provider": "codex", "started_at": null, "completed_at": null },
+    { "key": "frontend(gemini)", "role": "frontend-rules", "perspective": "CSS 규칙/브리프 주입 관점", "type": "opinion", "status": "done", "provider": "gemini", "started_at": null, "completed_at": null },
+    { "key": "risk(claude)", "role": "risk", "perspective": "트레이드오프/리스크 관점", "type": "opinion", "status": "done", "provider": "claude", "started_at": null, "completed_at": null }
+  ],
+  "critics": {
+    "claude": { "status": "done", "provider": "claude" }
+  },
+  "critic_count": 1,
+  "participant_config": { "codex": 1, "gemini": 1, "claude": 1 },
+  "rounds": [
+    { "round": 0, "status": "completed" }
+  ]
+}

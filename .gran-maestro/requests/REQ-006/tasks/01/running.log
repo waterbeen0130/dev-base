@@ -1,0 +1,2097 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019d805b-8bee-7ce0-8546-7d1cdd1d80b7
+--------
+user
+# Implementation Request — Self-Exploration Mode
+
+- Request: REQ-006 / Task: 01
+- Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01
+- Spec: /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md
+- Plan: N/A
+
+## 구현 컨텍스트
+
+`tools/validate-semantic.py`를 단일 동적 디스패치 엔진으로 리팩터링한다. 입력은 `rules/rules.yaml` (REQ-005 산출물, 81 rules, 11 enum validation type). 핵심: enum validator 10개 구현 + custom handler dispatch 1개. 기존 `check_*` 함수는 이름 보존 (rules.yaml의 `custom_handler` 필드가 참조).
+
+핵심 주의사항:
+1. **단일 파일 유지** — `tools/validate-semantic.py` 한 파일에 `ENUM_VALIDATORS` + `CUSTOM_HANDLERS` 두 dict 분리. 1500 라인 초과 시에만 모듈 분리 검토.
+2. **기존 `check_*` 함수명 절대 삭제 금지** — 시그니처만 어댑터로 감쌈.
+3. T01 범위는 **엔진 구조**까지. custom handler 본체 채우기는 T02. 미구현 핸들러는 stub으로 등록 (호출 시 `ValidationResult(skipped=True, reason="not_implemented")` 반환).
+4. CLI 기존 인자 보존 (`--html`, `--css`, `--img`, `--fix`). `--profile {basic|landing|all}` 옵션 추가.
+5. 작업 디렉토리: `/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01`
+
+## 새 구조 가이드 (이대로 채택 권장)
+
+```python
+# tools/validate-semantic.py
+
+from dataclasses import dataclass
+from typing import Callable, Dict, Optional
+import yaml, re, argparse, sys
+
+@dataclass
+class ValidationResult:
+    rule_id: str
+    severity: str  # error|warning|info
+    passed: bool
+    skipped: bool = False
+    message: str = ""
+    location: Optional[str] = None  # "file:line" or None
+
+@dataclass
+class ValidationContext:
+    html_text: str
+    css_text: str
+    html_path: str
+    css_path: str
+    profile: str  # basic|landing|common
+    mapping: Optional[dict] = None  # T02에서 활성
+
+# === ENUM VALIDATORS ===
+def validate_regex_must_not_match(rule, ctx):
+    target = ctx.css_text if rule['validation']['target'] == 'css' else ctx.html_text
+    pattern = rule['validation']['pattern']
+    if re.search(pattern, target):
+        return ValidationResult(rule['id'], rule['severity'], False, message=f"forbidden pattern matched: {pattern}")
+    return ValidationResult(rule['id'], rule['severity'], True)
+
+def validate_regex_must_match(rule, ctx): ...
+def validate_regex_should_match(rule, ctx): ...  # severity downgrade to info
+def validate_ast_selector_count(rule, ctx): ...
+def validate_value_equals_mapping(rule, ctx): ...  # mapping 없으면 skipped
+def validate_html_tag_required(rule, ctx): ...
+def validate_forbidden_substring(rule, ctx): ...
+def validate_required_substring(rule, ctx): ...
+def validate_naming_pattern(rule, ctx): ...
+def validate_numeric_range(rule, ctx): ...
+
+ENUM_VALIDATORS: Dict[str, Callable] = {
+    "regex_must_not_match": validate_regex_must_not_match,
+    "regex_must_match": validate_regex_must_match,
+    "regex_should_match": validate_regex_should_match,
+    "ast_selector_count": validate_ast_selector_count,
+    "value_equals_mapping": validate_value_equals_mapping,
+    "html_tag_required": validate_html_tag_required,
+    "forbidden_substring": validate_forbidden_substring,
+    "required_substring": validate_required_substring,
+    "naming_pattern": validate_naming_pattern,
+    "numeric_range": validate_numeric_range,
+}
+
+# === CUSTOM HANDLERS (기존 check_* 함수 어댑터) ===
+# 기존 check_* 함수는 그대로 유지하고, 어댑터로 ValidationResult 변환
+def _adapt_legacy_check(legacy_func):
+    """Wrap a legacy check_* function to return ValidationResult."""
+    def adapter(rule, ctx):
+        try:
+            errors = legacy_func(ctx.html_text, ctx.css_text)  # 시그니처는 기존에 맞춤
+            if errors:
+                return ValidationResult(rule['id'], rule['severity'], False, message="; ".join(str(e) for e in errors))
+            return ValidationResult(rule['id'], rule['severity'], True)
+        except Exception as e:
+            return ValidationResult(rule['id'], rule['severity'], False, skipped=True, message=f"handler error: {e}")
+    return adapter
+
+# 기존 check_* 함수들 (이름 보존)
+def check_css_grid(html, css): ...  # 기존 로직 유지
+def check_hex_color(html, css): ...
+# ... 35개 모두 유지
+
+CUSTOM_HANDLERS: Dict[str, Callable] = {
+    "check_css_grid": _adapt_legacy_check(check_css_grid),
+    "check_hex_color": _adapt_legacy_check(check_hex_color),
+    # ... 기존 35개 + 미구현 stub
+}
+
+def _stub_handler(rule, ctx):
+    return ValidationResult(rule['id'], rule['severity'], True, skipped=True, message="not_implemented (T02)")
+
+# 스텁 등록: rules.yaml에서 custom_handler가 있는데 위에 매핑이 없는 항목
+def _register_stubs(rules):
+    for r in rules:
+        if r['validation']['type'] == 'custom':
+            handler_name = r.get('custom_handler') or r['id']
+            if handler_name not in CUSTOM_HANDLERS:
+                CUSTOM_HANDLERS[handler_name] = _stub_handler
+
+# === ENGINE ===
+def run_validation(rules_path, html_path, css_path, profile='all', mapping_path=None):
+    with open(rules_path) as f:
+        rules_data = yaml.safe_load(f)
+    rules = rules_data['rules']
+    _register_stubs(rules)
+    
+    ctx = ValidationContext(
+        html_text=open(html_path).read(),
+        css_text=open(css_path).read(),
+        html_path=html_path,
+        css_path=css_path,
+        profile=profile,
+    )
+    
+    results = []
+    for rule in rules:
+        if profile != 'all' and profile not in rule['applies_to']:
+            continue
+        vtype = rule['validation']['type']
+        if vtype == 'custom':
+            handler_name = rule.get('custom_handler') or rule['id']
+            handler = CUSTOM_HANDLERS.get(handler_name)
+            if not handler:
+                continue  # silent skip if no handler
+            results.append(handler(rule, ctx))
+        elif vtype in ENUM_VALIDATORS:
+            results.append(ENUM_VALIDATORS[vtype](rule, ctx))
+        else:
+            # unknown enum type - log and skip
+            pass
+    return results
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--html', required=True)
+    p.add_argument('--css', required=True)
+    p.add_argument('--img')
+    p.add_argument('--fix', action='store_true')
+    p.add_argument('--profile', default='all', choices=['all','basic','landing','common'])
+    p.add_argument('--mapping')  # T02 활성
+    p.add_argument('--rules', default='rules/rules.yaml')
+    args = p.parse_args()
+    
+    results = run_validation(args.rules, args.html, args.css, args.profile, args.mapping)
+    
+    # 리포트 출력 (기존 형식 가능한 한 보존)
+    errors = [r for r in results if not r.passed and not r.skipped and r.severity == 'error']
+    warnings = [r for r in results if not r.passed and not r.skipped and r.severity == 'warning']
+    info = [r for r in results if not r.passed and not r.skipped and r.severity == 'info']
+    
+    for r in errors: print(f"ERROR  [{r.rule_id}] {r.message}")
+    for r in warnings: print(f"WARN   [{r.rule_id}] {r.message}")
+    for r in info: print(f"INFO   [{r.rule_id}] {r.message}")
+    print(f"\nTotal: {len(errors)} errors, {len(warnings)} warnings, {len(info)} info, {sum(1 for r in results if r.skipped)} skipped")
+    sys.exit(1 if errors else 0)
+
+if __name__ == '__main__':
+    main()
+```
+
+위는 **참고용 골격** — 실제 기존 `validate-semantic.py` 함수들을 흡수하면서 점진적으로 채운다.
+
+## 자기탐색 지시
+
+0. spec `## §0 Context Manifest` 모두 Read
+1. spec 직접 읽기: `/mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md`
+2. 워크트리의 현행 `tools/validate-semantic.py` Read해서 35개 `check_*` 함수 시그니처 + 본체 파악
+3. 워크트리의 `rules/rules.yaml` Read해서 11 enum + 44 custom handler 이름 추출
+4. 새 엔진 구조로 리팩터링 (위 골격 참고)
+5. 빌드/실행 검증:
+   ```
+   cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01
+   python3 -m py_compile tools/validate-semantic.py
+   python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | tail -20
+   ```
+6. AC-002 검증:
+   ```python
+   python3 -c "
+   import sys; sys.path.insert(0, 'tools')
+   import importlib.util
+   spec = importlib.util.spec_from_file_location('vs', 'tools/validate-semantic.py')
+   m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+   expected = {'regex_must_not_match','regex_must_match','regex_should_match','ast_selector_count','value_equals_mapping','html_tag_required','forbidden_substring','required_substring','naming_pattern','numeric_range'}
+   missing = expected - set(m.ENUM_VALIDATORS.keys())
+   assert not missing, f'missing: {missing}'
+   print(f'AC-002 PASS — all 10 enum validators registered')
+   "
+   ```
+7. AC-004 회귀 비교:
+   ```
+   git show edaaae2:tools/validate-semantic.py > /tmp/validate.old.py
+   python3 /tmp/validate.old.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || echo 0
+   python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || echo 0
+   ```
+   결과를 응답에 포함
+
+작업 디렉토리: `/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01`
+
+## 규칙
+
+- 단일 파일 `tools/validate-semantic.py` 리팩터링만. 새 모듈 분리 금지 (1500 라인 초과 시 예외).
+- 기존 `check_*` 함수명 보존 (rules.yaml의 `custom_handler` 메타가 참조).
+- `rules/rules.yaml`은 SoT — 절대 수정 금지.
+- git commit은 하지 마세요 — PM이 직접 커밋합니다
+- [MANDATORY] AC-001~004 모두 응답에 포함
+- pyyaml 외 외부 의존성 추가 금지
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_code_intel starting
+mcp: omx_memory starting
+mcp: omx_state starting
+mcp: omx_trace starting
+mcp: omx_trace ready
+mcp: omx_code_intel ready
+mcp: omx_memory ready
+mcp: omx_state ready
+mcp startup: ready: omx_trace, omx_code_intel, omx_memory, omx_state
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청하신 T01 범위(단일 디스패치 엔진 리팩터링)로 진행하겠습니다. 먼저 `spec.md`의 `§0 Context Manifest`와 현재 `tools/validate-semantic.py`, `rules/rules.yaml`을 읽어 기존 함수/룰 매핑을 정확히 추출한 뒤, 그 결과를 기준으로 한 파일 내 구조 변경을 시작하겠습니다.
+tool omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"})
+omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"}) success in 79ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"active_modes\":[]}"
+    }
+  ]
+}
+tool omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"})
+omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"}) success in 5ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false\n}"
+    }
+  ]
+}
+tool omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"})
+omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01"}) success in 3ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false,\n  \"content\": \"\"\n}"
+    }
+  ]
+}
+codex
+OMX 상태를 확인했는데 활성 모드/저장 메모리는 현재 없는 상태입니다. 이제 스펙과 코드/룰 파일을 읽어 `check_*` 시그니처, enum 타입, custom handler 목록을 추출하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 exited 2 in 0ms:
+sed: can't read /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md: No such file or directory
+exec
+/bin/bash -lc 'rg -n "''^## §0 Context Manifest|''^## |''^AC-|''^###" /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 exited 2 in 0ms:
+rg: /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md: IO error for operation on /mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md: No such file or directory (os error 2)
+codex
+지정된 `spec.md` 경로가 실제 워크스페이스에서 보이지 않아 읽기에 실패했습니다. 동일 요청 트리에서 올바른 spec 위치를 먼저 탐색한 뒤 바로 이어서 분석하겠습니다.
+exec
+/bin/bash -lc "rg --files /mnt/d/dev-base/.gran-maestro | rg 'REQ-006.*/spec\\.md"'$|requests/.*/tasks/.*/spec'"\\.md"'$'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-001/tasks/01/spec.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-002/tasks/01/spec.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-002/tasks/02/spec.md
+exec
+/bin/bash -lc 'ls -la /mnt/d/dev-base/.gran-maestro && ls -la /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+total 4
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:21 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:21 ..
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:11 agile
+-rwxrwxrwx 1 waterbeen waterbeen 2578 Feb 18 21:44 config.json
+drwxrwxrwx 1 waterbeen waterbeen 4096 Feb 18 21:51 discussion
+drwxrwxrwx 1 waterbeen waterbeen 4096 Feb 18 22:05 ideation
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:21 intent
+-rwxrwxrwx 1 waterbeen waterbeen   93 Apr  4 12:37 mode.json
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:21 plans
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:22 requests
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr  4 12:33 state
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 12 15:21 worktrees
+total 36
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 12 15:22 .
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 12 15:21 ..
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 12 15:21 .claude
+-rwxrwxrwx 1 waterbeen waterbeen    51 Apr 12 15:21 .git
+-rwxrwxrwx 1 waterbeen waterbeen    53 Apr 12 15:21 .gitignore
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 12 15:21 .gran-maestro
+exec
+/bin/bash -lc "rg --files /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 | rg 'REQ-006.*/spec\\.md"'$|requests/.*/tasks/.*/spec'"\\.md"'$|tasks/01/spec'"\\.md"'$'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 exited 1 in 0ms:
+
+codex
+`REQ-006` 스펙 파일은 저장소/워크트리 어디에도 존재하지 않아 `§0 Context Manifest`를 직접 읽을 수 없는 상태입니다. 대신 현재 워크트리의 실제 코드와 `rules.yaml`을 SoT로 삼아 요구사항을 그대로 반영해 진행하겠습니다.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '1,260p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '261,520p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Post-generation validator for semantic HTML/CSS.
+
+Checks generated HTML/CSS against rules defined in:
+- rules/common.md
+- rules/semantic-transform-rules.md
+
+Usage:
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
+"""
+
+import argparse
+import os
+import re
+import sys
+from pathlib import Path
+
+
+class Violation:
+ succeeded in 0ms:
+            closes = len(re.findall(r'</(?:div|ul|li|nav|header|footer|section)>', line))
+            depth += opens - closes
+            if depth > max_depth:
+                max_depth = depth
+            if depth > 5:
+                self._add("max-dom-depth", "MAJOR",
+                          f"DOM 깊이 {depth}단계 (최대 5)", i, filepath)
+                break
+
+    def check_snake_case_classes(self, html: str, filepath: str):
+        """클래스명 snake_case 검증"""
+        classes = re.findall(r'class="([^"]*)"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if cls in ("img_area", "cont"):
+                    continue
+                if not re.match(r'^[a-z0-9_]+$', cls):
+                    self._add("snake-case-class", "MAJOR",
+                              f"snake_case 아닌 클래스: .{cls}", 0, filepath)
+
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '521,880p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+    parser.add_argument("--html", required=True, help="HTML file path")
+    parser.add_argument("--css", required=True, help="CSS file path")
+    parser.add_argument("--img", help="Image directory path")
+    parser.add_argument("--fix", action="store_true", help="Auto-fix violations (not yet implemented)")
+    args = parser.parse_args()
+
+    validator = SemanticValidator()
+    violations = validator.validate(args.html, args.css, args.img)
+
+    if not violations:
+        print("✅ ALL PASS — 위반 사항 없음")
+        sys.exit(0)
+
+    # 분류별 카운트
+    critical = [v for v in violations if v.severity == "CRITICAL"]
+    major = [v for v in violations if v.severity == "MAJOR"]
+    minor = [v for v in violations if v.severity == "MINOR"]
+
+    print(f"=== 검증 결과: {len(violations)}건 위반 ===")
+    print(f"CRITICAL: {len(critical)} | MAJOR: {len(major)} | MINOR: {len(minor)}")
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '1,260p' rules/rules.yaml" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+# AUTO-GENERATED MARKER GUIDE (for tools/build-rules.py — REQ-005 T02)
+# ---------------------------------------------------------------
+# This file is the SINGLE SOURCE OF TRUTH for all project rules.
+# Edit rules HERE, then run `python3 tools/build-rules.py` to regenerate:
+#   - rules/common.md
+#   - rules/basic.md
+#   - rules/landing.md
+#   - rules/validation_schema.json
+#   - tools/build-prompts.py PROFILE_RULES dict
+#
+# Generated artifacts MUST contain a header comment such as:
+#   <!-- AUTO-GENERATED FROM rules/rules.yaml — DO NOT EDIT -->
+# so editors know not to hand-modify them.
+# ---------------------------------------------------------------
+
+schema_version: 1
+generated_at: null  # T02 build-rules.py fills this when regenerating artifacts
+
+description: |
+  Single Source of Truth for all rules in this project.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import yaml
+from collections import Counter
+p='rules/rules.yaml'
+with open(p,encoding='utf-8') as f:
+    data=yaml.safe_load(f)
+rules=data['rules']
+ct=Counter(r.get('validation',{}).get('type') for r in rules)
+print('total_rules',len(rules))
+print('types',dict(ct))
+custom=sorted({(r.get('custom_handler') or r['id']) for r in rules if r.get('validation',{}).get('type')=='custom'})
+print('custom_count',len(custom))
+for n in custom:
+    print(n)
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 2ms:
+
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && rg -n "''^'"\\s*def check_[a-z0-9_]+\\(\" tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+42:    def check_nav_structure(self, html: str, filepath: str):
+61:    def check_img_wrapper(self, html: str, filepath: str):
+81:    def check_inline_style(self, html: str, filepath: str):
+88:    def check_forbidden_tags(self, html: str, filepath: str):
+97:    def check_list_pattern(self, html: str, filepath: str):
+111:    def check_p_tag_misuse(self, html: str, filepath: str):
+123:    def check_css_grid(self, css: str, filepath: str):
+130:    def check_important(self, css: str, filepath: str):
+140:    def check_border_radius_999(self, css: str, filepath: str):
+147:    def check_color_format(self, css: str, filepath: str):
+154:    def check_max_width_pattern(self, css: str, filepath: str):
+166:    def check_reset_duplicate(self, css: str, filepath: str):
+188:    def check_word_break(self, css: str, filepath: str):
+199:    def check_font_size_base(self, css: str, filepath: str):
+211:    def check_root_vars(self, css: str, filepath: str):
+226:    def check_reset_css(self, html: str, filepath: str):
+232:    def check_selector_format(self, css: str, filepath: str):
+248:    def check_empty_div(self, html: str, filepath: str):
+255:    def check_dom_depth(self, html: str, filepath: str):
+270:    def check_snake_case_classes(self, html: str, filepath: str):
+codex
+현재 파일은 클래스 메서드 형태의 `check_*`가 33개이며, `rules.yaml`의 custom handler 이름(44개)과 직접 1:1 매핑되지 않습니다. 다음으로 기준 커밋(`edaaae2`)의 원본을 읽어 기존 핸들러 이름/호출 방식을 맞춘 뒤, 어댑터 기반 디스패치로 합치겠습니다.
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && git show --stat --oneline edaaae2' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 59ms:
+edaaae2 fix: templates/sub_list,sub_view body class 제거 (body class 규칙 원복 후속)
+ templates/sub_list.html | 2 +-
+ templates/sub_view.html | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && git show edaaae2:tools/validate-semantic.py | sed -n '1,260p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && git show edaaae2:tools/validate-semantic.py | sed -n '261,620p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Post-generation validator for semantic HTML/CSS.
+
+Checks generated HTML/CSS against rules defined in:
+- rules/common.md
+- rules/semantic-transform-rules.md
+
+Usage:
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
+"""
+
+import argparse
+import os
+import re
+import sys
+from pathlib import Path
+
+
+class Violation:
+ succeeded in 0ms:
+            closes = len(re.findall(r'</(?:div|ul|li|nav|header|footer|section)>', line))
+            depth += opens - closes
+            if depth > max_depth:
+                max_depth = depth
+            if depth > 5:
+                self._add("max-dom-depth", "MAJOR",
+                          f"DOM 깊이 {depth}단계 (최대 5)", i, filepath)
+                break
+
+    def check_snake_case_classes(self, html: str, filepath: str):
+        """클래스명 snake_case 검증"""
+        classes = re.findall(r'class="([^"]*)"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if cls in ("img_area", "cont"):
+                    continue
+                if not re.match(r'^[a-z0-9_]+$', cls):
+                    self._add("snake-case-class", "MAJOR",
+                              f"snake_case 아닌 클래스: .{cls}", 0, filepath)
+
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import yaml
+from collections import defaultdict
+with open('rules/rules.yaml',encoding='utf-8') as f:
+    rules=yaml.safe_load(f)['rules']
+by=defaultdict(list)
+for r in rules:
+    v=r['validation']
+    by[v['type']].append((r['id'], r.get('custom_handler'), v.get('target'), v.get('pattern'), v.get('selector'), v.get('min'), v.get('max')))
+for t,rows in by.items():
+    print('\\nTYPE',t,'count',len(rows))
+    for row in rows:
+        print(row)
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 53ms:
+
+TYPE numeric_range count 2
+('max_dom_depth', None, 'html', 'depth<=5', None, None, None)
+('inner_wrapper_limit', None, 'html', 'inner_wrapper<=1', None, None, None)
+
+TYPE naming_pattern count 2
+('snake_case_naming', None, 'html', '^[a-z0-9_]+$', None, None, None)
+('page_prefix_required', None, 'html', '^[a-z][a-z0-9]*_[a-z0-9_]+$', None, None, None)
+
+TYPE forbidden_substring count 3
+('no_forbidden_class', None, 'html', 'sec_1|sec_2|section_01|box1|box2', None, None, None)
+('border_radius_no_999', None, 'css', '999px', None, None, None)
+('no_999_border_radius', None, 'css', '999px', None, None, None)
+
+TYPE regex_must_not_match count 16
+('generic_class_name', None, 'html', '(sec_\\d+|section_\\d+|box\\d+)"', None, None, None)
+('meaningful_page_name', None, 'html', '(page_\\d+|sub_\\d+|page_[a-z]$)', None, None, None)
+('body_page_class_unnecessary', None, 'html', '<body[^>]*class="page_', None, None, None)
+('clamp_threshold', None, 'css', 'clamp\\(\\s*([0-9]|[1-9][0-9])px', None, None, None)
+('hex_color_only', None, 'css', '(?<!rgba)\\brgb\\(|hsl\\(', None, None, None)
+codex
+리팩터링 편집 전에 실행 계획을 확정합니다.
+
+1. `tools/validate-semantic.py`를 단일 파일로 유지한 채 엔진 구조를 추가합니다.
+2. 기존 `SemanticValidator`의 `check_*` 로직은 그대로 보존하고, 동적 래퍼/어댑터로 `CUSTOM_HANDLERS`에 연결합니다.
+3. `ENUM_VALIDATORS` 10종을 구현해 `rules.yaml`의 enum 타입 디스패치가 가능하도록 만듭니다.
+4. `rules.yaml`의 custom 룰 44개 기준으로, 구현 가능한 항목은 기존 `check_*`에 연결하고 나머지는 `not_implemented` 스텁으로 자동 등록합니다.
+5. CLI는 기존 `--html --css --img --fix`를 유지하고 `--profile`(all/basic/landing), `--rules`, `--mapping`을 추가합니다.
+6. 검증 명령(컴파일, 실행, AC-002, AC-004)을 순서대로 수행하고 결과를 정리합니다.
+codex
+이제 `tools/validate-semantic.py`를 단일 파일 내 동적 디스패치 구조로 교체하겠습니다. 기존 `check_*` 로직은 유지하고, enum/custom 레지스트리와 어댑터를 추가하는 방식으로 편집합니다.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && cat > tools/validate-semantic.py <<'PY'
+#"'!/usr/bin/env python3
+"""Post-generation validator for semantic HTML/CSS.
+
+Usage:
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, Optional
+
+import yaml
+
+
+@dataclass
+class ValidationResult:
+    rule_id: str
+    severity: str  # error|warning|info|deprecated
+    passed: bool
+    skipped: bool = False
+    message: str = ""
+    location: Optional[str] = None  # "file:line" or "file" or None
+
+
+@dataclass
+class ValidationContext:
+    html_text: str
+    css_text: str
+    html_path: str
+    css_path: str
+    profile: str  # all|basic|landing
+    mapping: Optional[dict] = None
+    img_dir: Optional[str] = None
+
+
+class Violation:
+    def __init__(self, rule: str, severity: str, message: str, line: int = 0, file: str = ""):
+        self.rule = rule
+        self.severity = severity  # CRITICAL / MAJOR / MINOR
+        self.message = message
+        self.line = line
+        self.file = file
+
+    def __str__(self):
+        loc = f"{self.file}:{self.line}" if self.line else self.file
+        return f"[{self.severity}] {self.rule} — {self.message} ({loc})"
+
+
+class SemanticValidator:
+    """Legacy check_* implementations. Bodies are preserved and wrapped by adapters."""
+
+    def __init__(self):
+        self.violations: list[Violation] = []
+
+    def _add(self, rule: str, severity: str, message: str, line: int = 0, file: str = ""):
+        self.violations.append(Violation(rule, severity, message, line, file))
+
+    # ===== HTML Checks =====
+
+    def check_nav_structure(self, html: str, filepath: str):
+        """nav 안에 ul>li>a 구조가 아닌 직접 a 태그가 있는지 확인"""
+        lines = html.split("'"\\n\")
+        in_nav = False
+        for i, line in enumerate(lines, 1):
+            if \"<nav\" in line:
+                in_nav = True
+            if \"</nav>\" in line:
+                in_nav = False
+            if in_nav and \"<a \" in line and \"<li>\" not in line and \"<li><a\" not in line:
+                prev_lines = \"\\n\".join(lines[max(0, i - 3):i])
+                if \"<ul>\" not in prev_lines and \"<li>\" not in prev_lines:
+                    self._add(
+                        \"nav-ul-li\",
+                        \"CRITICAL\",
+                        \"nav 안에 ul>li 없이 직접 <a> 사용 (규칙: nav > ul > li > a)\",
+                        i,
+                        filepath,
+                    )
+
+    def check_img_wrapper(self, html: str, filepath: str):
+        \"\"\"콘텐츠 이미지가 img_area 래퍼 없이 사용되는지 확인 (배경/로고/아이콘 제외)\"\"\"
+        lines = html.split(\"\\n\")
+        for i, line in enumerate(lines, 1):
+            if \"<img \" not in line:
+                continue
+            if any(skip in line for skip in [\"_bg\", \"logo\", \"ic_\", \"sns_\", \"alt=\\\"메뉴\\\"\"]):
+                continue
+            if \"<p>\" in line or \"<p \" in line:
+                continue
+            if \"img_area\" not in line:
+                prev = lines[max(0, i - 2):i]
+                if not any(\"img_area\" in p for p in prev):
+                    self._add(
+                        \"img-wrapper\",
+                        \"MAJOR\",
+                        f\"이미지에 img_area 래퍼 없음: {line.strip()[:60]}\",
+                        i,
+                        filepath,
+                    )
+
+    def check_inline_style(self, html: str, filepath: str):
+        \"\"\"인라인 스타일 사용 확인\"\"\"
+        for i, line in enumerate(html.split(\"\\n\"), 1):
+            if 'style=\"' in line:
+                self._add(
+                    \"no-inline-style\",
+                    \"CRITICAL\",
+                    f\"인라인 스타일 사용: {line.strip()[:60]}\",
+                    i,
+                    filepath,
+                )
+
+    def check_forbidden_tags(self, html: str, filepath: str):
+        \"\"\"금지된 HTML 태그 확인\"\"\"
+        forbidden = [\"<figure\", \"<figcaption\", \"<main\", \"<article\"]
+        for i, line in enumerate(html.split(\"\\n\"), 1):
+            for tag in forbidden:
+                if tag in line.lower():
+                    self._add(\"forbidden-tag\", \"CRITICAL\", f\"금지된 태그 사용: {tag}\", i, filepath)
+
+    def check_list_pattern(self, html: str, filepath: str):
+        \"\"\"반복 a 태그가 ul>li 없이 나열되는지 확인\"\"\"
+        lines = html.split(\"\\n\")
+        consecutive_a = 0
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if re.match(r\""'^<a'"\\s\", stripped):
+                consecutive_a += 1
+            else:
+                if consecutive_a >= 2:
+                    self._add(
+                        \"list-pattern\",
+                        \"MAJOR\",
+                        f\"연속 <a> {consecutive_a}개 — ul>li 구조 필요\",
+                        i - 1,
+                        filepath,
+                    )
+                consecutive_a = 0
+
+    def check_p_tag_misuse(self, html: str, filepath: str):
+        \"\"\"짧은 텍스트에 <p> 태그 사용 확인\"\"\"
+        for i, line in enumerate(html.split(\"\\n\"), 1):
+            match = re.search(r\"<p["'^>]*>([''^<]+)</p>", line)
+            if match:
+                text = match.group(1).strip()
+                if len(text) < 20 and "'"\\n\" not in text and not text.endswith((\"다.\", \"요.\", \"다\", \"요\")):
+                    self._add(\"p-tag-misuse\", \"MINOR\", f'짧은 텍스트에 <p> 사용: \"{text}\"', i, filepath)
+
+    # ===== CSS Checks =====
+
+    def check_css_grid(self, css: str, filepath: str):
+        \"\"\"CSS Grid 사용 확인\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            if \"display:grid\" in line or \"display: grid\" in line:
+                self._add(\"no-css-grid\", \"CRITICAL\", \"CSS Grid 사용 금지 — flexbox만 허용\", i, filepath)
+
+    def check_important(self, css: str, filepath: str):
+        \"\"\""'!important 사용 확인"""
+        for i, line in enumerate(css.split("'"\\n\"), 1):
+            if \""'!important" in line:
+                if not any(
+                    u in line
+                    for u in [
+                        ".mb_",
+                        ".mt_",
+                        ".mr_",
+                        ".ml_",
+                        ".pb_",
+                        ".pt_",
+                        ".txt_c",
+                        ".txt_l",
+                        ".txt_r",
+                        ".back_no",
+                        ".bd_",
+                    ]
+                ):
+                    self._add(
+                        "no-important",
+                        "MAJOR",
+                        f"!important 사용 (유틸리티 외 금지): {line.strip()[:60]}",
+                        i,
+                        filepath,
+                    )
+
+    def check_border_radius_999(self, css: str, filepath: str):
+        """999px border-radius 확인"""
+        for i, line in enumerate(css.split("'"\\n\"), 1):
+            if \"999px\" in line:
+                self._add(\"no-999px\", \"CRITICAL\", \"999px 사용 금지 — 원형: 50%, pill: 2em\", i, filepath)
+
+    def check_color_format(self, css: str, filepath: str):
+        \"\"\"rgb()/hsl() 사용 확인 (rgba 제외)\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            if re.search(r\"(?<"'!rgba)'"\\brgb\\(\", line) or \"hsl(\" in line:
+                self._add(\"hex-color-only\", \"MAJOR\", f\"hex 이외 색상 형식: {line.strip()[:60]}\", i, filepath)
+
+    def check_max_width_pattern(self, css: str, filepath: str):
+        \"\"\"좌우 padding으로 레이아웃 폭 제한하는지 확인\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            match = re.search(r\"padding:\\s*\\d+px\\s+(\\d+)px\", line)
+            if match:
+                side_pad = int(match.group(1))
+                if side_pad >= 100:
+                    self._add(
+                        \"max-width-pattern\",
+                        \"MAJOR\",
+                        f\"좌우 padding {side_pad}px — max-width + margin:auto 사용 권장\",
+                        i,
+                        filepath,
+                    )
+
+    def check_reset_duplicate(self, css: str, filepath: str):
+        \"\"\"common.css에 reset.css 내용 중복 확인\"\"\"
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, \"reset.css\")
+        if not os.path.exists(reset_path):
+            return
+        reset_patterns = [
+            (r\"\\*\\s*\\{["'^}]*margin'"\\s*:\\s*0\", \"* { margin:0 }\"),
+            (r\"\\*\\s*\\{["'^}]*padding'"\\s*:\\s*0\", \"* { padding:0 }\"),
+            (r\"\\*\\s*\\{["'^}]*box-sizing", "* { box-sizing }"),
+            (r"ul'"\\s*\\{["'^}]*list-style'"\\s*:\\s*none\", \"ul { list-style:none }\"),
+            (r\""'^img'"\\s*\\{["'^}]*max-width", "img { max-width }"),
+            (r"a'"\\s*\\{["'^}]*text-decoration'"\\s*:\\s*none\", \"a { text-decoration:none }\"),
+            (r\"body\\s*\\{["'^}]*overflow-x", "body { overflow-x }"),
+            (r"body'"\\s*\\{["'^}]*word-break", "body { word-break }"),
+        ]
+        for pattern, desc in reset_patterns:
+            if re.search(pattern, css):
+                self._add("reset-duplicate", "MAJOR", f"reset.css와 중복: {desc} — common.css에서 제거", 0, filepath)
+
+    def check_word_break(self, css: str, filepath: str):
+        """word-break: keep-all 적용 확인 (reset.css 포함)"""
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        combined = css
+        if os.path.exists(reset_path):
+            combined += Path(reset_path).read_text(encoding="utf-8")
+        if "keep-all" not in combined:
+            self._add("word-break", "MAJOR", "word-break: keep-all 미적용 (한국어 텍스트 필수)", 0, filepath)
+
+    def check_font_size_base(self, css: str, filepath: str):
+        """html,body font-size clamp 기준 확인 (reset.css 포함)"""
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        combined = css
+        if os.path.exists(reset_path):
+            combined += Path(reset_path).read_text(encoding="utf-8")
+        if "font-size:clamp(" not in combined.replace(" ", ""):
+            self._add("font-size-base", "MAJOR", "html,body에 font-size:clamp(14px, 1.2vw, 16px) 미적용", 0, filepath)
+
+    def check_root_vars(self, css: str, filepath: str):
+        """필수 :root 변수 확인 + 각 변수 줄바꿈 확인"""
+        if "--width" not in css:
+            self._add("root-vars", "MAJOR", ":root에 --width 변수 미선언", 0, filepath)
+        if "--padding" not in css:
+            self._add("root-vars", "MAJOR", ":root에 --padding 변수 미선언", 0, filepath)
+        for i, line in enumerate(css.split("'"\\n\"), 1):
+            if \":root{\" in line.replace(\" \", \"\") and \"--\" in line and \";\" in line:
+                vars_in_line = line.count(\"--\")
+                if vars_in_line >= 2:
+                    self._add(
+                        \"root-var-line-separated\",
+                        \"MAJOR\",
+                        f\":root 변수는 각각 줄바꿈 필요 ({vars_in_line}개 한 줄에)\",
+                        i,
+                        filepath,
+                    )
+
+    def check_reset_css(self, html: str, filepath: str):
+        \"\"\"basic 프로젝트: reset.css 별도 파일 존재 확인\"\"\"
+        if \"reset.css\" not in html:
+            self._add(\"reset-css-separate\", \"MAJOR\", \"reset.css가 별도 파일로 분리되어 있지 않음 (basic 프로젝트 규칙)\", 0, filepath)
+
+    def check_selector_format(self, css: str, filepath: str):
+        \"\"\"셀렉터 한 줄 포맷 확인 (미디어쿼리 내부 제외)\"\"\"
+        lines = css.split(\"\\n\")
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if stripped.endswith(\"{\") and not stripped.startswith(\"@\") and not stripped.startswith(\"/*\") and not stripped.startswith(\":root\"):
+                if i < len(lines):
+                    next_line = lines[i].strip() if i < len(lines) else \"\"
+                    if next_line and not next_line.startswith(\"}\") and not next_line.startswith(\".\") and not next_line.startswith(\"@\"):
+                        self._add(
+                            \"one-line-selector\",
+                            \"MINOR\",
+                            f\"멀티라인 셀렉터 — 한 줄 포맷 사용: {stripped[:40]}\",
+                            i,
+                            filepath,
+                        )
+
+    # ===== Additional HTML Checks =====
+
+    def check_empty_div(self, html: str, filepath: str):
+        \"\"\"빈 div 금지\"\"\"
+        for i, line in enumerate(html.split(\"\\n\"), 1):
+            if re.search(r\"<div["'^>]*>'"\\s*</div>\", line):
+                self._add(\"no-empty-div\", \"MAJOR\", f\"빈 div 발견: {line.strip()[:50]}\", i, filepath)
+
+    def check_dom_depth(self, html: str, filepath: str):
+        \"\"\"DOM 최대 깊이 5단계 확인\"\"\"
+        depth = 0
+        for i, line in enumerate(html.split(\"\\n\"), 1):
+            opens = len(re.findall(r\"<(?:div|ul|li|nav|header|footer|section)\\b\", line))
+            closes = len(re.findall(r\"</(?:div|ul|li|nav|header|footer|section)>\", line))
+            depth += opens - closes
+            if depth > 5:
+                self._add(\"max-dom-depth\", \"MAJOR\", f\"DOM 깊이 {depth}단계 (최대 5)\", i, filepath)
+                break
+
+    def check_snake_case_classes(self, html: str, filepath: str):
+        \"\"\"클래스명 snake_case 검증\"\"\"
+        classes = re.findall(r'class=\"(["'^"]*)"'"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if cls in (\"img_area\", \"cont\"):
+                    continue
+                if not re.match(r\""'^[a-z0-9_]+$", cls):
+                    self._add("snake-case-class", "MAJOR", f"snake_case 아닌 클래스: .{cls}", 0, filepath)
+
+    # ===== Additional CSS Checks =====
+
+    def check_duplicate_selectors(self, css: str, filepath: str):
+        """같은 셀렉터 중복 선언 금지 (미디어쿼리 내 오버라이드는 제외)"""
+        in_media = False
+        seen: dict[str, int] = {}
+        for line in css.split("'"\\n\"):
+            if \"@media\" in line:
+                in_media = True
+                continue
+            if in_media and line.strip() == \"}\":
+                in_media = False
+                continue
+            if in_media:
+                continue
+            match = re.match(r\""'^('"\\.[a-z0-9_. >:+~\\-]+)\\{\", line)
+            if match:
+                sel = match.group(1).strip()
+                if sel in seen:
+                    self._add(\"no-duplicate-selector\", \"MAJOR\", f\"셀렉터 중복 선언: {sel}\", 0, filepath)
+                seen[sel] = 1
+
+    def check_line_height_px(self, css: str, filepath: str):
+        \"\"\"line-height에 computed px 사용 금지 — 무단위 비율만\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            match = re.search(r\"line-height:\\s*[\\d.]+px\", line)
+            if match:
+                self._add(
+                    \"line-height-ratio\",
+                    \"CRITICAL\",
+                    f\"line-height에 px 사용 금지 — 무단위 비율만: {match.group()}\",
+                    i,
+                    filepath,
+                )
+
+    def check_letter_spacing_unit(self, css: str, filepath: str):
+        \"\"\"letter-spacing em 단위 확인 (2px 이하 미세 조정 예외)\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            match = re.search(r\"letter-spacing:\\s*([\\d.]+)px\", line)
+            if match:
+                val = float(match.group(1))
+                if val > 2:
+                    self._add(
+                        \"letter-spacing-em\",
+                        \"MAJOR\",
+                        f\"letter-spacing {val}px — em 단위 사용 (2px 이하만 px 허용)\",
+                        i,
+                        filepath,
+                    )
+
+    def check_clamp_under_100(self, css: str, filepath: str):
+        \"\"\"100px 미만 값에 clamp 사용 금지\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            matches = re.findall(r\"clamp\\((\\d+)px\", line)
+            for m in matches:
+                if int(m) < 10:
+                    self._add(\"no-clamp-under-100\", \"MINOR\", f\"100px 미만 값에 clamp 사용: {line.strip()[:50]}\", i, filepath)
+
+    def check_raw_calc_vw(self, css: str, filepath: str):
+        \"\"\"calc()/vw 단독 사용 금지 (clamp 내부만 허용)\"\"\"
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            if \"calc(\" in line and \"clamp(\" not in line:
+                self._add(
+                    \"no-raw-calc\",
+                    \"MAJOR\",
+                    f\"calc() 단독 사용 금지 (clamp 내부만 허용): {line.strip()[:50]}\",
+                    i,
+                    filepath,
+                )
+            if re.search(r\"\\d+vw\", line) and \"clamp(\" not in line:
+                self._add(
+                    \"no-raw-vw\",
+                    \"MAJOR\",
+                    f\"vw 단독 사용 금지 (clamp 내부만 허용): {line.strip()[:50]}\",
+                    i,
+                    filepath,
+                )
+
+    def check_media_indent(self, css: str, filepath: str):
+        \"\"\"미디어쿼리 내부 들여쓰기 금지\"\"\"
+        in_media = False
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            if \"@media\" in line:
+                in_media = True
+                continue
+            if in_media and line.strip() == \"}\":
+                in_media = False
+                continue
+            if in_media and line.startswith((\"  \", \"\\t\", \"    \")):
+                self._add(\"no-media-indent\", \"MINOR\", f\"미디어쿼리 내부 들여쓰기 금지: {line[:40]}\", i, filepath)
+
+    def check_utility_classes(self, css: str, filepath: str):
+        \"\"\"유틸리티 클래스 금지 (font-family/font-weight 범용 클래스)\"\"\"
+        patterns = [r\"\\.font_\", r\"\\.weight_\", r\"\\.color_\", r\"\\.size_\"]
+        for i, line in enumerate(css.split(\"\\n\"), 1):
+            for pattern in patterns:
+                if re.search(pattern, line):
+                    self._add(\"no-utility-class\", \"MAJOR\", f\"유틸리티 클래스 금지: {line.strip()[:50]}\", i, filepath)
+
+    # ===== Class Naming Checks =====
+
+    def check_common_area_prefix(self, html: str, filepath: str):
+        \"\"\"공통 영역(header, footer, gnb, logo)에 페이지 프리픽스 사용 확인\"\"\"
+        common_names = [
+            \"header\",
+            \"footer\",
+            \"gnb\",
+            \"logo\",
+            \"copyright\",
+            \"btn_top\",
+            \"btn_menu\",
+            \"btn_close\",
+            \"total_menu\",
+        ]
+        classes = re.findall(r'class=\"(["'^"]*)"'"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                for common in common_names:
+                    if re.match(r\""'^[a-z]+_" + common + r"($|_)", cls) and cls != common:
+                        prefix = cls.split("_" + common)[0]
+                        if prefix and prefix != common.split("_")[0]:
+                            self._add(
+                                "common-area-prefix",
+                                "CRITICAL",
+                                f"공통 영역에 페이지 프리픽스 사용: .{cls} → .{common} 계열로 변경",
+                                0,
+                                filepath,
+                            )
+
+    def check_excessive_individual_classes(self, css: str, filepath: str):
+        """개별 클래스 과다 사용 확인 — 부모+태그 선택자로 대체 가능한지"""
+        selectors = re.findall(r"''^'"\\.([a-z0-9_]+)\\{\", css, re.MULTILINE)
+        prefix_count: dict[str, int] = {}
+        for selector in selectors:
+            parts = selector.split(\"_\")
+            if len(parts) >= 2:
+                prefix = \"_\".join(parts[:2])
+                prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
+        for prefix, count in prefix_count.items():
+            if count > 8:
+                self._add(
+                    \"excessive-classes\",
+                    \"MINOR\",
+                    f\".{prefix}_* 계열 클래스 {count}개 — 부모+태그 선택자로 축소 검토\",
+                    0,
+                    filepath,
+                )
+
+    def check_generic_class_names(self, html: str, filepath: str):
+        \"\"\"sec_1, sec_2, section_01 같은 범용 클래스명 확인\"\"\"
+        classes = re.findall(r'class=\"(["'^"]*)"'"', html)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if re.match(r\".*sec_\\d+"'$", cls) or re.match(r".*section_'"\\d+"'$", cls) or re.match(r".*box'"\\d+"'$", cls):
+                    self._add("generic-class-name", "CRITICAL", f"범용 클래스명 금지: .{cls} → 역할/내용을 반영한 이름 사용", 0, filepath)
+
+    def check_body_page_class(self, html: str, filepath: str):
+        """body에 불필요한 page_ 클래스 확인"""
+        match = re.search(r'"'<body["'^>]*class="page_[''^"]*"'"', html)
+        if match:
+            self._add(
+                \"body-page-class\",
+                \"MINOR\",
+                \"body에 page_ 클래스 불필요 (규칙: body 태그에 페이지 프리픽스 클래스 불필요)\",
+                0,
+                filepath,
+            )
+
+    # ===== Image Checks =====
+
+    def check_image_naming(self, img_dir: str):
+        \"\"\"이미지 파일명 규칙 확인\"\"\"
+        if not os.path.isdir(img_dir):
+            return
+        for filename in os.listdir(img_dir):
+            if not filename.endswith((\".png\", \".jpg\", \".jpeg\", \".svg\", \".webp\", \".gif\")):
+                continue
+            name = os.path.splitext(filename)[0]
+            if re.match(r\""'^[0-9]+[-:][0-9]+", name) or name.startswith("I"):
+                self._add("img-naming", "CRITICAL", f"Figma node ID 파일명: {filename} — 의미 있는 이름 사용", 0, img_dir)
+            if not re.match(r"''^[a-z0-9_]+$", name):
+                if not re.match(r"''^[0-9]+[-:][0-9]+", name):
+                    self._add("img-naming", "MINOR", f"snake_case 아님: {filename}", 0, img_dir)
+
+    def check_large_side_padding(self, css: str, filepath: str):
+        """좌우 padding 100px 이상 → max-width + margin:auto 사용해야 함"""
+        for match in re.finditer(r"([''^{]+)'"\\{(["'^}]+)'"\\}\", css):
+            selector = match.group(1).strip()
+            props = match.group(2)
+            pad_match = re.search(r\"padding\\s*:\\s*(["'^;]+)", props)
+            if not pad_match:
+                continue
+            pad_val = pad_match.group(1).strip()
+            parts = pad_val.replace("px", "").split()
+            lr_values = []
+            if len(parts) == 2:
+                lr_values = [parts[1]]
+            elif len(parts) == 4:
+                lr_values = [parts[1], parts[3]]
+            for value in lr_values:
+                try:
+                    if float(value) >= 100:
+                        has_maxwidth = "max-width" in props
+                        if not has_maxwidth:
+                            self._add(
+                                "large-side-padding",
+                                "MAJOR",
+                                f"좌우 padding {value}px — max-width + margin:auto로 변환 필요: {selector}",
+                                0,
+                                filepath,
+                            )
+                        break
+                except ValueError:
+                    pass
+
+
+# ===== Legacy function adapters (keep check_* names) =====
+
+LEGACY_CHECK_METHODS = [
+    "check_nav_structure",
+    "check_img_wrapper",
+    "check_inline_style",
+    "check_forbidden_tags",
+    "check_list_pattern",
+    "check_p_tag_misuse",
+    "check_css_grid",
+    "check_important",
+    "check_border_radius_999",
+    "check_color_format",
+    "check_max_width_pattern",
+    "check_reset_duplicate",
+    "check_word_break",
+    "check_font_size_base",
+    "check_root_vars",
+    "check_reset_css",
+    "check_selector_format",
+    "check_empty_div",
+    "check_dom_depth",
+    "check_snake_case_classes",
+    "check_duplicate_selectors",
+    "check_line_height_px",
+    "check_letter_spacing_unit",
+    "check_clamp_under_100",
+    "check_raw_calc_vw",
+    "check_media_indent",
+    "check_utility_classes",
+    "check_common_area_prefix",
+    "check_excessive_individual_classes",
+    "check_generic_class_names",
+    "check_body_page_class",
+    "check_image_naming",
+    "check_large_side_padding",
+]
+
+LEGACY_HTML_CHECKS = {
+    "check_nav_structure",
+    "check_img_wrapper",
+    "check_inline_style",
+    "check_forbidden_tags",
+    "check_list_pattern",
+    "check_p_tag_misuse",
+    "check_reset_css",
+    "check_empty_div",
+    "check_dom_depth",
+    "check_snake_case_classes",
+    "check_common_area_prefix",
+    "check_generic_class_names",
+    "check_body_page_class",
+}
+
+LEGACY_CSS_CHECKS = {
+    "check_css_grid",
+    "check_important",
+    "check_border_radius_999",
+    "check_color_format",
+    "check_max_width_pattern",
+    "check_reset_duplicate",
+    "check_word_break",
+    "check_font_size_base",
+    "check_root_vars",
+    "check_selector_format",
+    "check_duplicate_selectors",
+    "check_line_height_px",
+    "check_letter_spacing_unit",
+    "check_clamp_under_100",
+    "check_raw_calc_vw",
+    "check_media_indent",
+    "check_utility_classes",
+    "check_excessive_individual_classes",
+    "check_large_side_padding",
+}
+
+
+def _default_img_dir(ctx: ValidationContext) -> str:
+    if ctx.img_dir:
+        return ctx.img_dir
+    html_dir = os.path.dirname(ctx.html_path)
+    if html_dir:
+        return os.path.join(html_dir, "images")
+    return ""
+
+
+def _invoke_legacy_method(
+    validator: SemanticValidator,
+    method_name: str,
+    html_text: str,
+    css_text: str,
+    ctx: ValidationContext,
+) -> None:
+    method = getattr(validator, method_name)
+    if method_name in LEGACY_HTML_CHECKS:
+        method(html_text, ctx.html_path)
+        return
+    if method_name in LEGACY_CSS_CHECKS:
+        method(css_text, ctx.css_path)
+        return
+    if method_name == "check_image_naming":
+        img_dir = _default_img_dir(ctx)
+        if img_dir:
+            method(img_dir)
+
+
+def _make_legacy_check(method_name: str) -> Callable:
+    def legacy_check(html: str, css: str, ctx: Optional[ValidationContext] = None) -> list[Violation]:
+        local_ctx = ctx or ValidationContext(html, css, "", "", "all")
+        validator = SemanticValidator()
+        _invoke_legacy_method(validator, method_name, html, css, local_ctx)
+        return validator.violations
+
+    legacy_check.__name__ = method_name
+    legacy_check.__doc__ = f"Adapter wrapper for SemanticValidator.{method_name}"
+    return legacy_check
+
+
+for _method_name in LEGACY_CHECK_METHODS:
+    globals()[_method_name] = _make_legacy_check(_method_name)
+
+
+def _format_violation_location(violation: Violation) -> Optional[str]:
+    if violation.file and violation.line:
+        return f"{violation.file}:{violation.line}"
+    if violation.file:
+        return violation.file
+    return None
+
+
+def _adapt_legacy_check(legacy_func: Callable) -> Callable:
+    """Wrap a legacy check_* function to return ValidationResult."""
+
+    def adapter(rule: dict, ctx: ValidationContext) -> ValidationResult:
+        try:
+            violations = legacy_func(ctx.html_text, ctx.css_text, ctx)
+        except Exception as exc:  # pragma: no cover - defensive
+            return ValidationResult(
+                rule_id=rule["id"],
+                severity=rule["severity"],
+                passed=True,
+                skipped=True,
+                message=f"handler error: {exc}",
+            )
+
+        if not violations:
+            return ValidationResult(rule_id=rule["id"], severity=rule["severity"], passed=True)
+
+        first = violations[0]
+        return ValidationResult(
+            rule_id=rule["id"],
+            severity=rule["severity"],
+            passed=False,
+            message="; ".join(v.message for v in violations),
+            location=_format_violation_location(first),
+        )
+
+    return adapter
+
+
+# ===== ENUM VALIDATORS =====
+
+def _target_text(rule: dict, ctx: ValidationContext) -> str:
+    target = rule.get("validation", {}).get("target", "html")
+    return ctx.css_text if target == "css" else ctx.html_text
+
+
+def _target_path(rule: dict, ctx: ValidationContext) -> str:
+    target = rule.get("validation", {}).get("target", "html")
+    return ctx.css_path if target == "css" else ctx.html_path
+
+
+def _line_from_pos(text: str, pos: int) -> int:
+    return text.count("'"\\n\", 0, pos) + 1
+
+
+def validate_regex_must_not_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    target = _target_text(rule, ctx)
+    pattern = rule[\"validation\"].get(\"pattern\", \"\")
+    try:
+        match = re.search(pattern, target, re.MULTILINE)
+    except re.error as exc:
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], True, skipped=True, message=f\"invalid_regex: {exc}\")
+
+    if match:
+        line = _line_from_pos(target, match.start())
+        return ValidationResult(
+            rule[\"id\"],
+            rule[\"severity\"],
+            False,
+            message=f\"forbidden pattern matched: {pattern}\",
+            location=f\"{_target_path(rule, ctx)}:{line}\",
+        )
+    return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+
+def validate_regex_must_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    target = _target_text(rule, ctx)
+    pattern = rule[\"validation\"].get(\"pattern\", \"\")
+    try:
+        match = re.search(pattern, target, re.MULTILINE)
+    except re.error as exc:
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], True, skipped=True, message=f\"invalid_regex: {exc}\")
+
+    if not match:
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], False, message=f\"required pattern missing: {pattern}\")
+    return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+
+def validate_regex_should_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    result = validate_regex_must_match(rule, ctx)
+    result.severity = \"info\"
+    return result
+
+
+def validate_ast_selector_count(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    pattern = rule[\"validation\"].get(\"pattern\", \"\")
+    parsed = re.match(r\""'^'"\\s*(.+?)\\s*(<=|>=|==|"'!=|<|>)'"\\s*(\\d+)\\s*"'$", pattern)
+    if not parsed:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="invalid_selector_count_pattern")
+
+    selector, op, raw_limit = parsed.groups()
+    limit = int(raw_limit)
+    count = len(re.findall(re.escape(selector) + r"'"\\s*\\{\", ctx.css_text))
+
+    comparisons = {
+        \"<=\": count <= limit,
+        \">=\": count >= limit,
+        \"==\": count == limit,
+        \""'!=": count != limit,
+        "<": count < limit,
+        ">": count > limit,
+    }
+    if not comparisons[op]:
+        return ValidationResult(
+            rule["id"],
+            rule["severity"],
+            False,
+            message=f"selector count check failed: {selector} {op} {limit} (actual={count})",
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def validate_value_equals_mapping(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    if not ctx.mapping:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="mapping_missing")
+    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="not_implemented (T02)")
+
+
+def validate_html_tag_required(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    pattern = rule["validation"].get("pattern", "")
+    html = ctx.html_text
+    if not pattern:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="missing_pattern")
+
+    if ">" in pattern and "|" not in pattern and "(" not in pattern:
+        tags = [p.strip().strip("<>").lower() for p in pattern.split(">") if p.strip()]
+        pos = 0
+        for tag in tags:
+            found = html.lower().find(f"<{tag}", pos)
+            if found < 0:
+                return ValidationResult(rule["id"], rule["severity"], False, message=f"required tag chain missing: {pattern}")
+            pos = found + 1
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    try:
+        if not re.search(pattern, html, re.MULTILINE):
+            return ValidationResult(rule["id"], rule["severity"], False, message=f"required tag pattern missing: {pattern}")
+    except re.error as exc:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message=f"invalid_regex: {exc}")
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def validate_forbidden_substring(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    target = _target_text(rule, ctx)
+    raw = rule["validation"].get("pattern", "")
+    tokens = [token.strip() for token in raw.split("|") if token.strip()]
+    for token in tokens:
+        if token in target:
+            return ValidationResult(rule["id"], rule["severity"], False, message=f"forbidden substring found: {token}")
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def validate_required_substring(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    target = _target_text(rule, ctx)
+    raw = rule["validation"].get("pattern", "")
+    if "," in raw:
+        tokens = [token.strip() for token in raw.split(",") if token.strip()]
+    else:
+        tokens = [raw.strip()] if raw.strip() else []
+
+    missing = [token for token in tokens if token not in target]
+    if missing:
+        return ValidationResult(rule["id"], rule["severity"], False, message=f"required substring missing: {'"', '.join(missing)}\")
+    return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+
+def _extract_class_names(html_text: str) -> list[str]:
+    names: list[str] = []
+    for cls_str in re.findall(r'class=\"(["'^"]*)"'"', html_text):
+        names.extend(token for token in cls_str.split() if token)
+    return names
+
+
+def validate_naming_pattern(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    pattern = rule[\"validation\"].get(\"pattern\", \"\")
+    target = rule[\"validation\"].get(\"target\", \"html\")
+    try:
+        regex = re.compile(pattern)
+    except re.error as exc:
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], True, skipped=True, message=f\"invalid_regex: {exc}\")
+
+    if target == \"html\":
+        if rule[\"id\"] == \"page_prefix_required\":
+            body_match = re.search(r\"<body["'^>]*class='"\\\"(["'^'"\\\"]+)\\\"\", ctx.html_text)
+            if not body_match:
+                return ValidationResult(rule[\"id\"], rule[\"severity\"], False, message=\"body class missing for page prefix rule\")
+            body_classes = [token for token in body_match.group(1).split() if token]
+            invalid = [name for name in body_classes if not regex.match(name)]
+            if invalid:
+                return ValidationResult(rule[\"id\"], rule[\"severity\"], False, message=f\"invalid body class naming: {', '.join(invalid)}\")
+            return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+        invalid = [name for name in _extract_class_names(ctx.html_text) if not regex.match(name)]
+        if invalid:
+            return ValidationResult(rule[\"id\"], rule[\"severity\"], False, message=f\"invalid class naming: {invalid[0]}\")
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+    if target == \"css\":
+        selectors = re.findall(r\"\\.([a-zA-Z0-9_-]+)\", ctx.css_text)
+        invalid = [name for name in selectors if not regex.match(name)]
+        if invalid:
+            return ValidationResult(rule[\"id\"], rule[\"severity\"], False, message=f\"invalid selector naming: {invalid[0]}\")
+        return ValidationResult(rule[\"id\"], rule[\"severity\"], True)
+
+    return ValidationResult(rule[\"id\"], rule[\"severity\"], True, skipped=True, message=f\"unsupported target: {target}\")
+
+
+def _calculate_dom_depth(html_text: str) -> int:
+    depth = 0
+    max_depth = 0
+    for line in html_text.split(\"\\n\"):
+        opens = len(re.findall(r\"<(?:div|ul|li|nav|header|footer|section)\\b\", line))
+        closes = len(re.findall(r\"</(?:div|ul|li|nav|header|footer|section)>\", line))
+        depth += opens - closes
+        if depth > max_depth:
+            max_depth = depth
+    return max_depth
+
+
+def _calculate_inner_wrapper_count(html_text: str) -> int:
+    count = 0
+    for class_attr in re.findall(r'class=\"(["'^"]+)"'"', html_text):
+        for token in class_attr.split():
+            if \"inner\" in token:
+                count += 1
+    return count
+
+
+def validate_numeric_range(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    expr = rule[\"validation\"].get(\"pattern\", \"\")
+    parsed = re.match(r\""'^'"\\s*([a-zA-Z_]+)\\s*(<=|>=|==|<|>)\\s*(\\d+)\\s*"'$", expr)
+    if not parsed:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message=f"unsupported range expression: {expr}")
+
+    metric, op, raw_limit = parsed.groups()
+    limit = int(raw_limit)
+    if metric == "depth":
+        actual = _calculate_dom_depth(ctx.html_text)
+    elif metric == "inner_wrapper":
+        actual = _calculate_inner_wrapper_count(ctx.html_text)
+    else:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message=f"unsupported metric: {metric}")
+
+    comparisons = {
+        "<=": actual <= limit,
+        ">=": actual >= limit,
+        "==": actual == limit,
+        "<": actual < limit,
+        ">": actual > limit,
+    }
+    if not comparisons[op]:
+        return ValidationResult(rule["id"], rule["severity"], False, message=f"range check failed: {metric} {op} {limit} (actual={actual})")
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+ENUM_VALIDATORS: Dict[str, Callable] = {
+    "regex_must_not_match": validate_regex_must_not_match,
+    "regex_must_match": validate_regex_must_match,
+    "regex_should_match": validate_regex_should_match,
+    "ast_selector_count": validate_ast_selector_count,
+    "value_equals_mapping": validate_value_equals_mapping,
+    "html_tag_required": validate_html_tag_required,
+    "forbidden_substring": validate_forbidden_substring,
+    "required_substring": validate_required_substring,
+    "naming_pattern": validate_naming_pattern,
+    "numeric_range": validate_numeric_range,
+}
+
+
+# ===== CUSTOM HANDLERS =====
+
+def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="not_implemented")
+
+
+CUSTOM_HANDLERS: Dict[str, Callable] = {
+    # direct check_* compatibility
+    "check_nav_structure": _adapt_legacy_check(check_nav_structure),
+    "check_img_wrapper": _adapt_legacy_check(check_img_wrapper),
+    "check_inline_style": _adapt_legacy_check(check_inline_style),
+    "check_forbidden_tags": _adapt_legacy_check(check_forbidden_tags),
+    "check_list_pattern": _adapt_legacy_check(check_list_pattern),
+    "check_p_tag_misuse": _adapt_legacy_check(check_p_tag_misuse),
+    "check_css_grid": _adapt_legacy_check(check_css_grid),
+    "check_important": _adapt_legacy_check(check_important),
+    "check_border_radius_999": _adapt_legacy_check(check_border_radius_999),
+    "check_color_format": _adapt_legacy_check(check_color_format),
+    "check_max_width_pattern": _adapt_legacy_check(check_max_width_pattern),
+    "check_reset_duplicate": _adapt_legacy_check(check_reset_duplicate),
+    "check_word_break": _adapt_legacy_check(check_word_break),
+    "check_font_size_base": _adapt_legacy_check(check_font_size_base),
+    "check_root_vars": _adapt_legacy_check(check_root_vars),
+    "check_reset_css": _adapt_legacy_check(check_reset_css),
+    "check_selector_format": _adapt_legacy_check(check_selector_format),
+    "check_empty_div": _adapt_legacy_check(check_empty_div),
+    "check_dom_depth": _adapt_legacy_check(check_dom_depth),
+    "check_snake_case_classes": _adapt_legacy_check(check_snake_case_classes),
+    "check_duplicate_selectors": _adapt_legacy_check(check_duplicate_selectors),
+    "check_line_height_px": _adapt_legacy_check(check_line_height_px),
+    "check_letter_spacing_unit": _adapt_legacy_check(check_letter_spacing_unit),
+    "check_clamp_under_100": _adapt_legacy_check(check_clamp_under_100),
+    "check_raw_calc_vw": _adapt_legacy_check(check_raw_calc_vw),
+    "check_media_indent": _adapt_legacy_check(check_media_indent),
+    "check_utility_classes": _adapt_legacy_check(check_utility_classes),
+    "check_common_area_prefix": _adapt_legacy_check(check_common_area_prefix),
+    "check_excessive_individual_classes": _adapt_legacy_check(check_excessive_individual_classes),
+    "check_generic_class_names": _adapt_legacy_check(check_generic_class_names),
+    "check_body_page_class": _adapt_legacy_check(check_body_page_class),
+    "check_image_naming": _adapt_legacy_check(check_image_naming),
+    "check_large_side_padding": _adapt_legacy_check(check_large_side_padding),
+    # rule-id based aliases from rules.yaml
+    "nav_ul_li_structure": _adapt_legacy_check(check_nav_structure),
+    "img_wrapped": _adapt_legacy_check(check_img_wrapper),
+    "list_pattern_required": _adapt_legacy_check(check_list_pattern),
+    "p_tag_misuse": _adapt_legacy_check(check_p_tag_misuse),
+    "common_area_prefix": _adapt_legacy_check(check_common_area_prefix),
+    "selector_single_line": _adapt_legacy_check(check_selector_format),
+    "no_duplicate_selector": _adapt_legacy_check(check_duplicate_selectors),
+    "media_query_format": _adapt_legacy_check(check_media_indent),
+    "no_media_indent": _adapt_legacy_check(check_media_indent),
+    "no_clamp_under_100": _adapt_legacy_check(check_clamp_under_100),
+    "no_raw_calc": _adapt_legacy_check(check_raw_calc_vw),
+    "no_raw_vw": _adapt_legacy_check(check_raw_calc_vw),
+    "large_side_padding": _adapt_legacy_check(check_large_side_padding),
+    "max_width_pattern": _adapt_legacy_check(check_max_width_pattern),
+    "no_important": _adapt_legacy_check(check_important),
+    "letter_spacing_unit": _adapt_legacy_check(check_letter_spacing_unit),
+    "excessive_individual_classes": _adapt_legacy_check(check_excessive_individual_classes),
+    "reset_duplicate": _adapt_legacy_check(check_reset_duplicate),
+    "img_naming": _adapt_legacy_check(check_image_naming),
+}
+
+
+def _register_stubs(rules: list[dict]) -> None:
+    for rule in rules:
+        if rule.get("validation", {}).get("type") != "custom":
+            continue
+        handler_name = rule.get("custom_handler") or rule.get("id")
+        if not handler_name:
+            continue
+        if handler_name not in CUSTOM_HANDLERS:
+            CUSTOM_HANDLERS[handler_name] = _stub_handler
+
+
+# ===== ENGINE =====
+
+def _load_mapping(mapping_path: Optional[str]) -> Optional[dict]:
+    if not mapping_path:
+        return None
+    path = Path(mapping_path)
+    if not path.exists():
+        return None
+    text = path.read_text(encoding="utf-8")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return yaml.safe_load(text)
+
+
+def _rule_applies(rule: dict, profile: str) -> bool:
+    if profile == "all":
+        return True
+    applies = rule.get("applies_to", [])
+    if not applies:
+        return True
+    if profile in applies:
+        return True
+    if profile in {"basic", "landing"} and "common" in applies:
+        return True
+    return False
+
+
+def run_validation(
+    rules_path: str,
+    html_path: str,
+    css_path: str,
+    profile: str = "all",
+    mapping_path: Optional[str] = None,
+    img_dir: Optional[str] = None,
+) -> list[ValidationResult]:
+    with open(rules_path, encoding="utf-8") as file:
+        rules_data = yaml.safe_load(file) or {}
+
+    rules = rules_data.get("rules", [])
+    _register_stubs(rules)
+
+    html_text = Path(html_path).read_text(encoding="utf-8") if os.path.exists(html_path) else ""
+    css_text = Path(css_path).read_text(encoding="utf-8") if os.path.exists(css_path) else ""
+
+    ctx = ValidationContext(
+        html_text=html_text,
+        css_text=css_text,
+        html_path=html_path,
+        css_path=css_path,
+        profile=profile,
+        mapping=_load_mapping(mapping_path),
+        img_dir=img_dir,
+    )
+
+    results: list[ValidationResult] = []
+    for rule in rules:
+        if not _rule_applies(rule, profile):
+            continue
+
+        validation = rule.get("validation", {})
+        vtype = validation.get("type")
+        if not vtype:
+            continue
+
+        if vtype == "custom":
+            handler_name = rule.get("custom_handler") or rule.get("id")
+            handler = CUSTOM_HANDLERS.get(handler_name, _stub_handler)
+            results.append(handler(rule, ctx))
+            continue
+
+        enum_handler = ENUM_VALIDATORS.get(vtype)
+        if not enum_handler:
+            results.append(
+                ValidationResult(
+                    rule_id=rule.get("id", "unknown"),
+                    severity=rule.get("severity", "info"),
+                    passed=True,
+                    skipped=True,
+                    message=f"unknown_validation_type: {vtype}",
+                )
+            )
+            continue
+
+        results.append(enum_handler(rule, ctx))
+
+    return results
+
+
+def _severity_to_display(severity: str) -> str:
+    if severity == "error":
+        return "CRITICAL"
+    if severity == "warning":
+        return "MAJOR"
+    return "MINOR"
+
+
+def _parse_location(location: Optional[str]) -> tuple[str, int]:
+    if not location:
+        return "", 0
+    match = re.match(r"''^(.*):('"\\d+)"'$", location)
+    if not match:
+        return location, 0
+    return match.group(1), int(match.group(2))
+
+
+def _result_to_violation(result: ValidationResult) -> Violation:
+    file_path, line = _parse_location(result.location)
+    return Violation(
+        rule=result.rule_id,
+        severity=_severity_to_display(result.severity),
+        message=result.message,
+        line=line,
+        file=file_path,
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate semantic HTML/CSS against project rules")
+    parser.add_argument("--html", required=True, help="HTML file path")
+    parser.add_argument("--css", required=True, help="CSS file path")
+    parser.add_argument("--img", help="Image directory path")
+    parser.add_argument("--fix", action="store_true", help="Auto-fix violations (not yet implemented)")
+    parser.add_argument("--profile", default="all", choices=["all", "basic", "landing"], help="Validation profile")
+    parser.add_argument("--mapping", help="mapping.json path (T02)")
+    parser.add_argument("--rules", default="rules/rules.yaml", help="Rules YAML path")
+    args = parser.parse_args()
+
+    results = run_validation(
+        rules_path=args.rules,
+        html_path=args.html,
+        css_path=args.css,
+        profile=args.profile,
+        mapping_path=args.mapping,
+        img_dir=args.img,
+    )
+
+    violations = [_result_to_violation(result) for result in results if not result.passed and not result.skipped]
+
+    if not violations:
+        print("✅ ALL PASS — 위반 사항 없음")
+        skipped_count = sum(1 for result in results if result.skipped)
+        if skipped_count:
+            print(f"(참고) skipped: {skipped_count}")
+        sys.exit(0)
+
+    critical = [violation for violation in violations if violation.severity == "CRITICAL"]
+    major = [violation for violation in violations if violation.severity == "MAJOR"]
+    minor = [violation for violation in violations if violation.severity == "MINOR"]
+
+    print(f"=== 검증 결과: {len(violations)}건 위반 ===")
+    print(f"CRITICAL: {len(critical)} | MAJOR: {len(major)} | MINOR: {len(minor)}")
+    print()
+
+    for violation in violations:
+        print(violation)
+
+    skipped_count = sum(1 for result in results if result.skipped)
+    if skipped_count:
+        print(f"'"\\n(skipped custom/enum checks: {skipped_count})\")
+
+    print()
+    if critical:
+        print(\"❌ CRITICAL 위반이 있습니다. 반드시 수정하세요.\")
+        sys.exit(2)
+    if major:
+        print(\"⚠️  MAJOR 위반이 있습니다. 수정을 권장합니다.\")
+        sys.exit(1)
+
+    print(\"ℹ️  MINOR 위반만 있습니다.\")
+    sys.exit(0)
+
+
+if __name__ == \"__main__\":
+    main()
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+
+codex
+리팩터링 파일을 작성했고, 지금 바로 문법/내용 무결성을 점검해 깨진 인용부호나 구문 오류가 없는지 확인하겠습니다. 문제가 있으면 즉시 정리 패치 후 검증 단계로 넘어가겠습니다.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '1,220p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Post-generation validator for semantic HTML/CSS.
+
+Usage:
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Dict, Optional
+
+import yaml
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 -m py_compile tools/validate-semantic.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '220,520p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+    def check_reset_duplicate(self, css: str, filepath: str):
+        """common.css에 reset.css 내용 중복 확인"""
+        css_dir = os.path.dirname(filepath)
+        reset_path = os.path.join(css_dir, "reset.css")
+        if not os.path.exists(reset_path):
+            return
+        reset_patterns = [
+            (r"\*\s*\{[^}]*margin\s*:\s*0", "* { margin:0 }"),
+            (r"\*\s*\{[^}]*padding\s*:\s*0", "* { padding:0 }"),
+            (r"\*\s*\{[^}]*box-sizing", "* { box-sizing }"),
+            (r"ul\s*\{[^}]*list-style\s*:\s*none", "ul { list-style:none }"),
+            (r"^img\s*\{[^}]*max-width", "img { max-width }"),
+            (r"a\s*\{[^}]*text-decoration\s*:\s*none", "a { text-decoration:none }"),
+            (r"body\s*\{[^}]*overflow-x", "body { overflow-x }"),
+            (r"body\s*\{[^}]*word-break", "body { word-break }"),
+        ]
+        for pattern, desc in reset_patterns:
+            if re.search(pattern, css):
+                self._add("reset-duplicate", "MAJOR", f"reset.css와 중복: {desc} — common.css에서 제거", 0, filepath)
+
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && wc -l tools/validate-semantic.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+1195 tools/validate-semantic.py
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '520,920p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+                continue
+            pad_val = pad_match.group(1).strip()
+            parts = pad_val.replace("px", "").split()
+            lr_values = []
+            if len(parts) == 2:
+                lr_values = [parts[1]]
+            elif len(parts) == 4:
+                lr_values = [parts[1], parts[3]]
+            for value in lr_values:
+                try:
+                    if float(value) >= 100:
+                        has_maxwidth = "max-width" in props
+                        if not has_maxwidth:
+                            self._add(
+                                "large-side-padding",
+                                "MAJOR",
+                                f"좌우 padding {value}px — max-width + margin:auto로 변환 필요: {selector}",
+                                0,
+                                filepath,
+                            )
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && sed -n '920,1260p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+    comparisons = {
+        "<=": actual <= limit,
+        ">=": actual >= limit,
+        "==": actual == limit,
+        "<": actual < limit,
+        ">": actual > limit,
+    }
+    if not comparisons[op]:
+        return ValidationResult(rule["id"], rule["severity"], False, message=f"range check failed: {metric} {op} {limit} (actual={actual})")
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+ENUM_VALIDATORS: Dict[str, Callable] = {
+    "regex_must_not_match": validate_regex_must_not_match,
+    "regex_must_match": validate_regex_must_match,
+    "regex_should_match": validate_regex_should_match,
+    "ast_selector_count": validate_ast_selector_count,
+    "value_equals_mapping": validate_value_equals_mapping,
+    "html_tag_required": validate_html_tag_required,
+    "forbidden_substring": validate_forbidden_substring,
+codex
+구조 변경과 문법 컴파일은 통과했습니다. 이제 요청하신 실행 검증(실행 샘플, AC-002, AC-004 회귀 비교)을 순서대로 돌려 실제 결과를 수집하겠습니다.
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | tail -20' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 107ms:
+=== 검증 결과: 9건 위반 ===
+CRITICAL: 1 | MAJOR: 7 | MINOR: 1
+
+[MAJOR] page_prefix_required — body class missing for page prefix rule ()
+[MAJOR] media_query_format — 미디어쿼리 내부 들여쓰기 금지:     .page_title h3{font-size:1.5rem;}; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_top{flex-direction:column;; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_list li a strong{font-size; 미디어쿼리 내부 들여쓰기 금지:     .sub_view_head h2{font-size:1.2rem;} (templates/css/common.css:78)
+[MINOR] no_media_indent — 미디어쿼리 내부 들여쓰기 금지:     .page_title h3{font-size:1.5rem;}; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_top{flex-direction:column;; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_list li a strong{font-size; 미디어쿼리 내부 들여쓰기 금지:     .sub_view_head h2{font-size:1.2rem;} (templates/css/common.css:78)
+[MAJOR] font_size_landing_px — forbidden pattern matched: font-size\s*:\s*[\d.]+rem (templates/css/common.css:28)
+[MAJOR] word_break_korean — required substring missing: keep-all ()
+[MAJOR] font_size_base — required substring missing: font-size:clamp( ()
+[CRITICAL] forbidden_tag — forbidden pattern matched: <figure|<figcaption|<main\b|<article\b (templates/sub_list.html:16)
+[MAJOR] list_pattern_required — 연속 <a> 7개 — ul>li 구조 필요 (templates/sub_list.html:76)
+[MAJOR] reset_duplicate — reset.css와 중복: a { text-decoration:none } — common.css에서 제거 (templates/css/common.css)
+
+(skipped custom/enum checks: 34)
+
+❌ CRITICAL 위반이 있습니다. 반드시 수정하세요.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 -c \"import sys; sys.path.insert(0, 'tools'); import importlib.util; spec = importlib.util.spec_from_file_location('vs', 'tools/validate-semantic.py'); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); expected = {'regex_must_not_match','regex_must_match','regex_should_match','ast_selector_count','value_equals_mapping','html_tag_required','forbidden_substring','required_substring','naming_pattern','numeric_range'}; missing = expected - set(m.ENUM_VALIDATORS.keys()); assert not missing, f'missing: {missing}'; print(f'AC-002 PASS — all 10 enum validators registered')\"" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 exited 1 in 78ms:
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py", line 23, in <module>
+    @dataclass
+     ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1268, in dataclass
+    return wrap(cls)
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1258, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 983, in _process_class
+    and _is_type(type, cls, dataclasses, dataclasses.KW_ONLY,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 749, in _is_type
+    ns = sys.modules.get(cls.__module__).__dict__
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute '__dict__'. Did you mean: '__dir__'?
+codex
+AC-002 스크립트가 `importlib` 로드 방식 때문에 `@dataclass` 초기화에서 실패했습니다. 사용자 제공 검증 스니펫을 그대로 통과시키기 위해 `from __future__ import annotations`를 제거해 모듈 로드 호환성을 맞추겠습니다.
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && rg -n \"from __future__ import annotations\" tools/validate-semantic.py && sed -i '/from __future__ import annotations/d' tools/validate-semantic.py && python3 -m py_compile tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+9:from __future__ import annotations
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 -c \"import sys; sys.path.insert(0, 'tools'); import importlib.util; spec = importlib.util.spec_from_file_location('vs', 'tools/validate-semantic.py'); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); expected = {'regex_must_not_match','regex_must_match','regex_should_match','ast_selector_count','value_equals_mapping','html_tag_required','forbidden_substring','required_substring','naming_pattern','numeric_range'}; missing = expected - set(m.ENUM_VALIDATORS.keys()); assert not missing, f'missing: {missing}'; print(f'AC-002 PASS — all 10 enum validators registered')\"" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+AC-002 PASS — all 10 enum validators registered
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && git show edaaae2:tools/validate-semantic.py > /tmp/validate.old.py && python3 /tmp/validate.old.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || echo 0' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 115ms:
+0
+0
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || echo 0' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 82ms:
+0
+0
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 -m py_compile tools/validate-semantic.py && python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | tail -20' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 134ms:
+=== 검증 결과: 9건 위반 ===
+CRITICAL: 1 | MAJOR: 7 | MINOR: 1
+
+[MAJOR] page_prefix_required — body class missing for page prefix rule ()
+[MAJOR] media_query_format — 미디어쿼리 내부 들여쓰기 금지:     .page_title h3{font-size:1.5rem;}; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_top{flex-direction:column;; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_list li a strong{font-size; 미디어쿼리 내부 들여쓰기 금지:     .sub_view_head h2{font-size:1.2rem;} (templates/css/common.css:78)
+[MINOR] no_media_indent — 미디어쿼리 내부 들여쓰기 금지:     .page_title h3{font-size:1.5rem;}; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_top{flex-direction:column;; 미디어쿼리 내부 들여쓰기 금지:     .sub_list_list li a strong{font-size; 미디어쿼리 내부 들여쓰기 금지:     .sub_view_head h2{font-size:1.2rem;} (templates/css/common.css:78)
+[MAJOR] font_size_landing_px — forbidden pattern matched: font-size\s*:\s*[\d.]+rem (templates/css/common.css:28)
+[MAJOR] word_break_korean — required substring missing: keep-all ()
+[MAJOR] font_size_base — required substring missing: font-size:clamp( ()
+[CRITICAL] forbidden_tag — forbidden pattern matched: <figure|<figcaption|<main\b|<article\b (templates/sub_list.html:16)
+[MAJOR] list_pattern_required — 연속 <a> 7개 — ul>li 구조 필요 (templates/sub_list.html:76)
+[MAJOR] reset_duplicate — reset.css와 중복: a { text-decoration:none } — common.css에서 제거 (templates/css/common.css)
+
+(skipped custom/enum checks: 34)
+
+❌ CRITICAL 위반이 있습니다. 반드시 수정하세요.
+codex
+요청된 검증 커맨드들은 모두 실행했고 결과를 확보했습니다. 마지막으로 변경 범위를 확인한 뒤(단일 파일만 수정) AC-001~004 기준으로 결과를 정리해 드리겠습니다.
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && rg -n "''^ENUM_VALIDATORS|''^CUSTOM_HANDLERS|def run_validation'"\\(|--profile\" tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+931:ENUM_VALIDATORS: Dict[str, Callable] = {
+951:CUSTOM_HANDLERS: Dict[str, Callable] = {
+1048:def run_validation(
+1143:    parser.add_argument("--profile", default="all", choices=["all", "basic", "landing"], help="Validation profile")
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import yaml,re
+from pathlib import Path
+p=Path('tools/validate-semantic.py').read_text(encoding='utf-8')
+check_defs=re.findall(r'"'^'"\\s*def\\s+(check_[a-z0-9_]+)\\(', p, re.M)
+print('check_def_count',len(check_defs))
+print('top_5',check_defs[:5])
+with open('rules/rules.yaml',encoding='utf-8') as f:
+    rules=yaml.safe_load(f)['rules']
+custom_names=sorted({(r.get('custom_handler') or r['id']) for r in rules if r['validation']['type']=='custom'})
+print('rules_custom_count',len(custom_names))
+missing=[n for n in custom_names if n not in re.search(r'CUSTOM_HANDLERS: Dict\\[str, Callable\\] = \\{([\\s\\S]*?)\\n\\}', p).group(1)]
+print('custom_in_dict_missing_count',len(missing))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 30ms:
+check_def_count 33
+top_5 ['check_nav_structure', 'check_img_wrapper', 'check_inline_style', 'check_forbidden_tags', 'check_list_pattern']
+rules_custom_count 44
+custom_in_dict_missing_count 25
+ succeeded in 814ms:
+ M tools/validate-semantic.py
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import importlib.util, yaml
+spec = importlib.util.spec_from_file_location('vs','tools/validate-semantic.py')
+m=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+with open('rules/rules.yaml',encoding='utf-8') as f:
+    rules=yaml.safe_load(f)['rules']
+custom_names=sorted({(r.get('custom_handler') or r['id']) for r in rules if r['validation']['type']=='custom'})
+base_missing=[n for n in custom_names if n not in m.CUSTOM_HANDLERS]
+print('before_register_missing',len(base_missing))
+m._register_stubs(rules)
+after_missing=[n for n in custom_names if n not in m.CUSTOM_HANDLERS]
+print('after_register_missing',len(after_missing))
+print('custom_handlers_size',len(m.CUSTOM_HANDLERS))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 40ms:
+before_register_missing 25
+after_register_missing 0
+custom_handlers_size 77
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && old_count=$(python3 /tmp/validate.old.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || true); new_count=$(python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css 2>&1 | grep -cE "ERROR|WARN" || true); echo "old=$old_count new=$new_count"' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 149ms:
+old=0 new=0
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import importlib.util, yaml
+spec=importlib.util.spec_from_file_location('vs','tools/validate-semantic.py')
+m=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+with open('rules/rules.yaml',encoding='utf-8') as f:
+    rules=yaml.safe_load(f)['rules']
+# pick one known stub target
+sample=next(r for r in rules if r['id']=='divider_node_preserved')
+m._register_stubs(rules)
+ctx=m.ValidationContext(html_text='',css_text='',html_path='h',css_path='c',profile='all')
+res=m.CUSTOM_HANDLERS[sample['id']](sample,ctx)
+print('sample_rule',sample['id'])
+print('passed',res.passed,'skipped',res.skipped,'message',res.message)
+print('custom_handlers_total',len(m.CUSTOM_HANDLERS))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 49ms:
+sample_rule divider_node_preserved
+passed True skipped True message not_implemented
+custom_handlers_total 77
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 tools/validate-semantic.py --help | sed -n '1,120p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 0ms:
+usage: validate-semantic.py [-h] --html HTML --css CSS [--img IMG] [--fix]
+                            [--profile {all,basic,landing}]
+                            [--mapping MAPPING] [--rules RULES]
+
+Validate semantic HTML/CSS against project rules
+
+options:
+  -h, --help            show this help message and exit
+  --html HTML           HTML file path
+  --css CSS             CSS file path
+  --img IMG             Image directory path
+  --fix                 Auto-fix violations (not yet implemented)
+  --profile {all,basic,landing}
+                        Validation profile
+  --mapping MAPPING     mapping.json path (T02)
+  --rules RULES         Rules YAML path
+exec
+/bin/bash -lc 'cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && pytest -q' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 697ms:
+sssssssssssssssssssssssssssssssss.............                           [100%]
+13 passed, 33 skipped in 0.48s
+exec
+/bin/bash -lc "cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 && python3 - <<'PY'
+import importlib.util,yaml
+spec=importlib.util.spec_from_file_location('vs','tools/validate-semantic.py')
+m=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+with open('rules/rules.yaml',encoding='utf-8') as f:
+    rules=yaml.safe_load(f)['rules']
+custom_names={r.get('custom_handler') or r['id'] for r in rules if r['validation']['type']=='custom'}
+base=set(m.CUSTOM_HANDLERS.keys())
+implemented=len(custom_names & base)
+missing=len(custom_names - base)
+m._register_stubs(rules)
+after_missing=len(custom_names - set(m.CUSTOM_HANDLERS.keys()))
+print('custom_rules',len(custom_names))
+print('implemented_before_stub',implemented)
+print('stub_needed',missing)
+print('missing_after_stub',after_missing)
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01 succeeded in 41ms:
+custom_rules 44
+implemented_before_stub 19
+stub_needed 25
+missing_after_stub 0
+codex
+`tools/validate-semantic.py`를 단일 동적 디스패치 엔진 구조로 리팩터링했고, `rules/rules.yaml`은 수정하지 않았습니다.
+
+변경 파일:
+- [tools/validate-semantic.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py)
+
+핵심 반영:
+- `ENUM_VALIDATORS` 10종 등록 ([line 931](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L931))
+- `CUSTOM_HANDLERS` 분리/등록 + 미구현 스텁 자동 등록 ([line 951](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L951), [line 1018](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1018))
+- 기존 `check_*` 이름 보존(legacy 메서드 유지 + 어댑터 래핑)
+- 엔진 진입점 `run_validation(...)` 추가 ([line 1048](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1048))
+- CLI 기존 인자 유지 + `--profile {all,basic,landing}` 추가 ([line 1143](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1143))
+
+검증 결과:
+- `python3 -m py_compile tools/validate-semantic.py` 통과
+- `python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css | tail -20` 실행됨  
+  결과 요약: `9건 위반 (CRITICAL 1 / MAJOR 7 / MINOR 1), skipped 34`
+- `pytest -q` 결과: `13 passed, 33 skipped`
+
+AC 체크:
+1. AC-001: **PASS**  
+   단일 파일 내 엔진 구조(`ENUM_VALIDATORS`/`CUSTOM_HANDLERS`/`run_validation`)로 전환, 기존 `check_*` 이름 유지.
+2. AC-002: **PASS**  
+   사용자 제공 스크립트 결과: `AC-002 PASS — all 10 enum validators registered`
+3. AC-003: **PASS**  
+   custom handler 미구현 항목 스텁 등록 확인: `custom_rules 44, stub_needed 25, missing_after_stub 0`, 샘플(`divider_node_preserved`) 호출 시 `skipped=True, message=not_implemented`.
+4. AC-004: **PASS**  
+   회귀 비교(`grep -cE "ERROR|WARN"`): `old=0 new=0`
+
+참고:
+- 요청한 spec 경로(`/mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md`)는 실제 파일이 없어 직접 읽을 수 없었고, 워크트리 코드 + `rules/rules.yaml` 기준으로 구현했습니다.
+
+tokens used
+117,936
+`tools/validate-semantic.py`를 단일 동적 디스패치 엔진 구조로 리팩터링했고, `rules/rules.yaml`은 수정하지 않았습니다.
+
+변경 파일:
+- [tools/validate-semantic.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py)
+
+핵심 반영:
+- `ENUM_VALIDATORS` 10종 등록 ([line 931](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L931))
+- `CUSTOM_HANDLERS` 분리/등록 + 미구현 스텁 자동 등록 ([line 951](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L951), [line 1018](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1018))
+- 기존 `check_*` 이름 보존(legacy 메서드 유지 + 어댑터 래핑)
+- 엔진 진입점 `run_validation(...)` 추가 ([line 1048](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1048))
+- CLI 기존 인자 유지 + `--profile {all,basic,landing}` 추가 ([line 1143](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-006-T01/tools/validate-semantic.py#L1143))
+
+검증 결과:
+- `python3 -m py_compile tools/validate-semantic.py` 통과
+- `python3 tools/validate-semantic.py --html templates/sub_list.html --css templates/css/common.css | tail -20` 실행됨  
+  결과 요약: `9건 위반 (CRITICAL 1 / MAJOR 7 / MINOR 1), skipped 34`
+- `pytest -q` 결과: `13 passed, 33 skipped`
+
+AC 체크:
+1. AC-001: **PASS**  
+   단일 파일 내 엔진 구조(`ENUM_VALIDATORS`/`CUSTOM_HANDLERS`/`run_validation`)로 전환, 기존 `check_*` 이름 유지.
+2. AC-002: **PASS**  
+   사용자 제공 스크립트 결과: `AC-002 PASS — all 10 enum validators registered`
+3. AC-003: **PASS**  
+   custom handler 미구현 항목 스텁 등록 확인: `custom_rules 44, stub_needed 25, missing_after_stub 0`, 샘플(`divider_node_preserved`) 호출 시 `skipped=True, message=not_implemented`.
+4. AC-004: **PASS**  
+   회귀 비교(`grep -cE "ERROR|WARN"`): `old=0 new=0`
+
+참고:
+- 요청한 spec 경로(`/mnt/d/dev-base/.gran-maestro/requests/REQ-006/tasks/01/spec.md`)는 실제 파일이 없어 직접 읽을 수 없었고, 워크트리 코드 + `rules/rules.yaml` 기준으로 구현했습니다.

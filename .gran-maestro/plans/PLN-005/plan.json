@@ -1,0 +1,14 @@
+{
+  "id": "PLN-005",
+  "title": "모제림 랜딩 레거시 섹션 재검증 + PLN-004 도구·워크플로우 보강",
+  "status": "completed",
+  "created_at": "2026-04-13T05:26:49.000Z",
+  "cynefin_domain": "complicated",
+  "linked_requests": [
+    "REQ-011",
+    "REQ-012",
+    "REQ-013",
+    "REQ-014",
+    "REQ-015"
+  ]
+}

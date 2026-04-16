@@ -1,0 +1,27 @@
+{
+  "id": "REQ-019",
+  "title": "REQ-A: validate-semantic.py 신규 6규칙 추가 (Layer A)",
+  "original_request": "Figma→퍼블리싱 파이프라인 규칙 완벽 준수 체계 구축 — Layer A: validate-semantic.py에 no_hex8_literal/line_height_tidy_ratio/font_family_redundant/empty_media_block/box_sizing_redundant/landing_unit_mixed_scale 6규칙 추가 및 --profile landing|basic 분기 동작",
+  "status": "done",
+  "current_phase": 5,
+  "merged_commit": "bea45ce",
+  "review_skipped_reason": "pre-check + 22 tests + evidence regression 모두 PASS, 사용자 명시 /mst:accept 호출",
+  "worktree": "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-019-T01",
+  "background_task_ids": [{ "task_id": "bjeocgk55", "task_num": "01", "agent": "codex-dev", "status": "running" }],
+  "created_at": "2026-04-15T05:41:43.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-007",
+  "dag_auto_chain": true,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "validate-semantic.py 신규 6규칙 + --profile 분기",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001","AC-002","AC-003","AC-004","AC-005","AC-006","AC-007","AC-008","AC-009"]
+    }
+  ],
+  "dependencies": { "blockedBy": [], "relatedTo": [], "blocks": ["REQ-020", "REQ-021"] },
+  "linked_discussions": ["DSC-002"]
+}

@@ -1,0 +1,4378 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01
+model: gpt-5.4
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019d85a1-db33-7202-82d2-9b4b3fb1a561
+--------
+user
+# Task: REQ-012 / 01 — figma-section-spec.py 보강
+
+## Paths
+- SPEC: /mnt/d/dev-base/.gran-maestro/requests/REQ-012/tasks/01/spec.md
+- PLAN: /mnt/d/dev-base/.gran-maestro/plans/PLN-005/plan.md
+- WORKTREE: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01
+- TARGET: tools/figma-section-spec.py
+- REQ_ID: REQ-012
+- TASK_ID: 01
+
+## 작업 개요
+
+`tools/figma-section-spec.py`에 3종 신규 필드를 추가한다. 기존 출력 형식은 모두 유지(additive only).
+
+## 반드시 먼저 Read
+
+1. `SPEC` (AC 6개 — AC-001~006)
+2. `PLAN` (PLN-005 §3 B-1)
+3. `tools/figma-section-spec.py` 전체 (특히 `walk_and_extract`, `normalize_text_node`, `normalize_frame_node`)
+4. `tools/figma-validate.py` (spec.json 소비 형식 — 신규 필드가 깨지지 않게)
+5. CLAUDE.md "텍스트 추출 품질" 섹션 (characterStyleOverrides 누적 병합 알고리즘)
+
+## 구현 항목
+
+### 1. character_segments[] (TEXT 노드)
+
+`normalize_text_node()`에 `character_segments` 필드 추가. Figma API 노드 객체에서:
+- `node.characters` (전체 텍스트)
+- `node.characterStyleOverrides` (배열, 인덱스 = 캐릭터 위치, 값 = override key)
+- `node.styleOverrideTable` (dict, key = override id 문자열, value = style+fills)
+
+#### 누적 병합 알고리즘 (CLAUDE.md 명시 — 정확 구현 필수)
+
+```python
+def build_character_segments(node):
+    chars = node.get("characters", "")
+    if not chars:
+        return []
+    overrides = node.get("characterStyleOverrides", []) or []
+    table = node.get("styleOverrideTable", {}) or {}
+    base_style = {**(node.get("style") or {})}
+    base_fills = node.get("fills") or []
+
+    segments = []
+    previous_resolved = None  # 누적 병합용
+
+    def resolve(override_id):
+        nonlocal previous_resolved
+        if override_id == 0 or override_id is None:
+            resolved = {**base_style, "fills": base_fills}
+        else:
+            override = table.get(str(override_id), {}) or {}
+            override_style = override.get("style") or {}
+            override_fills = override.get("fills")
+            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
+            resolved = {**base_for_merge, **override_style}
+            if override_fills is not None:
+                resolved["fills"] = override_fills
+        previous_resolved = resolved
+        return resolved
+
+    # 캐릭터별 override id 결정 (overrides가 chars보다 짧으면 나머지는 0)
+    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
+
+    # 동일 override id 구간끼리 병합
+    i = 0
+    while i < len(chars):
+        j = i
+        oid = override_ids[i]
+        while j + 1 < len(chars) and override_ids[j + 1] == oid:
+            j += 1
+        resolved = resolve(oid)
+        segment = {
+            "start": i,
+            "end": j + 1,
+            "text": chars[i:j+1],
+            "fontFamily": resolved.get("fontFamily"),
+            "fontSize": safe_round_3(resolved.get("fontSize")),
+            "fontWeight": safe_round_3(resolved.get("fontWeight")),
+            "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
+            "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
+            "color": extract_text_color(resolved.get("fills")),
+        }
+        segments.append(segment)
+        i = j + 1
+    return segments
+```
+
+#### `normalize_text_node()` 반환 dict에 추가
+```python
+"character_segments": build_character_segments(node),
+```
+
+### 2. cornerRadius / rectangleCornerRadii / border_radius_hint (FRAME 노드)
+
+`normalize_frame_node()`에 추가:
+```python
+def extract_corner_radius(node, bbox):
+    cr = node.get("cornerRadius")
+    rcr = node.get("rectangleCornerRadii")  # [tl, tr, br, bl] 또는 None
+    hint = None
+    w = bbox.get("w") or 0
+    h = bbox.get("h") or 0
+    if cr is not None and w and h:
+        if cr >= min(w, h) / 2:
+            hint = "50%"
+    return {
+        "cornerRadius": safe_round_3(cr),
+        "rectangleCornerRadii": [safe_round_3(v) for v in rcr] if isinstance(rcr, list) else None,
+        "border_radius_hint": hint,
+    }
+```
+
+`normalize_frame_node` 반환 dict에 위 3개 키 spread:
+```python
+**extract_corner_radius(node, extract_bbox(node)),
+```
+
+### 3. bbox (TEXT 노드) + parent_id (모든 노드)
+
+#### TEXT 노드 bbox
+`normalize_text_node()` 반환 dict에 추가:
+```python
+"bbox": extract_bbox(node),
+```
+(이미 frame엔 있고, 같은 헬퍼 재사용)
+
+#### parent_id (TEXT/FRAME 모두)
+`walk_and_extract()` 의 walk 재귀 함수에 `parent_id` 인자 추가:
+```python
+def walk(node, parent_id=None):
+    if not isinstance(node, dict):
+        return
+    node_id = node.get("id")
+    
+    # text/frame normalize 시 parent_id 주입
+    if node.get("type") == "TEXT":
+        normalized = normalize_text_node(node)
+        normalized["parent_id"] = parent_id
+        text_nodes.append(normalized)
+    elif node.get("type") in ("FRAME", "GROUP", "INSTANCE", "COMPONENT", "RECTANGLE", "VECTOR"):
+        normalized = normalize_frame_node(node, image_refs)
+        normalized["parent_id"] = parent_id
+        frame_nodes.append(normalized)
+    # ...
+
+    for child in node.get("children", []) or []:
+        walk(child, parent_id=node_id)
+
+walk(root, parent_id=None)
+```
+
+> ⚠️ 기존 walk 시그니처가 다르면 신중하게 보존 — `parent_id` 추가가 기존 호출 chain을 깨지 않게 keyword-only로.
+
+## 검증
+
+### AC-001 (남성 character override)
+```bash
+cd {WORKTREE}
+FIGMA_TOKEN=figd_[REDACTED] python3 tools/figma-section-spec.py \
+  --file-key T8xEPS7sR5MZCUQ9JVa4hH --node-id 842:206 --output /tmp/req012 --name section_05_test
+python3 -c "
+import json
+d = json.load(open('/tmp/req012/section_05_test_spec.json'))
+target = [x for x in d['text_nodes'] if x['id']=='842:209'][0]
+segs = target['character_segments']
+print('Segments:', len(segs))
+for s in segs:
+    print(f\"  [{s['start']}-{s['end']}] {s['text']!r} color={s['color']}\")
+# 기대: '오직 ', '남성', '만을 위한' 3 segment + '남성' color #916046
+assert any('남성' in s['text'] and s['color']=='#916046' for s in segs), '남성 #916046 segment not found'
+print('AC-001 PASS')
+"
+```
+
+### AC-002 (cornerRadius 50%)
+```bash
+python3 -c "
+import json
+d = json.load(open('/tmp/req012/section_05_test_spec.json'))
+icon = [x for x in d['frame_nodes'] if x['id']=='842:222'][0]
+print('cornerRadius:', icon.get('cornerRadius'), 'hint:', icon.get('border_radius_hint'))
+assert icon.get('border_radius_hint')=='50%', f'border_radius_hint should be 50%, got {icon}'
+print('AC-002 PASS')
+"
+```
+
+### AC-003 (bbox + parent_id)
+```bash
+python3 -c "
+import json
+d = json.load(open('/tmp/req012/section_05_test_spec.json'))
+assert all('bbox' in n for n in d['text_nodes']), 'TEXT bbox missing'
+assert all('parent_id' in n for n in d['text_nodes']), 'TEXT parent_id missing'
+assert all('parent_id' in n for n in d['frame_nodes']), 'FRAME parent_id missing'
+print('AC-003 PASS')
+"
+```
+
+### AC-004 (회귀 무회귀)
+```bash
+# 기존 figma-validate.py가 새 spec.json을 그대로 소비할 수 있는지
+# 신규 필드가 추가됐을 뿐이므로 기존 키만 사용하는 figma-validate는 영향 없어야 함
+python3 tools/figma-validate.py --spec /tmp/req012/section_05_test_spec.json --html /dev/null --css /dev/null 2>&1 | head -5 || echo "expected error: html/css not exist, but no traceback"
+# REQ-008/02 회귀
+bash /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh 2>&1 | grep -E "^=|exit=" | head
+```
+
+### AC-005 (py_compile)
+```bash
+python3 -m py_compile tools/figma-section-spec.py && echo "AC-005 PASS"
+```
+
+### AC-006 (override 없는 노드 graceful)
+```bash
+python3 -c "
+import json
+d = json.load(open('/tmp/req012/section_05_test_spec.json'))
+deep = [x for x in d['text_nodes'] if x['id']=='842:216'][0]  # 'DEEP 플랜'
+segs = deep['character_segments']
+# override 없으면 단일 segment 또는 빈 배열
+print('DEEP 플랜 segments:', segs)
+assert len(segs) <= 1 or all(s.get('color') == segs[0].get('color') for s in segs), 'DEEP 플랜 should have single segment'
+print('AC-006 PASS')
+"
+```
+
+## 금지
+
+- 기존 spec.json 출력 키 변경/제거 금지 (additive only)
+- 외부 패키지 추가 금지 (stdlib만)
+- `tools/figma-validate.py` 수정 금지 (REQ-013에서)
+- git commit 금지 (PM이 사전검증 후 직접 커밋)
+
+## 완료 보고 (6~10줄)
+
+- 추가된 함수/필드 요약
+- AC-001~006 각 검증 결과 (PASS/FAIL + 출력 값)
+- py_compile 결과
+- 회귀 12개 fixture 결과 (base/scenarios exit codes)
+- 작업 중 발견된 엣지 케이스 (있다면)
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_state starting
+mcp: omx_memory starting
+mcp: omx_code_intel starting
+mcp: omx_trace starting
+mcp: omx_trace ready
+mcp: omx_code_intel ready
+mcp: omx_memory ready
+mcp: omx_state ready
+mcp startup: ready: omx_trace, omx_code_intel, omx_memory, omx_state
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청 범위는 `tools/figma-section-spec.py`에 신규 필드 3종을 additive하게 넣고, 기존 소비자/회귀를 깨지 않는지 검증하는 작업입니다. 먼저 `.omx` 상태와 필수 문서들(`SPEC`, `PLAN`, `CLAUDE.md`, 대상 스크립트, 소비자 스크립트)을 읽어 요구사항과 현재 구현을 맞춰보겠습니다.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'CLAUDE.md' -g '.omx/**' -g 'tools/figma-section-spec.py' -g 'tools/figma-validate.py' '/mnt/d/dev-base/.gran-maestro/requests/REQ-012/tasks/01/spec.md' '/mnt/d/dev-base/.gran-maestro/plans/PLN-005/plan.md'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01
+/mnt/d/dev-base/.gran-maestro/plans/PLN-005/plan.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-012/tasks/01/spec.md
+tool omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"})
+omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"}) success in 5ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false\n}"
+    }
+  ]
+}
+tool omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"})
+omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"}) success in 55ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"active_modes\":[]}"
+    }
+  ]
+}
+tool omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"})
+omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01"}) success in 2ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false,\n  \"content\": \"\"\n}"
+    }
+  ]
+}
+codex
+`.omx` 런타임 상태는 비어 있고, 세션 메모리도 없습니다. 이제 작업 지시서와 관련 구현을 직접 읽어서 정확한 변경 지점을 좁히겠습니다.
+Plan update
+Restoring context and executing the requested additive change with regression-focused verification.
+  → Read required docs and current implementation/consumer files to confirm acceptance criteria and data contracts
+  • Write a short cleanup/change plan, then patch tools/figma-section-spec.py additively
+  • Run requested verification suite and summarize AC/regression results with evidence
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-012/tasks/01/spec.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+# Implementation Spec
+
+- Request ID: REQ-012
+- Task ID: 01
+- Created: 2026-04-13
+- Status: pending
+- Assigned Agent: [config: codex-dev] → [도메인: backend/tools] → 최종: codex-dev
+- Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01
+- Complexity: Standard
+
+## §0 Context Manifest
+
+- tools/figma-section-spec.py
+- .gran-maestro/plans/PLN-005/plan.md
+- .gran-maestro/requests/REQ-011/tasks/01/report.md (Section_05 "남성" character override 사례)
+- /tmp/mojelim_extracted/section_05_spec.json (현재 출력 형식 참고)
+- /tmp/mojelim_extracted/section_hero_spec.json
+
+## 1. 요약 (Summary)
+
+exec
+/bin/bash -lc "sed -n '1,240p' /mnt/d/dev-base/.gran-maestro/plans/PLN-005/plan.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+# PLN-005 — 모제림 랜딩 레거시 섹션 재검증 + PLN-004 도구·워크플로우 보강
+
+- 생성일: 2026-04-13
+- Cynefin: Complicated
+- 상태: active
+
+## 1. 요청 (Refined)
+
+모제림 비절개 랜딩 프로젝트의 **레거시 4 섹션(Hero, Section_02, Section_03 일부 잔여, Section_04)** 이 PLN-004 도구가 만들어지기 전에 작성되어 한 번도 figma-validate.py 검증을 거치지 않은 상태다. Section_03을 직접 검증해본 결과 텍스트 환각·한국어 조사 오류·정렬·폰트 누락·color override 미반영 등 사용자가 직접 지적한 문제가 모두 spec과의 차이로 잡혔다.
+
+또한 Section_05 신규 작업 중 PLN-004 도구의 한계(characterStyleOverrides 미추출, cornerRadius 미추출, pseudo-element ::before false-positive, 외주 에이전트가 spec 파일을 못 읽음, 사용자 반복 피드백인 "section 좌우 padding 금지"가 brief에 자동 주입되지 않음)가 동시에 노출되었다.
+
+본 plan은 **두 갈래 작업을 단일 plan에 묶어** PLN-004 워크플로우를 실전에서 자기완결적으로 만든다:
+
+A. 레거시 3 섹션 재검증·정정 (Hero/Section_02/Section_04)
+B. PLN-004 도구·워크플로우 4종 보강
+
+## 2. 범위 (Scope)
+
+**포함**:
+exec
+/bin/bash -lc "rg --files | rg '("'^|/)CLAUDE'"\\.md"'$|(''^|/)tools/figma-section-spec'"\\.py"'$|(''^|/)tools/figma-validate'"\\.py"'$|(''^|/)AGENTS'"\\.md"'$'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+CLAUDE.md
+tools/figma-validate.py
+tools/figma-section-spec.py
+codex
+요구사항은 명확합니다. 다음 단계는 `figma-section-spec.py` 내부 구조와 `figma-validate.py` 소비 계약, 그리고 `CLAUDE.md`의 누적 병합 규칙을 대조해서 실제 패치 범위를 고정하는 것입니다.
+exec
+/bin/bash -lc "sed -n '1,280p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01exec
+/bin/bash -lc "sed -n '1,260p' CLAUDE.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Extract a Figma section into stable spec.json + spec.md outputs.
+
+Usage:
+  python3 tools/figma-section-spec.py \
+    --file-key <FILE_KEY> \
+    --node-id <NODE_ID> \
+    --output <OUTPUT_DIR> \
+    [--name <PREFIX>]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import tempfile
+from dataclasses import dataclass
+from urllib import error, parse, request
+ succeeded in 0ms:
+# Claude 규칙
+
+Claude AI 어시스턴트 전용 규칙입니다.
+
+---
+
+## 기본
+- `common.md` 규칙 우선 적용
+- 응답 언어: 한국어
+- 코드 주석: 영어만
+
+---
+
+## 프로젝트 초기 설정 (CRITICAL — 새 프로젝트 시작 시 필수)
+
+### 권한 자동 허용 설정
+새 프로젝트 시작 시 `{project}/.claude/settings.local.json`을 생성하여 모든 도구 접근을 자동 허용한다.
+파일 접근, 편집, 검색, Bash 실행 등에 대해 사용자에게 매번 확인을 묻지 않도록 한다.
+
+```json
+exec
+/bin/bash -lc "sed -n '1,260p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Validate generated HTML/CSS against normalized Figma section specs.
+
+Usage:
+  python3 tools/figma-validate.py --spec extracted/section_spec.json --html output.html --css output.css
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from dataclasses import dataclass, field
+from html import unescape
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Iterable
+
+
+exec
+/bin/bash -lc "sed -n '281,520p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+    )
+
+
+def fetch_node_document(file_key: str, node_id: str, token: str) -> dict:
+    query = parse.urlencode({"ids": node_id, "depth": 8})
+    data = api_get_json(f"/v1/files/{parse.quote(file_key)}/nodes?{query}", token)
+
+    nodes = data.get("nodes")
+    if not isinstance(nodes, dict):
+        fail("Invalid Figma response: 'nodes' is missing")
+
+    entry = nodes.get(node_id)
+    if not isinstance(entry, dict):
+        # fallback: sometimes ID keys are normalized by API
+        for key, candidate in nodes.items():
+            if key == node_id and isinstance(candidate, dict):
+                entry = candidate
+                break
+
+    if not isinstance(entry, dict):
+exec
+/bin/bash -lc 'rg -n "텍스트 추출 품질|characterStyleOverrides|styleOverrideTable|누적" CLAUDE.md' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+408:### 텍스트 추출 품질
+409:- 피그마 `TEXT` 노드에서 `characterStyleOverrides`가 있으면 오버라이드 구간을 분할해서 굵기/크기/색상 차이를 보존한다
+410:- `styleOverrideTable` 병합은 누적 방식:
+exec
+/bin/bash -lc 'rg -n "text_nodes|frame_nodes|parent_id|bbox|character_segments|cornerRadius|rectangleCornerRadii|border_radius_hint" tools/figma-validate.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+954:def validate_text_nodes(
+955:    text_nodes: list[dict],
+963:    for node in text_nodes:
+1024:def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> list[Violation]:
+1027:    for frame in frame_nodes:
+1143:    text_nodes = spec.get("text_nodes")
+1144:    frame_nodes = spec.get("frame_nodes")
+1146:    if not isinstance(text_nodes, list) or not isinstance(frame_nodes, list) or not isinstance(interactions, list):
+1147:        fail("Invalid spec JSON: expected text_nodes/frame_nodes/interactions arrays")
+1149:    text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules)
+1150:    frame_violations = validate_frame_nodes(frame_nodes, css_rules)
+exec
+/bin/bash -lc "sed -n '400,430p' CLAUDE.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+1. MCP 노드 트리 순서 = HTML DOM 순서
+2. MCP 그룹핑(부모-자식) = HTML wrapper 구조
+3. 모든 layoutMode/gap/padding이 CSS에 반영됨
+4. 1920px 스크린샷과 Figma 원본 이미지를 섹션별로 실제 비교 완료
+5. 비교에서 발견된 차이점이 모두 수정됨
+
+---
+
+### 텍스트 추출 품질
+- 피그마 `TEXT` 노드에서 `characterStyleOverrides`가 있으면 오버라이드 구간을 분할해서 굵기/크기/색상 차이를 보존한다
+- `styleOverrideTable` 병합은 누적 방식:
+  - `baseStyle = { ...node.style, fills: node.fills }`
+  - `previousResolvedStyle = null`
+  - overrideId `0` 또는 오버라이드 빈값이면 `resolved = baseStyle`
+  - 나머지는 `resolved = { ...(previousResolvedStyle ?? baseStyle), ...(override.style ?? {}), ...(override.fills ? { fills: override.fills } : {}) }`
+- `fontSize`, `fontWeight`, `fontFamily`, `fills`는 누락값을 이전 오버라이드 구간 값에서 상속하고, `lineHeightPx`/`letterSpacing`은 각각 `line-height`/`letter-spacing`으로 변환한다
+
+---
+
+### 기존 프로젝트 코드 참조 (필수)
+exec
+/bin/bash -lc "sed -n '940,1165p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+        score, notes = evaluate_frame_rule(rule, frame)
+        if score <= 0:
+            continue
+        ranked.append((score, rule.order, rule, notes))
+    if not ranked:
+        return None, []
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    return ranked[0][2], ranked[0][3]
+
+
+def rule_properties(rule: CSSRule) -> dict[str, PropertyValue]:
+    return {key: PropertyValue(value=value, selector=", ".join(rule.selectors), specificity=(0, 0, 0), order=rule.order, important=False) for key, value in rule.declarations.items()}
+
+
+def validate_text_nodes(
+    text_nodes: list[dict],
+    candidates: list[ElementMatch],
+    css_rules: list[CSSRule],
+) -> tuple[list[Violation], list[dict]]:
+    violations: list[Violation] = []
+codex
+구현 지점은 좁혀졌습니다. `figma-validate.py`는 `text_nodes/frame_nodes/interactions` 배열 존재만 전제하고 추가 필드는 무시하므로, 핵심은 `figma-section-spec.py`를 additive하게 확장하면서 markdown 렌더 컬럼도 필요한 만큼만 확장하는 것입니다.
+exec
+/bin/bash -lc 'find .. -name AGENTS.md -print' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 45ms:
+
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 867ms:
+
+codex
+이제 패치를 넣겠습니다. 변경은 `figma-section-spec.py` 한 파일로 제한하고, 기존 키 순서와 소비 계약은 유지한 채 helper 2개 추가, TEXT/FRAME normalize 확장, 재귀 부모 추적, markdown 컬럼만 후행 추가하는 방식으로 처리합니다.
+file update
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py
+@@ -166,2 +166,73 @@
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+@@ -184,2 +255,4 @@
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+@@ -188,2 +261,3 @@
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+@@ -191,3 +265,3 @@
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+@@ -201,2 +275,3 @@
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+@@ -255,3 +330,3 @@
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+@@ -261,7 +336,12 @@
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+@@ -270,5 +350,5 @@
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+@@ -422,2 +502,5 @@
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+@@ -440,2 +523,6 @@
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+apply_patch(auto_approved=true) exited 0 in 159ms:
+Success. Updated the following files:
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+패치는 들어갔습니다. 지금 확인할 포인트는 두 가지입니다: 누적 병합 로직이 요구된 순서대로 구현됐는지, 그리고 `parent_id`/`bbox`/반경 필드가 기존 출력 키를 건드리지 않고 후행 추가됐는지입니다.
+exec
+/bin/bash -lc 'git diff -- tools/figma-section-spec.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57af..82fca36 100644
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@ def extract_bbox(node: dict) -> dict:
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
+exec
+/bin/bash -lc 'python3 -m py_compile tools/figma-section-spec.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+Plan update
+Required docs read and the additive patch is in place; moving into verification against the requested acceptance checks.
+  ✓ Read required docs and current implementation/consumer files to confirm acceptance criteria and data contracts
+  ✓ Write a short cleanup/change plan, then patch tools/figma-section-spec.py additively
+  → Run requested verification suite and summarize AC/regression results with evidence
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+이제 실제 검증으로 넘어갑니다. 먼저 Figma에서 섹션 spec을 다시 생성한 뒤, 생성물 기준으로 AC-001~006과 회귀 스크립트를 순서대로 확인하겠습니다.
+exec
+/bin/bash -lc "FIGMA_TOKEN='figd_[REDACTED]' python3 tools/figma-section-spec.py --file-key T8xEPS7sR5MZCUQ9JVa4hH --node-id 842:206 --output /tmp/req012 --name section_05_test" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 exited 1 in 46ms:
+Figma API request failed: /v1/files/T8xEPS7sR5MZCUQ9JVa4hH/nodes?ids=842%3A206&depth=8
+<urlopen error [Errno -3] Temporary failure in name resolution>
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+외부 Figma 호출은 현재 셸 환경에서 막혀 있습니다. 네트워크 해상도 실패라서 실데이터 재추출은 불가능하고, 대신 로컬에 있는 관련 fixture/spec 산출물을 찾아서 additive 구조와 회귀를 최대한 검증하겠습니다.
+exec
+/bin/bash -lc "rg --files /tmp /mnt/d/dev-base/.gran-maestro | rg 'section_05.*spec\\.json"'$|section_hero_spec'"\\.json"'$|mojelim|req012'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 29ms:
+/tmp/mojelim_extracted/section_03_spec.json
+/tmp/mojelim_extracted/section_02_spec.md
+/tmp/mojelim_extracted/section_05_spec.json
+/tmp/mojelim_extracted/section_hero_spec.md
+/tmp/mojelim_extracted/section_04_spec.json
+/tmp/mojelim_extracted/section_05_spec.md
+/tmp/mojelim_extracted/section_03_spec.md
+/tmp/mojelim_extracted/section_04_spec.md
+/tmp/mojelim_extracted/section_hero_spec.json
+/tmp/mojelim_extracted/section_02_spec.json
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/validate-semantic.txt
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/running.log
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/figma-validate.txt
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/brief.md
+exec
+/bin/bash -lc 'bash /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 228ms:
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 02-line-height-missing ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 03-color-wrong ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 04-text-mutation ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 05-newline-lost ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 06-gap-wrong ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+=== 07-frame-missing ===
+python3: can't open file '/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/../tools/figma-validate.py': [Errno 2] No such file or directory
+exit=2
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+exec
+/bin/bash -lc "python3 -c \"import json; d=json.load(open('/tmp/mojelim_extracted/section_05_spec.json')); print('text_nodes', len(d.get('text_nodes', [])), 'frame_nodes', len(d.get('frame_nodes', []))); print('ids', [x.get('id') for x in d.get('text_nodes', []) if x.get('id') in ('842:209','842:216')], [x.get('id') for x in d.get('frame_nodes', []) if x.get('id')=='842:222'])\"" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+text_nodes 16 frame_nodes 26
+ids ['842:209', '842:216'] ['842:222']
+exec
+/bin/bash -lc "sed -n '1,220p' /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+#!/usr/bin/env bash
+# REQ-008-02 regression runner for tools/figma-validate.py
+set +e
+cd "$(dirname "$0")"
+ROOT=".."
+
+echo "=== base ==="
+python3 "$ROOT/tools/figma-validate.py" --spec base/section_spec.json --html base/index.html --css base/style.css
+echo "exit=$?"
+
+for dir in scenarios/*/; do
+  name=$(basename "$dir")
+  echo "=== $name ==="
+  python3 "$ROOT/tools/figma-validate.py" --spec "$dir/section_spec.json" --html "$dir/index.html" --css "$dir/style.css"
+  echo "exit=$?"
+done
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+실데이터 AC는 Figma 재추출이 막혀 있어 그대로 재현할 수 없습니다. 대신 두 갈래로 검증하겠습니다: `build_character_segments`/`walk_and_extract`를 합성 노드로 직접 때려서 신규 로직 자체를 확인하고, `figma-validate.py` 회귀는 현재 워크트리의 validator 경로로 수동 재실행해 실제 exit 패턴을 확인합니다.
+exec
+/bin/bash -lc "rg -n \"characterStyleOverrides|styleOverrideTable|842:209|842:216|842:222\" /tmp/mojelim_extracted /mnt/d/dev-base/.gran-maestro/tmp /mnt/d/dev-base/.gran-maestro -g '"'!**/*.png'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01exec
+/bin/bash -lc "python3 - <<'PY'
+import importlib.util
+from pathlib import Path
+path = Path('tools/figma-section-spec.py')
+spec = importlib.util.spec_from_file_location('figma_section_spec', path)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+# AC-001 style synthetic TEXT node with cumulative override merge.
+node = {
+    'id': 't1',
+    'name': 'hero-copy',
+    'type': 'TEXT',
+    'characters': '오직 남성만을 위한',
+    'style': {
+        'fontFamily': 'Pretendard',
+        'fontSize': 24,
+        'fontWeight': 400,
+        'lineHeightPx': 36,
+        'letterSpacing': 0,
+    },
+    'fills': [{'type': 'SOLID', 'color': {'r': 49/255, 'g': 45/255, 'b': 43/255}}],
+    'characterStyleOverrides': [0,0,0,1,1,2,2,2,2,2],
+    'styleOverrideTable': {
+        '1': {
+            'fills': [{'type': 'SOLID', 'color': {'r': 145/255, 'g': 96/255, 'b': 70/255}}]
+        },
+        '2': {
+            'fills': [{'type': 'SOLID', 'color': {'r': 49/255, 'g': 45/255, 'b': 43/255}}]
+        },
+    },
+    'absoluteBoundingBox': {'x': 1, 'y': 2, 'width': 300, 'height': 40},
+}
+segments = mod.build_character_segments(node)
+print('synthetic_segments=', segments)
+assert len(segments) == 3, segments
+assert segments[1]['text'] == '남성' and segments[1]['color'] == '#916046', segments
+
+# AC-002 synthetic frame for 50% hint.
+frame = {
+    'id': 'f1',
+    'name': 'avatar',
+    'type': 'FRAME',
+    'cornerRadius': 220,
+    'absoluteBoundingBox': {'x': 0, 'y': 0, 'width': 440, 'height': 440},
+}
+corner = mod.extract_corner_radius(frame, mod.extract_bbox(frame))
+print('synthetic_corner=', corner)
+assert corner['border_radius_hint'] == '50%', corner
+
+# AC-003/006 synthetic walk + graceful no-override text.
+root = {
+    'id': 'root',
+    'name': 'section',
+    'type': 'FRAME',
+    'absoluteBoundingBox': {'x': 0, 'y': 0, 'width': 500, 'height': 500},
+    'children': [
+        node,
+        {
+            'id': 't2',
+            'name': 'plain',
+            'type': 'TEXT',
+            'characters': 'DEEP 플랜',
+            'style': {
+                'fontFamily': 'Pretendard',
+                'fontSize': 20,
+                'fontWeight': 700,
+                'lineHeightPx': 28,
+                'letterSpacing': 0,
+            },
+            'fills': [{'type': 'SOLID', 'color': {'r': 0, 'g': 0, 'b': 0}}],
+            'absoluteBoundingBox': {'x': 10, 'y': 20, 'width': 90, 'height': 24},
+        },
+        frame,
+    ],
+}
+res = mod.walk_and_extract(root)
+plain = next(x for x in res.text_nodes if x['id'] == 't2')
+frame_row = next(x for x in res.frame_nodes if x['id'] == 'f1')
+print('synthetic_plain_segments=', plain['character_segments'])
+print('synthetic_parent_ids=', [(x['id'], x['parent_id']) for x in res.text_nodes], [(x['id'], x['parent_id']) for x in res.frame_nodes])
+assert 'bbox' in plain and plain['bbox']['w'] == 90, plain
+assert all('parent_id' in x for x in res.text_nodes), res.text_nodes
+assert all('parent_id' in x for x in res.frame_nodes), res.frame_nodes
+assert len(plain['character_segments']) <= 1, plain['character_segments']
+print('SYNTHETIC_AC_001_002_003_006 PASS')
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 exited 1 in 43ms:
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py", line 26, in <module>
+    @dataclass
+     ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1268, in dataclass
+    return wrap(cls)
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1258, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 983, in _process_class
+    and _is_type(type, cls, dataclasses, dataclasses.KW_ONLY,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 749, in _is_type
+    ns = sys.modules.get(cls.__module__).__dict__
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute '__dict__'. Did you mean: '__dir__'?
+ succeeded in 397ms:
+/tmp/mojelim_extracted/section_05_spec.json:15:      "id": "842:209",
+/tmp/mojelim_extracted/section_05_spec.json:29:      "id": "842:216",
+/tmp/mojelim_extracted/section_05_spec.json:431:      "id": "842:222",
+/tmp/mojelim_extracted/section_05_spec.md:12:| 842:209 | 오직 남성만을 위한 | 오직 남성만을 위한 | Noto Serif KR | 45 | 500 | 65.25 | 1.45 | -0.9 | #312d2b | CENTER | CENTER |
+/tmp/mojelim_extracted/section_05_spec.md:13:| 842:216 | DEEP 플랜 | DEEP 플랜 | Pretendard | 69 | 800 | 100.05 | 1.45 | -1.38 | #312d2b | CENTER | CENTER |
+/tmp/mojelim_extracted/section_05_spec.md:42:| 842:222 | Section_05_1 | {"x": 263, "y": 4779, "w": 162, "h": 162} |  |  |  |  |  |  |  |  | 22f5b17d1a339edfc30be28eca6518ef4e5169ce |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:12:| 842:209 | 오직 남성만을 위한 | 오직 남성만을 위한 | Noto Serif KR | 45 | 500 | 65.25 | 1.45 | -0.9 | #312d2b | CENTER | CENTER |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:13:| 842:216 | DEEP 플랜 | DEEP 플랜 | Pretendard | 69 | 800 | 100.05 | 1.45 | -1.38 | #312d2b | CENTER | CENTER |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:42:| 842:222 | Section_05_1 | {"x": 263, "y": 4779, "w": 162, "h": 162} |  |  |  |  |  |  |  |  | 22f5b17d1a339edfc30be28eca6518ef4e5169ce |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:12:| 842:209 | 오직 남성만을 위한 | 오직 남성만을 위한 | Noto Serif KR | 45 | 500 | 65.25 | 1.45 | -0.9 | #312d2b | CENTER | CENTER |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:13:| 842:216 | DEEP 플랜 | DEEP 플랜 | Pretendard | 69 | 800 | 100.05 | 1.45 | -1.38 | #312d2b | CENTER | CENTER |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.md:42:| 842:222 | Section_05_1 | {"x": 263, "y": 4779, "w": 162, "h": 162} |  |  |  |  |  |  |  |  | 22f5b17d1a339edfc30be28eca6518ef4e5169ce |
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:15:      "id": "842:209",
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:29:      "id": "842:216",
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:431:      "id": "842:222",
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:15:      "id": "842:209",
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:29:      "id": "842:216",
+/mnt/d/dev-base/.gran-maestro/tmp/mojelim_section_05/section_05_spec.json:431:      "id": "842:222",
+/mnt/d/dev-base/.gran-maestro/requests/REQ-014/request.json:4:  "original_request": "PLN-005 B-3 — rules/templates/publishing/impl-request.md에 (1) section padding 금지, (2) spec 파일 프로젝트 내부 경로, (3) 9개 figma-validate 카테고리, (4) characterStyleOverrides 처리, (5) cornerRadius 처리 5종을 인라인 주입.",
+/mnt/d/dev-base/.gran-maestro/discussion/DSC-001/rounds/00/synthesis.md:11:- **중복 합의**: 21개 이상의 규칙이 2~4개 파일에 중복 등장. `styleOverrideTable` 알고리즘이 파일마다 표현이 미묘하게 달라 드리프트 시작됨
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+합성 검증 스크립트는 모듈 로딩 방식 때문에 한 번 실패했습니다. 로더만 바로잡아서 다시 돌리면 신규 helper와 재귀 추적 자체는 오프라인으로 확인 가능합니다.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+path = Path('tools/figma-section-spec.py')
+spec = importlib.util.spec_from_file_location('figma_section_spec', path)
+mod = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = mod
+spec.loader.exec_module(mod)
+
+node = {
+    'id': '842:209',
+    'name': 'hero-copy',
+    'type': 'TEXT',
+    'characters': '오직 남성만을 위한',
+    'style': {
+        'fontFamily': 'Pretendard',
+        'fontSize': 24,
+        'fontWeight': 400,
+        'lineHeightPx': 36,
+        'letterSpacing': 0,
+    },
+    'fills': [{'type': 'SOLID', 'color': {'r': 49/255, 'g': 45/255, 'b': 43/255}}],
+    'characterStyleOverrides': [0, 0, 0, 1, 1, 2, 2, 2, 2, 2],
+    'styleOverrideTable': {
+        '1': {'fills': [{'type': 'SOLID', 'color': {'r': 145/255, 'g': 96/255, 'b': 70/255}}]},
+        '2': {'fills': [{'type': 'SOLID', 'color': {'r': 49/255, 'g': 45/255, 'b': 43/255}}]},
+    },
+    'absoluteBoundingBox': {'x': 1, 'y': 2, 'width': 300, 'height': 40},
+}
+segments = mod.build_character_segments(node)
+print('Segments:', len(segments))
+for s in segments:
+    print(f\"  [{s['start']}-{s['end']}] {s['text']"'!r} color={s['"'color']}\")
+assert len(segments) == 3, segments
+assert any('남성' in s['text'] and s['color'] == '#916046' for s in segments), segments
+
+frame = {
+    'id': '842:222',
+    'name': 'Section_05_1',
+    'type': 'FRAME',
+    'cornerRadius': 220,
+    'absoluteBoundingBox': {'x': 263, 'y': 4779, 'width': 162, 'height': 162},
+}
+corner = mod.extract_corner_radius(frame, mod.extract_bbox(frame))
+print('cornerRadius:', corner.get('cornerRadius'), 'hint:', corner.get('border_radius_hint'))
+assert corner.get('border_radius_hint') == '50%'
+
+root = {
+    'id': '842:206',
+    'name': 'Section_05',
+    'type': 'FRAME',
+    'absoluteBoundingBox': {'x': 0, 'y': 0, 'width': 500, 'height': 500},
+    'children': [
+        node,
+        {
+            'id': '842:216',
+            'name': 'plain',
+            'type': 'TEXT',
+            'characters': 'DEEP 플랜',
+            'style': {
+                'fontFamily': 'Pretendard',
+                'fontSize': 20,
+                'fontWeight': 700,
+                'lineHeightPx': 28,
+                'letterSpacing': 0,
+            },
+            'fills': [{'type': 'SOLID', 'color': {'r': 0, 'g': 0, 'b': 0}}],
+            'absoluteBoundingBox': {'x': 10, 'y': 20, 'width': 90, 'height': 24},
+        },
+        frame,
+    ],
+}
+res = mod.walk_and_extract(root)
+plain = next(x for x in res.text_nodes if x['id'] == '842:216')
+assert all('bbox' in n for n in res.text_nodes), res.text_nodes
+assert all('parent_id' in n for n in res.text_nodes), res.text_nodes
+assert all('parent_id' in n for n in res.frame_nodes), res.frame_nodes
+print('DEEP 플랜 segments:', plain['character_segments'])
+assert len(plain['character_segments']) <= 1 or all(s.get('color') == plain['character_segments'][0].get('color') for s in plain['character_segments'])
+print('OFFLINE_SYNTHETIC_PASS')
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+Segments: 3
+  [0-3] '오직 ' color=#312d2b
+  [3-5] '남성' color=#916046
+  [5-10] '만을 위한' color=#312d2b
+cornerRadius: 220 hint: 50%
+DEEP 플랜 segments: [{'start': 0, 'end': 7, 'text': 'DEEP 플랜', 'fontFamily': 'Pretendard', 'fontSize': 20, 'fontWeight': 700, 'lineHeightPx': 28, 'letterSpacing': 0, 'color': '#000000'}]
+OFFLINE_SYNTHETIC_PASS
+exec
+/bin/bash -lc 'python3 tools/figma-validate.py --spec /tmp/mojelim_extracted/section_05_spec.json --html /dev/null --css /dev/null' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 exited 1 in 0ms:
+카테고리 | 노드 | 기대값 | 실제값
+텍스트 위변조 | 842:209 (오직 남성만을 위한) | 오직 남성만을 위한 | HTML 텍스트 미발견
+텍스트 위변조 | 842:216 (DEEP 플랜) | DEEP 플랜 | HTML 텍스트 미발견
+텍스트 위변조 | 842:218 (남성 모발이식은 비어 보이는 부분을 채우는 것만으로 완성되지 않습니다. 이마 비율, M자 라인의 각도, 관자놀이 연결, 측면 밸런스, 기존 모발의 흐름까지 함께 봐야 더 자연스럽고 더 풍성해 보일 수 있습니다. 모제림은 단순히 모수를 나누는 것이 아니라, 얼굴형과 인상까지 고려해 남성에게 어울리는 비절개 디자인을 설계합니다.) | 남성 모발이식은 비어 보이는 부분을 채우는 것만으로 완성되지 않습니다. 이마 비율, M자 라인의 각도, 관자놀이 연결, 측면 밸런스, 기존 모발의 흐름까지 함께 봐야 더 자연스럽고 더 풍성해 보일 수 있습니다. 모제림은 단순히 모수를 나누는 것이 아니라, 얼굴형과 인상까지 고려해 남성에게 어울리는 비절개 디자인을 설계합니다. | HTML 텍스트 미발견
+텍스트 위변조 | 842:225 (1.) | 1. | HTML 텍스트 미발견
+텍스트 위변조 | 842:226 (이마 비율 고려) | 이마 비율 고려 | HTML 텍스트 미발견
+텍스트 위변조 | 842:227 (황금 비율 기준으로 개인 이마 구조를 정밀 분석해 최적의 헤어라인 위치를 결정합니다.) | 황금 비율 기준으로 개인 이마 구조를 정밀 분석해
+최적의 헤어라인 위치를 결정합니다. | HTML 텍스트 미발견
+텍스트 위변조 | 842:232 (2.) | 2. | HTML 텍스트 미발견
+텍스트 위변조 | 842:233 (M자 라인 설계) | M자 라인 설계 | HTML 텍스트 미발견
+텍스트 위변조 | 842:234 (각도와 깊이를 입체적으로 설계해 자연스러운 M자 라인을 완성합니다.) | 각도와 깊이를 입체적으로 설계해 자연스러운
+M자 라인을 완성합니다. | HTML 텍스트 미발견
+텍스트 위변조 | 842:240 (3.) | 3. | HTML 텍스트 미발견
+텍스트 위변조 | 842:241 (관자놀이 · 측면 보정) | 관자놀이 · 측면 보정 | HTML 텍스트 미발견
+텍스트 위변조 | 842:242 (측면 밸런스와 기존 모발의 흐름을 함께 계산해 어색함 없는 연결을 구현합니다.) | 측면 밸런스와 기존 모발의 흐름을 함께 계산해
+어색함 없는 연결을 구현합니다. | HTML 텍스트 미발견
+텍스트 위변조 | 842:247 (4.) | 4. | HTML 텍스트 미발견
+텍스트 위변조 | 842:248 (얼굴형 맞춤 디자인) | 얼굴형 맞춤 디자인 | HTML 텍스트 미발견
+텍스트 위변조 | 842:249 (얼굴형 · 인상 · 연령대까지 종합적으로 고려한 남성 전용 맞춤 비절개 디자인을 제공합니다.) | 얼굴형 · 인상 · 연령대까지 종합적으로 고려한
+남성 전용 맞춤 비절개 디자인을 제공합니다. | HTML 텍스트 미발견
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p = Path('/tmp/mojelim_extracted/section_05_spec.json')
+d = json.loads(p.read_text(encoding='utf-8'))
+print('842:209 raw color =', next(x for x in d['text_nodes'] if x['id']=='842:209')['color'])
+print('842:216 raw color =', next(x for x in d['text_nodes'] if x['id']=='842:216')['color'])
+print('842:222 raw bbox =', next(x for x in d['frame_nodes'] if x['id']=='842:222')['bbox'])
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+842:209 raw color = #312d2b
+842:216 raw color = #312d2b
+842:222 raw bbox = {'x': 263, 'y': 4779, 'w': 162, 'h': 162}
+exec
+/bin/bash -lc 'find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures -maxdepth 2 -type f | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/index.html
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/section_spec.json
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base/style.css
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/regression-report.md
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/run_regression.sh
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+REQ-008 회귀 스크립트는 경로가 깨져 있어서 그대로는 의미 있는 결과를 주지 못합니다. fixture 레이아웃을 다시 확인해서 현재 워크트리의 validator 경로로 같은 검증을 수동 재현하겠습니다.
+exec
+/bin/bash -lc 'find /mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures -maxdepth 3 -type d | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/base
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/01-font-family-missing
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/02-line-height-missing
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/03-color-wrong
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/04-text-mutation
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/05-newline-lost
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/06-gap-wrong
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/07-frame-missing
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/08-padding-wrong
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/09-line-box-mismatch
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/10-link-url-missing
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/11-clamp-missing
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/12-column-gap-used
+/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures/scenarios/13-inherited-font-ok
+exec
+/bin/bash -lc "ROOT=/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures; echo '=== base ==='; python3 tools/figma-validate.py --spec \""'$ROOT/base/section_spec.json" --html "$ROOT/base/index.html" --css "$ROOT/base/style.css" >/tmp/req012_reg_base.out 2>&1; echo "exit=$?"; sed -n '"'1,6p' /tmp/req012_reg_base.out" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 6ms:
+exit=0
+카테고리 | 노드 | 기대값 | 실제값
+PASS | - | 위반 0건 | -
+
+누락된 spec 행
+없음
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+from pathlib import Path
+root = Path('/mnt/d/dev-base/.gran-maestro/requests/REQ-008/tasks/02/regression-fixtures')
+validator = Path('/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-validate.py')
+results = []
+base = root / 'base'
+cmd = ['python3', str(validator), '--spec', str(base / 'section_spec.json'), '--html', str(base / 'index.html'), '--css', str(base / 'style.css')]
+proc = subprocess.run(cmd, capture_output=True, text=True)
+results.append(('base', proc.returncode, proc.stdout.splitlines()[:3], proc.stderr.splitlines()[:3]))
+for scenario in sorted((root / 'scenarios').iterdir()):
+    if not scenario.is_dir():
+        continue
+    cmd = ['python3', str(validator), '--spec', str(scenario / 'section_spec.json'), '--html', str(scenario / 'index.html'), '--css', str(scenario / 'style.css')]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    results.append((scenario.name, proc.returncode, proc.stdout.splitlines()[:3], proc.stderr.splitlines()[:3]))
+for name, code, stdout, stderr in results:
+    print(f'=== {name} ===')
+    print(f'exit={code}')
+    if stdout:
+        print('stdout:', ' | '.join(stdout))
+    if stderr:
+        print('stderr:', ' | '.join(stderr))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+ succeeded in 1.23s:
+=== base ===
+exit=0
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | PASS | - | 위반 0건 | - | 
+=== 01-font-family-missing ===
+exit=1
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | 폰트 5필드 완결성 | 1:10 (title) | font-family, font-size, font-weight, line-height, color | missing: font-family @ html > body > section.base_section > h2.base_title | 
+=== 02-line-height-missing ===
+exit=1
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | 폰트 5필드 완결성 | 1:11 (desc) | font-family, font-size, font-weight, line-height, color | missing: line-height @ html > body > section.base_section > p.base_desc | lineHeight 비율 일치 | 1:11 (desc) | 1.5 ±0.05 | - @ html > body > section.base_section > p.base_desc
+=== 03-color-wrong ===
+exit=1
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | fills color hex 일치 | 1:10 (title) | #090944 | #ff0000 @ html > body > section.base_section > h2.base_title | 
+=== 04-text-mutation ===
+exit=1
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | 텍스트 위변조 | 1:10 (title) | 반갑습니다 | HTML 텍스트 미발견 | 
+=== 05-newline-lost ===
+exit=1
+stdout: 카테고리 | 노드 | 기대값 | 실제값 | 줄바꿈 보존 | 1:11 (desc) | 첫째 줄\n둘째 줄 | 첫째 줄 둘째 줄 | 
+=== 06-gap-wrong ===
+exit=1
+codex
+회귀는 현재 validator 경로로 수동 재실행 중입니다. 여기서 필요한 건 전체 로그가 아니라 `base`와 각 scenario의 exit code 패턴이 기존 기대와 같은지입니다.
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+핵심 AC와 회귀 패턴은 확보됐습니다. 남은 확인은 이 변경이 기존 테스트 표면과도 충돌하지 않는지라서, 관련 정규화 테스트가 있으면 가장 근접한 것만 추가로 실행하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,220p' tests/test_normalization.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+
+
+ROOT = os.path.dirname(os.path.dirname(__file__))
+SCRIPT_PATH = os.path.join(ROOT, "tools", "figma-extract.py")
+
+
+spec = importlib.util.spec_from_file_location("figma_extract", SCRIPT_PATH)
+figma_extract = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(figma_extract)
+
+
+SAMPLE_TEXT = {
+    "id": "2:1",
+    "name": "title",
+    "type": "TEXT",
+exec
+/bin/bash -lc 'rg -n "pytest|unittest" pyproject.toml setup.cfg pytest.ini tox.ini .' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 exited 2 in 96ms:
+
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+exec
+/bin/bash -lc "sed -n '1,120p' pyproject.toml" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+exec
+/bin/bash -lc 'pytest -q tests/test_normalization.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 508ms:
+......                                                                   [100%]
+6 passed in 0.34s
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+코드 자체 검증은 끝났고, 마지막으로 편집 파일의 정적 진단만 한 번 더 보겠습니다. 여기서 깨끗하면 변경 파일 기준 검증 체인은 충분합니다.
+tool omx_code_intel.lsp_diagnostics({"file":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py"})
+omx_code_intel.lsp_diagnostics({"file":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py"}) success in 9ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"file\": \"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py\",\n  \"diagnosticCount\": 0,\n  \"diagnostics\": [],\n  \"command\": \"tsc skipped: no tsconfig found\"\n}"
+    }
+  ]
+}
+exec
+/bin/bash -lc 'git diff --stat' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 790ms:
+ tools/figma-section-spec.py | 99 ++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 93 insertions(+), 6 deletions(-)
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+exec
+/bin/bash -lc "nl -ba tools/figma-section-spec.py | sed -n '160,360p'; printf '
+---
+'; nl -ba tools/figma-section-spec.py | sed -n '490,535p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01 succeeded in 0ms:
+   160	        "x": safe_round_3(bbox.get("x")),
+   161	        "y": safe_round_3(bbox.get("y")),
+   162	        "w": safe_round_3(bbox.get("width")),
+   163	        "h": safe_round_3(bbox.get("height")),
+   164	    }
+   165	
+   166	
+   167	def build_character_segments(node: dict) -> list[dict]:
+   168	    chars = node.get("characters", "")
+   169	    if not isinstance(chars, str) or not chars:
+   170	        return []
+   171	
+   172	    overrides = node.get("characterStyleOverrides", []) or []
+   173	    table = node.get("styleOverrideTable", {}) or {}
+   174	    base_style = {**(node.get("style") or {})}
+   175	    base_fills = node.get("fills") or []
+   176	
+   177	    segments: list[dict] = []
+   178	    previous_resolved = None
+   179	
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+Plan update
+Implementation and verification are complete within the current environment; only live Figma extraction remained blocked by network/DNS restrictions, so equivalent offline checks were used for the new logic and local regressions were run directly.
+  ✓ Read required docs and current implementation/consumer files to confirm acceptance criteria and data contracts
+  ✓ Write a short cleanup/change plan, then patch tools/figma-section-spec.py additively
+  ✓ Run requested verification suite and summarize AC/regression results with evidence
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+codex
+- 변경 파일: [tools/figma-section-spec.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py:167) 하나만 수정했고, `build_character_segments()`/`extract_corner_radius()`를 추가해 `character_segments`, TEXT `bbox`, FRAME `cornerRadius`·`rectangleCornerRadii`·`border_radius_hint`, 모든 추출 노드 `parent_id`를 additive로 넣었습니다; 기존 키는 유지했고 markdown 컬럼도 후행 추가했습니다.
+- AC-001: `PASS (offline synthetic)`; 출력값 `Segments: 3`, `[0-3] '오직 ' #312d2b`, `[3-5] '남성' #916046`, `[5-10] '만을 위한' #312d2b`를 확인했습니다. 정확한 Figma 재추출 커맨드는 이 셸에서 DNS 실패로 실행 불가했습니다.
+- AC-002: `PASS (offline synthetic)`; 출력값 `cornerRadius: 220`, `hint: 50%`.
+- AC-003: `PASS (offline synthetic)`; TEXT 전부 `bbox`/`parent_id`, FRAME 전부 `parent_id`가 채워지는 것을 `walk_and_extract()` 경유로 확인했습니다.
+- AC-004: `PASS (manual compatibility/regression)`; `python3 tools/figma-validate.py --spec /tmp/mojelim_extracted/section_05_spec.json --html /dev/null --css /dev/null`는 traceback 없이 정상 리포트만 출력했습니다. REQ-008/02 회귀는 현재 validator 경로로 수동 재실행해 `base=0`, `01~12=1`, `13-inherited-font-ok=0`를 확인했습니다. 참고로 제공된 `run_regression.sh` 자체는 `../tools/figma-validate.py` 경로가 깨져 그대로는 `exit=2`입니다.
+- AC-005: `PASS`; `python3 -m py_compile tools/figma-section-spec.py` exit 0.
+- AC-006: `PASS (offline synthetic)`; `DEEP 플랜 segments: [{'start': 0, 'end': 7, ... 'color': '#000000'}]`로 단일 segment graceful 처리 확인했습니다.
+- 추가 검증: `pytest -q tests/test_normalization.py`는 `6 passed`, LSP diagnostics는 `0`건이었습니다.
+- 엣지 케이스: `characterStyleOverrides` 길이가 text보다 짧으면 나머지를 `0`으로 처리하고, override table 누락 필드는 직전 resolved style에서 누적 상속되도록 구현했습니다. 남은 리스크는 라이브 Section_05 JSON을 현재 셸에서 다시 생성해 exact AC 커맨드를 못 돌렸다는 점뿐입니다.
+file update:
+diff --git a/tools/figma-section-spec.py b/tools/figma-section-spec.py
+index 35b57afcbbc77bc4db6ca7baa8907ec91cb90bab..82fca36d3b054314d426d12e015f0c397076cf3c
+--- a/tools/figma-section-spec.py
++++ b/tools/figma-section-spec.py
+@@ -164,6 +164,77 @@
+     }
+ 
+ 
++def build_character_segments(node: dict) -> list[dict]:
++    chars = node.get("characters", "")
++    if not isinstance(chars, str) or not chars:
++        return []
++
++    overrides = node.get("characterStyleOverrides", []) or []
++    table = node.get("styleOverrideTable", {}) or {}
++    base_style = {**(node.get("style") or {})}
++    base_fills = node.get("fills") or []
++
++    segments: list[dict] = []
++    previous_resolved = None
++
++    def resolve(override_id):
++        nonlocal previous_resolved
++        if override_id == 0 or override_id is None:
++            resolved = {**base_style, "fills": base_fills}
++        else:
++            override = table.get(str(override_id), {}) or {}
++            override_style = override.get("style") or {}
++            override_fills = override.get("fills")
++            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
++            resolved = {**base_for_merge, **override_style}
++            if override_fills is not None:
++                resolved["fills"] = override_fills
++        previous_resolved = resolved
++        return resolved
++
++    override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
++
++    i = 0
++    while i < len(chars):
++        j = i
++        override_id = override_ids[i]
++        while j + 1 < len(chars) and override_ids[j + 1] == override_id:
++            j += 1
++        resolved = resolve(override_id)
++        segments.append(
++            {
++                "start": i,
++                "end": j + 1,
++                "text": chars[i : j + 1],
++                "fontFamily": resolved.get("fontFamily"),
++                "fontSize": safe_round_3(resolved.get("fontSize")),
++                "fontWeight": safe_round_3(resolved.get("fontWeight")),
++                "lineHeightPx": safe_round_3(resolved.get("lineHeightPx")),
++                "letterSpacing": safe_round_3(resolved.get("letterSpacing")),
++                "color": extract_text_color(resolved.get("fills")),
++            }
++        )
++        i = j + 1
++
++    return segments
++
++
++def extract_corner_radius(node: dict, bbox: dict) -> dict:
++    cr = node.get("cornerRadius")
++    rcr = node.get("rectangleCornerRadii")
++    hint = None
++    w = bbox.get("w") or 0
++    h = bbox.get("h") or 0
++    if cr is not None and w and h:
++        if cr >= min(w, h) / 2:
++            hint = "50%"
++    return {
++        "cornerRadius": safe_round_3(cr),
++        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
++        "border_radius_hint": hint,
++    }
++
++
+ def normalize_text_node(node: dict) -> dict:
+     style = node.get("style") if isinstance(node.get("style"), dict) else {}
+     font_size = style.get("fontSize")
+@@ -182,14 +253,17 @@
+         "color": extract_text_color(node.get("fills")),
+         "textAlignHorizontal": style.get("textAlignHorizontal"),
+         "textAlignVertical": style.get("textAlignVertical"),
++        "bbox": extract_bbox(node),
++        "character_segments": build_character_segments(node),
+     }
+ 
+ 
+ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
++    bbox = extract_bbox(node)
+     return {
+         "id": node.get("id"),
+         "name": node.get("name"),
+-        "bbox": extract_bbox(node),
++        "bbox": bbox,
+         "layoutMode": node.get("layoutMode"),
+         "paddingTop": safe_round_3(node.get("paddingTop")),
+         "paddingRight": safe_round_3(node.get("paddingRight")),
+@@ -199,6 +273,7 @@
+         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
+         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
+         "fills": extract_frame_fill(node.get("fills"), image_refs),
++        **extract_corner_radius(node, bbox),
+     }
+ 
+ 
+@@ -253,24 +328,29 @@
+     interactions: list[dict] = []
+     image_refs: set[str] = set()
+ 
+-    def walk(node: dict) -> None:
++    def walk(node: dict, *, parent_id=None) -> None:
+         if not isinstance(node, dict):
+             return
+ 
+         interactions.extend(extract_url_interactions(node))
+ 
++        node_id = node.get("id")
+         node_type = node.get("type")
+         if node_type == "TEXT":
+-            text_nodes.append(normalize_text_node(node))
++            normalized = normalize_text_node(node)
++            normalized["parent_id"] = parent_id
++            text_nodes.append(normalized)
+         if node_type == "FRAME":
+-            frame_nodes.append(normalize_frame_node(node, image_refs))
++            normalized = normalize_frame_node(node, image_refs)
++            normalized["parent_id"] = parent_id
++            frame_nodes.append(normalized)
+ 
+         children = node.get("children")
+         if isinstance(children, list):
+             for child in children:
+-                walk(child)
++                walk(child, parent_id=node_id)
+ 
+-    walk(root)
++    walk(root, parent_id=None)
+ 
+     return ExtractionResult(
+         section=section,
+@@ -420,6 +500,9 @@
+         "color",
+         "textAlignHorizontal",
+         "textAlignVertical",
++        "bbox",
++        "parent_id",
++        "character_segments",
+     ]
+     lines.append(render_table(text_columns, text_nodes))
+     lines.append("")
+@@ -438,6 +521,10 @@
+         "primaryAxisAlignItems",
+         "counterAxisAlignItems",
+         "fills",
++        "cornerRadius",
++        "rectangleCornerRadii",
++        "border_radius_hint",
++        "parent_id",
+     ]
+     lines.append(render_table(frame_columns, frame_nodes))
+     lines.append("")
+
+tokens used
+197,759
+- 변경 파일: [tools/figma-section-spec.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-012-01/tools/figma-section-spec.py:167) 하나만 수정했고, `build_character_segments()`/`extract_corner_radius()`를 추가해 `character_segments`, TEXT `bbox`, FRAME `cornerRadius`·`rectangleCornerRadii`·`border_radius_hint`, 모든 추출 노드 `parent_id`를 additive로 넣었습니다; 기존 키는 유지했고 markdown 컬럼도 후행 추가했습니다.
+- AC-001: `PASS (offline synthetic)`; 출력값 `Segments: 3`, `[0-3] '오직 ' #312d2b`, `[3-5] '남성' #916046`, `[5-10] '만을 위한' #312d2b`를 확인했습니다. 정확한 Figma 재추출 커맨드는 이 셸에서 DNS 실패로 실행 불가했습니다.
+- AC-002: `PASS (offline synthetic)`; 출력값 `cornerRadius: 220`, `hint: 50%`.
+- AC-003: `PASS (offline synthetic)`; TEXT 전부 `bbox`/`parent_id`, FRAME 전부 `parent_id`가 채워지는 것을 `walk_and_extract()` 경유로 확인했습니다.
+- AC-004: `PASS (manual compatibility/regression)`; `python3 tools/figma-validate.py --spec /tmp/mojelim_extracted/section_05_spec.json --html /dev/null --css /dev/null`는 traceback 없이 정상 리포트만 출력했습니다. REQ-008/02 회귀는 현재 validator 경로로 수동 재실행해 `base=0`, `01~12=1`, `13-inherited-font-ok=0`를 확인했습니다. 참고로 제공된 `run_regression.sh` 자체는 `../tools/figma-validate.py` 경로가 깨져 그대로는 `exit=2`입니다.
+- AC-005: `PASS`; `python3 -m py_compile tools/figma-section-spec.py` exit 0.
+- AC-006: `PASS (offline synthetic)`; `DEEP 플랜 segments: [{'start': 0, 'end': 7, ... 'color': '#000000'}]`로 단일 segment graceful 처리 확인했습니다.
+- 추가 검증: `pytest -q tests/test_normalization.py`는 `6 passed`, LSP diagnostics는 `0`건이었습니다.
+- 엣지 케이스: `characterStyleOverrides` 길이가 text보다 짧으면 나머지를 `0`으로 처리하고, override table 누락 필드는 직전 resolved style에서 누적 상속되도록 구현했습니다. 남은 리스크는 라이브 Section_05 JSON을 현재 셸에서 다시 생성해 exact AC 커맨드를 못 돌렸다는 점뿐입니다.
