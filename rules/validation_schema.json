@@ -34,6 +34,22 @@
         "basic",
         "landing"
       ],
+      "category": "css.layout",
+      "custom_handler": "section_width_formula",
+      "description": "섹션 폭 공식 강제: --width = Figma inner content width + 40, --padding = 20px, .cont 클래스 패턴 필수, 섹션은 full-bleed + background, 너비 제한은 .cont 내부에서만.",
+      "id": "section_width_formula",
+      "rationale": "프로젝트마다 반복되는 실수 방지: section에 Figma inner padding(240 등)을 직접 이식해\nbackground가 가운데만 나오고 content 정렬이 깨지는 문제. 공식을 코드로 강제한다.\n\n공식:\n- :root { --width: <figma_content_width + 40>; --padding: 20px; }\n- .cont { width: 100%; max-width: var(--width); margin: 0 auto; padding: 0 var(--padding); }\n- 배경이 있는 섹션은 full-width 유지 (max-width 직접 선언 금지, .cont 하위 사용)\n- border-box 기준 .cont 내부 content = --width - 2*--padding = Figma content width\n",
+      "selector": "custom:section_width_formula",
+      "severity": "error",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
       "category": "css.color",
       "description": "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용.",
       "id": "hex_color_only",
@@ -41,6 +57,51 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.color",
+      "custom_handler": "_check_no_hex8_literal",
+      "description": "8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외).",
+      "id": "no_hex8_literal",
+      "selector": "custom:_check_no_hex8_literal",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "custom_handler": "_check_box_sizing_redundant",
+      "description": "universal reset(*, *::before, *::after) 외 box-sizing:border-box 중복 선언을 금지한다.",
+      "id": "box_sizing_redundant",
+      "selector": "custom:_check_box_sizing_redundant",
+      "severity": "info",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "custom_handler": "_check_empty_media_block",
+      "description": "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외).",
+      "id": "empty_media_block",
+      "selector": "custom:_check_empty_media_block",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -302,6 +363,21 @@
     },
     {
       "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "custom_handler": "_check_font_family_redundant",
+      "description": "동일 font-family fallback 체인이 *, body, 개별 selector에 과다 반복되면 중복으로 간주한다.",
+      "id": "font_family_redundant",
+      "selector": "custom:_check_font_family_redundant",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
         "basic"
       ],
       "category": "css.typography",
@@ -344,6 +420,21 @@
         "landing"
       ],
       "category": "css.typography",
+      "custom_handler": "_check_landing_unit_mixed_scale",
+      "description": "landing 프로파일에서 html/body font-size에 clamp|vw|rem|calc 혼용을 금지한다.",
+      "id": "landing_unit_mixed_scale",
+      "selector": "custom:_check_landing_unit_mixed_scale",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
       "custom_handler": "check_letter_spacing_unit",
       "description": "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용.",
       "id": "letter_spacing_unit",
@@ -365,6 +456,21 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "custom_handler": "_check_line_height_tidy_ratio",
+      "description": "line-height 무단위 비율은 정돈 후보 목록(1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.45, 1.5, 1.6, 1.667, 1.75, 1.8, 2.0) 중 하나를 사용한다.",
+      "id": "line_height_tidy_ratio",
+      "selector": "custom:_check_line_height_tidy_ratio",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -827,6 +933,22 @@
     {
       "applies_to": [
         "common",
+        "basic",
+        "landing",
+        "figma"
+      ],
+      "category": "figma.mapping",
+      "description": "Figma primaryAxis/counterAxis 정렬은 layoutMode에 따라 CSS justify-content/align-items 매핑이 바뀐다.",
+      "id": "figma_alignment_axis_mapping",
+      "rationale": "기존 문서는 primaryAxisAlignItems→justify-content 1:1 매핑만 명시했고\nlayoutMode에 따른 축 전환(HORIZONTAL: primary=수평, VERTICAL: primary=수직)은 빠져 있어서\n세션마다 매핑 결과가 달라졌다.\n\nDecision tree:\n┌─ layoutMode == HORIZONTAL\n│    primaryAxis(수평)  → justify-content\n│    counterAxis(수직)  → align-items\n│\n├─ layoutMode == VERTICAL\n│    primaryAxis(수직)  → justify-content  (flex-direction:column 전제)\n│    counterAxis(수평)  → align-items\n│\n└─ layoutMode == NONE\n     children absolute positioned — CSS 정렬 속성 미사용\n\nValue mapping (양쪽 축 공통):\n  MIN           → flex-start\n  CENTER        → center\n  MAX           → flex-end\n  SPACE_BETWEEN → space-between  (primary axis only)\n\ntextAlignHorizontal → text-align (LEFT/CENTER/RIGHT/JUSTIFIED)\ntextAlignVertical   → 무시 (inline 요소는 vertical-align 대신 부모 align-items로 처리)\n",
+      "selector": "type:documentation",
+      "severity": "info",
+      "target": "none",
+      "type": "documentation"
+    },
+    {
+      "applies_to": [
+        "common",
         "figma"
       ],
       "category": "figma.mapping",
@@ -905,6 +1027,22 @@
     {
       "applies_to": [
         "common",
+        "basic",
+        "landing",
+        "figma"
+      ],
+      "category": "figma.mapping",
+      "description": "Figma itemSpacing → CSS gap 또는 margin 선택은 간격 균일성·layoutMode·정렬 복잡도로 결정한다.",
+      "id": "gap_vs_margin_decision",
+      "rationale": "기존 문서는 '동일 간격이면 gap, 다르면 margin'이라는 정성적 판단만 제시했다.\n이번 룰은 수치 임계치와 decision tree로 고정한다.\n\nStep 1 — 간격 균일성 측정:\n  적응성 판정: child 간 실측 간격의 max - min 값\n  ≤ 1px  → \"완전 균일\" (gap 사용 가능)\n  ≤ 3px  → \"거의 균일\" (gap 허용, 1px 오차는 pixel snap)\n  > 3px  → \"비균일\" (개별 margin 강제)\n\nStep 2 — layoutMode별 분기:\n\n  layoutMode == HORIZONTAL:\n    - 균일 → display:flex; flex-direction:row; gap:{itemSpacing}px;\n    - 비균일 → display:flex; flex-direction:row; + 자식별 margin-left:{gap_n}px\n              (첫 자식 제외, `.parent > * + * {margin-left:Xpx}` 관용구)\n\n  layoutMode == VERTICAL:\n    - 균일 + 정렬 제어 필요(align-items 사용) → display:flex; flex-direction:column\n              + 자식별 margin-top (common.md no_column_gap 규칙상 column에 gap 금지)\n    - 균일 + 정렬 제어 불필요 → display:block; 자식별 margin-top 동일값\n    - 비균일 → display:block; 자식별 margin-top 개별값\n\nStep 3 — 관용구:\n  - `.parent > * + * {margin-top:Xpx}` 이 표준 (첫 자식 margin 불필요)\n  - 방향은 항상 `margin-top` (다음 자식 위쪽에 붙임), `margin-bottom` 금지\n  - 단, 마지막 자식 특수 margin-bottom 이 필요하면 허용\n\nStep 4 — 혼합 케이스:\n  - HORIZONTAL wrap 레이아웃에서 `row-gap`/`column-gap` 분리 지정 가능\n  - gap의 두 값 형식 `gap: row column;` 는 허용\n",
+      "selector": "type:documentation",
+      "severity": "info",
+      "target": "none",
+      "type": "documentation"
+    },
+    {
+      "applies_to": [
+        "common",
         "figma"
       ],
       "category": "figma.mapping",
@@ -955,6 +1093,38 @@
       "severity": "error",
       "target": "html",
       "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "figma.fidelity",
+      "custom_handler": "figma_cardinality_match",
+      "description": "Figma 카드 슬롯 수(component variant dedup 후) == HTML main section <li> 수. variant를 별개 카드로 오인 방지.",
+      "id": "figma_cardinality_match",
+      "rationale": "Figma 컴포넌트 variant(default/hover/state 등)가 같은 위치에 stacked되어 있으면\ntext_nodes로 뽑을 때 variant 수만큼 중복이 나온다. HTML 작성자가 이를 별개 카드로\n오인하면 카드 수가 잘못됨. 예: 에이스디펜스 main_company는 Figma 3 슬롯 + 2 variant\noverlap이지만 HTML이 4 카드로 작성됐던 실제 사례.\n",
+      "selector": "custom:figma_cardinality_match",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing",
+        "figma"
+      ],
+      "category": "figma.fidelity",
+      "description": "Figma 카드/리스트 아이템 개수 결정: 고유 bbox 슬롯 수 + component variant dedup + instance 그룹.",
+      "id": "figma_item_count_rule",
+      "rationale": "기존 룰이 전무했기 때문에 text_nodes[] 개수로 카드 수를 추정했고 component variant overlap 시\nvariant를 별개 카드로 오인하는 사례가 반복됐다. 이 규칙은 figma_cardinality_match 와 짝으로 동작한다.\n\n카드 개수 결정 알고리즘:\n\nStep 1 — 리스트 컨테이너 식별:\n  부모 frame이 layoutMode=HORIZONTAL (또는 VERTICAL) + children 중\n  같은 componentId(또는 같은 size 반복) 인스턴스가 2개 이상 → \"list container\"\n\nStep 2 — 카드 후보 수집:\n  list container의 direct children 중:\n  - type == INSTANCE (component instance)\n  - width/height 동일 (±2px)\n  - 또는 frame name 패턴이 동일 (예: list_img_company, list_card 등)\n\nStep 3 — Variant dedup:\n  같은 bbox.x 에 ±3px 이내로 겹치는 인스턴스 → component variant overlap으로 간주\n  → 첫 번째 인스턴스만 카드로 계수 (나머지는 상태 variant)\n\n  판단 근거: Figma에서 `I<instance_id>;<variant_id>;...` 형태로 parent_id 접두사가 같으면\n  같은 컴포넌트 set의 다른 variant.\n\nStep 4 — HTML 변환:\n  카드 수 N → `<ul class=\"XXX_list\"><li>` × N\n  각 li는 type=INSTANCE의 visible default variant 하나만 사용\n\nStep 5 — 검증:\n  figma_cardinality_match 룰이 HTML <li> 수와 Step 4의 N을 자동 대조하여 불일치 시 CRITICAL.\n",
+      "selector": "type:documentation",
+      "severity": "info",
+      "target": "none",
+      "type": "documentation"
     },
     {
       "applies_to": [
@@ -1036,6 +1206,22 @@
       "description": "fontSize/fontWeight/fontFamily/color 중 하나라도 다르면 별도 <span>으로 분리한다.",
       "id": "style_diff_span_required",
       "selector": "custom:style_diff_span_required",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "figma",
+        "basic",
+        "landing"
+      ],
+      "category": "figma.fidelity",
+      "custom_handler": "text_from_spec_required",
+      "description": "extracted/*_spec.json의 text_nodes[].characters는 반드시 HTML에 나타나야 한다. AI가 텍스트를 추론/축약/복원하면 안 된다.",
+      "id": "text_from_spec_required",
+      "selector": "custom:text_from_spec_required",
       "severity": "error",
       "target": "html",
       "type": "custom"

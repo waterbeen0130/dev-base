@@ -847,24 +847,43 @@ def collect_text_candidates(root: DOMElement) -> list[ElementMatch]:
     return candidates
 
 
-def match_text_node(text_value: str, candidates: list[ElementMatch]) -> ElementMatch | None:
+def match_text_node(
+    text_value: str,
+    candidates: list[ElementMatch],
+    spec_ratio: float | None = None,
+    css_rules: list[CSSRule] | None = None,
+) -> ElementMatch | None:
     normalized = normalize_text_for_match(text_value)
     if not normalized:
         return None
 
-    ranked: list[tuple[int, int, int, int, ElementMatch]] = []
+    ranked: list[tuple[int, int, int, int, int, ElementMatch]] = []
     for candidate in candidates:
         if normalized not in candidate.normalized_text:
             continue
         exact = 0 if candidate.normalized_text == normalized else 1
         excess = len(candidate.normalized_text) - len(normalized)
+        ratio_penalty = 2
+        if spec_ratio is not None and css_rules is not None:
+            try:
+                props = compute_element_properties(candidate.element, css_rules)
+                actual_ratio = parse_line_height_ratio(
+                    props.get("line-height").value if props.get("line-height") else None,
+                    props.get("font-size").value if props.get("font-size") else None,
+                )
+                if actual_ratio is not None and abs(actual_ratio - spec_ratio) <= 0.05:
+                    ratio_penalty = 0
+                elif actual_ratio is not None:
+                    ratio_penalty = 1
+            except Exception:
+                pass
         depth_rank = -candidate.element.depth
-        ranked.append((exact, excess, depth_rank, candidate.element.order, candidate))
+        ranked.append((exact, ratio_penalty, excess, depth_rank, candidate.element.order, candidate))
 
     if not ranked:
         return None
-    ranked.sort(key=lambda item: item[:4])
-    return ranked[0][4]
+    ranked.sort(key=lambda item: item[:5])
+    return ranked[0][5]
 
 
 def build_special_whitespace_regex(text: str) -> str:
@@ -875,11 +894,15 @@ def build_special_whitespace_regex(text: str) -> str:
         if not buffer:
             return
         segment = "".join(buffer)
+        # Preserve leading/trailing whitespace as optional \s* so regex allows
+        # original space characters that precede/follow non-space tokens.
+        leading = r"\s*" if segment and segment[0].isspace() else ""
+        trailing = r"\s*" if segment and segment[-1].isspace() else ""
         tokens = re.split(r"\s+", segment.strip())
         if not tokens or tokens == [""]:
             parts.append(r"\s+")
         else:
-            parts.append(r"\s+".join(re.escape(token) for token in tokens if token))
+            parts.append(leading + r"\s+".join(re.escape(token) for token in tokens if token) + trailing)
         buffer.clear()
 
     for char in text:
@@ -1130,9 +1153,20 @@ def validate_text_nodes(
     violations: list[Violation] = []
     missing_rows: list[dict] = []
     property_cache: dict[int, dict[str, PropertyValue]] = {}
+    used_orders: set[int] = set()
 
     for node in text_nodes:
-        match = match_text_node(node.get("characters", ""), candidates)
+        spec_ratio = node.get("lineHeightRatio")
+        try:
+            spec_ratio = float(spec_ratio) if spec_ratio is not None else None
+        except (TypeError, ValueError):
+            spec_ratio = None
+        available = [c for c in candidates if c.element.order not in used_orders]
+        match = match_text_node(node.get("characters", ""), available, spec_ratio, css_rules)
+        if match is None:
+            match = match_text_node(node.get("characters", ""), candidates, spec_ratio, css_rules)
+        if match is not None:
+            used_orders.add(match.element.order)
         if match is None:
             missing_rows.append(node)
             add_violation(violations, "텍스트 위변조", node, node.get("characters", ""), "HTML 텍스트 미발견")
@@ -1257,7 +1291,9 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                 expected = frame.get(f"padding{side.capitalize()}")
                 if not value_matches_px(padding.get(side), expected):
                     missing_bits.append(f"padding-{side}={expected}")
-            if spacing not in (None, 0) and not any(value_matches_px(value, spacing) for value in gap_values):
+            # VERTICAL frames use margin-top per common.md (no-column-gap rule) — skip gap check here,
+            # column flex gap 금지 below handles the reverse.
+            if spacing not in (None, 0) and str(frame.get("layoutMode") or "").upper() != "VERTICAL" and not any(value_matches_px(value, spacing) for value in gap_values):
                 missing_bits.append(f"gap={spacing}")
             if missing_bits:
                 add_violation(
@@ -1273,7 +1309,8 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
             expected = frame.get(f"padding{side.capitalize()}")
             if isinstance(expected, (int, float)) and expected >= 100:
                 clamp_targets.append((f"padding-{side}", expected))
-        if isinstance(spacing, (int, float)) and spacing >= 100:
+        # Skip gap clamp for VERTICAL frames (common.md: no gap on column flex, use margin-top)
+        if isinstance(spacing, (int, float)) and spacing >= 100 and str(frame.get("layoutMode") or "").upper() != "VERTICAL":
             clamp_targets.append(("gap", spacing))
 
         for prop_name, expected in clamp_targets:
@@ -1291,7 +1328,10 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                     f"{render_value(actual_value)} @ {rule_display}",
                 )
 
-        if str(frame.get("layoutMode") or "").upper() == "VERTICAL" and any(prop in props for prop in ("gap", "row-gap", "column-gap")):
+        matched_flex_dir = ""
+        if "flex-direction" in props:
+            matched_flex_dir = str(props["flex-direction"].value).strip().lower()
+        if str(frame.get("layoutMode") or "").upper() == "VERTICAL" and matched_flex_dir == "column" and any(prop in props for prop in ("gap", "row-gap", "column-gap")):
             add_violation(
                 violations,
                 "column flex gap 금지",

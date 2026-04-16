@@ -32,12 +32,29 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run figma-validate + validate-semantic and classify post-impl verification results."
     )
-    parser.add_argument("--spec", required=True, help="Path to section spec JSON")
+    parser.add_argument("--spec", required=False, help="Path to section spec JSON (auto-discovered if omitted)")
     parser.add_argument("--html", required=True, help="Path to generated HTML")
     parser.add_argument("--css", required=True, help="Path to generated CSS")
     parser.add_argument("--profile", default="all", help="validate-semantic profile")
     parser.add_argument("--json", action="store_true", dest="json_output", help="Emit JSON output")
+    parser.add_argument("--no-figma", action="store_true", help="Skip figma-validate step (not recommended)")
     return parser.parse_args()
+
+
+def auto_discover_spec(html_path: str) -> str | None:
+    """Walk up from html path to find extracted/*_spec.json."""
+    start = Path(html_path).resolve().parent
+    current = start
+    for _ in range(6):
+        for candidate in (current / "extracted", current.parent / "extracted", current.parent.parent / "extracted"):
+            if candidate.is_dir():
+                specs = sorted(candidate.glob("*_spec.json"))
+                if specs:
+                    return str(specs[0])
+        if current.parent == current:
+            break
+        current = current.parent
+    return None
 
 
 def run_validator(command: list[str]) -> tuple[int, str]:
@@ -177,16 +194,18 @@ def parse_validate_semantic_output(output: str, exit_code: int) -> dict[str, obj
 
 def build_commands(args: argparse.Namespace) -> tuple[list[str], list[str]]:
     tools_dir = Path(__file__).resolve().parent
-    figma_command = [
-        sys.executable,
-        str(tools_dir / "figma-validate.py"),
-        "--spec",
-        str(Path(args.spec)),
-        "--html",
-        str(Path(args.html)),
-        "--css",
-        str(Path(args.css)),
-    ]
+    figma_command: list[str] = []
+    if args.spec and not args.no_figma:
+        figma_command = [
+            sys.executable,
+            str(tools_dir / "figma-validate.py"),
+            "--spec",
+            str(Path(args.spec)),
+            "--html",
+            str(Path(args.html)),
+            "--css",
+            str(Path(args.css)),
+        ]
     semantic_command = [
         sys.executable,
         str(tools_dir / "validate-semantic.py"),
@@ -256,9 +275,24 @@ def render_text_output(
 
 def main() -> int:
     args = parse_args()
+    # Auto-discover spec when not provided
+    if not args.spec and not args.no_figma:
+        discovered = auto_discover_spec(args.html)
+        if discovered:
+            args.spec = discovered
+            print(f"[post-impl-verify] auto-discovered spec: {discovered}", file=sys.stderr)
+        else:
+            print("[post-impl-verify] WARNING: no *_spec.json discovered — figma-validate will be skipped. "
+                  "Pass --spec explicitly to force text fidelity verification, or --no-figma to silence this warning.",
+                  file=sys.stderr)
+            args.no_figma = True
+
     figma_command, semantic_command = build_commands(args)
 
-    figma_exit_code, figma_output = run_validator(figma_command)
+    if args.no_figma:
+        figma_exit_code, figma_output = 0, "figma-validate skipped (--no-figma)"
+    else:
+        figma_exit_code, figma_output = run_validator(figma_command)
     semantic_exit_code, semantic_output = run_validator(semantic_command)
 
     figma_result = parse_figma_output(figma_output, figma_exit_code)
