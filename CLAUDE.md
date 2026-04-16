@@ -168,10 +168,10 @@ Task(subagent_type: "general-purpose", prompt: ...)
 - 모든 요소에 개별 클래스 부여 금지 — 부모+태그 선택자 우선
 - 짧은 라벨에 <p> 금지 — <span> 사용
 
-### Figma MCP 값 사용 규칙 (인라인)
-- Figma MCP 응답의 노드 속성을 직접 해석하여 CSS 값 결정
-- 섹션 단위로 MCP 호출 (전체 페이지 한번에 처리 금지)
-- layoutMode/itemSpacing/padding/fills/style 등 Figma 속성 → CSS 변환 규칙 준수
+### Figma Spec 값 사용 규칙 (인라인)
+- Figma 섹션 작업은 반드시 `figma-section-spec.py`로 생성된 spec.md/spec.json만 참조
+- CSS 값은 spec.md/spec.json의 추출값만 사용
+- raw Figma API/Figma MCP 응답 직접 해석 금지
 - 구현 후 validate-semantic.py로 규칙 검증 필수
 ```
 
@@ -359,80 +359,6 @@ python3 tools/post-impl-verify.py \
 - PM은 외주 완료 알림을 받으면 위 명령을 먼저 실행하고, exit code 확인 후 다음 액션(commit 또는 재dispatch)을 선택한다.
 - `validate-semantic.py` 요약은 함께 출력되지만, post-impl 후처리의 1차 재dispatch 기준은 위 `CRITICAL`/`MAJOR` 분류와 semantic CRITICAL 여부다.
 - 재dispatch 브리프에는 위반 원문을 축약하지 말고 그대로 붙여서 수정 근거를 남긴다.
-
----
-
-## 피그마 MCP 기반 워크플로우 (참고 — 위 5단계 플로우 내부의 보조 수단)
-
-> **Figma MCP(`mcp__figma__get_figma_data`)로 섹션별 데이터를 가져와 AI가 직접 해석한다.**
-> 섹션 단위 MCP 호출은 컨텍스트가 작아 AI가 정확하게 해석할 수 있다.
-
-### 핵심 원칙
-- **섹션별 MCP 호출**: 전체 페이지를 한번에 처리하지 않고, 섹션(노드) 단위로 MCP 호출
-- **AI 직접 해석 허용**: MCP 응답은 섹션 단위이므로 AI가 직접 해석해도 정확도 유지
-- **검증은 validate-semantic.py**: 구현 완료 후 규칙 준수 여부를 자동 검증
-
-### 도구
-
-| 도구 | 용도 | 실행 시점 |
-|------|------|----------|
-| **Figma MCP** (`get_figma_data`) | 섹션별 Figma 노드 데이터 조회 | spec 작성 시 / 구현 시 |
-| **Figma MCP** (`download_figma_images`) | 이미지/아이콘 다운로드 | 구현 시 |
-| **validate-semantic.py** | HTML/CSS 규칙 검증 | 구현 완료 후 |
-| **figma-extract.py** (선택) | MCP 응답 → mapping.json 생성 (값 대조 검증용) | 정밀 검증 필요 시 |
-
-### Phase 1: 섹션 구조 파악
-
-```
-1. Figma MCP로 전체 프레임 조회 (depth 얕게)
-   → mcp__figma__get_figma_data(fileKey, nodeId, depth=1)
-2. 최상위 자식 노드(섹션) 목록 확인
-3. 각 섹션의 nodeId, 이름, 유형 정리
-```
-
-### Phase 2: 섹션별 구현 (커서+오푸스 방식)
-
-```
-각 섹션마다:
-1. Figma MCP로 해당 섹션 데이터 조회
-   → mcp__figma__get_figma_data(fileKey, nodeId=섹션ID)
-2. AI가 MCP 응답을 직접 해석하여 HTML/CSS 생성
-   - layoutMode → flex 필요 여부 먼저 판단 (세로+간격 제각각이면 block, 가로 배치면 flex)
-   - itemSpacing → 간격 동일하면 gap, 다르면 개별 margin
-   - padding* → padding
-   - fills → background/color (hex 변환)
-   - style → font-size, font-weight, line-height(비율), letter-spacing(em)
-3. 이미지 노드는 Figma MCP로 다운로드
-   → mcp__figma__download_figma_images(fileKey, nodes, localPath)
-4. 다음 섹션으로 진행
-```
-
-### Phase 3: 검증 (필수)
-
-```bash
-# HTML/CSS 규칙 검증
-# TODO: validator 확장 필요 (REQ-005+) — --type basic|landing 미지원
-python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
-```
-
-### Phase 3+: 정밀 값 대조 검증 (선택)
-
-MCP 응답을 저장하여 mapping.json을 생성하면 값 수준 대조 가능:
-```bash
-# MCP 응답을 파이프로 전달하여 mapping.json 생성
-echo '<mcp_response>' | python3 D:/dev-base/tools/figma-extract.py --stdin --name "<section>" --output ./extracted/ --json-only
-
-# mapping 기반 값 대조
-# TODO: validator 확장 필요 (REQ-005+) — --mapping / --type 미지원, 현재는 일반 검증만 실행
-python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <output.css>
-```
-
-### 퍼블리싱 프로젝트 템플릿
-
-퍼블리싱 프로젝트 시작 시 `D:\dev-base\rules\templates\publishing\` 의 config.json/agents.json을 `.gran-maestro/`에 복사:
-- `default_agent: "gemini-dev"` (Codex 미사용)
-- `figma_mcp.section_by_section: true` (섹션별 MCP 호출)
-- `validation.run_after_impl: true` (구현 후 검증 필수)
 
 ---
 
