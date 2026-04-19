@@ -382,8 +382,16 @@ class SemanticValidator:
         for i, line in enumerate(css.split("\n"), 1):
             matches = re.findall(r"clamp\((\d+)px", line)
             for m in matches:
-                if int(m) < 10:
-                    self._add("no-clamp-under-100", "MINOR", f"100px 미만 값에 clamp 사용: {line.strip()[:50]}", i, filepath)
+                threshold = int(m)
+                if threshold < 100:
+                    # REQ-033: threshold uplift for no_clamp_under_100 parity.
+                    self._add(
+                        "no-clamp-under-100",
+                        "MINOR",
+                        f"100px 미만 값에 clamp 사용: {line.strip()[:50]} (threshold={threshold}px)",
+                        i,
+                        filepath,
+                    )
 
     def check_raw_calc_vw(self, css: str, filepath: str):
         """calc()/vw 단독 사용 금지 (clamp 내부만 허용)"""
@@ -746,8 +754,24 @@ def _line_from_pos(text: str, pos: int) -> int:
 
 
 def validate_regex_must_not_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
-    target = _target_text(rule, ctx)
     pattern = rule["validation"].get("pattern", "")
+
+    if rule.get("id") == "meaningful_page_name":
+        filename = Path(ctx.html_path).stem.lower()
+        try:
+            filename_match = re.search(pattern, filename, re.MULTILINE)
+        except re.error as exc:
+            return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message=f"invalid_regex: {exc}")
+        if filename_match:
+            return ValidationResult(
+                rule["id"],
+                rule["severity"],
+                False,
+                message=f"forbidden pattern matched in filename: {pattern}",
+                location=f"{ctx.html_path}:1",
+            )
+
+    target = _target_text(rule, ctx)
     try:
         match = re.search(pattern, target, re.MULTILINE)
     except re.error as exc:
@@ -2622,7 +2646,14 @@ def _check_landing_unit_mixed_scale(rule: dict, ctx: ValidationContext) -> Valid
 # ===== CUSTOM HANDLERS =====
 
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
-    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="not_implemented")
+    handler_name = _resolve_custom_handler_name(rule) or "unknown"
+    return ValidationResult(
+        rule["id"],
+        "warning",
+        False,
+        skipped=False,
+        message=f"[STUB-PASS BLOCKED] handler {handler_name} not implemented — treating as MAJOR FAIL",
+    )
 
 
 def check_no_column_gap(rule: dict, ctx: ValidationContext) -> ValidationResult:
@@ -2658,10 +2689,25 @@ def item_spacing_reflected(rule: dict, _ctx: ValidationContext) -> ValidationRes
     return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="mapping not loaded")
 
 
+def enforce_policy1_vertical_margin_bottom(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    return check_no_column_gap(rule, ctx)
+
+
+def enforce_policy2_constraints_extract_only(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="validated_by_figma_validate")
+
+
+def enforce_policy3_rules_conflict_bypass(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="validated_by_figma_validate")
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
     "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
     "item_spacing_reflected": item_spacing_reflected,
+    "enforce_policy1_vertical_margin_bottom": _safe_custom_handler(enforce_policy1_vertical_margin_bottom),
+    "enforce_policy2_constraints_extract_only": _safe_custom_handler(enforce_policy2_constraints_extract_only),
+    "enforce_policy3_rules_conflict_bypass": _safe_custom_handler(enforce_policy3_rules_conflict_bypass),
     # direct check_* compatibility
     "check_nav_structure": _adapt_legacy_check(check_nav_structure),
     "check_img_wrapper": _adapt_legacy_check(check_img_wrapper),

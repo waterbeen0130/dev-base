@@ -149,7 +149,7 @@ rules:
       pattern: "(sec_\\d+|section_\\d+|box\\d+)\""
 
   - id: meaningful_page_name
-    description: "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지)."
+    description: "의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다."
     severity: error
     priority: 100
     applies_to: [common, basic, landing]
@@ -194,6 +194,17 @@ rules:
 
   # ===== CSS format / structure =====
 
+  - id: selector_single_line
+    description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지)."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_selector_format
+
   - id: no_duplicate_selector
     description: "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언)."
     severity: warning
@@ -204,6 +215,28 @@ rules:
       type: custom
       target: css
       custom_handler: check_duplicate_selectors
+
+  - id: media_query_format
+    description: "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_media_indent
+
+  - id: no_media_indent
+    description: "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다."
+    severity: info
+    priority: 300
+    applies_to: [common, basic, landing]
+    category: css.format
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_media_indent
 
   - id: empty_media_block
     description: "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외)."

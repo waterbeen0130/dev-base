@@ -78,7 +78,7 @@
         "landing"
       ],
       "category": "html.naming",
-      "description": "HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지).",
+      "description": "의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다.",
       "id": "meaningful_page_name",
       "severity": "error",
       "target": "html",

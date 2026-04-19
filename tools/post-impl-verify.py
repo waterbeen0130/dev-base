@@ -49,6 +49,12 @@ V2_CATEGORIES = V1_CATEGORIES + (
     "v2.layoutSizing.stub",
     "v2.characterStyleOverrides.stub",
 )
+DRIFT_SOURCE_FILES = (
+    "rules/rules.yaml",
+    "rules/validation_schema.json",
+    "tools/validate-semantic.py",
+)
+DRIFT_CACHE_RELATIVE_PATH = Path(".gran-maestro/state/drift-cache.json")
 
 
 def parse_args() -> argparse.Namespace:
@@ -114,6 +120,105 @@ def run_validator(command: list[str]) -> tuple[int, str]:
     if result.stderr:
         output_parts.append(result.stderr.rstrip())
     return result.returncode, "\n".join(part for part in output_parts if part)
+
+
+def _project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def _read_json_file(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(payload, dict):
+        return payload
+    return {}
+
+
+def _is_drift_check_enabled(project_root: Path) -> bool:
+    config_path = project_root / ".gran-maestro" / "config.json"
+    payload = _read_json_file(config_path)
+    workflow = payload.get("workflow", {})
+    if isinstance(workflow, dict):
+        enabled = workflow.get("drift_check_enabled")
+        if isinstance(enabled, bool):
+            return enabled
+    return True
+
+
+def _collect_drift_source_mtimes(project_root: Path) -> dict[str, float]:
+    mtimes: dict[str, float] = {}
+    for rel_path in DRIFT_SOURCE_FILES:
+        target = project_root / rel_path
+        mtimes[rel_path] = target.stat().st_mtime if target.exists() else 0.0
+    return mtimes
+
+
+def _should_run_drift_check(cache_payload: dict[str, object], source_mtimes: dict[str, float]) -> bool:
+    cached_sources = cache_payload.get("sources")
+    if not isinstance(cached_sources, dict):
+        return True
+
+    for rel_path, current_mtime in source_mtimes.items():
+        cached_raw = cached_sources.get(rel_path)
+        if not isinstance(cached_raw, (int, float)):
+            return True
+        if float(cached_raw) < current_mtime:
+            return True
+    return False
+
+
+def _write_drift_cache(path: Path, source_mtimes: dict[str, float]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "sources": source_mtimes,
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _run_drift_check() -> dict[str, object]:
+    project_root = _project_root()
+    enabled = _is_drift_check_enabled(project_root)
+    if not enabled:
+        return {
+            "enabled": False,
+            "ran": False,
+            "passed": True,
+            "message": "[DRIFT] disabled (workflow.drift_check_enabled=false)",
+            "output": "",
+            "cache_path": str(project_root / DRIFT_CACHE_RELATIVE_PATH),
+        }
+
+    source_mtimes = _collect_drift_source_mtimes(project_root)
+    cache_path = project_root / DRIFT_CACHE_RELATIVE_PATH
+    cache_payload = _read_json_file(cache_path)
+    if not _should_run_drift_check(cache_payload, source_mtimes):
+        return {
+            "enabled": True,
+            "ran": False,
+            "passed": True,
+            "message": "[DRIFT] cache up-to-date",
+            "output": "",
+            "cache_path": str(cache_path),
+        }
+
+    drift_command = [sys.executable, str(project_root / "tools" / "check-rules-drift.py")]
+    drift_exit_code, drift_output = run_validator(drift_command)
+    if drift_exit_code == 0:
+        _write_drift_cache(cache_path, source_mtimes)
+
+    return {
+        "enabled": True,
+        "ran": True,
+        "passed": drift_exit_code == 0,
+        "message": "[DRIFT] check-rules-drift executed",
+        "output": drift_output,
+        "exit_code": drift_exit_code,
+        "cache_path": str(cache_path),
+    }
 
 
 def classify_ignore_reason(category: str, node: str, expected: str, actual: str) -> str | None:
@@ -453,6 +558,28 @@ def render_text_output(
 
 def main() -> int:
     args = parse_args()
+    drift_result = _run_drift_check()
+
+    if args.json_output:
+        if not bool(drift_result["passed"]):
+            print(
+                json.dumps(
+                    {
+                        "drift_check": drift_result,
+                        "summary": {"exit_code": 1},
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            return 1
+    else:
+        print(str(drift_result["message"]))
+        if not bool(drift_result["passed"]):
+            if drift_result["output"]:
+                print(str(drift_result["output"]))
+            print("post-impl-verify: exit=1")
+            return 1
+
     # Auto-discover spec when not provided
     if not args.spec and not args.no_figma:
         discovered = auto_discover_spec(args.html)
@@ -496,6 +623,7 @@ def main() -> int:
     overall_exit_code = determine_exit_code(figma_result, semantic_result)
 
     payload = {
+        "drift_check": drift_result,
         "figma_validate": figma_result,
         "validate_semantic": semantic_result,
         "auto_repair": auto_repair_result,
