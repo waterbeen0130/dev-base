@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -49,11 +50,16 @@ V2_FRAME_NODE_NULL_KEYS = (
     "layoutSizingVertical",
     "layoutGrow",
     "layoutAlign",
+    "componentId",
+    "componentSetId",
     "constraints",
     "rules_conflict",
     "_extra",
 )
 V2_VECTOR_NODE_NULL_KEYS = (
+    "viewBox",
+    "fillGeometryPathData",
+    "strokeGeometryPathData",
     "rules_conflict",
     "_extra",
 )
@@ -77,6 +83,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", required=True, help="Output directory")
     parser.add_argument("--name", help="Output filename prefix (default: section_<node-id>)")
     parser.add_argument("--codegen", action="store_true", help="Generate deterministic base HTML/CSS and tokens.json")
+    parser.add_argument(
+        "--emit-asset-manifest",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Emit <name>_asset_manifest.json alongside spec output",
+    )
     args = parser.parse_args()
 
     if args.from_spec:
@@ -606,6 +618,8 @@ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
         "layoutSizingVertical": normalize_enum(node.get("layoutSizingVertical"), LAYOUT_SIZING_VALUES, "FIXED"),
         "layoutGrow": normalize_layout_grow(node.get("layoutGrow")),
         "layoutAlign": normalize_enum(node.get("layoutAlign"), LAYOUT_ALIGN_VALUES, "INHERIT"),
+        "componentId": node.get("componentId") if isinstance(node.get("componentId"), str) else None,
+        "componentSetId": node.get("componentSetId") if isinstance(node.get("componentSetId"), str) else None,
         **extract_corner_radius(node, bbox),
     }
 
@@ -659,6 +673,107 @@ VECTOR_NODE_TYPES = {
 }
 
 
+def normalize_vector_path_data_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[str] = []
+    for item in value:
+        if isinstance(item, str):
+            normalized.append(item)
+    return normalized
+
+
+def extract_vector_geometry_paths(geometry: object) -> list[str]:
+    if not isinstance(geometry, list):
+        return []
+    extracted: list[str] = []
+    for item in geometry:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        if isinstance(path, str):
+            extracted.append(path)
+    return extracted
+
+
+def normalize_vector_viewbox(size: object) -> dict[str, float | int | None]:
+    if not isinstance(size, dict):
+        return {"width": None, "height": None}
+    return {
+        "width": safe_round_3(size.get("width")),
+        "height": safe_round_3(size.get("height")),
+    }
+
+
+def vector_path_content(node: dict) -> str:
+    fill_paths = normalize_vector_path_data_list(node.get("fillGeometryPathData"))
+    stroke_paths = normalize_vector_path_data_list(node.get("strokeGeometryPathData"))
+    if not fill_paths:
+        fill_paths = extract_vector_geometry_paths(node.get("fillGeometry"))
+    if not stroke_paths:
+        stroke_paths = extract_vector_geometry_paths(node.get("strokeGeometry"))
+    return "\n".join(fill_paths + stroke_paths)
+
+
+def sha256_hex(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def build_asset_manifest(payload: dict) -> dict:
+    assets: list[dict[str, str]] = []
+    image_refs_seen: set[str] = set()
+    vector_refs_seen: set[str] = set()
+
+    frame_nodes = payload.get("frame_nodes")
+    if isinstance(frame_nodes, list):
+        for index, frame in enumerate(frame_nodes):
+            if not isinstance(frame, dict):
+                continue
+            node_id = node_identifier(frame, "frame", index)
+            fills_v2 = frame.get("fills_v2")
+            if not isinstance(fills_v2, list):
+                continue
+            for fill in fills_v2:
+                if not isinstance(fill, dict):
+                    continue
+                if fill.get("type") != "IMAGE":
+                    continue
+                image_ref = fill.get("imageRef")
+                if not isinstance(image_ref, str) or not image_ref or image_ref in image_refs_seen:
+                    continue
+                image_refs_seen.add(image_ref)
+                assets.append(
+                    {
+                        "ref": image_ref,
+                        "kind": "image",
+                        "hash": image_ref,
+                        "spec_node_id": node_id,
+                    }
+                )
+
+    vector_nodes = payload.get("vector_nodes")
+    if isinstance(vector_nodes, list):
+        for index, vector_node in enumerate(vector_nodes):
+            if not isinstance(vector_node, dict):
+                continue
+            node_id = node_identifier(vector_node, "vector", index)
+            if node_id in vector_refs_seen:
+                continue
+            vector_refs_seen.add(node_id)
+            path_content = vector_path_content(vector_node)
+            assets.append(
+                {
+                    "ref": node_id,
+                    "kind": "vector",
+                    "hash": sha256_hex(path_content),
+                    "spec_node_id": node_id,
+                }
+            )
+
+    assets.sort(key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]))
+    return {"assets": assets}
+
+
 def normalize_vector_node(node: dict) -> dict:
     """Capture vector-style graphic nodes so AI consumers don't silently miss
     logo/decorative elements (e.g. '1%' rendered as paths instead of text)."""
@@ -668,6 +783,9 @@ def normalize_vector_node(node: dict) -> dict:
         "type": node.get("type"),
         "bbox": extract_bbox(node),
         "fills_color": extract_text_color(node.get("fills")),
+        "viewBox": normalize_vector_viewbox(node.get("size")),
+        "fillGeometryPathData": extract_vector_geometry_paths(node.get("fillGeometry")),
+        "strokeGeometryPathData": extract_vector_geometry_paths(node.get("strokeGeometry")),
         "opacity": extract_node_opacity(node),
     }
 
@@ -787,7 +905,7 @@ def atomic_write_text(path: str, text: str) -> None:
             os.unlink(tmp_path)
 
 
-def atomic_write_json(path: str, data: dict) -> None:
+def atomic_write_json(path: str, data: dict, *, sort_keys: bool = False) -> None:
     directory = os.path.dirname(path)
     if directory:
         os.makedirs(directory, exist_ok=True)
@@ -795,7 +913,7 @@ def atomic_write_json(path: str, data: dict) -> None:
     fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=directory or ".")
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
-            json.dump(data, handle, ensure_ascii=False, indent=2)
+            json.dump(data, handle, ensure_ascii=False, indent=2, sort_keys=sort_keys)
             handle.write("\n")
         os.replace(tmp_path, path)
     finally:
@@ -864,11 +982,27 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
                 )
                 node["layoutGrow"] = normalize_layout_grow(node.get("layoutGrow"))
                 node["layoutAlign"] = normalize_enum(node.get("layoutAlign"), LAYOUT_ALIGN_VALUES, "INHERIT")
+                node["componentId"] = node.get("componentId") if isinstance(node.get("componentId"), str) else None
+                node["componentSetId"] = (
+                    node.get("componentSetId") if isinstance(node.get("componentSetId"), str) else None
+                )
 
     vector_nodes = payload.get("vector_nodes")
     if isinstance(vector_nodes, list):
         for node in vector_nodes:
             ensure_null_keys(node, V2_VECTOR_NODE_NULL_KEYS)
+            if isinstance(node, dict):
+                view_box = node.get("viewBox")
+                if isinstance(view_box, dict):
+                    node["viewBox"] = normalize_vector_viewbox(view_box)
+                else:
+                    node["viewBox"] = normalize_vector_viewbox(node.get("size"))
+                node["fillGeometryPathData"] = normalize_vector_path_data_list(node.get("fillGeometryPathData"))
+                if not node["fillGeometryPathData"]:
+                    node["fillGeometryPathData"] = extract_vector_geometry_paths(node.get("fillGeometry"))
+                node["strokeGeometryPathData"] = normalize_vector_path_data_list(node.get("strokeGeometryPathData"))
+                if not node["strokeGeometryPathData"]:
+                    node["strokeGeometryPathData"] = extract_vector_geometry_paths(node.get("strokeGeometry"))
 
     return payload
 
@@ -1562,6 +1696,8 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "layoutSizingVertical",
         "layoutGrow",
         "layoutAlign",
+        "componentId",
+        "componentSetId",
         "border_radius_hint",
         "parent_id",
     ]
@@ -1571,7 +1707,18 @@ def render_markdown(payload: dict, node_id: str) -> str:
     vector_nodes = payload.get("vector_nodes", [])
     lines.append(f"## vector_nodes ({len(vector_nodes)})")
     lines.append("> ⚠️ Non-text graphic nodes (logos, icons, decorative shapes). MUST be exported as image and inserted as `<img>` — never reconstruct as text/HTML.")
-    vector_columns = ["id", "name", "type", "bbox", "fills_color", "opacity", "parent_id"]
+    vector_columns = [
+        "id",
+        "name",
+        "type",
+        "bbox",
+        "fills_color",
+        "viewBox",
+        "fillGeometryPathData",
+        "strokeGeometryPathData",
+        "opacity",
+        "parent_id",
+    ]
     lines.append(render_table(vector_columns, vector_nodes))
     lines.append("")
 
@@ -1586,6 +1733,10 @@ def render_markdown(payload: dict, node_id: str) -> str:
     lines.append("")
 
     return "\n".join(lines)
+
+
+def asset_manifest_name(base_name: str) -> str:
+    return f"{base_name}_asset_manifest.json"
 
 
 def default_name(node_id: str) -> str:
@@ -1637,8 +1788,15 @@ def main() -> int:
     atomic_write_json(json_path, payload)
     atomic_write_text(md_path, render_markdown(payload, node_id))
 
+    manifest_path = os.path.join(args.output, asset_manifest_name(name))
+    if args.emit_asset_manifest:
+        manifest_payload = build_asset_manifest(payload)
+        atomic_write_json(manifest_path, manifest_payload, sort_keys=True)
+
     print(json_path)
     print(md_path)
+    if args.emit_asset_manifest:
+        print(manifest_path)
 
     if args.codegen:
         html_path = os.path.join(args.output, f"{name}_base.html")

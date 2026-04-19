@@ -8,6 +8,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -72,6 +73,8 @@ V2_DETAIL_CATEGORIES = (
     "v2.layoutSizing.match",
     "v2.textCase.match",
     "v2.textDecoration.match",
+    "v2.componentId.match",
+    "v2.assetManifest.exists",
 )
 V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_DETAIL_CATEGORIES
 
@@ -285,6 +288,208 @@ def load_spec(path_str: str) -> dict:
     if not isinstance(payload, dict):
         fail(f"Invalid spec JSON: expected object at root ({path_str})")
     return payload
+
+
+def asset_manifest_path_from_spec(spec_path: str) -> Path:
+    spec = Path(spec_path)
+    stem = spec.stem
+    if stem.endswith("_spec"):
+        base = stem[: -len("_spec")]
+    else:
+        base = stem
+    return spec.with_name(f"{base}_asset_manifest.json")
+
+
+def normalize_vector_path_data(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[str] = []
+    for item in value:
+        if isinstance(item, str):
+            normalized.append(item)
+    return normalized
+
+
+def extract_vector_geometry_paths(geometry: object) -> list[str]:
+    if not isinstance(geometry, list):
+        return []
+    extracted: list[str] = []
+    for item in geometry:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        if isinstance(path, str):
+            extracted.append(path)
+    return extracted
+
+
+def vector_node_path_content(node: dict) -> str:
+    fill_paths = normalize_vector_path_data(node.get("fillGeometryPathData"))
+    stroke_paths = normalize_vector_path_data(node.get("strokeGeometryPathData"))
+    if not fill_paths:
+        fill_paths = extract_vector_geometry_paths(node.get("fillGeometry"))
+    if not stroke_paths:
+        stroke_paths = extract_vector_geometry_paths(node.get("strokeGeometry"))
+    return "\n".join(fill_paths + stroke_paths)
+
+
+def spec_node_identifier(node: dict, prefix: str, index: int) -> str:
+    node_id = node.get("id")
+    if isinstance(node_id, str) and node_id.strip():
+        return node_id.strip()
+    return f"{prefix}@{index}"
+
+
+def expected_asset_manifest_entries(spec: dict) -> list[dict[str, str]]:
+    expected: list[dict[str, str]] = []
+    image_seen: set[str] = set()
+    vector_seen: set[str] = set()
+
+    frame_nodes = spec.get("frame_nodes")
+    if isinstance(frame_nodes, list):
+        for index, frame in enumerate(frame_nodes):
+            if not isinstance(frame, dict):
+                continue
+            frame_id = spec_node_identifier(frame, "frame", index)
+            fills = frame.get("fills_v2")
+            if not isinstance(fills, list):
+                continue
+            for fill in fills:
+                if not isinstance(fill, dict):
+                    continue
+                if fill.get("type") != "IMAGE":
+                    continue
+                image_ref = fill.get("imageRef")
+                if not isinstance(image_ref, str) or not image_ref or image_ref in image_seen:
+                    continue
+                image_seen.add(image_ref)
+                expected.append(
+                    {
+                        "ref": image_ref,
+                        "kind": "image",
+                        "hash": image_ref,
+                        "spec_node_id": frame_id,
+                    }
+                )
+
+    vector_nodes = spec.get("vector_nodes")
+    if isinstance(vector_nodes, list):
+        for index, vector_node in enumerate(vector_nodes):
+            if not isinstance(vector_node, dict):
+                continue
+            vector_id = spec_node_identifier(vector_node, "vector", index)
+            if vector_id in vector_seen:
+                continue
+            vector_seen.add(vector_id)
+            expected.append(
+                {
+                    "ref": vector_id,
+                    "kind": "vector",
+                    "hash": hashlib.sha256(vector_node_path_content(vector_node).encode("utf-8")).hexdigest(),
+                    "spec_node_id": vector_id,
+                }
+            )
+
+    expected.sort(key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]))
+    return expected
+
+
+def validate_asset_manifest(spec: dict, spec_path: str) -> list[Violation]:
+    violations: list[Violation] = []
+    expected_entries = expected_asset_manifest_entries(spec)
+    if not expected_entries:
+        return violations
+
+    manifest_path = asset_manifest_path_from_spec(spec_path)
+    if not manifest_path.exists():
+        add_violation(
+            violations,
+            "v2.assetManifest.exists",
+            str(manifest_path),
+            f"manifest exists with {len(expected_entries)} asset entries",
+            "missing file",
+        )
+        return violations
+
+    try:
+        manifest_raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        add_violation(
+            violations,
+            "v2.assetManifest.exists",
+            str(manifest_path),
+            "valid manifest JSON",
+            f"invalid JSON: {exc}",
+        )
+        return violations
+
+    if isinstance(manifest_raw, dict):
+        manifest_assets = manifest_raw.get("assets")
+    else:
+        manifest_assets = manifest_raw
+    if not isinstance(manifest_assets, list):
+        add_violation(
+            violations,
+            "v2.assetManifest.exists",
+            str(manifest_path),
+            "assets list",
+            f"invalid assets payload type: {type(manifest_assets).__name__}",
+        )
+        return violations
+
+    manifest_index: dict[tuple[str, str], dict[str, str]] = {}
+    duplicate_keys: set[tuple[str, str]] = set()
+    for item in manifest_assets:
+        if not isinstance(item, dict):
+            continue
+        kind = item.get("kind")
+        ref = item.get("ref")
+        hash_value = item.get("hash")
+        spec_node_id = item.get("spec_node_id")
+        if not all(isinstance(value, str) and value for value in (kind, ref, hash_value, spec_node_id)):
+            continue
+        key = (kind, ref)
+        if key in manifest_index:
+            duplicate_keys.add(key)
+        else:
+            manifest_index[key] = {
+                "kind": kind,
+                "ref": ref,
+                "hash": hash_value,
+                "spec_node_id": spec_node_id,
+            }
+
+    for duplicate_kind, duplicate_ref in sorted(duplicate_keys):
+        add_violation(
+            violations,
+            "v2.assetManifest.exists",
+            f"{duplicate_kind}:{duplicate_ref}",
+            "single manifest entry per asset ref",
+            "duplicate manifest entries",
+        )
+
+    for expected in expected_entries:
+        key = (expected["kind"], expected["ref"])
+        actual = manifest_index.get(key)
+        if actual is None:
+            add_violation(
+                violations,
+                "v2.assetManifest.exists",
+                f"{expected['kind']}:{expected['ref']}",
+                json.dumps(expected, ensure_ascii=False, sort_keys=True),
+                "missing entry",
+            )
+            continue
+        if actual["hash"] != expected["hash"] or actual["spec_node_id"] != expected["spec_node_id"]:
+            add_violation(
+                violations,
+                "v2.assetManifest.exists",
+                f"{expected['kind']}:{expected['ref']}",
+                json.dumps(expected, ensure_ascii=False, sort_keys=True),
+                json.dumps(actual, ensure_ascii=False, sort_keys=True),
+            )
+
+    return violations
 
 
 def normalize_text_for_match(text: str) -> str:
@@ -1941,6 +2146,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], sche
     violations: list[Violation] = []
     rules_conflict_seen: set[tuple[str, str]] = set()
     parent_lookup = infer_parent_lookup(frame_nodes)
+    component_rule_signatures: dict[str, list[tuple[str, str]]] = {}
 
     ordered_frames: list[tuple[int, float, int, dict, str, FrameMatchContext]] = []
     for index, frame in enumerate(frame_nodes):
@@ -1974,6 +2180,13 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], sche
         best_rule, matched_notes = best_frame_rule(contextualized_frame, css_rules)
         if best_rule is not None:
             matched_rule_by_frame_id[frame_id] = css_rule_key(best_rule)
+        if schema_branch == "v2":
+            component_id = frame.get("componentId")
+            if isinstance(component_id, str) and component_id.strip():
+                signature = "UNMATCHED"
+                if best_rule is not None:
+                    signature = ",".join(best_rule.selectors)
+                component_rule_signatures.setdefault(component_id.strip(), []).append((frame_id, signature))
 
         match_hint = matched_notes[0] if best_rule is None and matched_notes else None
         rule_label = ", ".join(best_rule.selectors) if best_rule else "미매칭"
@@ -2246,6 +2459,22 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], sche
                     ),
                 )
 
+    if schema_branch == "v2":
+        for component_id, instances in component_rule_signatures.items():
+            if len(instances) < 2:
+                continue
+            signatures = {signature for _, signature in instances}
+            if len(signatures) <= 1:
+                continue
+            frame_ids = ", ".join(frame_id for frame_id, _ in instances)
+            add_violation(
+                violations,
+                "v2.componentId.match",
+                frame_ids,
+                f"single selector/template signature for componentId={component_id}",
+                "; ".join(f"{frame_id}=>{signature}" for frame_id, signature in instances),
+            )
+
     return violations
 
 
@@ -2311,8 +2540,11 @@ def main() -> int:
     text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules, schema_branch=schema_branch)
     frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
     interaction_violations = validate_interactions(interactions, parser.root)
+    asset_manifest_violations: list[Violation] = []
+    if schema_branch == "v2":
+        asset_manifest_violations = validate_asset_manifest(spec, args.spec)
 
-    violations = text_violations + frame_violations + interaction_violations
+    violations = text_violations + frame_violations + interaction_violations + asset_manifest_violations
     print_report(violations, missing_rows)
     if schema_branch == "v1":
         return 0
