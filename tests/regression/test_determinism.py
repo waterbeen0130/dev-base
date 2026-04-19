@@ -51,5 +51,14 @@ def test_normalization_is_byte_exact_deterministic_across_100_runs() -> None:
         snapshots.append(payload_bytes)
         digests.add(hashlib.md5(payload_bytes).hexdigest())  # noqa: S324 - deterministic fingerprint only
 
+    payload = json.loads(snapshots[0].decode("utf-8"))
+    first_frame = payload["frame_nodes"][0]
+    first_text = payload["text_nodes"][0]
+    assert "fills_v2" in first_frame
+    assert "effects" in first_frame
+    assert "blendMode" in first_frame
+    assert "effects" in first_text
+    assert "blendMode" in first_text
+
     assert len(digests) == 1
     assert all(snapshot == snapshots[0] for snapshot in snapshots)

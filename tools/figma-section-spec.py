@@ -137,6 +137,188 @@ def to_hex_from_rgb(color: dict | None) -> str | None:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
+def round_float_3(value: object, *, default: float | None = None) -> float | None:
+    if value is None:
+        return default
+    try:
+        rounded = round(float(value), 3)
+    except (TypeError, ValueError):
+        return default
+    return rounded
+
+
+def normalize_unit_opacity(value: object, *, default: float = 1.0) -> float:
+    opacity = round_float_3(value, default=default)
+    if opacity is None:
+        return float(default)
+    if opacity < 0:
+        return 0.0
+    if opacity > 1:
+        return 1.0
+    return opacity
+
+
+def extract_blend_mode(node: dict) -> str:
+    value = node.get("blendMode")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return "PASS_THROUGH"
+
+
+def extract_node_opacity(node: dict) -> float:
+    return normalize_unit_opacity(node.get("opacity"), default=1.0)
+
+
+def normalize_gradient_stops(stops: object) -> list[dict]:
+    if not isinstance(stops, list):
+        return []
+    normalized: list[dict] = []
+    for stop in stops:
+        if not isinstance(stop, dict):
+            continue
+        color = to_hex_from_rgb(stop.get("color"))
+        if color is None:
+            continue
+        position = round_float_3(stop.get("position"), default=0.0)
+        normalized.append(
+            {
+                "position": position if position is not None else 0.0,
+                "color": color,
+            }
+        )
+    return normalized
+
+
+def normalize_gradient_handles(handles: object) -> list[dict]:
+    if not isinstance(handles, list):
+        return []
+    normalized: list[dict] = []
+    for handle in handles:
+        if not isinstance(handle, dict):
+            continue
+        x = round_float_3(handle.get("x"), default=0.0)
+        y = round_float_3(handle.get("y"), default=0.0)
+        normalized.append({"x": x if x is not None else 0.0, "y": y if y is not None else 0.0})
+    return normalized
+
+
+def normalize_image_transform(transform: object) -> list[list[float]] | None:
+    if not isinstance(transform, list):
+        return None
+    normalized_rows: list[list[float]] = []
+    for row in transform:
+        if not isinstance(row, list):
+            return None
+        normalized_row: list[float] = []
+        for value in row:
+            rounded = round_float_3(value)
+            if rounded is None:
+                return None
+            normalized_row.append(rounded)
+        normalized_rows.append(normalized_row)
+    return normalized_rows
+
+
+def extract_frame_fills_v2(fills: list | None, image_refs: set[str]) -> list[dict]:
+    if not isinstance(fills, list):
+        return []
+
+    parsed: list[dict] = []
+    for fill in fills:
+        if not isinstance(fill, dict):
+            continue
+        fill_type = fill.get("type")
+        if fill_type == "SOLID":
+            color = to_hex_from_rgb(fill.get("color"))
+            if color is None:
+                continue
+            parsed.append(
+                {
+                    "type": "SOLID",
+                    "color": color,
+                    "opacity": normalize_unit_opacity(fill.get("opacity"), default=1.0),
+                }
+            )
+            continue
+
+        if fill_type in {"GRADIENT_LINEAR", "GRADIENT_RADIAL"}:
+            parsed.append(
+                {
+                    "type": fill_type,
+                    "opacity": normalize_unit_opacity(fill.get("opacity"), default=1.0),
+                    "gradientStops": normalize_gradient_stops(fill.get("gradientStops")),
+                    "gradientHandlePositions": normalize_gradient_handles(fill.get("gradientHandlePositions")),
+                }
+            )
+            continue
+
+        if fill_type == "IMAGE":
+            image_fill: dict[str, object] = {"type": "IMAGE"}
+            image_ref = fill.get("imageRef")
+            if isinstance(image_ref, str) and image_ref:
+                image_fill["imageRef"] = image_ref
+                image_refs.add(image_ref)
+            scale_mode = fill.get("scaleMode")
+            if isinstance(scale_mode, str) and scale_mode:
+                image_fill["scaleMode"] = scale_mode
+            image_transform = normalize_image_transform(fill.get("imageTransform"))
+            if image_transform is not None:
+                image_fill["imageTransform"] = image_transform
+            scaling_factor = round_float_3(fill.get("scalingFactor"))
+            if scaling_factor is not None:
+                image_fill["scalingFactor"] = scaling_factor
+            rotation = round_float_3(fill.get("rotation"))
+            if rotation is not None:
+                image_fill["rotation"] = rotation
+            image_fill["opacity"] = normalize_unit_opacity(fill.get("opacity"), default=1.0)
+            parsed.append(image_fill)
+
+    return parsed
+
+
+def extract_effects(effects: object) -> list[dict]:
+    if not isinstance(effects, list):
+        return []
+
+    parsed: list[dict] = []
+    for effect in effects:
+        if not isinstance(effect, dict):
+            continue
+        effect_type = effect.get("type")
+        if effect_type not in {"DROP_SHADOW", "INNER_SHADOW", "LAYER_BLUR", "BACKGROUND_BLUR"}:
+            continue
+
+        radius = round_float_3(effect.get("radius"), default=0.0)
+        item: dict[str, object] = {
+            "type": effect_type,
+            "visible": bool(effect.get("visible", True)),
+            "radius": radius if radius is not None else 0.0,
+        }
+
+        if effect_type in {"DROP_SHADOW", "INNER_SHADOW"}:
+            color = to_hex_from_rgb(effect.get("color"))
+            if color:
+                item["color"] = color
+            offset = effect.get("offset")
+            if isinstance(offset, dict):
+                item["offset"] = {
+                    "x": round_float_3(offset.get("x"), default=0.0) or 0.0,
+                    "y": round_float_3(offset.get("y"), default=0.0) or 0.0,
+                }
+            else:
+                item["offset"] = {"x": 0.0, "y": 0.0}
+            spread = round_float_3(effect.get("spread"))
+            if spread is not None:
+                item["spread"] = spread
+            blend_mode = effect.get("blendMode")
+            if isinstance(blend_mode, str) and blend_mode.strip():
+                item["blendMode"] = blend_mode.strip()
+
+        parsed.append(item)
+
+    return parsed
+
+
 def extract_text_color(fills: list | None) -> str | None:
     if not isinstance(fills, list):
         return None
@@ -281,32 +463,6 @@ def extract_corner_radius(node: dict, bbox: dict) -> dict:
     }
 
 
-def extract_opacity(node: dict) -> float | None:
-    """Extract effective opacity from node-level + first visible fill alpha.
-    Returns combined opacity (node × fill) rounded to 3 decimals, or None when both are 1.0/missing."""
-    node_op = node.get("opacity")
-    node_op = float(node_op) if isinstance(node_op, (int, float)) else 1.0
-    fill_op = 1.0
-    fills = node.get("fills")
-    if isinstance(fills, list):
-        for fill in fills:
-            if not isinstance(fill, dict) or fill.get("visible") is False:
-                continue
-            f_op = fill.get("opacity")
-            if isinstance(f_op, (int, float)):
-                fill_op = float(f_op)
-            color = fill.get("color")
-            if isinstance(color, dict):
-                a = color.get("a")
-                if isinstance(a, (int, float)) and a < 1.0:
-                    fill_op *= float(a)
-            break
-    combined = node_op * fill_op
-    if combined >= 0.999:
-        return None
-    return round(combined, 3)
-
-
 def normalize_text_node(node: dict) -> dict:
     style = node.get("style") if isinstance(node.get("style"), dict) else {}
     font_size = style.get("fontSize")
@@ -323,7 +479,9 @@ def normalize_text_node(node: dict) -> dict:
         "lineHeightRatio": compute_line_height_ratio(line_height_px, font_size),
         "letterSpacing": safe_round_3(style.get("letterSpacing")),
         "color": extract_text_color(node.get("fills")),
-        "opacity": extract_opacity(node),
+        "opacity": extract_node_opacity(node),
+        "blendMode": extract_blend_mode(node),
+        "effects": extract_effects(node.get("effects")),
         "textAlignHorizontal": style.get("textAlignHorizontal"),
         "textAlignVertical": style.get("textAlignVertical"),
         "bbox": extract_bbox(node),
@@ -346,7 +504,10 @@ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
         "primaryAxisAlignItems": node.get("primaryAxisAlignItems"),
         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
         "fills": extract_frame_fill(node.get("fills"), image_refs),
-        "opacity": extract_opacity(node),
+        "fills_v2": extract_frame_fills_v2(node.get("fills"), image_refs),
+        "effects": extract_effects(node.get("effects")),
+        "opacity": extract_node_opacity(node),
+        "blendMode": extract_blend_mode(node),
         **extract_corner_radius(node, bbox),
     }
 
@@ -409,7 +570,7 @@ def normalize_vector_node(node: dict) -> dict:
         "type": node.get("type"),
         "bbox": extract_bbox(node),
         "fills_color": extract_text_color(node.get("fills")),
-        "opacity": extract_opacity(node),
+        "opacity": extract_node_opacity(node),
     }
 
 
@@ -565,11 +726,20 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
     if isinstance(text_nodes, list):
         for node in text_nodes:
             ensure_null_keys(node, V2_TEXT_NODE_NULL_KEYS)
+            if isinstance(node, dict):
+                node["effects"] = node.get("effects") if isinstance(node.get("effects"), list) else []
+                node["opacity"] = normalize_unit_opacity(node.get("opacity"), default=1.0)
+                node["blendMode"] = extract_blend_mode(node)
 
     frame_nodes = payload.get("frame_nodes")
     if isinstance(frame_nodes, list):
         for node in frame_nodes:
             ensure_null_keys(node, V2_FRAME_NODE_NULL_KEYS)
+            if isinstance(node, dict):
+                node["fills_v2"] = node.get("fills_v2") if isinstance(node.get("fills_v2"), list) else []
+                node["effects"] = node.get("effects") if isinstance(node.get("effects"), list) else []
+                node["opacity"] = normalize_unit_opacity(node.get("opacity"), default=1.0)
+                node["blendMode"] = extract_blend_mode(node)
 
     vector_nodes = payload.get("vector_nodes")
     if isinstance(vector_nodes, list):
@@ -1224,6 +1394,8 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "letterSpacing",
         "color",
         "opacity",
+        "blendMode",
+        "effects",
         "textAlignHorizontal",
         "textAlignVertical",
         "bbox",
@@ -1247,7 +1419,10 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "primaryAxisAlignItems",
         "counterAxisAlignItems",
         "fills",
+        "fills_v2",
+        "effects",
         "opacity",
+        "blendMode",
         "cornerRadius",
         "rectangleCornerRadii",
         "border_radius_hint",

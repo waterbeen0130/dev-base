@@ -59,14 +59,16 @@ V1_CATEGORIES = (
     "column flex gap 금지",
     "interaction URL 일치",
 )
-V2_STUB_CATEGORIES = (
-    "v2.fills.type.stub",
-    "v2.effects.stub",
-    "v2.strokes.stub",
-    "v2.layoutSizing.stub",
-    "v2.characterStyleOverrides.stub",
+V2_DETAIL_CATEGORIES = (
+    "v2.fills.solid.match",
+    "v2.fills.gradient.match",
+    "v2.fills.image.match",
+    "v2.effects.shadow.match",
+    "v2.effects.blur.match",
+    "v2.opacity.match",
+    "v2.blendMode.match",
 )
-V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_STUB_CATEGORIES
+V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_DETAIL_CATEGORIES
 
 POLICY_RULE_SUMMARIES = {
     "vertical_frame_itemspacing_uses_margin_bottom": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
@@ -428,6 +430,75 @@ def value_matches_px(value: str | None, expected_px: float | int | None, toleran
         return False
     expected = float(expected_px)
     return any(abs(candidate - expected) <= tolerance for candidate in parse_length_candidates_px(value))
+
+
+def parse_numeric_value(value: str | None) -> float | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not re.fullmatch(r"-?\d+(?:\.\d+)?", text):
+        return None
+    return float(text)
+
+
+def normalize_blend_mode_value(value: object) -> str:
+    if not isinstance(value, str):
+        return "PASS_THROUGH"
+    text = value.strip()
+    if not text:
+        return "PASS_THROUGH"
+    return text.upper()
+
+
+def normalize_css_blend_mode(value: str | None) -> str | None:
+    if not isinstance(value, str):
+        return None
+    token = value.strip().lower().replace("_", "-")
+    return token or None
+
+
+def blend_mode_matches(expected: object, actual: str | None) -> bool:
+    expected_mode = normalize_blend_mode_value(expected)
+    actual_mode = normalize_css_blend_mode(actual)
+    if expected_mode in {"PASS_THROUGH", "NORMAL"}:
+        if actual_mode is None:
+            return True
+        return actual_mode == "normal"
+    return actual_mode == expected_mode.lower().replace("_", "-")
+
+
+def opacity_matches(expected: object, actual: str | None, tolerance: float = 0.01) -> bool:
+    if not isinstance(expected, (int, float)):
+        return True
+    expected_value = float(expected)
+    actual_value = parse_numeric_value(actual)
+    if actual_value is None:
+        return abs(expected_value - 1.0) <= tolerance
+    return abs(actual_value - expected_value) <= tolerance
+
+
+def shadow_components(value: str | None) -> tuple[float, float, float] | None:
+    if not isinstance(value, str):
+        return None
+    lowered = value.strip().lower()
+    if not lowered or lowered == "none":
+        return None
+    candidates = parse_length_candidates_px(value)
+    if len(candidates) < 3:
+        return None
+    return (candidates[0], candidates[1], candidates[2])
+
+
+def blur_radius(value: str | None) -> float | None:
+    if not isinstance(value, str):
+        return None
+    match = re.search(r"blur\(([^)]+)\)", value, flags=re.I)
+    if not match:
+        return None
+    candidates = parse_length_candidates_px(match.group(1).strip())
+    if not candidates:
+        return None
+    return candidates[0]
 
 
 def parse_line_height_ratio(line_height: str | None, font_size: str | None) -> float | None:
@@ -896,6 +967,42 @@ def resolved_background_colors(properties: dict[str, PropertyValue]) -> list[str
     return colors
 
 
+def v2_fills_list(frame: dict) -> list[dict]:
+    fills = frame.get("fills_v2")
+    if isinstance(fills, list):
+        return [item for item in fills if isinstance(item, dict)]
+    return []
+
+
+def gradient_colors_match(fill: dict, properties: dict[str, PropertyValue]) -> bool:
+    fill_type = str(fill.get("type") or "")
+    expected_keyword = "linear-gradient(" if fill_type == "GRADIENT_LINEAR" else "radial-gradient("
+    gradient_sources: list[str] = []
+    for prop in ("background", "background-image"):
+        prop_value = properties.get(prop)
+        if prop_value:
+            gradient_sources.append(prop_value.value.lower())
+    if not any(expected_keyword in source for source in gradient_sources):
+        return False
+
+    expected_colors: list[str] = []
+    stops = fill.get("gradientStops")
+    if isinstance(stops, list):
+        for stop in stops:
+            if not isinstance(stop, dict):
+                continue
+            color = normalize_hex(stop.get("color"))
+            if color:
+                expected_colors.append(color)
+    if not expected_colors:
+        return False
+
+    actual_colors = set()
+    for source in gradient_sources:
+        actual_colors.update(extract_hex_colors(source))
+    return all(color in actual_colors for color in expected_colors)
+
+
 def collect_text_candidates(root: DOMElement) -> list[ElementMatch]:
     candidates: list[ElementMatch] = []
     for element in iter_elements(root):
@@ -1338,6 +1445,7 @@ def validate_text_nodes(
     text_nodes: list[dict],
     candidates: list[ElementMatch],
     css_rules: list[CSSRule],
+    schema_branch: str = "v1",
 ) -> tuple[list[Violation], list[dict]]:
     violations: list[Violation] = []
     missing_rows: list[dict] = []
@@ -1409,8 +1517,89 @@ def validate_text_nodes(
                 "fills color hex 일치",
                 node,
                 expected_color,
-                f"{render_value(actual_color)} @ {match.element.short_selector()}",
-            )
+                    f"{render_value(actual_color)} @ {match.element.short_selector()}",
+                )
+
+        if schema_branch == "v2":
+            opacity_prop = properties.get("opacity")
+            opacity_value = opacity_prop.value if opacity_prop else None
+            if not opacity_matches(node.get("opacity"), opacity_value):
+                add_violation(
+                    violations,
+                    "v2.opacity.match",
+                    node,
+                    render_value(node.get("opacity")),
+                    f"{render_value(opacity_value)} @ {match.element.short_selector()}",
+                )
+
+            blend_prop = properties.get("mix-blend-mode")
+            blend_value = blend_prop.value if blend_prop else None
+            if not blend_mode_matches(node.get("blendMode"), blend_value):
+                add_violation(
+                    violations,
+                    "v2.blendMode.match",
+                    node,
+                    render_value(node.get("blendMode")),
+                    f"{render_value(blend_value)} @ {match.element.short_selector()}",
+                )
+
+            effects = node.get("effects")
+            if isinstance(effects, list):
+                for effect in effects:
+                    if not isinstance(effect, dict):
+                        continue
+                    effect_type = effect.get("type")
+                    if effect_type == "DROP_SHADOW":
+                        shadow_value = None
+                        if properties.get("text-shadow"):
+                            shadow_value = properties["text-shadow"].value
+                        elif properties.get("box-shadow"):
+                            shadow_value = properties["box-shadow"].value
+                        expected_offset = effect.get("offset") if isinstance(effect.get("offset"), dict) else {}
+                        expected_x = expected_offset.get("x") if isinstance(expected_offset, dict) else None
+                        expected_y = expected_offset.get("y") if isinstance(expected_offset, dict) else None
+                        expected_radius = effect.get("radius")
+                        parsed = shadow_components(shadow_value)
+                        if (
+                            parsed is None
+                            or not isinstance(expected_x, (int, float))
+                            or not isinstance(expected_y, (int, float))
+                            or not isinstance(expected_radius, (int, float))
+                            or abs(parsed[0] - float(expected_x)) > 1.0
+                            or abs(parsed[1] - float(expected_y)) > 1.0
+                            or abs(parsed[2] - float(expected_radius)) > 1.0
+                        ):
+                            add_violation(
+                                violations,
+                                "v2.effects.shadow.match",
+                                node,
+                                f"x={render_value(expected_x)}, y={render_value(expected_y)}, blur={render_value(expected_radius)}",
+                                f"{render_value(shadow_value)} @ {match.element.short_selector()}",
+                            )
+                    elif effect_type == "LAYER_BLUR":
+                        filter_value = properties.get("filter").value if properties.get("filter") else None
+                        radius_value = blur_radius(filter_value)
+                        expected_radius = effect.get("radius")
+                        if not isinstance(expected_radius, (int, float)) or radius_value is None or abs(radius_value - float(expected_radius)) > 1.0:
+                            add_violation(
+                                violations,
+                                "v2.effects.blur.match",
+                                node,
+                                f"filter: blur({render_value(expected_radius)}px)",
+                                f"{render_value(filter_value)} @ {match.element.short_selector()}",
+                            )
+                    elif effect_type == "BACKGROUND_BLUR":
+                        filter_value = properties.get("backdrop-filter").value if properties.get("backdrop-filter") else None
+                        radius_value = blur_radius(filter_value)
+                        expected_radius = effect.get("radius")
+                        if not isinstance(expected_radius, (int, float)) or radius_value is None or abs(radius_value - float(expected_radius)) > 1.0:
+                            add_violation(
+                                violations,
+                                "v2.effects.blur.match",
+                                node,
+                                f"backdrop-filter: blur({render_value(expected_radius)}px)",
+                                f"{render_value(filter_value)} @ {match.element.short_selector()}",
+                            )
 
     return violations, missing_rows
 
@@ -1543,6 +1732,118 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], sche
                 rules_conflict_seen=rules_conflict_seen,
             )
 
+        if schema_branch == "v2":
+            for fill in v2_fills_list(frame):
+                fill_type = fill.get("type")
+                if fill_type == "SOLID":
+                    expected_color_v2 = normalize_hex(fill.get("color"))
+                    if expected_color_v2 and expected_color_v2 not in backgrounds:
+                        add_violation(
+                            violations,
+                            "v2.fills.solid.match",
+                            frame,
+                            expected_color_v2,
+                            f"{', '.join(backgrounds) if backgrounds else 'background-color/background 미발견'} @ {rule_display}",
+                        )
+                elif fill_type in {"GRADIENT_LINEAR", "GRADIENT_RADIAL"}:
+                    if not gradient_colors_match(fill, props):
+                        add_violation(
+                            violations,
+                            "v2.fills.gradient.match",
+                            frame,
+                            f"{fill_type} stops in CSS gradient",
+                            f"{rule_display} ({', '.join(matched_notes) if matched_notes else 'gradient 불일치'})",
+                        )
+                elif fill_type == "IMAGE":
+                    background_value = props.get("background").value if props.get("background") else ""
+                    background_image_value = props.get("background-image").value if props.get("background-image") else ""
+                    joined = f"{background_value} {background_image_value}".lower()
+                    if "url(" not in joined:
+                        add_violation(
+                            violations,
+                            "v2.fills.image.match",
+                            frame,
+                            "background-image: url(...)",
+                            f"{rule_display} (url() 미발견)",
+                        )
+
+            frame_effects = frame.get("effects")
+            if isinstance(frame_effects, list):
+                for effect in frame_effects:
+                    if not isinstance(effect, dict):
+                        continue
+                    effect_type = effect.get("type")
+                    if effect_type == "DROP_SHADOW":
+                        shadow_value = props.get("box-shadow").value if props.get("box-shadow") else None
+                        parsed = shadow_components(shadow_value)
+                        offset = effect.get("offset") if isinstance(effect.get("offset"), dict) else {}
+                        expected_x = offset.get("x") if isinstance(offset, dict) else None
+                        expected_y = offset.get("y") if isinstance(offset, dict) else None
+                        expected_radius = effect.get("radius")
+                        if (
+                            parsed is None
+                            or not isinstance(expected_x, (int, float))
+                            or not isinstance(expected_y, (int, float))
+                            or not isinstance(expected_radius, (int, float))
+                            or abs(parsed[0] - float(expected_x)) > 1.0
+                            or abs(parsed[1] - float(expected_y)) > 1.0
+                            or abs(parsed[2] - float(expected_radius)) > 1.0
+                        ):
+                            node_id = render_value(frame.get("id"))
+                            add_violation(
+                                violations,
+                                "v2.effects.shadow.match",
+                                frame,
+                                f"[V2-EFFECTS] node {node_id} expected box-shadow for DROP_SHADOW",
+                                f"{render_value(shadow_value)} @ {rule_display}",
+                            )
+                    elif effect_type == "LAYER_BLUR":
+                        filter_value = props.get("filter").value if props.get("filter") else None
+                        expected_radius = effect.get("radius")
+                        actual_radius = blur_radius(filter_value)
+                        if not isinstance(expected_radius, (int, float)) or actual_radius is None or abs(actual_radius - float(expected_radius)) > 1.0:
+                            add_violation(
+                                violations,
+                                "v2.effects.blur.match",
+                                frame,
+                                f"filter: blur({render_value(expected_radius)}px)",
+                                f"{render_value(filter_value)} @ {rule_display}",
+                            )
+                    elif effect_type == "BACKGROUND_BLUR":
+                        filter_value = props.get("backdrop-filter").value if props.get("backdrop-filter") else None
+                        expected_radius = effect.get("radius")
+                        actual_radius = blur_radius(filter_value)
+                        if not isinstance(expected_radius, (int, float)) or actual_radius is None or abs(actual_radius - float(expected_radius)) > 1.0:
+                            add_violation(
+                                violations,
+                                "v2.effects.blur.match",
+                                frame,
+                                f"backdrop-filter: blur({render_value(expected_radius)}px)",
+                                f"{render_value(filter_value)} @ {rule_display}",
+                            )
+
+            opacity_prop = props.get("opacity")
+            opacity_value = opacity_prop.value if opacity_prop else None
+            if not opacity_matches(frame.get("opacity"), opacity_value):
+                add_violation(
+                    violations,
+                    "v2.opacity.match",
+                    frame,
+                    render_value(frame.get("opacity")),
+                    f"{render_value(opacity_value)} @ {rule_display}",
+                )
+
+            blend_prop = props.get("mix-blend-mode")
+            blend_value = blend_prop.value if blend_prop else None
+            if not blend_mode_matches(frame.get("blendMode"), blend_value):
+                add_violation(
+                    violations,
+                    "v2.blendMode.match",
+                    frame,
+                    render_value(frame.get("blendMode")),
+                    f"{render_value(blend_value)} @ {rule_display}",
+                )
+
     return violations
 
 
@@ -1605,7 +1906,7 @@ def main() -> int:
     if not isinstance(text_nodes, list) or not isinstance(frame_nodes, list) or not isinstance(interactions, list):
         fail("Invalid spec JSON: expected text_nodes/frame_nodes/interactions arrays")
 
-    text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules)
+    text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules, schema_branch=schema_branch)
     frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
     interaction_violations = validate_interactions(interactions, parser.root)
 
