@@ -1,0 +1,57 @@
+{
+  "schema_version": "2.0.0",
+  "section": {
+    "id": "S:POLICY1",
+    "name": "Policy 1 Fixture",
+    "bbox": {
+      "x": 0,
+      "y": 0,
+      "w": 240,
+      "h": 120
+    },
+    "_extra": null
+  },
+  "text_nodes": [],
+  "frame_nodes": [
+    {
+      "id": "F:1",
+      "name": "Vertical Frame",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 240,
+        "h": 120
+      },
+      "layoutMode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "fills": null,
+      "opacity": null,
+      "cornerRadius": null,
+      "rectangleCornerRadii": null,
+      "border_radius_hint": null,
+      "parent_id": null,
+      "fills_v2": null,
+      "effects": null,
+      "strokes": null,
+      "strokeWeight": null,
+      "strokeAlign": null,
+      "layoutSizingHorizontal": null,
+      "layoutSizingVertical": null,
+      "layoutGrow": null,
+      "layoutAlign": null,
+      "constraints": null,
+      "rules_conflict": null,
+      "_extra": null
+    }
+  ],
+  "vector_nodes": [],
+  "interactions": [],
+  "images": {},
+  "_extra": null
+}

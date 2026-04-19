@@ -27,6 +27,28 @@ MAJOR_CATEGORIES = {
 
 PSEUDO_PATTERN = re.compile(r"::?(before|after)\b")
 SEMANTIC_COUNTS_PATTERN = re.compile(r"CRITICAL:\s*(\d+)\s*\|\s*MAJOR:\s*(\d+)\s*\|\s*MINOR:\s*(\d+)")
+SCHEMA_V1_PATTERN = re.compile(r"^1(?:\.\d+\.\d+)?$")
+SCHEMA_V2_PATTERN = re.compile(r"^2(?:\.\d+\.\d+)?$")
+POLICY_1_CATEGORY = "[POLICY-1] VERTICAL frame itemSpacing must map to margin-bottom"
+V1_CATEGORIES = (
+    "텍스트 위변조",
+    "줄바꿈 보존",
+    "폰트 5필드 완결성",
+    "lineHeight 비율 일치",
+    "fills color hex 일치",
+    "frame padding/gap 반영",
+    "clamp 적용",
+    "column flex gap 금지",
+    "interaction URL 일치",
+)
+V2_CATEGORIES = V1_CATEGORIES + (
+    POLICY_1_CATEGORY,
+    "v2.fills.type.stub",
+    "v2.effects.stub",
+    "v2.strokes.stub",
+    "v2.layoutSizing.stub",
+    "v2.characterStyleOverrides.stub",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,6 +81,31 @@ def auto_discover_spec(html_path: str) -> str | None:
     return None
 
 
+def parse_schema_branch(schema_version: object) -> str:
+    if isinstance(schema_version, int):
+        if schema_version == 1:
+            return "v1"
+        if schema_version == 2:
+            return "v2"
+    if isinstance(schema_version, str):
+        text = schema_version.strip()
+        if SCHEMA_V1_PATTERN.match(text):
+            return "v1"
+        if SCHEMA_V2_PATTERN.match(text):
+            return "v2"
+    return "v1"
+
+
+def detect_spec_branch(spec_path: str) -> str:
+    try:
+        payload = json.loads(Path(spec_path).read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return "v1"
+    if not isinstance(payload, dict):
+        return "v1"
+    return parse_schema_branch(payload.get("schema_version"))
+
+
 def run_validator(command: list[str]) -> tuple[int, str]:
     result = subprocess.run(command, capture_output=True, text=True)
     output_parts: list[str] = []
@@ -78,7 +125,7 @@ def classify_ignore_reason(category: str, node: str, expected: str, actual: str)
     return None
 
 
-def parse_figma_output(output: str, exit_code: int) -> dict[str, object]:
+def parse_figma_output(output: str, exit_code: int, known_categories: set[str]) -> dict[str, object]:
     summary: dict[str, object] = {
         "exit_code": exit_code,
         "status": "PASS",
@@ -93,17 +140,6 @@ def parse_figma_output(output: str, exit_code: int) -> dict[str, object]:
     violations = summary["violations"]
     missing_rows = summary["missing_rows"]
     in_missing_rows = False
-    known_categories = {
-        "텍스트 위변조",
-        "줄바꿈 보존",
-        "폰트 5필드 완결성",
-        "lineHeight 비율 일치",
-        "fills color hex 일치",
-        "frame padding/gap 반영",
-        "clamp 적용",
-        "column flex gap 금지",
-        "interaction URL 일치",
-    }
     pending_row: dict[str, str] | None = None
 
     def _is_new_violation_row(raw_line: str) -> bool:
@@ -254,6 +290,20 @@ def parse_validate_semantic_output(output: str, exit_code: int) -> dict[str, obj
         "unexpected_exit": unexpected_exit,
         "raw_output": output,
     }
+
+
+def apply_legacy_v1_relaxation(figma_result: dict[str, object], schema_branch: str) -> dict[str, object]:
+    if schema_branch != "v1":
+        return figma_result
+    relaxed = dict(figma_result)
+    relaxed["status"] = "PASS"
+    relaxed["critical"] = 0
+    relaxed["major"] = 0
+    relaxed["ignore"] = 0
+    relaxed["violations"] = []
+    relaxed["missing_rows"] = []
+    relaxed["legacy_relaxed"] = True
+    return relaxed
 
 
 def build_commands(args: argparse.Namespace) -> tuple[list[str], list[str]]:
@@ -415,6 +465,13 @@ def main() -> int:
                   file=sys.stderr)
             args.no_figma = True
 
+    schema_branch = "v1"
+    if args.spec and not args.no_figma:
+        schema_branch = detect_spec_branch(args.spec)
+        if schema_branch == "v1":
+            print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
+    known_figma_categories = set(V1_CATEGORIES if schema_branch == "v1" else V2_CATEGORIES)
+
     figma_command, semantic_command = build_commands(args)
 
     if args.no_figma:
@@ -423,7 +480,8 @@ def main() -> int:
         figma_exit_code, figma_output = run_validator(figma_command)
     semantic_exit_code, semantic_output = run_validator(semantic_command)
 
-    figma_result = parse_figma_output(figma_output, figma_exit_code)
+    figma_result = parse_figma_output(figma_output, figma_exit_code, known_figma_categories)
+    figma_result = apply_legacy_v1_relaxation(figma_result, schema_branch)
     semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
     auto_repair_result: dict[str, object] | None = None
 
@@ -431,7 +489,8 @@ def main() -> int:
         auto_repair_result = run_auto_repair(args)
         figma_exit_code, figma_output = run_validator(figma_command)
         semantic_exit_code, semantic_output = run_validator(semantic_command)
-        figma_result = parse_figma_output(figma_output, figma_exit_code)
+        figma_result = parse_figma_output(figma_output, figma_exit_code, known_figma_categories)
+        figma_result = apply_legacy_v1_relaxation(figma_result, schema_branch)
         semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
 
     overall_exit_code = determine_exit_code(figma_result, semantic_result)

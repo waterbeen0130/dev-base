@@ -750,3 +750,38 @@ rules:
       type: required_substring
       target: css
       pattern: "[data-delay]"
+
+  # ===== Figma v2 policy sync (REQ-029) =====
+
+  - id: vertical_frame_itemspacing_uses_margin_bottom
+    description: "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing, figma]
+    category: figma.mapping
+    validation:
+      type: custom
+      target: css
+      custom_handler: enforce_policy1_vertical_margin_bottom
+
+  - id: no_constraints_to_position_absolute_mapping
+    description: "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing, figma]
+    category: figma.mapping
+    validation:
+      type: custom
+      target: spec
+      custom_handler: enforce_policy2_constraints_extract_only
+
+  - id: figma_rules_conflict_uses_meta_marker
+    description: "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지)."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing, figma]
+    category: figma.fidelity
+    validation:
+      type: custom
+      target: spec
+      custom_handler: enforce_policy3_rules_conflict_bypass

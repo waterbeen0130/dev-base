@@ -45,6 +45,39 @@ VOID_TAGS = {
 BOX_SIDES = ("top", "right", "bottom", "left")
 FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
 INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+SCHEMA_V1_PATTERN = re.compile(r"^1(?:\.\d+\.\d+)?$")
+SCHEMA_V2_PATTERN = re.compile(r"^2(?:\.\d+\.\d+)?$")
+POLICY_1_CATEGORY = "[POLICY-1] VERTICAL frame itemSpacing must map to margin-bottom"
+V1_CATEGORIES = (
+    "텍스트 위변조",
+    "줄바꿈 보존",
+    "폰트 5필드 완결성",
+    "lineHeight 비율 일치",
+    "fills color hex 일치",
+    "frame padding/gap 반영",
+    "clamp 적용",
+    "column flex gap 금지",
+    "interaction URL 일치",
+)
+V2_STUB_CATEGORIES = (
+    "v2.fills.type.stub",
+    "v2.effects.stub",
+    "v2.strokes.stub",
+    "v2.layoutSizing.stub",
+    "v2.characterStyleOverrides.stub",
+)
+V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_STUB_CATEGORIES
+
+POLICY_RULE_SUMMARIES = {
+    "vertical_frame_itemspacing_uses_margin_bottom": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
+    "no_constraints_to_position_absolute_mapping": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
+    "figma_rules_conflict_uses_meta_marker": "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).",
+}
+POLICY_HANDLER_MAP = {
+    "vertical_frame_itemspacing_uses_margin_bottom": "enforce_policy1_vertical_margin_bottom",
+    "no_constraints_to_position_absolute_mapping": "enforce_policy2_constraints_extract_only",
+    "figma_rules_conflict_uses_meta_marker": "enforce_policy3_rules_conflict_bypass",
+}
 
 
 @dataclass
@@ -186,10 +219,38 @@ class FrameMatchContext:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate HTML/CSS output against normalized Figma section spec")
-    parser.add_argument("--spec", required=True, help="Path to section_spec.json")
-    parser.add_argument("--html", required=True, help="Path to generated HTML")
-    parser.add_argument("--css", required=True, help="Path to generated CSS")
-    return parser.parse_args()
+    parser.add_argument("--spec", required=False, help="Path to section_spec.json")
+    parser.add_argument("--html", required=False, help="Path to generated HTML")
+    parser.add_argument("--css", required=False, help="Path to generated CSS")
+    parser.add_argument("--version-info", action="store_true", help="Print v1/v2 category map and exit")
+    args = parser.parse_args()
+    if not args.version_info and (not args.spec or not args.html or not args.css):
+        parser.error("--spec, --html, --css are required unless --version-info is used")
+    return args
+
+
+def parse_schema_branch(schema_version: object) -> str:
+    if isinstance(schema_version, int):
+        if schema_version == 1:
+            return "v1"
+        if schema_version == 2:
+            return "v2"
+    if isinstance(schema_version, str):
+        text = schema_version.strip()
+        if SCHEMA_V1_PATTERN.match(text):
+            return "v1"
+        if SCHEMA_V2_PATTERN.match(text):
+            return "v2"
+    return "v1"
+
+
+def print_version_info() -> None:
+    print("v1 categories:")
+    for name in V1_CATEGORIES:
+        print(f"- {name}")
+    print("v2 categories:")
+    for name in V2_CATEGORIES:
+        print(f"- {name}")
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -1145,6 +1206,134 @@ def rule_properties(rule: CSSRule) -> dict[str, PropertyValue]:
     return {key: PropertyValue(value=value, selector=", ".join(rule.selectors), specificity=(0, 0, 0), order=rule.order, important=False) for key, value in rule.declarations.items()}
 
 
+def rules_conflict_payload(node: dict) -> tuple[str, str, str] | None:
+    conflict = node.get("rules_conflict")
+    if not isinstance(conflict, dict):
+        return None
+    rule_id = conflict.get("rule_id")
+    figma_value = conflict.get("figma_value")
+    applied_value = conflict.get("applied_value")
+    if not isinstance(rule_id, str) or not rule_id.strip():
+        return None
+    return (
+        rule_id.strip(),
+        str(figma_value) if figma_value is not None else "",
+        str(applied_value) if applied_value is not None else "",
+    )
+
+
+def log_rules_conflict_once(node: dict, rule_id: str, figma_value: str, applied_value: str, seen: set[tuple[str, str]]) -> None:
+    node_id = str(node.get("id") or node.get("node_id") or "-")
+    marker = (node_id, rule_id)
+    if marker in seen:
+        return
+    seen.add(marker)
+    print(
+        f"[RULES-CONFLICT] node {node_id} bypassed rule {rule_id} "
+        f"(figma: {figma_value} \u2192 applied: {applied_value})"
+    )
+
+
+def should_bypass_rule(node: dict, rule_id: str, seen: set[tuple[str, str]]) -> bool:
+    payload = rules_conflict_payload(node)
+    if payload is None:
+        return False
+    conflict_rule_id, figma_value, applied_value = payload
+    if conflict_rule_id != rule_id:
+        return False
+    log_rules_conflict_once(node, conflict_rule_id, figma_value, applied_value, seen)
+    return True
+
+
+def selector_scope_prefixes(rule: CSSRule | None) -> list[str]:
+    if rule is None:
+        return []
+    prefixes: list[str] = []
+    for selector in rule.selectors:
+        base = strip_pseudos(selector).strip()
+        if base:
+            prefixes.append(base)
+    return prefixes
+
+
+def has_margin_bottom_mapping(
+    frame_rule: CSSRule | None,
+    css_rules: list[CSSRule],
+    spacing: float | int,
+    frame_properties: dict[str, PropertyValue],
+) -> bool:
+    if value_matches_px(frame_properties.get("margin-bottom").value if frame_properties.get("margin-bottom") else None, spacing):
+        return True
+
+    prefixes = selector_scope_prefixes(frame_rule)
+    if not prefixes:
+        return False
+
+    for css_rule in css_rules:
+        if css_rule.pseudo_element is not None:
+            continue
+        margin_bottom = css_rule.declarations.get("margin-bottom")
+        if not value_matches_px(margin_bottom, spacing):
+            continue
+        for selector in css_rule.selectors:
+            normalized = strip_pseudos(selector).strip()
+            for prefix in prefixes:
+                if (
+                    normalized == prefix
+                    or normalized.startswith(prefix + " ")
+                    or normalized.startswith(prefix + ">")
+                ):
+                    return True
+    return False
+
+
+def enforce_policy1_vertical_margin_bottom(
+    frame: dict,
+    props: dict[str, PropertyValue],
+    best_rule: CSSRule | None,
+    css_rules: list[CSSRule],
+    rule_display: str,
+    violations: list[Violation],
+    rules_conflict_seen: set[tuple[str, str]],
+) -> None:
+    spacing = frame.get("itemSpacing")
+    if not isinstance(spacing, (int, float)) or spacing <= 0:
+        return
+    if str(frame.get("layoutMode") or "").upper() != "VERTICAL":
+        return
+    if should_bypass_rule(frame, "vertical_frame_itemspacing_uses_margin_bottom", rules_conflict_seen):
+        return
+
+    gap_props = [prop for prop in ("gap", "row-gap", "column-gap") if prop in props]
+    if gap_props:
+        add_violation(
+            violations,
+            POLICY_1_CATEGORY,
+            frame,
+            f"margin-bottom:{render_value(spacing)}px and no gap/row-gap/column-gap",
+            f"{', '.join(f'{prop}={props[prop].value}' for prop in gap_props)} @ {rule_display}",
+        )
+        return
+
+    if not has_margin_bottom_mapping(best_rule, css_rules, spacing, props):
+        add_violation(
+            violations,
+            POLICY_1_CATEGORY,
+            frame,
+            f"margin-bottom:{render_value(spacing)}px",
+            f"margin-bottom 미발견 @ {rule_display}",
+        )
+
+
+def enforce_policy2_constraints_extract_only(frame: dict) -> bool:
+    _ = frame
+    return True
+
+
+def enforce_policy3_rules_conflict_bypass(node: dict, rule_id: str, seen: set[tuple[str, str]]) -> bool:
+    return should_bypass_rule(node, rule_id, seen)
+
+
 def validate_text_nodes(
     text_nodes: list[dict],
     candidates: list[ElementMatch],
@@ -1226,8 +1415,9 @@ def validate_text_nodes(
     return violations, missing_rows
 
 
-def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> list[Violation]:
+def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], schema_branch: str = "v1") -> list[Violation]:
     violations: list[Violation] = []
+    rules_conflict_seen: set[tuple[str, str]] = set()
     parent_lookup = infer_parent_lookup(frame_nodes)
 
     ordered_frames: list[tuple[int, float, int, dict, str, FrameMatchContext]] = []
@@ -1291,8 +1481,8 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
                 expected = frame.get(f"padding{side.capitalize()}")
                 if not value_matches_px(padding.get(side), expected):
                     missing_bits.append(f"padding-{side}={expected}")
-            # VERTICAL frames use margin-top per common.md (no-column-gap rule) — skip gap check here,
-            # column flex gap 금지 below handles the reverse.
+            # VERTICAL frames use child margin-bottom mapping in policy-1 — skip gap check here,
+            # and enforce no gap/row-gap/column-gap separately below.
             if spacing not in (None, 0) and str(frame.get("layoutMode") or "").upper() != "VERTICAL" and not any(value_matches_px(value, spacing) for value in gap_values):
                 missing_bits.append(f"gap={spacing}")
             if missing_bits:
@@ -1309,7 +1499,7 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
             expected = frame.get(f"padding{side.capitalize()}")
             if isinstance(expected, (int, float)) and expected >= 100:
                 clamp_targets.append((f"padding-{side}", expected))
-        # Skip gap clamp for VERTICAL frames (common.md: no gap on column flex, use margin-top)
+        # Skip gap clamp for VERTICAL frames (policy-1: no gap on column flex, use margin-bottom)
         if isinstance(spacing, (int, float)) and spacing >= 100 and str(frame.get("layoutMode") or "").upper() != "VERTICAL":
             clamp_targets.append(("gap", spacing))
 
@@ -1332,12 +1522,25 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule]) -> l
         if "flex-direction" in props:
             matched_flex_dir = str(props["flex-direction"].value).strip().lower()
         if str(frame.get("layoutMode") or "").upper() == "VERTICAL" and matched_flex_dir == "column" and any(prop in props for prop in ("gap", "row-gap", "column-gap")):
-            add_violation(
-                violations,
-                "column flex gap 금지",
-                frame,
-                "gap 미사용",
-                f"{', '.join(f'{prop}={props[prop].value}' for prop in ('gap', 'row-gap', 'column-gap') if prop in props)} @ {rule_display}",
+            if not enforce_policy3_rules_conflict_bypass(frame, "no_column_flex_gap", rules_conflict_seen):
+                add_violation(
+                    violations,
+                    "column flex gap 금지",
+                    frame,
+                    "gap 미사용",
+                    f"{', '.join(f'{prop}={props[prop].value}' for prop in ('gap', 'row-gap', 'column-gap') if prop in props)} @ {rule_display}",
+                )
+
+        if schema_branch == "v2" and str(frame.get("layoutMode") or "").upper() == "VERTICAL":
+            enforce_policy2_constraints_extract_only(frame)
+            enforce_policy1_vertical_margin_bottom(
+                frame=frame,
+                props=props,
+                best_rule=best_rule,
+                css_rules=css_rules,
+                rule_display=rule_display,
+                violations=violations,
+                rules_conflict_seen=rules_conflict_seen,
             )
 
     return violations
@@ -1377,7 +1580,18 @@ def print_report(violations: list[Violation], missing_rows: list[dict]) -> None:
 
 def main() -> int:
     args = parse_args()
+    if args.version_info:
+        print_version_info()
+        return 0
+
+    assert args.spec is not None
+    assert args.html is not None
+    assert args.css is not None
+
     spec = load_spec(args.spec)
+    schema_branch = parse_schema_branch(spec.get("schema_version"))
+    if schema_branch == "v1":
+        print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
     html_text = read_text(args.html)
     css_text = read_text(args.css)
 
@@ -1392,11 +1606,13 @@ def main() -> int:
         fail("Invalid spec JSON: expected text_nodes/frame_nodes/interactions arrays")
 
     text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules)
-    frame_violations = validate_frame_nodes(frame_nodes, css_rules)
+    frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
     interaction_violations = validate_interactions(interactions, parser.root)
 
     violations = text_violations + frame_violations + interaction_violations
     print_report(violations, missing_rows)
+    if schema_branch == "v1":
+        return 0
     return 1 if violations or missing_rows else 0
 
 

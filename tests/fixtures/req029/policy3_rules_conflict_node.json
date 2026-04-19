@@ -1,0 +1,8 @@
+{
+  "id": "N:1",
+  "rules_conflict": {
+    "rule_id": "no_color_grid",
+    "figma_value": "rgb-grid",
+    "applied_value": "flexbox"
+  }
+}

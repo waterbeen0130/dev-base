@@ -309,9 +309,19 @@ def validation_rule_item(rule: dict[str, Any]) -> dict[str, Any]:
     return item
 
 
+def normalize_schema_version(value: Any) -> int | str:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            return text
+    return 1
+
+
 def build_validation_schema(payload: dict[str, Any], rules: list[dict[str, Any]]) -> str:
     schema = {
-        "version": payload.get("schema_version", 1),
+        "version": normalize_schema_version(payload.get("schema_version", 1)),
         "rules": [validation_rule_item(rule) for rule in rules],
     }
     return json.dumps(schema, indent=2, ensure_ascii=False, sort_keys=True) + "\n"

@@ -25,6 +25,36 @@ from urllib import error, parse, request
 
 
 FIGMA_API_BASE = "https://api.figma.com"
+SCHEMA_VERSION_V2 = "2.0.0"
+V2_TOP_LEVEL_NULL_KEYS = ("_extra",)
+V2_SECTION_NULL_KEYS = ("_extra",)
+V2_TEXT_NODE_NULL_KEYS = (
+    "characterStyleOverrides",
+    "textCase",
+    "textDecoration",
+    "paragraphSpacing",
+    "paragraphIndent",
+    "rules_conflict",
+    "_extra",
+)
+V2_FRAME_NODE_NULL_KEYS = (
+    "fills_v2",
+    "effects",
+    "strokes",
+    "strokeWeight",
+    "strokeAlign",
+    "layoutSizingHorizontal",
+    "layoutSizingVertical",
+    "layoutGrow",
+    "layoutAlign",
+    "constraints",
+    "rules_conflict",
+    "_extra",
+)
+V2_VECTOR_NODE_NULL_KEYS = (
+    "rules_conflict",
+    "_extra",
+)
 
 
 @dataclass
@@ -514,6 +544,41 @@ def atomic_write_json(path: str, data: dict) -> None:
             os.unlink(tmp_path)
 
 
+def ensure_null_keys(target: object, keys: tuple[str, ...]) -> None:
+    if not isinstance(target, dict):
+        return
+    for key in keys:
+        target.setdefault(key, None)
+
+
+def ensure_v2_payload_shape(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        return payload
+
+    payload["schema_version"] = SCHEMA_VERSION_V2
+    ensure_null_keys(payload, V2_TOP_LEVEL_NULL_KEYS)
+
+    section = payload.get("section")
+    ensure_null_keys(section, V2_SECTION_NULL_KEYS)
+
+    text_nodes = payload.get("text_nodes")
+    if isinstance(text_nodes, list):
+        for node in text_nodes:
+            ensure_null_keys(node, V2_TEXT_NODE_NULL_KEYS)
+
+    frame_nodes = payload.get("frame_nodes")
+    if isinstance(frame_nodes, list):
+        for node in frame_nodes:
+            ensure_null_keys(node, V2_FRAME_NODE_NULL_KEYS)
+
+    vector_nodes = payload.get("vector_nodes")
+    if isinstance(vector_nodes, list):
+        for node in vector_nodes:
+            ensure_null_keys(node, V2_VECTOR_NODE_NULL_KEYS)
+
+    return payload
+
+
 def load_spec_payload(path_str: str) -> dict:
     path = Path(path_str)
     try:
@@ -841,18 +906,15 @@ def generate_base_html(result: ExtractionResult, section_name: str) -> str:
     frame_parent_lookup = infer_frame_parent_lookup(result.frame_nodes)
     text_parent_lookup = infer_text_parent_lookup(result.text_nodes, result.frame_nodes)
 
-    children: dict[str | None, list[tuple[tuple[float, float, int, int], str, str]]] = defaultdict(list)
+    children: dict[str | None, list[tuple[tuple[int, int], str, str]]] = defaultdict(list)
 
-    def order_key(node: dict, node_index: int, rank: int) -> tuple[float, float, int, int]:
-        bbox = normalize_bbox_for_codegen(node.get("bbox"))
-        if not bbox:
-            return (1e12, 1e12, rank, node_index)
-        return (bbox["y"], bbox["x"], rank, node_index)
+    def order_key(node_index: int, rank: int) -> tuple[int, int]:
+        return (node_index, rank)
 
     for index, frame in enumerate(result.frame_nodes):
         frame_id = node_identifier(frame, "frame", index)
         parent = frame_parent_lookup.get(frame_id)
-        children[parent].append((order_key(frame, index, 0), "frame", frame_id))
+        children[parent].append((order_key(index, 0), "frame", frame_id))
 
     frame_id_set = set(frame_lookup.keys())
     for index, text_node in enumerate(result.text_nodes):
@@ -860,13 +922,13 @@ def generate_base_html(result: ExtractionResult, section_name: str) -> str:
         parent = text_parent_lookup.get(text_id)
         if parent not in frame_id_set:
             parent = None
-        children[parent].append((order_key(text_node, index, 1), "text", text_id))
+        children[parent].append((order_key(index, 1), "text", text_id))
 
     for index, vector_node in enumerate(result.vector_nodes):
         vector_id = node_identifier(vector_node, "vector", index)
         declared_parent = vector_node.get("parent_id")
         parent = declared_parent.strip() if isinstance(declared_parent, str) and declared_parent.strip() in frame_id_set else None
-        children[parent].append((order_key(vector_node, index, 2), "vector", vector_id))
+        children[parent].append((order_key(index, 2), "vector", vector_id))
 
     for key in list(children.keys()):
         children[key].sort(key=lambda item: item[0])
@@ -976,7 +1038,8 @@ def generate_base_css(result: ExtractionResult, section_name: str) -> str:
         lines.append(join_css_rule(selector, declarations))
 
         if mode == "VERTICAL" and isinstance(spacing, (int, float)) and spacing != 0:
-            lines.append(join_css_rule(f"{selector} > * + *", [f"margin-top:{format_px(spacing)}"]))
+            lines.append(join_css_rule(f"{selector} > *", [f"margin-bottom:{format_px(spacing)}"]))
+            lines.append(join_css_rule(f"{selector} > *:last-child", ["margin-bottom:0"]))
 
     for index, text_node in enumerate(result.text_nodes):
         text_id = node_identifier(text_node, "text", index)
@@ -1221,13 +1284,14 @@ def main() -> int:
     args = parse_args()
     if args.from_spec:
         payload = load_spec_payload(args.from_spec)
-        payload["schema_version"] = payload.get("schema_version", 1)
+        payload["schema_version"] = SCHEMA_VERSION_V2
         if not isinstance(payload.get("vector_nodes"), list):
             payload["vector_nodes"] = []
         if not isinstance(payload.get("interactions"), list):
             payload["interactions"] = []
         images = payload.get("images")
         payload["images"] = {key: images[key] for key in sorted(images.keys())} if isinstance(images, dict) else {}
+        payload = ensure_v2_payload_shape(payload)
         payload = preprocess_payload(payload)
         extracted = extraction_result_from_payload(payload)
         source_node_id = payload.get("section", {}).get("id")
@@ -1239,7 +1303,7 @@ def main() -> int:
         extracted = walk_and_extract(root)
         images = fetch_images_map(args.file_key, token, extracted.image_refs)
         payload = {
-            "schema_version": 1,
+            "schema_version": SCHEMA_VERSION_V2,
             "section": extracted.section,
             "text_nodes": extracted.text_nodes,
             "frame_nodes": extracted.frame_nodes,
@@ -1247,6 +1311,7 @@ def main() -> int:
             "interactions": extracted.interactions,
             "images": {key: images[key] for key in sorted(images.keys())},
         }
+        payload = ensure_v2_payload_shape(payload)
         payload = preprocess_payload(payload)
         extracted = extraction_result_from_payload(payload)
         node_id = args.node_id

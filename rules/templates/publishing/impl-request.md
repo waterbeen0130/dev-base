@@ -33,15 +33,25 @@
 ## 코딩 규칙 (CRITICAL — 반드시 준수)
 
 - `rules_version: 2`
-- `rule_ids: [all]` 또는 PM이 지정한 ID 목록만 사용
+- `rule_ids: [vertical_frame_itemspacing_uses_margin_bottom, no_constraints_to_position_absolute_mapping, figma_rules_conflict_uses_meta_marker]` 또는 PM이 지정한 ID 목록만 사용
 - 에이전트는 `rules/rules.yaml`에서 필요한 규칙 ID를 조회하여 적용
 - 규칙 충돌 시 `rules/rules.yaml`의 `precedence`를 따른다
+- constraints 는 spec 에 추출만 하고 CSS 로 매핑하지 않는다 (position:absolute 변환 금지)
+
+### 정책 요약 (Rule-ID 고정 문구)
+
+- `vertical_frame_itemspacing_uses_margin_bottom`: Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.
+- `no_constraints_to_position_absolute_mapping`: Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.
+- `figma_rules_conflict_uses_meta_marker`: Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).
 
 ### Rule-ID 참조 블록 (브리프에 그대로 포함)
 
 ```yaml
 rules_version: 2
-rule_ids: [all]
+rule_ids:
+  - vertical_frame_itemspacing_uses_margin_bottom
+  - no_constraints_to_position_absolute_mapping
+  - figma_rules_conflict_uses_meta_marker
 ```
 
 ### Figma Spec 값 사용 규칙

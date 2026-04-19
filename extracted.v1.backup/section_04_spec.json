@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": 1,
   "section": {
     "id": "842:196",
     "name": "Section_04",
@@ -8,8 +8,7 @@
       "y": 3472.5,
       "w": 1920,
       "h": 717
-    },
-    "_extra": null
+    }
   },
   "text_nodes": [
     {
@@ -24,14 +23,7 @@
       "letterSpacing": -0.82,
       "color": "#ebd6c7",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:203",
@@ -45,14 +37,7 @@
       "letterSpacing": -1.3,
       "color": "#ebd6c7",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:204",
@@ -66,14 +51,7 @@
       "letterSpacing": 4.42,
       "color": "#ffe7d7",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:205",
@@ -87,14 +65,7 @@
       "letterSpacing": -0.38,
       "color": "#ccc4c1",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     }
   ],
   "frame_nodes": [
@@ -115,19 +86,7 @@
       "itemSpacing": 64,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": "7257dffe6a4dfc423a6b5fe64f33910cd08576b5",
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": "7257dffe6a4dfc423a6b5fe64f33910cd08576b5"
     },
     {
       "id": "842:197",
@@ -146,19 +105,7 @@
       "itemSpacing": 38,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:198",
@@ -177,19 +124,7 @@
       "itemSpacing": 18,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:200",
@@ -208,19 +143,7 @@
       "itemSpacing": -7,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:201",
@@ -239,22 +162,9 @@
       "itemSpacing": -13,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "MAX",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     }
   ],
   "interactions": [],
-  "images": {},
-  "_extra": null
+  "images": {}
 }

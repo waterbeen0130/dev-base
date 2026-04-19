@@ -8,6 +8,7 @@ SCRIPT_PATH = ROOT / "tools" / "post-impl-verify.py"
 spec = importlib.util.spec_from_file_location("post_impl_verify", SCRIPT_PATH)
 post_impl_verify = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(post_impl_verify)
+KNOWN_CATEGORIES = set(post_impl_verify.V2_CATEGORIES)
 
 
 def _build_output(lines: list[str]) -> str:
@@ -20,7 +21,7 @@ def test_parse_figma_output_singleline_row():
         ["텍스트 위변조 | 842:88 (VS) | VS | HTML 텍스트 미발견"]
     )
 
-    result = post_impl_verify.parse_figma_output(output, 1)
+    result = post_impl_verify.parse_figma_output(output, 1, KNOWN_CATEGORIES)
 
     assert result["runner_error"] is False
     assert result["critical"] == 1
@@ -41,7 +42,7 @@ def test_parse_figma_output_multiline_expected_text_preserved():
         ]
     )
 
-    result = post_impl_verify.parse_figma_output(output, 1)
+    result = post_impl_verify.parse_figma_output(output, 1, KNOWN_CATEGORIES)
 
     assert len(result["violations"]) == 1
     violation = result["violations"][0]
@@ -62,7 +63,7 @@ def test_parse_figma_output_multiple_rows_with_one_multiline():
         ]
     )
 
-    result = post_impl_verify.parse_figma_output(output, 1)
+    result = post_impl_verify.parse_figma_output(output, 1, KNOWN_CATEGORIES)
 
     assert len(result["violations"]) == 3
     assert [item["category"] for item in result["violations"]] == [
@@ -84,7 +85,7 @@ def test_parse_figma_output_multiline_node_and_expected_are_not_merged_with_prev
         ]
     )
 
-    result = post_impl_verify.parse_figma_output(output, 1)
+    result = post_impl_verify.parse_figma_output(output, 1, KNOWN_CATEGORIES)
 
     assert len(result["violations"]) == 2
     first, second = result["violations"]

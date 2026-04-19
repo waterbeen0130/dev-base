@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": 1,
   "section": {
     "id": "842:84",
     "name": "Section_03",
@@ -8,8 +8,7 @@
       "y": 2283.5,
       "w": 1920,
       "h": 1189
-    },
-    "_extra": null
+    }
   },
   "text_nodes": [
     {
@@ -24,14 +23,7 @@
       "letterSpacing": -2.43,
       "color": "#c3b2a9",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:92",
@@ -45,14 +37,7 @@
       "letterSpacing": -0.94,
       "color": "#312d2b",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:98",
@@ -66,14 +51,7 @@
       "letterSpacing": -0.44,
       "color": "#454545",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:103",
@@ -87,14 +65,7 @@
       "letterSpacing": -0.44,
       "color": "#454545",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:108",
@@ -108,14 +79,7 @@
       "letterSpacing": -0.44,
       "color": "#454545",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:110",
@@ -129,14 +93,7 @@
       "letterSpacing": -4.05,
       "color": "#c3b2a9",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:119",
@@ -150,14 +107,7 @@
       "letterSpacing": -1.2,
       "color": "#f8e8df",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:120",
@@ -171,14 +121,7 @@
       "letterSpacing": -1.86,
       "color": "#d9d9d9",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:126",
@@ -192,14 +135,7 @@
       "letterSpacing": -0.44,
       "color": "#ebd6c7",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:131",
@@ -213,14 +149,7 @@
       "letterSpacing": -0.44,
       "color": "#ebd6c7",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:136",
@@ -234,14 +163,7 @@
       "letterSpacing": -0.44,
       "color": "#ebd6c7",
       "textAlignHorizontal": "LEFT",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     },
     {
       "id": "842:137",
@@ -255,14 +177,7 @@
       "letterSpacing": -0.38,
       "color": "#787472",
       "textAlignHorizontal": "CENTER",
-      "textAlignVertical": "CENTER",
-      "characterStyleOverrides": null,
-      "textCase": null,
-      "textDecoration": null,
-      "paragraphSpacing": null,
-      "paragraphIndent": null,
-      "rules_conflict": null,
-      "_extra": null
+      "textAlignVertical": "CENTER"
     }
   ],
   "frame_nodes": [
@@ -283,19 +198,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:85",
@@ -314,19 +217,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": "#ffffff",
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": "#ffffff"
     },
     {
       "id": "842:87",
@@ -345,19 +236,7 @@
       "itemSpacing": 64,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:89",
@@ -376,19 +255,7 @@
       "itemSpacing": -17,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:90",
@@ -407,19 +274,7 @@
       "itemSpacing": 24,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:91",
@@ -438,19 +293,7 @@
       "itemSpacing": 24,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:93",
@@ -469,19 +312,7 @@
       "itemSpacing": 24,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:94",
@@ -500,19 +331,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:95",
@@ -531,19 +350,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:97",
@@ -562,19 +369,7 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:99",
@@ -593,19 +388,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:100",
@@ -624,19 +407,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:102",
@@ -655,19 +426,7 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:104",
@@ -686,19 +445,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:105",
@@ -717,19 +464,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:107",
@@ -748,19 +483,7 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:109",
@@ -779,19 +502,7 @@
       "itemSpacing": 10,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:111",
@@ -810,19 +521,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": "MAX",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:112",
@@ -841,19 +540,7 @@
       "itemSpacing": 41,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": "#463c37",
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": "#463c37"
     },
     {
       "id": "842:113",
@@ -872,19 +559,7 @@
       "itemSpacing": 19,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:114",
@@ -903,19 +578,7 @@
       "itemSpacing": 45,
       "primaryAxisAlignItems": "MAX",
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:115",
@@ -934,19 +597,7 @@
       "itemSpacing": 5,
       "primaryAxisAlignItems": "CENTER",
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:116",
@@ -965,19 +616,7 @@
       "itemSpacing": -11,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "MAX",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:121",
@@ -996,19 +635,7 @@
       "itemSpacing": 24,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:122",
@@ -1027,19 +654,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:123",
@@ -1058,19 +673,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:125",
@@ -1089,19 +692,7 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:127",
@@ -1120,19 +711,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:128",
@@ -1151,19 +730,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:130",
@@ -1182,19 +749,7 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:132",
@@ -1213,19 +768,7 @@
       "itemSpacing": 14,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": "CENTER",
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:133",
@@ -1244,19 +787,7 @@
       "itemSpacing": null,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     },
     {
       "id": "842:135",
@@ -1275,22 +806,9 @@
       "itemSpacing": 2.375,
       "primaryAxisAlignItems": null,
       "counterAxisAlignItems": null,
-      "fills": null,
-      "fills_v2": null,
-      "effects": null,
-      "strokes": null,
-      "strokeWeight": null,
-      "strokeAlign": null,
-      "layoutSizingHorizontal": null,
-      "layoutSizingVertical": null,
-      "layoutGrow": null,
-      "layoutAlign": null,
-      "constraints": null,
-      "rules_conflict": null,
-      "_extra": null
+      "fills": null
     }
   ],
   "interactions": [],
-  "images": {},
-  "_extra": null
+  "images": {}
 }
