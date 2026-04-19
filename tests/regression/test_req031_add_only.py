@@ -34,7 +34,14 @@ REQ031_FRAME_KEYS = {
 # Some checked-in fixtures may not carry all earlier REQ-030 defaults yet.
 LEGACY_V2_TEXT_COMPAT_KEYS = {"effects", "opacity", "blendMode"}
 LEGACY_V2_FRAME_COMPAT_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
-NORMALIZATION_ALLOWED_KEYS = REQ031_TEXT_KEYS | REQ031_FRAME_KEYS | LEGACY_V2_TEXT_COMPAT_KEYS | LEGACY_V2_FRAME_COMPAT_KEYS
+REQ032_FRAME_COMPAT_KEYS = {"componentId", "componentSetId"}
+NORMALIZATION_ALLOWED_KEYS = (
+    REQ031_TEXT_KEYS
+    | REQ031_FRAME_KEYS
+    | LEGACY_V2_TEXT_COMPAT_KEYS
+    | LEGACY_V2_FRAME_COMPAT_KEYS
+    | REQ032_FRAME_COMPAT_KEYS
+)
 
 
 def _load_module():
@@ -98,7 +105,7 @@ def test_req031_add_only_preserves_existing_values_and_adds_only_req031_axes() -
         added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
 
         allowed_text_keys = REQ031_TEXT_KEYS | LEGACY_V2_TEXT_COMPAT_KEYS
-        allowed_frame_keys = REQ031_FRAME_KEYS | LEGACY_V2_FRAME_COMPAT_KEYS
+        allowed_frame_keys = REQ031_FRAME_KEYS | LEGACY_V2_FRAME_COMPAT_KEYS | REQ032_FRAME_COMPAT_KEYS
 
         assert added_text_keys <= allowed_text_keys
         assert added_frame_keys <= allowed_frame_keys

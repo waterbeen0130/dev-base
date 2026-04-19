@@ -61,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run figma-validate + validate-semantic and classify post-impl verification results."
     )
-    parser.add_argument("--spec", required=False, help="Path to section spec JSON (auto-discovered if omitted)")
+    parser.add_argument("--spec", required=False, help="Path to section spec JSON")
     parser.add_argument("--html", required=True, help="Path to generated HTML")
     parser.add_argument("--css", required=True, help="Path to generated CSS")
     parser.add_argument("--profile", default="all", help="validate-semantic profile")
@@ -69,22 +69,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-repair", action="store_true", help="Disable one-pass auto-repair loop")
     parser.add_argument("--no-figma", action="store_true", help="Skip figma-validate step (not recommended)")
     return parser.parse_args()
-
-
-def auto_discover_spec(html_path: str) -> str | None:
-    """Walk up from html path to find extracted/*_spec.json."""
-    start = Path(html_path).resolve().parent
-    current = start
-    for _ in range(6):
-        for candidate in (current / "extracted", current.parent / "extracted", current.parent.parent / "extracted"):
-            if candidate.is_dir():
-                specs = sorted(candidate.glob("*_spec.json"))
-                if specs:
-                    return str(specs[0])
-        if current.parent == current:
-            break
-        current = current.parent
-    return None
 
 
 def parse_schema_branch(schema_version: object) -> str:
@@ -381,7 +365,7 @@ def parse_validate_semantic_output(output: str, exit_code: int) -> dict[str, obj
         )
 
     unexpected_exit = exit_code not in {0, 1, 2}
-    blocking = critical > 0 or unexpected_exit
+    blocking = critical > 0 or major > 0 or unexpected_exit
     return {
         "exit_code": exit_code,
         "status": "FAIL" if blocking else "PASS",
@@ -552,6 +536,8 @@ def render_text_output(
             if violation["severity"] == "CRITICAL":
                 lines.append(f"[SEMANTIC-CRITICAL] {violation['message']}")
 
+    if overall_exit_code == 2:
+        lines.append("[INFO] exit=2 means PASS-with-IGNORE-only (사용자 검수 권장)")
     lines.append(f"post-impl-verify: exit={overall_exit_code}")
     return "\n".join(lines)
 
@@ -580,17 +566,23 @@ def main() -> int:
             print("post-impl-verify: exit=1")
             return 1
 
-    # Auto-discover spec when not provided
     if not args.spec and not args.no_figma:
-        discovered = auto_discover_spec(args.html)
-        if discovered:
-            args.spec = discovered
-            print(f"[post-impl-verify] auto-discovered spec: {discovered}", file=sys.stderr)
+        fatal = "[FATAL] --spec is required"
+        if args.json_output:
+            print(
+                json.dumps(
+                    {
+                        "drift_check": drift_result,
+                        "summary": {"exit_code": 1},
+                        "error": fatal,
+                    },
+                    ensure_ascii=False,
+                )
+            )
         else:
-            print("[post-impl-verify] WARNING: no *_spec.json discovered — figma-validate will be skipped. "
-                  "Pass --spec explicitly to force text fidelity verification, or --no-figma to silence this warning.",
-                  file=sys.stderr)
-            args.no_figma = True
+            print(fatal)
+            print("post-impl-verify: exit=1")
+        return 1
 
     schema_branch = "v1"
     if args.spec and not args.no_figma:

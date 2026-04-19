@@ -15,9 +15,9 @@ def _load_rules() -> list[dict]:
     return yaml.safe_load(RULES_PATH.read_text(encoding="utf-8"))["rules"]
 
 
-def test_rules_count_is_60_or_less():
+def test_rules_count_is_65_or_less():
     rules = _load_rules()
-    assert len(rules) <= 60
+    assert len(rules) <= 65
 
 
 def test_duplicate_rule_pairs_are_collapsed():

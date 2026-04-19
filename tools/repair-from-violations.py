@@ -28,6 +28,9 @@ CATEGORY_KEYS = (
     "letter_spacing_px_to_em",
     "duplicate_selector_merge",
 )
+REQUIRED_VIOLATION_FIELDS = ("rule_id", "file")
+OPTIONAL_VIOLATION_FIELDS = ("line", "expected", "actual", "fix_strategy", "patch_hint")
+DEFAULT_PATCH_HINT_TEXT = "패치 힌트 없음 — 직접 수정 필요"
 
 SIMPLE_BLOCK_RE = re.compile(r"([^{]+)\{([^{}]*)\}", re.DOTALL)
 RULE_LINE_RE = re.compile(r"^([^@{}][^{}]*)\{([^{}]*)\}$")
@@ -274,21 +277,92 @@ def _merge_duplicate_selector_blocks(css_text: str, counts: dict[str, int]) -> s
     return rebuilt
 
 
-def _collect_current_violation_count(violations_path: str | None, html_path: Path, css_path: Path) -> int:
-    if violations_path:
-        try:
-            payload = json.loads(Path(violations_path).read_text(encoding="utf-8"))
-        except Exception:
-            payload = None
-        if isinstance(payload, dict):
-            if isinstance(payload.get("violations"), list):
-                return len(payload["violations"])
-            figma = payload.get("figma_validate") if isinstance(payload.get("figma_validate"), dict) else {}
-            semantic = payload.get("validate_semantic") if isinstance(payload.get("validate_semantic"), dict) else {}
-            figma_count = len(figma.get("violations", [])) if isinstance(figma, dict) else 0
-            semantic_count = len(semantic.get("violations", [])) if isinstance(semantic, dict) else 0
-            return figma_count + semantic_count
+def _project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
 
+
+def _load_max_cli_retries(project_root: Path) -> int:
+    config_path = project_root / ".gran-maestro" / "config.json"
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return 2
+    retry = payload.get("retry")
+    if not isinstance(retry, dict):
+        return 2
+    raw = retry.get("max_cli_retries")
+    if isinstance(raw, int) and raw >= 0:
+        return raw
+    return 2
+
+
+def _validate_violation_schema(violation: Any, index: int) -> dict[str, Any]:
+    if not isinstance(violation, dict):
+        raise ValueError(f"invalid violation[{index}]: expected object")
+
+    normalized: dict[str, Any] = {}
+    for field in REQUIRED_VIOLATION_FIELDS:
+        value = violation.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"invalid violation[{index}]: missing required field: {field}")
+        normalized[field] = value.strip()
+
+    for field in OPTIONAL_VIOLATION_FIELDS:
+        value = violation.get(field)
+        if value is None:
+            continue
+        if field == "line":
+            if isinstance(value, int):
+                normalized[field] = value
+            elif isinstance(value, float) and value.is_integer():
+                normalized[field] = int(value)
+            elif isinstance(value, str) and value.strip().isdigit():
+                normalized[field] = int(value.strip())
+            else:
+                raise ValueError(f"invalid violation[{index}]: line must be int-compatible")
+            continue
+        normalized[field] = str(value)
+    return normalized
+
+
+def _collect_violation_items(payload: Any) -> list[Any]:
+    if isinstance(payload, dict):
+        if isinstance(payload.get("violations"), list):
+            return list(payload["violations"])
+        items: list[Any] = []
+        for key in ("figma_validate", "validate_semantic"):
+            nested = payload.get(key)
+            if isinstance(nested, dict) and isinstance(nested.get("violations"), list):
+                items.extend(nested["violations"])
+        return items
+    if isinstance(payload, list):
+        return list(payload)
+    return []
+
+
+def _load_violations(violations_path: str | None) -> list[dict[str, Any]] | None:
+    if not violations_path:
+        return None
+    path = Path(violations_path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise ValueError(f"failed to parse violations JSON: {exc}") from exc
+
+    raw_items = _collect_violation_items(payload)
+    validated: list[dict[str, Any]] = []
+    for index, item in enumerate(raw_items):
+        validated.append(_validate_violation_schema(item, index))
+    return validated
+
+
+def _collect_current_violation_count(
+    violations: list[dict[str, Any]] | None,
+    html_path: Path,
+    css_path: Path,
+) -> int:
+    if violations is not None:
+        return len(violations)
     tools_dir = Path(__file__).resolve().parent
     command = [
         sys.executable,
@@ -303,6 +377,41 @@ def _collect_current_violation_count(violations_path: str | None, html_path: Pat
     proc = subprocess.run(command, capture_output=True, text=True, check=False)
     lines = [line for line in (proc.stdout + "\n" + proc.stderr).splitlines() if line.strip().startswith("[")]
     return len(lines)
+
+
+def _escape_markdown_cell(value: Any) -> str:
+    text = str(value).replace("\n", "<br>")
+    return text.replace("|", "\\|")
+
+
+def _build_violation_brief_appendix(violations: list[dict[str, Any]]) -> str:
+    if not violations:
+        return ""
+    lines = [
+        "| rule_id | file | line | expected | actual | fix_strategy | patch_hint |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for violation in violations:
+        patch_hint = violation.get("patch_hint")
+        if not isinstance(patch_hint, str) or not patch_hint.strip():
+            patch_hint = DEFAULT_PATCH_HINT_TEXT
+        line_value = violation.get("line", "")
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    _escape_markdown_cell(violation.get("rule_id", "")),
+                    _escape_markdown_cell(violation.get("file", "")),
+                    _escape_markdown_cell(line_value),
+                    _escape_markdown_cell(violation.get("expected", "")),
+                    _escape_markdown_cell(violation.get("actual", "")),
+                    _escape_markdown_cell(violation.get("fix_strategy", "")),
+                    _escape_markdown_cell(patch_hint),
+                ]
+            )
+            + " |"
+        )
+    return "\n".join(lines)
 
 
 def _count_remaining_fixable(css_text: str) -> int:
@@ -374,11 +483,25 @@ def _has_tinycss2_support(css_text: str) -> bool:
         return False
 
 
+def _run_repair_pass(css_text: str) -> tuple[str, dict[str, int]]:
+    counts = {key: 0 for key in CATEGORY_KEYS}
+    repaired_css = css_text
+    repaired_css = _apply_regex_value_repairs(repaired_css, counts)
+    repaired_css = _apply_block_repairs(repaired_css, counts)
+    repaired_css = _remove_media_indentation(repaired_css, counts)
+    repaired_css = _merge_duplicate_selector_blocks(repaired_css, counts)
+    if not repaired_css.endswith("\n"):
+        repaired_css += "\n"
+    return repaired_css, counts
+
+
 def main() -> int:
     args = parse_args()
     html_path = Path(args.html)
     css_path = Path(args.css)
-    counts = {key: 0 for key in CATEGORY_KEYS}
+    project_root = _project_root()
+    max_cli_retries = _load_max_cli_retries(project_root)
+    max_attempts = max(1, max_cli_retries + 1)
 
     try:
         _ = html_path.read_text(encoding="utf-8")
@@ -387,17 +510,53 @@ def main() -> int:
         print(f"[repair] parse error: {exc}", file=sys.stderr)
         return 2
 
+    try:
+        violations = _load_violations(args.violations)
+    except ValueError as exc:
+        print(f"[repair] schema error: {exc}", file=sys.stderr)
+        return 2
+
+    if violations is None:
+        max_attempts = 1
+
+    brief_appendix = _build_violation_brief_appendix(violations or [])
+
     # Preference contract: use tinycss2 when available, otherwise regex fallback.
     _has_tinycss2_support(original_css)
 
+    aggregate_counts = {key: 0 for key in CATEGORY_KEYS}
     repaired_css = original_css
-    repaired_css = _apply_regex_value_repairs(repaired_css, counts)
-    repaired_css = _apply_block_repairs(repaired_css, counts)
-    repaired_css = _remove_media_indentation(repaired_css, counts)
-    repaired_css = _merge_duplicate_selector_blocks(repaired_css, counts)
+    previous_violation_count: int | None = None
+    attempts = 0
+    convergence_early_stop = False
 
-    if not repaired_css.endswith("\n"):
-        repaired_css += "\n"
+    for attempt in range(1, max_attempts + 1):
+        attempts = attempt
+        current_violation_count = _collect_current_violation_count(violations, html_path, css_path)
+        next_css, pass_counts = _run_repair_pass(repaired_css)
+
+        for key, value in pass_counts.items():
+            aggregate_counts[key] += value
+
+        css_changed = next_css != repaired_css
+        if (
+            violations is not None
+            and previous_violation_count is not None
+            and not css_changed
+            and current_violation_count == previous_violation_count
+        ):
+            convergence_early_stop = True
+            print(
+                "[repair] convergence-stop: "
+                f"violation_count unchanged at {current_violation_count} (attempt={attempt})"
+            )
+            break
+
+        previous_violation_count = current_violation_count
+        repaired_css = next_css
+
+        if not css_changed and attempt >= max_attempts:
+            break
 
     files_modified: list[str] = []
     if repaired_css != original_css:
@@ -407,28 +566,43 @@ def main() -> int:
         else:
             css_path.write_text(repaired_css, encoding="utf-8")
 
-    total_fixed = sum(counts.values())
+    total_fixed = sum(aggregate_counts.values())
     remaining_fixable = _count_remaining_fixable(repaired_css)
-    violation_count = _collect_current_violation_count(args.violations, html_path, css_path)
+    violation_count = _collect_current_violation_count(violations, html_path, css_path)
     unfixable_count = max(0, violation_count - total_fixed)
 
     summary = {
         "total_fixed": total_fixed,
-        "by_category": counts,
+        "by_category": aggregate_counts,
         "files_modified": files_modified,
         "unfixable_count": unfixable_count,
         "dry_run": bool(args.dry_run),
+        "attempts": attempts,
+        "max_attempts": max_attempts,
+        "convergence_early_stop": convergence_early_stop,
+        "violations_loaded": len(violations) if violations is not None else 0,
+        "violation_brief_appendix": brief_appendix,
     }
 
     print(f"[repair] total_fixed={total_fixed}")
     print(f"[repair] files_modified={len(files_modified)}")
+    print(f"[repair] attempts={attempts}/{max_attempts}")
     if total_fixed:
-        non_zero = ", ".join(f"{key}:{value}" for key, value in counts.items() if value)
+        non_zero = ", ".join(f"{key}:{value}" for key, value in aggregate_counts.items() if value)
         print(f"[repair] by_category={non_zero}")
+    if violations is not None:
+        print(f"[repair] violations_loaded={len(violations)}")
+        if brief_appendix:
+            print("[repair] external_brief_appendix:")
+            print(brief_appendix)
 
     if args.report:
         Path(args.report).write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
+    if violations is not None and convergence_early_stop:
+        return 1
+    if violations is not None and violation_count > 0 and total_fixed == 0:
+        return 1
     if total_fixed == 0 and remaining_fixable > 0:
         return 1
     return 0

@@ -2491,6 +2491,30 @@ def validate_interactions(interactions: list[dict], root: DOMElement) -> list[Vi
     return violations
 
 
+def run_v2_categories(
+    *,
+    spec: dict,
+    spec_path: str,
+    text_nodes: list[dict],
+    frame_nodes: list[dict],
+    interactions: list[dict],
+    text_candidates: list[ElementMatch],
+    css_rules: list[CSSRule],
+    root: DOMElement,
+) -> tuple[list[Violation], list[dict]]:
+    text_violations, missing_rows = validate_text_nodes(
+        text_nodes,
+        text_candidates,
+        css_rules,
+        schema_branch="v2",
+    )
+    frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch="v2")
+    interaction_violations = validate_interactions(interactions, root)
+    asset_manifest_violations = validate_asset_manifest(spec, spec_path)
+    violations = text_violations + frame_violations + interaction_violations + asset_manifest_violations
+    return violations, missing_rows
+
+
 def print_report(violations: list[Violation], missing_rows: list[dict]) -> None:
     print("카테고리 | 노드 | 기대값 | 실제값")
     if violations:
@@ -2537,14 +2561,28 @@ def main() -> int:
     if not isinstance(text_nodes, list) or not isinstance(frame_nodes, list) or not isinstance(interactions, list):
         fail("Invalid spec JSON: expected text_nodes/frame_nodes/interactions arrays")
 
-    text_violations, missing_rows = validate_text_nodes(text_nodes, text_candidates, css_rules, schema_branch=schema_branch)
-    frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
-    interaction_violations = validate_interactions(interactions, parser.root)
-    asset_manifest_violations: list[Violation] = []
     if schema_branch == "v2":
-        asset_manifest_violations = validate_asset_manifest(spec, args.spec)
+        violations, missing_rows = run_v2_categories(
+            spec=spec,
+            spec_path=args.spec,
+            text_nodes=text_nodes,
+            frame_nodes=frame_nodes,
+            interactions=interactions,
+            text_candidates=text_candidates,
+            css_rules=css_rules,
+            root=parser.root,
+        )
+    else:
+        text_violations, missing_rows = validate_text_nodes(
+            text_nodes,
+            text_candidates,
+            css_rules,
+            schema_branch=schema_branch,
+        )
+        frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
+        interaction_violations = validate_interactions(interactions, parser.root)
+        violations = text_violations + frame_violations + interaction_violations
 
-    violations = text_violations + frame_violations + interaction_violations + asset_manifest_violations
     print_report(violations, missing_rows)
     if schema_branch == "v1":
         return 0
