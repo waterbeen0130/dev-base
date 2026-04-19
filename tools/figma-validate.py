@@ -67,6 +67,11 @@ V2_DETAIL_CATEGORIES = (
     "v2.effects.blur.match",
     "v2.opacity.match",
     "v2.blendMode.match",
+    "v2.strokes.match",
+    "v2.cornerRadii.match",
+    "v2.layoutSizing.match",
+    "v2.textCase.match",
+    "v2.textDecoration.match",
 )
 V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_DETAIL_CATEGORIES
 
@@ -499,6 +504,307 @@ def blur_radius(value: str | None) -> float | None:
     if not candidates:
         return None
     return candidates[0]
+
+
+BORDER_STYLE_KEYWORDS = {
+    "none",
+    "hidden",
+    "dotted",
+    "dashed",
+    "solid",
+    "double",
+    "groove",
+    "ridge",
+    "inset",
+    "outset",
+}
+
+
+def collect_border_width_candidates(properties: dict[str, PropertyValue]) -> list[float]:
+    widths: list[float] = []
+    for prop in ("border-width", "border-top-width", "border-right-width", "border-bottom-width", "border-left-width"):
+        value = properties.get(prop)
+        if value:
+            widths.extend(parse_length_candidates_px(value.value))
+
+    for prop in ("border", "border-top", "border-right", "border-bottom", "border-left"):
+        value = properties.get(prop)
+        if value:
+            widths.extend(parse_length_candidates_px(value.value))
+
+    return widths
+
+
+def collect_border_colors(properties: dict[str, PropertyValue]) -> list[str]:
+    colors: list[str] = []
+    for prop in ("border-color", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color"):
+        value = properties.get(prop)
+        if value:
+            colors.extend(extract_hex_colors(value.value))
+
+    for prop in ("border", "border-top", "border-right", "border-bottom", "border-left"):
+        value = properties.get(prop)
+        if value:
+            colors.extend(extract_hex_colors(value.value))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for color in colors:
+        if color in seen:
+            continue
+        seen.add(color)
+        deduped.append(color)
+    return deduped
+
+
+def collect_border_styles(properties: dict[str, PropertyValue]) -> set[str]:
+    styles: set[str] = set()
+    for prop in ("border-style", "border-top-style", "border-right-style", "border-bottom-style", "border-left-style"):
+        value = properties.get(prop)
+        if value:
+            for token in split_whitespace_tokens(value.value.lower()):
+                if token in BORDER_STYLE_KEYWORDS:
+                    styles.add(token)
+
+    for prop in ("border", "border-top", "border-right", "border-bottom", "border-left"):
+        value = properties.get(prop)
+        if value:
+            for token in split_whitespace_tokens(value.value.lower()):
+                if token in BORDER_STYLE_KEYWORDS:
+                    styles.add(token)
+    return styles
+
+
+def border_visible(properties: dict[str, PropertyValue]) -> bool:
+    styles = collect_border_styles(properties)
+    if not styles:
+        # border shorthand with width/color but no style token can still render as default solid.
+        return bool(collect_border_width_candidates(properties) or collect_border_colors(properties))
+    return any(style not in {"none", "hidden"} for style in styles)
+
+
+def border_uses_gradient(properties: dict[str, PropertyValue]) -> bool:
+    for prop in ("border-image", "border-image-source", "border"):
+        value = properties.get(prop)
+        if value and "gradient(" in value.value.lower():
+            return True
+    return False
+
+
+def parse_border_radius_tokens(value: str | None) -> list[str] | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    primary = text.split("/", 1)[0].strip()
+    tokens = split_whitespace_tokens(primary)
+    if not tokens:
+        return None
+    if len(tokens) == 1:
+        return [tokens[0], tokens[0], tokens[0], tokens[0]]
+    if len(tokens) == 2:
+        return [tokens[0], tokens[1], tokens[0], tokens[1]]
+    if len(tokens) == 3:
+        return [tokens[0], tokens[1], tokens[2], tokens[1]]
+    return tokens[:4]
+
+
+def resolve_corner_radii_values(properties: dict[str, PropertyValue]) -> list[str | None]:
+    resolved: list[str | None] = [None, None, None, None]
+    shorthand = properties.get("border-radius")
+    if shorthand:
+        parsed = parse_border_radius_tokens(shorthand.value)
+        if parsed:
+            resolved = parsed
+
+    longhand_map = {
+        "border-top-left-radius": 0,
+        "border-top-right-radius": 1,
+        "border-bottom-right-radius": 2,
+        "border-bottom-left-radius": 3,
+    }
+    for prop, index in longhand_map.items():
+        value = properties.get(prop)
+        if value:
+            parsed = parse_border_radius_tokens(value.value)
+            if parsed:
+                resolved[index] = parsed[0]
+    return resolved
+
+
+def corner_radii_match(expected: object, properties: dict[str, PropertyValue]) -> bool:
+    if not isinstance(expected, list) or len(expected) < 4:
+        return True
+    expected_values: list[float] = []
+    for value in expected[:4]:
+        if not isinstance(value, (int, float)):
+            return True
+        expected_values.append(float(value))
+
+    actual_values = resolve_corner_radii_values(properties)
+    if all(abs(value) <= 0.01 for value in expected_values):
+        return all(item is None or value_matches_px(item, 0) for item in actual_values)
+
+    for index, expected_value in enumerate(expected_values):
+        actual = actual_values[index]
+        if actual is None or not value_matches_px(actual, expected_value):
+            return False
+    return True
+
+
+def parse_flex_grow(properties: dict[str, PropertyValue]) -> float | None:
+    flex_grow = properties.get("flex-grow")
+    if flex_grow:
+        parsed = parse_numeric_value(flex_grow.value)
+        if parsed is not None:
+            return parsed
+
+    flex = properties.get("flex")
+    if flex:
+        tokens = split_whitespace_tokens(flex.value)
+        if tokens:
+            parsed = parse_numeric_value(tokens[0])
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def is_auto_or_fit_content(value: str | None) -> bool:
+    if value is None:
+        return True
+    lowered = value.strip().lower()
+    return lowered in {"auto", "fit-content", "max-content", "min-content", "content"}
+
+
+def is_fill_sizing(value: str | None, properties: dict[str, PropertyValue]) -> bool:
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"100%", "stretch", "fill-available", "-webkit-fill-available"}:
+            return True
+    flex_grow = parse_flex_grow(properties)
+    return flex_grow is not None and flex_grow >= 1.0
+
+
+def is_explicit_fixed_sizing(value: str | None) -> bool:
+    if not isinstance(value, str):
+        return False
+    lowered = value.strip().lower()
+    if lowered in {"auto", "fit-content", "max-content", "min-content", "100%"}:
+        return False
+    if parse_length_candidates_px(lowered):
+        return True
+    return bool(re.search(r"\d", lowered) and any(token in lowered for token in ("calc(", "clamp(", "min(", "max(")))
+
+
+def layout_sizing_axis_match(expected: object, value: str | None, properties: dict[str, PropertyValue]) -> bool:
+    if not isinstance(expected, str):
+        return True
+    normalized = expected.strip().upper()
+    if normalized == "HUG":
+        return is_auto_or_fit_content(value)
+    if normalized == "FILL":
+        return is_fill_sizing(value, properties)
+    if normalized == "FIXED":
+        return is_explicit_fixed_sizing(value)
+    return True
+
+
+def layout_align_matches(expected: object, properties: dict[str, PropertyValue]) -> bool:
+    if not isinstance(expected, str):
+        return True
+    normalized = expected.strip().upper()
+    if normalized == "INHERIT":
+        return True
+    value = properties.get("align-self")
+    actual = value.value.strip().lower() if value else ""
+    if normalized == "STRETCH":
+        return actual == "stretch"
+    if normalized == "MIN":
+        return actual in {"flex-start", "start"}
+    if normalized == "MAX":
+        return actual in {"flex-end", "end"}
+    if normalized == "CENTER":
+        return actual == "center"
+    return True
+
+
+def layout_sizing_matches(frame: dict, properties: dict[str, PropertyValue]) -> bool:
+    has_layout_keys = any(
+        key in frame for key in ("layoutSizingHorizontal", "layoutSizingVertical", "layoutGrow", "layoutAlign")
+    )
+    if not has_layout_keys:
+        return True
+
+    width_prop = properties.get("width")
+    height_prop = properties.get("height")
+    width_value = width_prop.value if width_prop else None
+    height_value = height_prop.value if height_prop else None
+
+    horizontal_ok = layout_sizing_axis_match(frame.get("layoutSizingHorizontal"), width_value, properties)
+    vertical_ok = layout_sizing_axis_match(frame.get("layoutSizingVertical"), height_value, properties)
+    align_ok = layout_align_matches(frame.get("layoutAlign"), properties)
+
+    grow_expected = frame.get("layoutGrow")
+    grow_ok = True
+    if isinstance(grow_expected, (int, float)) and float(grow_expected) > 0:
+        grow_actual = parse_flex_grow(properties)
+        grow_ok = grow_actual is not None and grow_actual >= float(grow_expected) - 0.05
+
+    return horizontal_ok and vertical_ok and align_ok and grow_ok
+
+
+def text_case_expected_transform(text_case: object) -> str | None:
+    if not isinstance(text_case, str):
+        return None
+    normalized = text_case.strip().upper()
+    mapping = {
+        "ORIGINAL": "none",
+        "UPPER": "uppercase",
+        "LOWER": "lowercase",
+        "TITLE": "capitalize",
+        "SMALL_CAPS": "none",
+        "SMALL_CAPS_FORCED": "none",
+    }
+    return mapping.get(normalized)
+
+
+def text_case_matches(text_case: object, css_text_transform: str | None) -> bool:
+    expected = text_case_expected_transform(text_case)
+    if expected is None:
+        return True
+    if css_text_transform is None:
+        return expected == "none"
+    actual = css_text_transform.strip().lower()
+    if expected == "none":
+        return actual in {"none", "initial", "unset", "inherit"}
+    return actual == expected
+
+
+def collect_text_decoration_tokens(css_text_decoration: str | None, css_text_decoration_line: str | None) -> set[str]:
+    tokens: set[str] = set()
+    for value in (css_text_decoration, css_text_decoration_line):
+        if not isinstance(value, str):
+            continue
+        for token in re.findall(r"[a-z-]+", value.lower()):
+            tokens.add(token)
+    return tokens
+
+
+def text_decoration_matches(expected: object, css_text_decoration: str | None, css_text_decoration_line: str | None) -> bool:
+    if not isinstance(expected, str):
+        return True
+    expected_norm = expected.strip().upper()
+    tokens = collect_text_decoration_tokens(css_text_decoration, css_text_decoration_line)
+    if expected_norm == "NONE":
+        if not tokens:
+            return True
+        return "underline" not in tokens and "line-through" not in tokens
+    if expected_norm == "UNDERLINE":
+        return "underline" in tokens
+    if expected_norm == "STRIKETHROUGH":
+        return "line-through" in tokens
+    return True
 
 
 def parse_line_height_ratio(line_height: str | None, font_size: str | None) -> float | None:
@@ -1543,6 +1849,33 @@ def validate_text_nodes(
                     f"{render_value(blend_value)} @ {match.element.short_selector()}",
                 )
 
+            transform_prop = properties.get("text-transform")
+            transform_value = transform_prop.value if transform_prop else None
+            if not text_case_matches(node.get("textCase"), transform_value):
+                add_violation(
+                    violations,
+                    "v2.textCase.match",
+                    node,
+                    render_value(node.get("textCase")),
+                    f"{render_value(transform_value)} @ {match.element.short_selector()}",
+                )
+
+            decoration_prop = properties.get("text-decoration")
+            decoration_line_prop = properties.get("text-decoration-line")
+            decoration_value = decoration_prop.value if decoration_prop else None
+            decoration_line_value = decoration_line_prop.value if decoration_line_prop else None
+            if not text_decoration_matches(node.get("textDecoration"), decoration_value, decoration_line_value):
+                add_violation(
+                    violations,
+                    "v2.textDecoration.match",
+                    node,
+                    render_value(node.get("textDecoration")),
+                    (
+                        f"text-decoration={render_value(decoration_value)}, "
+                        f"text-decoration-line={render_value(decoration_line_value)} @ {match.element.short_selector()}"
+                    ),
+                )
+
             effects = node.get("effects")
             if isinstance(effects, list):
                 for effect in effects:
@@ -1842,6 +2175,75 @@ def validate_frame_nodes(frame_nodes: list[dict], css_rules: list[CSSRule], sche
                     frame,
                     render_value(frame.get("blendMode")),
                     f"{render_value(blend_value)} @ {rule_display}",
+                )
+
+            strokes = frame.get("strokes")
+            first_stroke = None
+            if isinstance(strokes, list):
+                for stroke in strokes:
+                    if isinstance(stroke, dict):
+                        first_stroke = stroke
+                        break
+            if isinstance(first_stroke, dict):
+                stroke_type = first_stroke.get("type")
+                expected_weight = frame.get("strokeWeight")
+                expected_color = normalize_hex(first_stroke.get("color"))
+                border_widths = collect_border_width_candidates(props)
+                border_colors = collect_border_colors(props)
+                type_ok = border_visible(props)
+                if stroke_type in {"GRADIENT_LINEAR", "GRADIENT_RADIAL"}:
+                    type_ok = border_uses_gradient(props)
+                weight_ok = isinstance(expected_weight, (int, float)) and any(
+                    abs(width - float(expected_weight)) <= 0.75 for width in border_widths
+                )
+                color_ok = True
+                if stroke_type == "SOLID" and expected_color:
+                    color_ok = expected_color in border_colors
+                if not (type_ok and weight_ok and color_ok):
+                    add_violation(
+                        violations,
+                        "v2.strokes.match",
+                        frame,
+                        (
+                            f"type={render_value(stroke_type)}, "
+                            f"color={render_value(expected_color)}, "
+                            f"weight={render_value(expected_weight)}"
+                        ),
+                        (
+                            f"styles={','.join(sorted(collect_border_styles(props))) or '-'}, "
+                            f"colors={','.join(border_colors) or '-'}, "
+                            f"widths={','.join(render_value(width) for width in border_widths) or '-'} @ {rule_display}"
+                        ),
+                    )
+
+            expected_corners = frame.get("rectangleCornerRadii")
+            if not corner_radii_match(expected_corners, props):
+                add_violation(
+                    violations,
+                    "v2.cornerRadii.match",
+                    frame,
+                    render_value(expected_corners),
+                    f"{render_value(resolve_corner_radii_values(props))} @ {rule_display}",
+                )
+
+            if not layout_sizing_matches(frame, props):
+                add_violation(
+                    violations,
+                    "v2.layoutSizing.match",
+                    frame,
+                    (
+                        f"H={render_value(frame.get('layoutSizingHorizontal'))}, "
+                        f"V={render_value(frame.get('layoutSizingVertical'))}, "
+                        f"grow={render_value(frame.get('layoutGrow'))}, "
+                        f"align={render_value(frame.get('layoutAlign'))}"
+                    ),
+                    (
+                        f"width={render_value(props.get('width').value if props.get('width') else None)}, "
+                        f"height={render_value(props.get('height').value if props.get('height') else None)}, "
+                        f"flex={render_value(props.get('flex').value if props.get('flex') else None)}, "
+                        f"flex-grow={render_value(props.get('flex-grow').value if props.get('flex-grow') else None)}, "
+                        f"align-self={render_value(props.get('align-self').value if props.get('align-self') else None)} @ {rule_display}"
+                    ),
                 )
 
     return violations

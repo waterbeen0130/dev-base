@@ -30,6 +30,7 @@ V2_TOP_LEVEL_NULL_KEYS = ("_extra",)
 V2_SECTION_NULL_KEYS = ("_extra",)
 V2_TEXT_NODE_NULL_KEYS = (
     "characterStyleOverrides",
+    "styleOverrideTable",
     "textCase",
     "textDecoration",
     "paragraphSpacing",
@@ -43,6 +44,7 @@ V2_FRAME_NODE_NULL_KEYS = (
     "strokes",
     "strokeWeight",
     "strokeAlign",
+    "rectangleCornerRadii",
     "layoutSizingHorizontal",
     "layoutSizingVertical",
     "layoutGrow",
@@ -219,14 +221,15 @@ def normalize_image_transform(transform: object) -> list[list[float]] | None:
     return normalized_rows
 
 
-def extract_frame_fills_v2(fills: list | None, image_refs: set[str]) -> list[dict]:
-    if not isinstance(fills, list):
+def normalize_paint_list(paints: object) -> list[dict]:
+    if not isinstance(paints, list):
         return []
+    return [paint for paint in paints if isinstance(paint, dict)]
 
+
+def extract_paints_v2(paints: object, image_refs: set[str], *, allow_image: bool) -> list[dict]:
     parsed: list[dict] = []
-    for fill in fills:
-        if not isinstance(fill, dict):
-            continue
+    for fill in normalize_paint_list(paints):
         fill_type = fill.get("type")
         if fill_type == "SOLID":
             color = to_hex_from_rgb(fill.get("color"))
@@ -252,7 +255,7 @@ def extract_frame_fills_v2(fills: list | None, image_refs: set[str]) -> list[dic
             )
             continue
 
-        if fill_type == "IMAGE":
+        if fill_type == "IMAGE" and allow_image:
             image_fill: dict[str, object] = {"type": "IMAGE"}
             image_ref = fill.get("imageRef")
             if isinstance(image_ref, str) and image_ref:
@@ -274,6 +277,15 @@ def extract_frame_fills_v2(fills: list | None, image_refs: set[str]) -> list[dic
             parsed.append(image_fill)
 
     return parsed
+
+
+def extract_frame_fills_v2(fills: list | None, image_refs: set[str]) -> list[dict]:
+    return extract_paints_v2(fills, image_refs, allow_image=True)
+
+
+def extract_frame_strokes_v2(strokes: object, image_refs: set[str]) -> list[dict]:
+    # IMAGE strokes are rare and not consistently represented in CSS; skip gracefully.
+    return extract_paints_v2(strokes, image_refs, allow_image=False)
 
 
 def extract_effects(effects: object) -> list[dict]:
@@ -368,6 +380,77 @@ def safe_round_3(value) -> float | int | None:
     return rounded
 
 
+def normalize_numeric_default(value: object, *, default: float = 0.0) -> float | int:
+    rounded = round_float_3(value, default=default)
+    if rounded is None:
+        rounded = default
+    if float(rounded).is_integer():
+        return int(rounded)
+    return rounded
+
+
+def normalize_enum(value: object, allowed: set[str], default: str) -> str:
+    if isinstance(value, str):
+        text = value.strip().upper()
+        if text in allowed:
+            return text
+    return default
+
+
+def normalize_layout_grow(value: object) -> float | int:
+    rounded = round_float_3(value, default=0.0)
+    if rounded is None:
+        return 0
+    if rounded < 0:
+        return 0
+    if rounded > 1:
+        return 1
+    if float(rounded).is_integer():
+        return int(rounded)
+    return rounded
+
+
+def normalize_rectangle_corner_radii(node: dict) -> list[float | int]:
+    raw = node.get("rectangleCornerRadii")
+    if isinstance(raw, list) and len(raw) >= 4:
+        values: list[float | int] = []
+        for value in raw[:4]:
+            parsed = safe_round_3(value)
+            values.append(0 if parsed is None else parsed)
+        return values
+
+    corner = safe_round_3(node.get("cornerRadius"))
+    corner_value = 0 if corner is None else corner
+    return [corner_value, corner_value, corner_value, corner_value]
+
+
+def normalize_style_overrides(node: dict) -> list[int]:
+    chars = node.get("characters")
+    char_len = len(chars) if isinstance(chars, str) else 0
+    raw = node.get("characterStyleOverrides")
+    if not isinstance(raw, list):
+        return [0 for _ in range(char_len)] if char_len else []
+    normalized: list[int] = []
+    for value in raw:
+        try:
+            normalized.append(int(value))
+        except (TypeError, ValueError):
+            normalized.append(0)
+    return normalized
+
+
+def normalize_style_override_table(node: dict) -> dict:
+    table = node.get("styleOverrideTable")
+    if isinstance(table, dict):
+        return table
+    return {}
+
+
+LAYOUT_SIZING_VALUES = {"FIXED", "HUG", "FILL"}
+LAYOUT_ALIGN_VALUES = {"INHERIT", "STRETCH", "MIN", "MAX", "CENTER"}
+STROKE_ALIGN_VALUES = {"INSIDE", "OUTSIDE", "CENTER"}
+
+
 def compute_line_height_ratio(line_height_px, font_size):
     try:
         if line_height_px is None or font_size is None:
@@ -397,8 +480,8 @@ def build_character_segments(node: dict) -> list[dict]:
     if not isinstance(chars, str) or not chars:
         return []
 
-    overrides = node.get("characterStyleOverrides", []) or []
-    table = node.get("styleOverrideTable", {}) or {}
+    overrides = normalize_style_overrides(node)
+    table = normalize_style_override_table(node)
     base_style = {**(node.get("style") or {})}
     base_fills = node.get("fills") or []
 
@@ -449,16 +532,16 @@ def build_character_segments(node: dict) -> list[dict]:
 
 def extract_corner_radius(node: dict, bbox: dict) -> dict:
     cr = node.get("cornerRadius")
-    rcr = node.get("rectangleCornerRadii")
+    cr_rounded = safe_round_3(cr)
     hint = None
     w = bbox.get("w") or 0
     h = bbox.get("h") or 0
-    if cr is not None and w and h:
-        if cr >= min(w, h) / 2:
+    if isinstance(cr_rounded, (int, float)) and w and h:
+        if float(cr_rounded) >= min(w, h) / 2:
             hint = "50%"
     return {
-        "cornerRadius": safe_round_3(cr),
-        "rectangleCornerRadii": [safe_round_3(value) for value in rcr] if isinstance(rcr, list) else None,
+        "cornerRadius": cr_rounded,
+        "rectangleCornerRadii": normalize_rectangle_corner_radii(node),
         "border_radius_hint": hint,
     }
 
@@ -467,6 +550,8 @@ def normalize_text_node(node: dict) -> dict:
     style = node.get("style") if isinstance(node.get("style"), dict) else {}
     font_size = style.get("fontSize")
     line_height_px = style.get("lineHeightPx")
+    text_case = normalize_enum(style.get("textCase"), {"ORIGINAL", "UPPER", "LOWER", "TITLE", "SMALL_CAPS", "SMALL_CAPS_FORCED"}, "ORIGINAL")
+    text_decoration = normalize_enum(style.get("textDecoration"), {"NONE", "UNDERLINE", "STRIKETHROUGH"}, "NONE")
 
     return {
         "id": node.get("id"),
@@ -484,6 +569,12 @@ def normalize_text_node(node: dict) -> dict:
         "effects": extract_effects(node.get("effects")),
         "textAlignHorizontal": style.get("textAlignHorizontal"),
         "textAlignVertical": style.get("textAlignVertical"),
+        "characterStyleOverrides": normalize_style_overrides(node),
+        "styleOverrideTable": normalize_style_override_table(node),
+        "textCase": text_case,
+        "textDecoration": text_decoration,
+        "paragraphSpacing": normalize_numeric_default(style.get("paragraphSpacing"), default=0.0),
+        "paragraphIndent": normalize_numeric_default(style.get("paragraphIndent"), default=0.0),
         "bbox": extract_bbox(node),
         "character_segments": build_character_segments(node),
     }
@@ -505,9 +596,16 @@ def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
         "counterAxisAlignItems": node.get("counterAxisAlignItems"),
         "fills": extract_frame_fill(node.get("fills"), image_refs),
         "fills_v2": extract_frame_fills_v2(node.get("fills"), image_refs),
+        "strokes": extract_frame_strokes_v2(node.get("strokes"), image_refs),
+        "strokeWeight": normalize_numeric_default(node.get("strokeWeight"), default=0.0),
+        "strokeAlign": normalize_enum(node.get("strokeAlign"), STROKE_ALIGN_VALUES, "CENTER"),
         "effects": extract_effects(node.get("effects")),
         "opacity": extract_node_opacity(node),
         "blendMode": extract_blend_mode(node),
+        "layoutSizingHorizontal": normalize_enum(node.get("layoutSizingHorizontal"), LAYOUT_SIZING_VALUES, "FIXED"),
+        "layoutSizingVertical": normalize_enum(node.get("layoutSizingVertical"), LAYOUT_SIZING_VALUES, "FIXED"),
+        "layoutGrow": normalize_layout_grow(node.get("layoutGrow")),
+        "layoutAlign": normalize_enum(node.get("layoutAlign"), LAYOUT_ALIGN_VALUES, "INHERIT"),
         **extract_corner_radius(node, bbox),
     }
 
@@ -730,6 +828,20 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
                 node["effects"] = node.get("effects") if isinstance(node.get("effects"), list) else []
                 node["opacity"] = normalize_unit_opacity(node.get("opacity"), default=1.0)
                 node["blendMode"] = extract_blend_mode(node)
+                node["characterStyleOverrides"] = normalize_style_overrides(node)
+                node["styleOverrideTable"] = normalize_style_override_table(node)
+                node["textCase"] = normalize_enum(
+                    node.get("textCase"),
+                    {"ORIGINAL", "UPPER", "LOWER", "TITLE", "SMALL_CAPS", "SMALL_CAPS_FORCED"},
+                    "ORIGINAL",
+                )
+                node["textDecoration"] = normalize_enum(
+                    node.get("textDecoration"),
+                    {"NONE", "UNDERLINE", "STRIKETHROUGH"},
+                    "NONE",
+                )
+                node["paragraphSpacing"] = normalize_numeric_default(node.get("paragraphSpacing"), default=0.0)
+                node["paragraphIndent"] = normalize_numeric_default(node.get("paragraphIndent"), default=0.0)
 
     frame_nodes = payload.get("frame_nodes")
     if isinstance(frame_nodes, list):
@@ -738,8 +850,20 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
             if isinstance(node, dict):
                 node["fills_v2"] = node.get("fills_v2") if isinstance(node.get("fills_v2"), list) else []
                 node["effects"] = node.get("effects") if isinstance(node.get("effects"), list) else []
+                node["strokes"] = node.get("strokes") if isinstance(node.get("strokes"), list) else []
+                node["strokeWeight"] = normalize_numeric_default(node.get("strokeWeight"), default=0.0)
+                node["strokeAlign"] = normalize_enum(node.get("strokeAlign"), STROKE_ALIGN_VALUES, "CENTER")
                 node["opacity"] = normalize_unit_opacity(node.get("opacity"), default=1.0)
                 node["blendMode"] = extract_blend_mode(node)
+                node["rectangleCornerRadii"] = normalize_rectangle_corner_radii(node)
+                node["layoutSizingHorizontal"] = normalize_enum(
+                    node.get("layoutSizingHorizontal"), LAYOUT_SIZING_VALUES, "FIXED"
+                )
+                node["layoutSizingVertical"] = normalize_enum(
+                    node.get("layoutSizingVertical"), LAYOUT_SIZING_VALUES, "FIXED"
+                )
+                node["layoutGrow"] = normalize_layout_grow(node.get("layoutGrow"))
+                node["layoutAlign"] = normalize_enum(node.get("layoutAlign"), LAYOUT_ALIGN_VALUES, "INHERIT")
 
     vector_nodes = payload.get("vector_nodes")
     if isinstance(vector_nodes, list):
@@ -1396,6 +1520,12 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "opacity",
         "blendMode",
         "effects",
+        "characterStyleOverrides",
+        "styleOverrideTable",
+        "textCase",
+        "textDecoration",
+        "paragraphSpacing",
+        "paragraphIndent",
         "textAlignHorizontal",
         "textAlignVertical",
         "bbox",
@@ -1420,11 +1550,18 @@ def render_markdown(payload: dict, node_id: str) -> str:
         "counterAxisAlignItems",
         "fills",
         "fills_v2",
+        "strokes",
+        "strokeWeight",
+        "strokeAlign",
         "effects",
         "opacity",
         "blendMode",
         "cornerRadius",
         "rectangleCornerRadii",
+        "layoutSizingHorizontal",
+        "layoutSizingVertical",
+        "layoutGrow",
+        "layoutAlign",
         "border_radius_hint",
         "parent_id",
     ]
