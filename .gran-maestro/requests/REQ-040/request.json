@@ -1,0 +1,27 @@
+{
+  "id": "REQ-040",
+  "title": "파이프라인 근본 개선 — 합본 검증 + 텍스트 byte-exact + 통이미지 감지",
+  "original_request": "오늘 목포플레이파크 재검증에서 figma-validate 가 섹션별로만 가능하여 합본 HTML 전체 대비 격차(330+건)를 PM 이 수동 집계해야 하는 문제 노출. 또한 text byte-exact 미체크로 NBSP 소실 등이 암묵 통과. 통이미지(AI가 Figma에 없는 이미지 합성) 감지 없음. 3가지 축 동시 도입.",
+  "status": "spec_ready",
+  "current_phase": 1,
+  "created_at": "2026-04-20T05:30:00.000Z",
+  "auto_approve": true,
+  "source_plan": null,
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "합본 검증 + text byte-exact + asset manifest fidelity",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": []
+  },
+  "stitch_screens": []
+}
