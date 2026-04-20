@@ -50,6 +50,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--html", required=True, help="HTML file path")
     parser.add_argument("--css", required=True, help="CSS file path")
     parser.add_argument("--violations", help="Violation report JSON path")
+    parser.add_argument(
+        "--agent",
+        choices=["codex-dev", "gemini-dev", "claude-dev"],
+        default="codex-dev",
+        help="Dispatch agent label",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Do not write files; print unified diff")
     parser.add_argument("--report", help="Write repair report JSON")
     return parser.parse_args()

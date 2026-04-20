@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 
 
 CRITICAL_CATEGORIES = {
@@ -70,7 +71,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-repair", action="store_true", help="Disable one-pass auto-repair loop")
     parser.add_argument("--no-figma", action="store_true", help="Skip figma-validate step (not recommended)")
     parser.add_argument("--structural-diff", action="store_true", help="Run structural diff gate")
-    return parser.parse_args()
+    parser.add_argument("--converge", action="store_true", help="Auto-repair loop: re-dispatch until convergence")
+    parser.add_argument("--max-iterations", type=int, default=5)
+    parser.add_argument(
+        "--convergence-mode",
+        choices=["zero-violations", "no-change", "n-iterations"],
+        default="zero-violations",
+    )
+    parser.add_argument(
+        "--dispatch-agent",
+        default="codex-dev",
+        choices=["codex-dev", "gemini-dev", "claude-dev"],
+    )
+    args = parser.parse_args()
+    if args.converge and args.no_repair:
+        parser.error("--converge is incompatible with --no-repair")
+    if args.max_iterations < 1:
+        parser.error("--max-iterations must be >= 1")
+    return args
 
 
 def parse_schema_branch(schema_version: object) -> str:
@@ -96,6 +114,13 @@ def detect_spec_branch(spec_path: str) -> str:
     if not isinstance(payload, dict):
         return "v1"
     return parse_schema_branch(payload.get("schema_version"))
+
+
+def detect_spec_dir_branch(spec_dir: str) -> str:
+    for spec_path in sorted(Path(spec_dir).glob("*_spec.json")):
+        if detect_spec_branch(str(spec_path)) == "v2":
+            return "v2"
+    return "v1"
 
 
 def run_validator(command: list[str]) -> tuple[int, str]:
@@ -400,17 +425,19 @@ def apply_legacy_v1_relaxation(figma_result: dict[str, object], schema_branch: s
 def build_commands(args: argparse.Namespace) -> tuple[list[str], list[str]]:
     tools_dir = Path(__file__).resolve().parent
     figma_command: list[str] = []
-    if args.spec and not args.no_figma:
+    if not args.no_figma:
         figma_command = [
             sys.executable,
             str(tools_dir / "figma-validate.py"),
-            "--spec",
-            str(Path(args.spec)),
             "--html",
             str(Path(args.html)),
             "--css",
             str(Path(args.css)),
         ]
+        if args.spec:
+            figma_command.extend(["--spec", str(Path(args.spec))])
+        elif args.spec_dir:
+            figma_command.extend(["--spec-dir", str(Path(args.spec_dir))])
     semantic_command = [
         sys.executable,
         str(tools_dir / "validate-semantic.py"),
@@ -500,6 +527,247 @@ def determine_exit_code(figma_result: dict[str, object], semantic_result: dict[s
     if int(figma_result["ignore"]) > 0:
         return 2
     return 0
+
+
+def build_convergence_result(
+    figma_result: dict[str, object],
+    semantic_result: dict[str, object],
+    overall_exit_code: int,
+    structural_result: dict[str, object] | None = None,
+) -> dict[str, object]:
+    semantic_counts = semantic_result["counts"]
+    critical = int(figma_result["critical"]) + int(semantic_counts["critical"])
+    major = int(figma_result["major"]) + int(semantic_counts["major"]) + len(figma_result["missing_rows"])
+    minor = int(figma_result["ignore"]) + int(semantic_counts["minor"])
+    if structural_result is not None and bool(structural_result["blocking"]):
+        major += 1
+
+    total = critical + major + minor
+    payload: dict[str, object] = {
+        "critical": critical,
+        "major": major,
+        "minor": minor,
+        "total": total,
+        "exit_code": overall_exit_code,
+        "figma_validate": figma_result,
+        "validate_semantic": semantic_result,
+        "summary": {
+            "critical": critical,
+            "major": major,
+            "minor": minor,
+            "total": total,
+            "exit_code": overall_exit_code,
+        },
+    }
+    if structural_result is not None:
+        payload["structural_diff"] = structural_result
+    return payload
+
+
+def validate_for_convergence(
+    args: argparse.Namespace,
+    known_figma_categories: set[str],
+    figma_command: list[str],
+    semantic_command: list[str],
+) -> dict[str, object]:
+    if args.no_figma:
+        figma_exit_code, figma_output = 0, "figma-validate skipped (--no-figma)"
+    else:
+        figma_exit_code, figma_output = run_validator(figma_command)
+    semantic_exit_code, semantic_output = run_validator(semantic_command)
+
+    schema_branch = "v1"
+    if args.spec and not args.no_figma:
+        schema_branch = detect_spec_branch(args.spec)
+    elif args.spec_dir and not args.no_figma:
+        schema_branch = detect_spec_dir_branch(args.spec_dir)
+
+    figma_result = parse_figma_output(figma_output, figma_exit_code, known_figma_categories)
+    figma_result = apply_legacy_v1_relaxation(figma_result, schema_branch)
+    semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
+    overall_exit_code = determine_exit_code(figma_result, semantic_result)
+
+    structural_result: dict[str, object] | None = None
+    if args.structural_diff:
+        structural_result = run_structural_diff(args)
+        if bool(structural_result["blocking"]):
+            overall_exit_code = 1
+
+    return build_convergence_result(figma_result, semantic_result, overall_exit_code, structural_result)
+
+
+def _append_violation_item(
+    items: list[dict[str, object]],
+    rule_id: str,
+    file_path: str,
+    severity: str,
+    expected: object = "",
+    actual: object = "",
+    patch_hint: object = "",
+) -> None:
+    items.append(
+        {
+            "rule_id": rule_id,
+            "file": file_path,
+            "severity": severity,
+            "expected": str(expected),
+            "actual": str(actual),
+            "patch_hint": str(patch_hint),
+        }
+    )
+
+
+def _collect_repair_violations(result: dict[str, object]) -> list[dict[str, object]]:
+    items: list[dict[str, object]] = []
+    figma_result = result.get("figma_validate", {})
+    if isinstance(figma_result, dict):
+        for violation in figma_result.get("violations", []):
+            if not isinstance(violation, dict):
+                continue
+            category = str(violation.get("category", "figma"))
+            severity = str(violation.get("severity", "MAJOR"))
+            _append_violation_item(
+                items,
+                f"figma.{category}",
+                "figma-validate",
+                severity,
+                violation.get("expected", ""),
+                violation.get("actual", ""),
+                violation.get("node", ""),
+            )
+        for missing_row in figma_result.get("missing_rows", []):
+            node_id = ""
+            if isinstance(missing_row, dict):
+                node_id = str(missing_row.get("id", ""))
+            _append_violation_item(
+                items,
+                "figma.missing_spec_row",
+                "figma-validate",
+                "MAJOR",
+                "spec row exists",
+                node_id,
+                "Add or align the missing spec row.",
+            )
+
+    semantic_result = result.get("validate_semantic", {})
+    if isinstance(semantic_result, dict):
+        for violation in semantic_result.get("violations", []):
+            if not isinstance(violation, dict):
+                continue
+            severity = str(violation.get("severity", "MAJOR"))
+            message = str(violation.get("message", ""))
+            _append_violation_item(
+                items,
+                f"semantic.{severity.lower()}",
+                "validate-semantic",
+                severity,
+                "",
+                message,
+                message,
+            )
+
+    total = int(result.get("total", len(items)))
+    for index in range(len(items), total):
+        _append_violation_item(
+            items,
+            "post_impl.synthetic",
+            "post-impl-verify",
+            "MAJOR",
+            "violation resolved",
+            f"unparsed violation {index + 1}",
+            "Inspect validator output and repair manually.",
+        )
+    return items
+
+
+def write_violations_json(result: dict[str, object], path: str) -> str:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "summary": {
+            "critical": result["critical"],
+            "major": result["major"],
+            "minor": result["minor"],
+            "total": result["total"],
+            "exit_code": result.get("exit_code"),
+        },
+        "figma_validate": result.get("figma_validate", {}),
+        "validate_semantic": result.get("validate_semantic", {}),
+        "violations": _collect_repair_violations(result),
+    }
+    if "structural_diff" in result:
+        payload["structural_diff"] = result["structural_diff"]
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return str(target)
+
+
+def dispatch_repair_from_violations(args: argparse.Namespace, violations_json: str, dispatch_agent: str) -> None:
+    tools_dir = Path(__file__).resolve().parent
+    repair_command = [
+        sys.executable,
+        str(tools_dir / "repair-from-violations.py"),
+        "--html",
+        str(Path(args.html)),
+        "--css",
+        str(Path(args.css)),
+        "--violations",
+        str(Path(violations_json)),
+        "--agent",
+        dispatch_agent,
+    ]
+    exit_code, output = run_validator(repair_command)
+    if output:
+        print(output)
+    if exit_code != 0:
+        print(f"[WARN] dispatch repair exited with {exit_code}", file=sys.stderr)
+
+
+def run_convergence_loop(args: argparse.Namespace, validate_fn, dispatch_fn) -> int:
+    history: list[dict[str, object]] = []
+    prev_total: int | None = None
+    for i in range(1, args.max_iterations + 1):
+        t0 = time.time()
+        result = validate_fn()
+        duration = time.time() - t0
+
+        violations = {
+            "iter": i,
+            "critical": result["critical"],
+            "major": result["major"],
+            "minor": result["minor"],
+            "total": result["total"],
+            "duration_s": round(duration, 2),
+        }
+        history.append(violations)
+
+        print(
+            f"[ITER {i}] CRITICAL={result['critical']} MAJOR={result['major']} "
+            f"MINOR={result['minor']} TOTAL={result['total']}"
+        )
+
+        if args.convergence_mode == "zero-violations" and result["total"] == 0:
+            print(f"[CONVERGED] iter={i} zero-violations")
+            break
+        if args.convergence_mode == "no-change" and prev_total == result["total"]:
+            print(f"[CONVERGED] iter={i} no-change (total={result['total']})")
+            break
+        if i == args.max_iterations:
+            if result["total"] > 0:
+                print(f"[WARN] 수렴 미달성: iter={args.max_iterations} remaining={result['total']}", file=sys.stderr)
+            break
+
+        violations_json = write_violations_json(result, f".gran-maestro/state/iter-{i}-violations.json")
+        dispatch_fn(violations_json, args.dispatch_agent)
+
+        prev_total = int(result["total"])
+
+    history_path = Path(".gran-maestro/state/converge-history.json")
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    history_path.write_text(json.dumps(history, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    if history[-1]["total"] == 0:
+        return 0
+    return 1
 
 
 def render_text_output(
@@ -618,9 +886,24 @@ def main() -> int:
         schema_branch = detect_spec_branch(args.spec)
         if schema_branch == "v1":
             print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
+    elif args.spec_dir and not args.no_figma:
+        schema_branch = detect_spec_dir_branch(args.spec_dir)
+        if schema_branch == "v1":
+            print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
     known_figma_categories = set(V1_CATEGORIES if schema_branch == "v1" else V2_CATEGORIES)
 
     figma_command, semantic_command = build_commands(args)
+
+    if args.converge:
+        return run_convergence_loop(
+            args,
+            lambda: validate_for_convergence(args, known_figma_categories, figma_command, semantic_command),
+            lambda violations_json, dispatch_agent: dispatch_repair_from_violations(
+                args,
+                violations_json,
+                dispatch_agent,
+            ),
+        )
 
     if args.no_figma:
         figma_exit_code, figma_output = 0, "figma-validate skipped (--no-figma)"
