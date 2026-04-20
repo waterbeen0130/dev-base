@@ -132,9 +132,9 @@ rules:
     validation:
       type: forbidden_substring
       target: html
-      pattern: "sec_1|sec_2|section_01|box1|box2"
+      pattern: "sec_\\d+|section_\\d+|box\\d+"
     examples:
-      bad: "<section class=\"sec_1\">"
+      bad: "<section class=\"sec_3\"><div class=\"box5\">"
       good: "<section class=\"about_intro\">"
 
   - id: generic_class_name

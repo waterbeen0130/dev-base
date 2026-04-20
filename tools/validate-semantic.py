@@ -744,6 +744,10 @@ def _target_text(rule: dict, ctx: ValidationContext) -> str:
     return ctx.css_text if target == "css" else ctx.html_text
 
 
+def _strip_html_comments(html: str) -> str:
+    return re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
+
+
 def _target_path(rule: dict, ctx: ValidationContext) -> str:
     target = rule.get("validation", {}).get("target", "html")
     return ctx.css_path if target == "css" else ctx.html_path
@@ -1222,12 +1226,22 @@ def validate_html_tag_required(rule: dict, ctx: ValidationContext) -> Validation
 
 
 def validate_forbidden_substring(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    target_name = rule.get("validation", {}).get("target", "html")
     target = _target_text(rule, ctx)
-    raw = rule["validation"].get("pattern", "")
-    tokens = [token.strip() for token in raw.split("|") if token.strip()]
-    for token in tokens:
-        if token in target:
-            return ValidationResult(rule["id"], rule["severity"], False, message=f"forbidden substring found: {token}")
+    if target_name == "html":
+        target = _strip_html_comments(target)
+
+    pattern = rule["validation"].get("pattern", "")
+    if not pattern:
+        return ValidationResult(rule["id"], rule["severity"], True)
+
+    try:
+        match = re.search(pattern, target, re.MULTILINE)
+    except re.error as exc:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message=f"invalid_regex: {exc}")
+
+    if match:
+        return ValidationResult(rule["id"], rule["severity"], False, message=f"forbidden substring found: {match.group(0)}")
     return ValidationResult(rule["id"], rule["severity"], True)
 
 

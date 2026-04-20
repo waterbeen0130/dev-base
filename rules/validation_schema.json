@@ -148,10 +148,10 @@
       "severity": "error",
       "target": "html",
       "type": "forbidden_substring",
-      "pattern": "sec_1|sec_2|section_01|box1|box2",
+      "pattern": "sec_\\d+|section_\\d+|box\\d+",
       "priority": 100,
       "examples": {
-        "bad": "<section class=\"sec_1\">",
+        "bad": "<section class=\"sec_3\"><div class=\"box5\">",
         "good": "<section class=\"about_intro\">"
       }
     },
