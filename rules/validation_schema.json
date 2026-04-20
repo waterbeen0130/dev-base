@@ -83,6 +83,12 @@
       "id": "figma.fidelity"
     },
     {
+      "id": "figma.text"
+    },
+    {
+      "id": "figma.asset"
+    },
+    {
       "id": "process"
     },
     {
@@ -1023,6 +1029,42 @@
       "type": "required_substring",
       "pattern": "[data-delay]",
       "priority": 200
+    },
+    {
+      "applies_to": [
+        "figma"
+      ],
+      "category": "figma.text",
+      "description": "Figma spec의 text_nodes[].characters는 HTML에 byte-exact 존재해야 한다 (NBSP/특수공백 포함).",
+      "id": "text_byte_exact_required",
+      "severity": "error",
+      "target": "text",
+      "type": "custom",
+      "custom_handler": "validate_text_byte_exact",
+      "selector": "custom:validate_text_byte_exact",
+      "priority": 100,
+      "examples": {
+        "bad": "Figma '운영시간\\xa0  10:00' → HTML '운영시간 10:00' (NBSP 소실)",
+        "good": "byte-exact 복사"
+      }
+    },
+    {
+      "applies_to": [
+        "figma"
+      ],
+      "category": "figma.asset",
+      "description": "asset_manifest.json 과 HTML <img src> 는 양방향 일치해야 한다 (통이미지 금지).",
+      "id": "asset_manifest_consistency",
+      "severity": "error",
+      "target": "html",
+      "type": "custom",
+      "custom_handler": "validate_asset_manifest_consistency",
+      "selector": "custom:validate_asset_manifest_consistency",
+      "priority": 100,
+      "examples": {
+        "bad": "HTML 에 asset_manifest 미등록 이미지 (AI 합성 의심)",
+        "good": "HTML 이미지 전부 asset_manifest 등록된 Figma 원본"
+      }
     },
     {
       "applies_to": [

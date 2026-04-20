@@ -8,15 +8,18 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import glob
 import hashlib
 import json
 import re
 import sys
 import types
+from collections import Counter
 from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlsplit
 from typing import Any, Callable, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +60,7 @@ SCHEMA_V2_PATTERN = re.compile(r"^2(?:\.\d+\.\d+)?$")
 POLICY_1_CATEGORY = "[POLICY-1] VERTICAL frame itemSpacing must map to margin-bottom"
 V1_CATEGORIES = (
     "텍스트 위변조",
+    "텍스트 byte-exact",
     "줄바꿈 보존",
     "폰트 5필드 완결성",
     "lineHeight 비율 일치",
@@ -65,6 +69,7 @@ V1_CATEGORIES = (
     "clamp 적용",
     "column flex gap 금지",
     "interaction URL 일치",
+    "asset_manifest 일치",
 )
 V2_DETAIL_CATEGORIES = (
     "v2.fills.solid.match",
@@ -95,6 +100,19 @@ POLICY_HANDLER_MAP = {
     "figma_rules_conflict_uses_meta_marker": "enforce_policy3_rules_conflict_bypass",
 }
 
+CRITICAL_CATEGORIES = {
+    "텍스트 byte-exact",
+    "asset_manifest 일치",
+    "텍스트 위변조",
+    "fills color hex 일치",
+}
+MAJOR_CATEGORIES = {
+    "frame padding/gap 반영",
+    "clamp 적용",
+    "lineHeight 비율 일치",
+    "column flex gap 금지",
+}
+
 
 @dataclass
 class Violation:
@@ -102,6 +120,14 @@ class Violation:
     node: str
     expected: str
     actual: str
+
+
+@dataclass(frozen=True)
+class SectionValidationResult:
+    section_name: str
+    schema_branch: str
+    violations: list[Violation]
+    missing_rows: list[dict]
 
 
 @dataclass
@@ -256,13 +282,16 @@ class RuleDispatchContext:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate HTML/CSS output against normalized Figma section spec")
-    parser.add_argument("--spec", required=False, help="Path to section_spec.json")
+    parser.add_argument("--spec", required=False, help="Path to single spec.json")
+    parser.add_argument("--spec-dir", required=False, help="Directory containing *_spec.json files")
     parser.add_argument("--html", required=False, help="Path to generated HTML")
     parser.add_argument("--css", required=False, help="Path to generated CSS")
     parser.add_argument("--version-info", action="store_true", help="Print v1/v2 category map and exit")
     args = parser.parse_args()
-    if not args.version_info and (not args.spec or not args.html or not args.css):
-        parser.error("--spec, --html, --css are required unless --version-info is used")
+    if args.spec and args.spec_dir:
+        parser.error("--spec and --spec-dir are mutually exclusive")
+    if not args.version_info and (not args.spec and not args.spec_dir or not args.html or not args.css):
+        parser.error("--spec or --spec-dir, --html, --css are required unless --version-info is used")
     return args
 
 
@@ -317,6 +346,13 @@ def load_spec(path_str: str) -> dict:
     if not isinstance(payload, dict):
         fail(f"Invalid spec JSON: expected object at root ({path_str})")
     return payload
+
+
+def load_spec_paths(spec_dir: str) -> list[str]:
+    paths = sorted(glob.glob(str(Path(spec_dir) / "*_spec.json")))
+    if not paths:
+        fail(f"No *_spec.json files found in: {spec_dir}")
+    return paths
 
 
 def asset_manifest_path_from_spec(spec_path: str) -> Path:
@@ -516,6 +552,129 @@ def validate_asset_manifest(spec: dict, spec_path: str) -> list[Violation]:
                 f"{expected['kind']}:{expected['ref']}",
                 json.dumps(expected, ensure_ascii=False, sort_keys=True),
                 json.dumps(actual, ensure_ascii=False, sort_keys=True),
+            )
+
+    return violations
+
+
+def validate_text_byte_exact(spec: dict, html: str) -> list[Violation]:
+    violations: list[Violation] = []
+    text_nodes = spec.get("text_nodes")
+    if not isinstance(text_nodes, list):
+        return violations
+
+    for node in text_nodes:
+        if not isinstance(node, dict):
+            continue
+        chars = node.get("characters", "")
+        if not isinstance(chars, str) or not chars:
+            continue
+        if chars not in html:
+            add_violation(
+                violations,
+                "텍스트 byte-exact",
+                node,
+                repr(chars),
+                "HTML 에 byte-exact 미발견",
+            )
+    return violations
+
+
+def _manifest_path_for_section(spec: dict, spec_dir: Path | None, spec_path: str | None = None) -> Path | None:
+    section = spec.get("section")
+    section_name = ""
+    if isinstance(section, dict):
+        raw_name = section.get("name")
+        if isinstance(raw_name, str):
+            section_name = raw_name.strip().lower()
+    if spec_dir is not None and section_name:
+        candidates = list(spec_dir.glob(f"{section_name}_asset_manifest.json"))
+        if candidates:
+            return candidates[0]
+    if spec_path is not None:
+        fallback = asset_manifest_path_from_spec(spec_path)
+        if fallback.exists():
+            return fallback
+    return None
+
+
+def _manifest_image_refs(manifest: object) -> set[str]:
+    if isinstance(manifest, dict):
+        assets = manifest.get("assets")
+    else:
+        assets = manifest
+    if not isinstance(assets, list):
+        return set()
+
+    refs: set[str] = set()
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+        kind = asset.get("kind")
+        if isinstance(kind, str) and kind and kind != "image":
+            continue
+        ref = asset.get("image_ref")
+        if not isinstance(ref, str) or not ref:
+            ref = asset.get("ref")
+        if isinstance(ref, str) and ref:
+            refs.add(ref)
+    return refs
+
+
+def _html_img_basenames(html: str) -> set[str]:
+    srcs = re.findall(r"<img\b[^>]*\bsrc\s*=\s*['\"]([^'\"]+)['\"]", html, flags=re.I)
+    basenames: set[str] = set()
+    for src in srcs:
+        path = urlsplit(src).path
+        stem = Path(path).stem
+        if stem:
+            basenames.add(stem)
+    return basenames
+
+
+def _asset_ref_matches_basename(ref: str, basename: str) -> bool:
+    return ref in basename or basename in ref
+
+
+def validate_asset_manifest_consistency(
+    spec: dict,
+    html: str,
+    spec_dir: Path | None,
+    spec_path: str | None = None,
+) -> list[Violation]:
+    manifest_path = _manifest_path_for_section(spec, spec_dir, spec_path)
+    if manifest_path is None or not manifest_path.exists():
+        return []
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return []
+
+    manifest_refs = _manifest_image_refs(manifest)
+    html_basenames = _html_img_basenames(html)
+    if not html_basenames:
+        return []
+    violations: list[Violation] = []
+
+    for ref in sorted(manifest_refs):
+        if not any(_asset_ref_matches_basename(ref, basename) for basename in html_basenames):
+            add_violation(
+                violations,
+                "asset_manifest 일치",
+                ref,
+                "HTML에 존재해야 함",
+                "HTML에 미발견",
+            )
+
+    for basename in sorted(html_basenames):
+        if not any(_asset_ref_matches_basename(ref, basename) for ref in manifest_refs):
+            add_violation(
+                violations,
+                "asset_manifest 일치",
+                basename,
+                "asset_manifest 등록 필요 (Figma 원본)",
+                "통이미지 의심 (manifest 미등록)",
             )
 
     return violations
@@ -1614,10 +1773,6 @@ def build_special_whitespace_regex(text: str) -> str:
         buffer.clear()
 
     for char in text:
-        if char == "\xa0":
-            flush()
-            parts.append(r"\u00a0")
-            continue
         if char in {"\n", "\u2028"}:
             flush()
             parts.append(r"\s*(?:\u2028|\r?\n)\s*")
@@ -1628,7 +1783,7 @@ def build_special_whitespace_regex(text: str) -> str:
 
 
 def special_whitespace_preserved(spec_text: str, actual_text: str) -> bool:
-    if not any(marker in spec_text for marker in ("\n", "\u2028", "\xa0")):
+    if not any(marker in spec_text for marker in ("\n", "\u2028")):
         return True
     pattern = build_special_whitespace_regex(spec_text)
     if not pattern:
@@ -2578,6 +2733,8 @@ def run_v2_categories(
     *,
     spec: dict,
     spec_path: str,
+    spec_dir: Path | None,
+    html_text: str,
     text_nodes: list[dict],
     frame_nodes: list[dict],
     interactions: list[dict],
@@ -2594,7 +2751,16 @@ def run_v2_categories(
     frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch="v2")
     interaction_violations = validate_interactions(interactions, root)
     asset_manifest_violations = validate_asset_manifest(spec, spec_path)
-    violations = text_violations + frame_violations + interaction_violations + asset_manifest_violations
+    text_byte_exact_violations = validate_text_byte_exact(spec, html_text)
+    asset_consistency_violations = validate_asset_manifest_consistency(spec, html_text, spec_dir, spec_path)
+    violations = (
+        text_byte_exact_violations
+        + text_violations
+        + frame_violations
+        + interaction_violations
+        + asset_manifest_violations
+        + asset_consistency_violations
+    )
     return violations, missing_rows
 
 
@@ -2617,27 +2783,29 @@ def print_report(violations: list[Violation], missing_rows: list[dict]) -> None:
         print("없음")
 
 
-def main() -> int:
-    args = parse_args()
-    if args.version_info:
-        print_version_info()
-        return 0
+def section_name_from_spec(spec: dict, spec_path: str) -> str:
+    section = spec.get("section")
+    if isinstance(section, dict):
+        name = section.get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip().lower()
+    stem = Path(spec_path).stem
+    if stem.endswith("_spec"):
+        stem = stem[: -len("_spec")]
+    return stem.lower()
 
-    assert args.spec is not None
-    assert args.html is not None
-    assert args.css is not None
 
-    spec = load_spec(args.spec)
+def validate_spec_payload(
+    *,
+    spec: dict,
+    spec_path: str,
+    spec_dir: Path | None,
+    html_text: str,
+    parser: SimpleHTMLDocumentParser,
+    css_rules: list[CSSRule],
+    text_candidates: list[ElementMatch],
+) -> SectionValidationResult:
     schema_branch = parse_schema_branch(spec.get("schema_version"))
-    if schema_branch == "v1":
-        print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
-    html_text = read_text(args.html)
-    css_text = read_text(args.css)
-
-    parser = parse_html_document(html_text)
-    css_rules = parse_css_rules(css_text)
-    text_candidates = collect_text_candidates(parser.root)
-
     text_nodes = spec.get("text_nodes")
     frame_nodes = spec.get("frame_nodes")
     interactions = spec.get("interactions")
@@ -2647,7 +2815,9 @@ def main() -> int:
     if schema_branch == "v2":
         violations, missing_rows = run_v2_categories(
             spec=spec,
-            spec_path=args.spec,
+            spec_path=spec_path,
+            spec_dir=spec_dir,
+            html_text=html_text,
             text_nodes=text_nodes,
             frame_nodes=frame_nodes,
             interactions=interactions,
@@ -2664,12 +2834,132 @@ def main() -> int:
         )
         frame_violations = validate_frame_nodes(frame_nodes, css_rules, schema_branch=schema_branch)
         interaction_violations = validate_interactions(interactions, parser.root)
-        violations = text_violations + frame_violations + interaction_violations
+        text_byte_exact_violations = validate_text_byte_exact(spec, html_text)
+        asset_consistency_violations = validate_asset_manifest_consistency(spec, html_text, spec_dir, spec_path)
+        violations = (
+            text_byte_exact_violations
+            + text_violations
+            + frame_violations
+            + interaction_violations
+            + asset_consistency_violations
+        )
 
-    print_report(violations, missing_rows)
-    if schema_branch == "v1":
+    return SectionValidationResult(
+        section_name=section_name_from_spec(spec, spec_path),
+        schema_branch=schema_branch,
+        violations=violations,
+        missing_rows=missing_rows,
+    )
+
+
+def violation_severity(category: str) -> str:
+    if category in CRITICAL_CATEGORIES:
+        return "CRITICAL"
+    if category in MAJOR_CATEGORIES:
+        return "MAJOR"
+    return "MINOR"
+
+
+def violation_category_counts(violations: list[Violation]) -> Counter[str]:
+    return Counter(item.category for item in violations)
+
+
+def violation_severity_counts(violations: list[Violation]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for item in violations:
+        counts[violation_severity(item.category)] += 1
+    return counts
+
+
+def print_section_category_summary(violations: list[Violation]) -> None:
+    print()
+    print("위반 카테고리 | 건수")
+    counts = violation_category_counts(violations)
+    if not counts:
+        print("없음 | 0")
+        return
+    for category in sorted(counts):
+        print(f"{category} | {counts[category]}")
+
+
+def print_spec_dir_report(results: list[SectionValidationResult]) -> None:
+    for index, result in enumerate(results):
+        if index:
+            print()
+        print(f"=== [{result.section_name}] ===")
+        print_report(result.violations, result.missing_rows)
+        print_section_category_summary(result.violations)
+
+    print()
+    print("=== 총계 ===")
+    print("섹션 | CRITICAL | MAJOR | MINOR | 합계")
+    overall: Counter[str] = Counter()
+    for result in results:
+        counts = violation_severity_counts(result.violations)
+        overall.update(counts)
+        total = sum(counts.values())
+        print(
+            f"{result.section_name} | {counts['CRITICAL']} | {counts['MAJOR']} | "
+            f"{counts['MINOR']} | {total}"
+        )
+    print(
+        f"전체 | {overall['CRITICAL']} | {overall['MAJOR']} | "
+        f"{overall['MINOR']} | {sum(overall.values())}"
+    )
+
+
+def main() -> int:
+    args = parse_args()
+    if args.version_info:
+        print_version_info()
         return 0
-    return 1 if violations or missing_rows else 0
+
+    assert args.html is not None
+    assert args.css is not None
+
+    html_text = read_text(args.html)
+    css_text = read_text(args.css)
+    parser = parse_html_document(html_text)
+    css_rules = parse_css_rules(css_text)
+    text_candidates = collect_text_candidates(parser.root)
+
+    if args.spec_dir:
+        spec_paths = load_spec_paths(args.spec_dir)
+        results: list[SectionValidationResult] = []
+        for spec_path in spec_paths:
+            spec = load_spec(spec_path)
+            result = validate_spec_payload(
+                spec=spec,
+                spec_path=spec_path,
+                spec_dir=Path(args.spec_dir),
+                html_text=html_text,
+                parser=parser,
+                css_rules=css_rules,
+                text_candidates=text_candidates,
+            )
+            if result.schema_branch == "v1":
+                print(f"[WARN] {result.section_name}: schema_version=1 (legacy)", file=sys.stderr)
+            results.append(result)
+        print_spec_dir_report(results)
+        return 1 if any(result.schema_branch != "v1" and (result.violations or result.missing_rows) for result in results) else 0
+
+    assert args.spec is not None
+    spec = load_spec(args.spec)
+    result = validate_spec_payload(
+        spec=spec,
+        spec_path=args.spec,
+        spec_dir=Path(args.spec).parent,
+        html_text=html_text,
+        parser=parser,
+        css_rules=css_rules,
+        text_candidates=text_candidates,
+    )
+    if result.schema_branch == "v1":
+        print("[WARN] schema_version=1 (legacy)", file=sys.stderr)
+    print_report(result.violations, result.missing_rows)
+    if result.schema_branch == "v1":
+        return 0
+    return 1 if result.violations or result.missing_rows else 0
 
 
 if __name__ == "__main__":

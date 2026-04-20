@@ -56,4 +56,4 @@ def test_all_rules_drift_check_converges_for_phase_b() -> None:
     combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
 
     assert result.returncode == 0, combined
-    assert "63/63 rules in sync" in combined
+    assert "65/65 rules in sync" in combined

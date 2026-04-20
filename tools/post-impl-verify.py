@@ -62,6 +62,7 @@ def parse_args() -> argparse.Namespace:
         description="Run figma-validate + validate-semantic and classify post-impl verification results."
     )
     parser.add_argument("--spec", required=False, help="Path to section spec JSON")
+    parser.add_argument("--spec-dir", required=False, help="Directory containing *_spec.json files (passthrough to figma-validate)")
     parser.add_argument("--html", required=True, help="Path to generated HTML")
     parser.add_argument("--css", required=True, help="Path to generated CSS")
     parser.add_argument("--profile", default="all", help="validate-semantic profile")
@@ -594,8 +595,8 @@ def main() -> int:
             print("post-impl-verify: exit=1")
             return 1
 
-    if not args.spec and (not args.no_figma or args.structural_diff):
-        fatal = "[FATAL] --spec is required"
+    if not args.spec and not args.spec_dir and (not args.no_figma or args.structural_diff):
+        fatal = "[FATAL] --spec or --spec-dir is required"
         if args.json_output:
             print(
                 json.dumps(

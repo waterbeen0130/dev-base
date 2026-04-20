@@ -82,6 +82,8 @@ categories:
   - accessibility
   - figma.mapping
   - figma.fidelity
+  - figma.text
+  - figma.asset
   - process
   - enhancement.workflow
 
@@ -783,6 +785,36 @@ rules:
       type: required_substring
       target: css
       pattern: "[data-delay]"
+
+  # ===== Figma extraction fidelity =====
+
+  - id: text_byte_exact_required
+    description: "Figma spec의 text_nodes[].characters는 HTML에 byte-exact 존재해야 한다 (NBSP/특수공백 포함)."
+    severity: error
+    priority: 100
+    applies_to: [figma]
+    category: figma.text
+    validation:
+      type: custom
+      target: text
+      custom_handler: validate_text_byte_exact
+    examples:
+      bad: "Figma '운영시간\\xa0  10:00' → HTML '운영시간 10:00' (NBSP 소실)"
+      good: "byte-exact 복사"
+
+  - id: asset_manifest_consistency
+    description: "asset_manifest.json 과 HTML <img src> 는 양방향 일치해야 한다 (통이미지 금지)."
+    severity: error
+    priority: 100
+    applies_to: [figma]
+    category: figma.asset
+    validation:
+      type: custom
+      target: html
+      custom_handler: validate_asset_manifest_consistency
+    examples:
+      bad: "HTML 에 asset_manifest 미등록 이미지 (AI 합성 의심)"
+      good: "HTML 이미지 전부 asset_manifest 등록된 Figma 원본"
 
   # ===== Figma v2 policy sync (REQ-029) =====
 

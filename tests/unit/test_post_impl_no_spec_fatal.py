@@ -33,4 +33,4 @@ def test_post_impl_requires_spec_when_figma_validation_is_enabled(tmp_path: Path
 
     combined = "\n".join(part for part in (proc.stdout, proc.stderr) if part)
     assert proc.returncode == 1, combined
-    assert "[FATAL] --spec is required" in combined
+    assert "[FATAL] --spec or --spec-dir is required" in combined
