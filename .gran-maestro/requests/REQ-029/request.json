@@ -1,0 +1,78 @@
+{
+  "id": "REQ-029",
+  "title": "[A] 정책 3건 문서화 + schema_version semver + migration 스크립트 + v1/v2 분기 파서",
+  "original_request": "Phase A 1단계 — 선결 정책 3건(VERTICAL itemSpacing/constraints/spec-vs-rules)을 4곳(rules.yaml, validation_schema.json, figma-validate.py, 외주 브리프 템플릿)에 동일 문구로 문서화. schema_version 숫자 1 → 문자열 \"2.0.0\" semver 전환. migration 스크립트(tools/migrate-spec-v1-to-v2.py) 신규 생성, 전체 프로젝트 스캔 + extracted.v1.backup/ 자동 백업 + add-only diff 보장. validator(tools/figma-validate.py + tools/post-impl-verify.py)에 v1/v2 분기 파서 도입.",
+  "status": "done",
+  "current_phase": 5,
+  "completed_at": "2026-04-19T09:30:00.000Z",
+  "merge_commit": "431d0e3",
+  "created_at": "2026-04-19T06:43:14.000Z",
+  "auto_approve": false,
+  "source_plan": "PLN-009",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_ideation": "IDN-002",
+  "dag_auto_chain": true,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "[A] 정책 3건 문서화 + schema_version semver + migration 스크립트 + v1/v2 분기 파서",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "commit_hash": "a1b004b",
+      "covers_ac": [
+        "AC-001","AC-002","AC-003","AC-004","AC-005","AC-006","AC-007","AC-008","AC-009","AC-010","AC-011","AC-012","AC-013"
+      ],
+      "covers_pac": [
+        "PAC-1","PAC-7","PAC-8","PAC-9","PAC-10","PAC-11","PAC-12","PAC-23","PAC-15"
+      ],
+      "self_check": {
+        "tsc": "PASS",
+        "test": "PASS",
+        "ran_at": "2026-04-19T08:15:00.000Z",
+        "tsc_output": "N/A (Python project — py_compile substituted): tools/migrate-spec-v1-to-v2.py tools/figma-section-spec.py tools/figma-validate.py tools/post-impl-verify.py tools/check-rules-drift.py tools/build-rules.py compiled cleanly",
+        "test_output": "TS-01..02 PASS, TS-04..07 PASS, TS-10 PASS, TS-12 PASS, TS-13 PASS. TS-03/08/09/11 deferred to task 02 (regression+unit suite) per spec note. Add-only diff verified: section_03 (v1=19213B → v2=32676B, no key/value loss, schema_version 1 → 2.0.0).",
+        "retry_round": 0
+      }
+    },
+    {
+      "id": "02",
+      "title": "[A-test] migration regression + 결정성 byte-exact + 정책 enforcement 통합 검증",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/02/spec.md",
+      "commit_hash": "cee85d7",
+      "covers_ac": ["AC-001","AC-002","AC-003","AC-004","AC-005","AC-006","AC-007"],
+      "covers_pac": ["PAC-7","PAC-8","PAC-23","PAC-25"],
+      "depends_on": ["01"],
+      "self_check": {
+        "tsc": "PASS",
+        "test": "PASS",
+        "ran_at": "2026-04-19T08:55:00.000Z",
+        "test_output": "pytest tests/ -v: 64 passed, 33 skipped in 6.28s. Integration test_req029_endtoend.sh: PASS (migrate exit=0, figma-validate exit=0, post-impl-verify exit=0). New test files created: 7 (3 regression + 2 integration + 3 unit + fixtures + conftest).",
+        "tsc_output": "N/A (Python — py_compile substituted, all OK)",
+        "retry_round": 0
+      }
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": [
+      "REQ-030",
+      "REQ-033"
+    ]
+  },
+  "stitch_screens": [],
+  "background_task_ids": [
+    { "task_id": "ba2eexk4l", "task_num": "01", "agent": "codex-dev", "status": "completed", "started_at": "2026-04-19T07:41:30.000Z" },
+    { "task_id": "b2sqa97e6", "task_num": "02", "agent": "codex-dev", "status": "completed", "started_at": "2026-04-19T08:30:00.000Z" }
+  ],
+  "pre_check_retries": 0,
+  "review_iterations": [
+    { "rv_id": "RV-001", "created_at": "2026-04-19T09:10:00.000Z", "gaps_found": 0, "tasks_created": [], "status": "completed" }
+  ],
+  "review_summary": { "iteration": 1, "status": "passed" },
+  "updated_at": "2026-04-19T09:15:00.000Z"
+}

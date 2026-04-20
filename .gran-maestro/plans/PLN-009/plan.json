@@ -1,0 +1,19 @@
+{
+  "id": "PLN-009",
+  "title": "Figma→Code 파이프라인 v2 확장 (spec v2 + validator drift 제거 + deterministic 공식화)",
+  "status": "completed",
+  "created_at": "2026-04-19T05:10:24.000Z",
+  "completed_at": "2026-04-19T13:35:00.000Z",
+  "cynefin_domain": "complicated",
+  "linked_ideation": "IDN-002",
+  "linked_previous_plan": "PLN-008",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_requests": ["REQ-029", "REQ-030", "REQ-031", "REQ-032", "REQ-033", "REQ-034"],
+  "progress": {
+    "completed": ["REQ-029", "REQ-030", "REQ-031", "REQ-032", "REQ-033", "REQ-034"],
+    "in_progress": [],
+    "pending": [],
+    "merge_commits": ["431d0e3", "7fa6cd2", "8919608", "cc619fc", "18bb9e0", "b4e8162"]
+  }
+}

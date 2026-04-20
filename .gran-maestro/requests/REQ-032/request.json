@@ -1,0 +1,23 @@
+{
+  "id": "REQ-032",
+  "title": "[D] componentId/componentSetId 추출 + vector SVG path 메타 + asset_manifest (hash 기반)",
+  "original_request": "Phase A 4단계 — frame_nodes에 componentId/componentSetId 필드 추출(재사용 로직은 본 plan 제외). vector_nodes의 SVG path 메타 보강. 신규 asset_manifest.json(hash 기반)을 spec과 함께 생성하여 이미지/아이콘/SVG asset의 결정적 참조를 보장. REQ-031 완료 후 시작.",
+  "status": "done",
+  "current_phase": 5,
+  "completed_at": "2026-04-19T12:00:00.000Z",
+  "merge_commit": "cc619fc",
+  "created_at": "2026-04-19T06:43:14.000Z",
+  "auto_approve": false,
+  "source_plan": "PLN-009",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_ideation": "IDN-002",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": ["REQ-034"]
+  },
+  "stitch_screens": []
+}

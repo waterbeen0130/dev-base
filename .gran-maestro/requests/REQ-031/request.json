@@ -1,0 +1,23 @@
+{
+  "id": "REQ-031",
+  "title": "[C] spec v2 — strokes + rectangleCornerRadii + layoutSizing*/Grow/Align + characterStyleOverrides + textCase + textDecoration + paragraphSpacing",
+  "original_request": "Phase A 3단계 — frame_nodes에 strokes/strokeWeight/strokeAlign + rectangleCornerRadii(개별 corner) + layoutSizingHorizontal/Vertical + layoutGrow + layoutAlign 추출. text_nodes에 characterStyleOverrides(인라인 스타일 보존) + textCase + textDecoration + paragraphSpacing 추출. figma-validate.py에 대응 검증 카테고리 추가. REQ-030(fills 구조) 완료 후 시작 — figma-section-spec.py 동시 수정 충돌 방지.",
+  "status": "done",
+  "current_phase": 5,
+  "completed_at": "2026-04-19T11:30:00.000Z",
+  "merge_commit": "8919608",
+  "created_at": "2026-04-19T06:43:14.000Z",
+  "auto_approve": false,
+  "source_plan": "PLN-009",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_ideation": "IDN-002",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": ["REQ-032"]
+  },
+  "stitch_screens": []
+}

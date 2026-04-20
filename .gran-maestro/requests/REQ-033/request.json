@@ -1,0 +1,23 @@
+{
+  "id": "REQ-033",
+  "title": "[E] validator drift 제거 — rules.yaml ↔ validation_schema.json ↔ 핸들러 정합성 + _stub_handler PASS 금지 + 불일치 항목 수정",
+  "original_request": "Phase A 5단계 — rules.yaml ↔ validation_schema.json ↔ validate-semantic.py 핸들러 3자 동기화. selector_single_line/media_query_format/no_media_indent 등 누락 규칙 보강. no_clamp_under_100 설명(<100) ↔ 구현(<10) 일치화. meaningful_page_name 규칙 ↔ 구현 일치화. _stub_handler 제거 또는 skipped → MAJOR FAIL 승격. REQ-029 완료 후 figma-section-spec과 독립 진행 가능.",
+  "status": "done",
+  "current_phase": 5,
+  "completed_at": "2026-04-19T12:30:00.000Z",
+  "merge_commit": "18bb9e0",
+  "created_at": "2026-04-19T06:43:14.000Z",
+  "auto_approve": false,
+  "source_plan": "PLN-009",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_ideation": "IDN-002",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": ["REQ-030"],
+    "blocks": ["REQ-034"]
+  },
+  "stitch_screens": []
+}

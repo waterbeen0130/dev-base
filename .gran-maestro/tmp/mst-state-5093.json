@@ -1,0 +1,20 @@
+{
+  "workflow_active": true,
+  "next_action": {
+    "skill": "mst:accept",
+    "source": "REQ-029",
+    "auto": true,
+    "expected_skill": "mst:accept",
+    "source_skill": "mst:approve",
+    "source_id": "REQ-029",
+    "auto_mode": true
+  },
+  "current_skill": "mst:approve",
+  "active_req": "REQ-029",
+  "iteration": 0,
+  "agile_loop_active": false,
+  "steering_disabled": false,
+  "block_count": 0,
+  "last_block_reason": "",
+  "updated_at": "2026-04-19T07:41:04Z"
+}

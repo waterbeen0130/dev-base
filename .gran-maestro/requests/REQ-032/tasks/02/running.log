@@ -1,0 +1,4707 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019da53a-40ba-7ee2-8c8a-32098e83d5b4
+--------
+user
+# Implementation Request — REQ-032/02 (Integration Test)
+
+- Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02
+- 선행: REQ-029 (431d0e3) + REQ-030 (7fa6cd2) + REQ-031 (8919608) + REQ-032/01 (0f3716d)
+
+## 구현 컨텍스트 (PM 작성)
+
+REQ-032/01 (0f3716d) 가 componentId + vector path + asset_manifest + 2 v2 카테고리 + 4 unit test 추가했고 35 unit PASS. 본 task 02 는 다음 통합/회귀 검증만 추가:
+
+1. `tests/integration/test_req032_endtoend.sh`:
+   - figma-validate.py --version-info 출력에 신규 2 카테고리 (v2.componentId.match, v2.assetManifest.exists) 등장 확인
+   - section_03/04 spec 으로 validate 실행 시 baseline 일치
+   - asset_manifest.json 자동 생성 옵션 (`--no-emit-asset-manifest` 토글 동작 확인)
+2. `tests/regression/test_req032_add_only.py`:
+   - REQ-029/030/031 산출물의 기존 v2 키 변경 없음 + REQ-032 신규 키만 추가됨
+3. `tests/regression/test_asset_manifest_determinism.py`:
+   - 동일 입력으로 manifest 2회 생성 → byte-exact 동일 (sort_keys 순서, hash 결정성)
+
+[REFERENCE_CONTEXT]
+current_date: 2026-04-19
+model_cutoff: 2026-01
+references: none
+[/REFERENCE_CONTEXT]
+
+## 자기탐색 지시
+
+1. REQ-032/01 prompts/phase2-impl.md 의 spec 확인
+2. REQ-031 task 02 패턴 참조
+
+## 규칙
+
+- task 01 의 구현 코드 절대 수정 금지
+- git commit 금지
+- stdlib + pytest 만 사용
+- [MANDATORY] 완료 전 신규 테스트 실행 + endtoend.sh 실행 후 응답에 출력 포함
+- worktree 내부에서만 작업
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_memory starting
+mcp: omx_wiki starting
+mcp: omx_code_intel starting
+mcp: omx_trace starting
+mcp: omx_state starting
+mcp: omx_state ready
+mcp: omx_trace ready
+mcp: omx_wiki ready
+mcp: omx_code_intel ready
+mcp: omx_memory ready
+mcp startup: ready: omx_state, omx_trace, omx_wiki, omx_code_intel, omx_memory
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청하신 REQ-032/02는 테스트 추가만 수행하고 기존 구현 코드는 건드리지 않겠습니다. 먼저 AGENTS 지침에 따라 `.omx` 상태/메모리를 복원 확인한 뒤, `prompts/phase2-impl.md`와 REQ-031 task 02 테스트 패턴을 확인해 동일한 방식으로 통합/회귀 테스트를 작성하겠습니다.
+exec
+/bin/bash -lc 'pwd; ls -la' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02
+total 9152
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 .
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 ..
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 .claude
+-rwxrwxrwx 1 waterbeen waterbeen      55 Apr 19 19:12 .git
+-rwxrwxrwx 1 waterbeen waterbeen      92 Apr 19 19:12 .gitignore
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 .gran-maestro
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 .omx
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 .playwright-mcp
+-rwxrwxrwx 1 waterbeen waterbeen   21329 Apr 19 19:12 AGENTS.md
+-rwxrwxrwx 1 waterbeen waterbeen   21166 Apr 19 19:12 CLAUDE.md
+-rwxrwxrwx 1 waterbeen waterbeen   12332 Apr 19 19:12 HANDOVER_2026-04-12.md
+-rwxrwxrwx 1 waterbeen waterbeen   12589 Apr 19 19:12 HANDOVER_2026-04-13.md
+-rwxrwxrwx 1 waterbeen waterbeen   20753 Apr 19 19:12 HANDOVER_2026-04-13_v2.md
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 docs
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 extracted
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 extracted.v1.backup
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:12 landing
+-rwxrwxrwx 1 waterbeen waterbeen  537819 Apr 19 19:12 mojelim_01_hero.png
+tool omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"})
+omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"}) success in 48ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"active_modes\":[]}"
+    }
+  ]
+}
+tool omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"})
+omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"}) success in 3ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false\n}"
+    }
+  ]
+}
+tool omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"})
+omx_memory.notepad_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02"}) success in 1ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false,\n  \"content\": \"\"\n}"
+    }
+  ]
+}
+exec
+/bin/bash -lc "rg --files -g 'AGENTS.md'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+AGENTS.md
+codex
+`.omx` 런타임 상태를 확인했고 현재 활성 모드는 없으며, 프로젝트 메모리/노트도 비어 있습니다. 이제 요청하신 대로 `prompts/phase2-impl.md`와 REQ-031의 task 02 테스트 패턴을 읽고 동일 구조로 신규 테스트 파일 3개를 작성하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,240p' prompts/phase2-impl.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 exited 2 in 0ms:
+sed: can't read prompts/phase2-impl.md: No such file or directory
+exec
+/bin/bash -lc "rg -n \"REQ-031|031|endtoend|asset_manifest|version-info|no-emit-asset-manifest|v2\\.\" tests -S" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+tests/unit/test_paragraph_spacing_indent.py:14:    module_name = "figma_section_spec_req031_paragraph_defaults"
+tests/unit/test_layout_sizing.py:16:    module_name = "figma_section_spec_req031_layout_sizing"
+tests/unit/test_layout_sizing.py:130:    assert "v2.layoutSizing.match" in output
+tests/regression/test_req031_add_only.py:15:REQ031_TEXT_KEYS = {
+tests/regression/test_req031_add_only.py:23:REQ031_FRAME_KEYS = {
+tests/regression/test_req031_add_only.py:37:NORMALIZATION_ALLOWED_KEYS = REQ031_TEXT_KEYS | REQ031_FRAME_KEYS | LEGACY_V2_TEXT_COMPAT_KEYS | LEGACY_V2_FRAME_COMPAT_KEYS
+tests/regression/test_req031_add_only.py:41:    module_name = "figma_section_spec_req031_add_only"
+tests/regression/test_req031_add_only.py:79:def test_req031_add_only_preserves_existing_values_and_adds_only_req031_axes() -> None:
+tests/regression/test_req031_add_only.py:100:        allowed_text_keys = REQ031_TEXT_KEYS | LEGACY_V2_TEXT_COMPAT_KEYS
+tests/regression/test_req031_add_only.py:101:        allowed_frame_keys = REQ031_FRAME_KEYS | LEGACY_V2_FRAME_COMPAT_KEYS
+tests/regression/test_req031_add_only.py:107:            assert REQ031_TEXT_KEYS <= set(text_node.keys())
+tests/regression/test_req031_add_only.py:110:            assert REQ031_FRAME_KEYS <= set(frame_node.keys())
+tests/unit/test_validate_effects.py:76:    assert "v2.effects.shadow.match" in output
+tests/unit/test_corner_radii_individual.py:16:    module_name = "figma_section_spec_req031_corner_radii"
+tests/unit/test_corner_radii_individual.py:112:    assert "v2.cornerRadii.match" in output
+tests/unit/test_validate_image.py:18:    manifest_path = tmp_path / "spec_asset_manifest.json"
+tests/unit/test_text_case_decoration.py:16:    module_name = "figma_section_spec_req031_text_case_decoration"
+tests/unit/test_text_case_decoration.py:147:    assert "v2.textCase.match" in output
+tests/unit/test_text_case_decoration.py:148:    assert "v2.textDecoration.match" in output
+tests/integration/test_req031_endtoend.sh:85:python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
+exec
+/bin/bash -lc 'ls -la prompts; ls -la tests; ls -la tests/integration; ls -la tests/regression' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+ls: cannot access 'prompts': No such file or directory
+total 76
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 ..
+-rwxrwxrwx 1 waterbeen waterbeen    0 Apr 19 19:12 __init__.py
+-rwxrwxrwx 1 waterbeen waterbeen  183 Apr 19 19:12 conftest.py
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 fixtures
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 integration
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 regression
+-rwxrwxrwx 1 waterbeen waterbeen 7064 Apr 19 19:12 test_codegen.py
+-rwxrwxrwx 1 waterbeen waterbeen 2647 Apr 19 19:12 test_column_flex_gap.py
+-rwxrwxrwx 1 waterbeen waterbeen 8394 Apr 19 19:12 test_e2e_quality.py
+-rwxrwxrwx 1 waterbeen waterbeen 6725 Apr 19 19:12 test_normalization.py
+-rwxrwxrwx 1 waterbeen waterbeen 4270 Apr 19 19:12 test_parse_figma_output.py
+-rwxrwxrwx 1 waterbeen waterbeen 2265 Apr 19 19:12 test_post_impl_auto_repair.py
+-rwxrwxrwx 1 waterbeen waterbeen 1229 Apr 19 19:12 test_post_impl_no_repair.py
+-rwxrwxrwx 1 waterbeen waterbeen 4885 Apr 19 19:12 test_repair_from_violations.py
+-rwxrwxrwx 1 waterbeen waterbeen 1302 Apr 19 19:12 test_req024_rules_slimming.py
+-rwxrwxrwx 1 waterbeen waterbeen 1444 Apr 19 19:12 test_smoke.py
+-rwxrwxrwx 1 waterbeen waterbeen 1241 Apr 19 19:12 test_validate_semantic_fix.py
+codex
+`prompts/phase2-impl.md`는 현재 루트에 없어서 위치를 다시 탐색하겠습니다. 이어서 REQ-031의 `endtoend`/`add_only` 테스트 파일을 기준 템플릿으로 읽어 REQ-032/02 대상 파일을 정확히 맞춰 작성하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,260p' tests/unit/test_asset_manifest_generation.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_req031_add_only.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req031_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+EXTRACTED_DIR = ROOT / "extracted"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+REQ031_TEXT_KEYS = {
+    "characterStyleOverrides",
+    "styleOverrideTable",
+    "textCase",
+    "textDecoration",
+    "paragraphSpacing",
+ succeeded in 0ms:
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+
+
+def _load_module():
+    module_name = "figma_section_spec_req032_asset_manifest"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+ succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+if [[ ! -f "$BASELINE_PATH" ]]; then
+  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
+  exit 1
+fi
+
+BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+exec
+/bin/bash -lc "rg --files | rg 'phase2-impl\\.md"'$|req031|REQ-031|req032|REQ-032'"'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+tests/regression/test_req031_add_only.py
+tests/integration/test_req031_endtoend.sh
+codex
+REQ-031 패턴은 확인했고, 이제 누락된 `phase2-impl.md`를 저장소 전체에서 찾아 PM 스펙 지시를 대조하겠습니다. 그다음 테스트 파일 작성으로 바로 들어가겠습니다.
+exec
+/bin/bash -lc "find . -type f -name 'phase2-impl.md' -o -name '*req032*' -o -name '*REQ-032*' | sed -n '1,200p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "ls -la .gran-maestro; find .gran-maestro -maxdepth 4 -type f | sed -n '1,240p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 78ms:
+.gran-maestro/agile/AGI-001/events.ndjson
+.gran-maestro/agile/AGI-001/index/links.json
+.gran-maestro/agile/AGI-001/objective/changelog.ndjson
+.gran-maestro/agile/AGI-001/objective/objective.md
+.gran-maestro/agile/AGI-001/session.json
+.gran-maestro/agile/counter.json
+.gran-maestro/config.json
+.gran-maestro/debug/counter.json
+.gran-maestro/debug/DBG-001/debug-report.md
+.gran-maestro/debug/DBG-001/finding-codex.md
+.gran-maestro/debug/DBG-001/finding-gemini.md
+.gran-maestro/debug/DBG-001/prompts/codex-prompt.md
+.gran-maestro/debug/DBG-001/prompts/gemini-prompt.md
+.gran-maestro/debug/DBG-001/session.json
+.gran-maestro/discussion/counter.json
+.gran-maestro/discussion/DSC-001/consensus.md
+.gran-maestro/discussion/DSC-001/session.json
+.gran-maestro/discussion/DSC-002/consensus.md
+.gran-maestro/discussion/DSC-002/session.json
+.gran-maestro/explore/counter.json
+ succeeded in 249ms:
+./.gran-maestro/requests/REQ-001/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-002/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-003/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-004/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-004/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-004/tasks/03/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-005/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-005/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-005/tasks/03/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-006/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-006/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-006/tasks/03/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-007/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-008/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-008/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-009/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-009/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-010/tasks/01/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-010/tasks/02/prompts/phase2-impl.md
+./.gran-maestro/requests/REQ-012/tasks/01/prompts/phase2-impl.md
+exec
+/bin/bash -lc "find .gran-maestro/requests -maxdepth 6 -type f | rg 'REQ-031|REQ-032|phase2-impl\\.md|task-02|task_02|tasks/02'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 117ms:
+.gran-maestro/requests/REQ-001/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-002/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-002/tasks/02/spec.md
+.gran-maestro/requests/REQ-003/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-003/tasks/02/spec.md
+.gran-maestro/requests/REQ-004/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-004/tasks/02/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-004/tasks/02/spec.md
+.gran-maestro/requests/REQ-004/tasks/03/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-005/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-005/tasks/02/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-005/tasks/02/running.log
+.gran-maestro/requests/REQ-005/tasks/02/spec.md
+.gran-maestro/requests/REQ-005/tasks/03/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-006/tasks/01/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-006/tasks/02/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-006/tasks/02/running.log
+.gran-maestro/requests/REQ-006/tasks/02/spec.md
+.gran-maestro/requests/REQ-006/tasks/03/prompts/phase2-impl.md
+.gran-maestro/requests/REQ-007/tasks/01/prompts/phase2-impl.md
+exec
+/bin/bash -lc "rg -n \"REQ-032|req032|asset_manifest|componentId|vector|v2\\.componentId\\.match|v2\\.assetManifest\\.exists\" -S . | sed -n '1,260p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 118ms:
+d": "100:200",
+./tests/unit/test_component_id_extract.py:38:    assert with_component["componentId"] == "100:200"
+./tests/unit/test_component_id_extract.py:40:    assert without_component["componentId"] is None
+./tests/regression/test_migration_add_only.py:67:    for node in copy_payload.get("vector_nodes", []):
+./tests/unit/test_text_case_decoration.py:124:        "vector_nodes": [],
+./tests/regression/test_determinism.py:33:        "vector_nodes": extracted.vector_nodes,
+./tests/unit/test_strokes_extract.py:99:        "vector_nodes": [],
+./tests/unit/test_asset_manifest_generation.py:17:    module_name = "figma_section_spec_req032_asset_manifest"
+./tests/unit/test_asset_manifest_generation.py:26:def test_asset_manifest_collects_image_and_vector_assets_deterministically() -> None:
+./tests/unit/test_asset_manifest_generation.py:36:        "vector_nodes": [
+./tests/unit/test_asset_manifest_generation.py:45:    manifest_1 = module.build_asset_manifest(payload)
+./tests/unit/test_asset_manifest_generation.py:46:    manifest_2 = module.build_asset_manifest(payload)
+./tests/unit/test_asset_manifest_generation.py:52:    vector_assets = [item for item in assets if item["kind"] == "vector"]
+./tests/unit/test_asset_manifest_generation.py:58:    assert len(vector_assets) == 1
+./tests/unit/test_asset_manifest_generation.py:59:    expected_vector_hash = hashlib.sha256("M0 0L10 10Z\nM2 2L3 3Z".encode("utf-8")).hexdigest()
+./tests/unit/test_asset_manifest_generation.py:60:    assert vector_assets[0]["ref"] == "1:10"
+./tests/unit/test_asset_manifest_generation.py:61:    assert vector_assets[0]["spec_node_id"] == "1:10"
+./tests/unit/test_asset_manifest_generation.py:62:    assert vector_assets[0]["hash"] == expected_vector_hash
+./tests/unit/test_asset_manifest_generation.py:68:def test_emit_asset_manifest_is_enabled_by_default_and_can_be_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+./tests/unit/test_asset_manifest_generation.py:76:        "vector_nodes": [{"id": "1:3", "fillGeometryPathData": ["M0 0L1 1Z"], "strokeGeometryPathData": []}],
+exec
+/bin/bash -lc "find .gran-maestro/requests -maxdepth 3 -type d | rg 'REQ-03[12]' ; ls -la .gran-maestro/requests | sed -n '1,220p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 67ms:
+total 0
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 ..
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-001
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-002
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-003
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-004
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-005
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-006
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-007
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-008
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-009
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-010
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-011
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-012
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-013
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-014
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-015
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-016
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:12 REQ-017
+exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req030_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req029_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+SPEC_PATH="$TMP_DIR/req029_endtoend_spec.json"
+HTML_PATH="$TMP_DIR/index.html"
+CSS_PATH="$TMP_DIR/common.css"
+
+cat >"$SPEC_PATH" <<'JSON'
+{
+  "schema_version": "2.0.0",
+  "section": {
+ succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+BASELINE_EXIT=""
+if [[ -f "$BASELINE_PATH" ]]; then
+  BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_determinism.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC_PATH = ROOT / "tools" / "figma-section-spec.py"
+FIXTURE_PATH = ROOT / "tests" / "fixtures" / "figma_node_sample.json"
+
+
+def _load_figma_section_spec_module():
+    module_name = "figma_section_spec"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_req030_add_only.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+BACKUP_DIR = ROOT / "extracted.v1.backup"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+
+def _load_module():
+    module_name = "figma_section_spec_req030_add_only"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+exec
+/bin/bash -lc "ls -la extracted | sed -n '1,220p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "ls -la extracted.v1.backup | sed -n '1,220p'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+total 56
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 19 19:12 .
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 19 19:12 ..
+-rwxrwxrwx 1 waterbeen waterbeen 33380 Apr 19 19:12 section_03_spec.json
+-rwxrwxrwx 1 waterbeen waterbeen  7166 Apr 19 19:12 section_03_spec.md
+-rwxrwxrwx 1 waterbeen waterbeen  7359 Apr 19 19:12 section_04_spec.json
+-rwxrwxrwx 1 waterbeen waterbeen  2890 Apr 19 19:12 section_04_spec.md
+ succeeded in 0ms:
+total 40
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 19 19:12 .
+drwxrwxrwx 1 waterbeen waterbeen  4096 Apr 19 19:12 ..
+-rwxrwxrwx 1 waterbeen waterbeen 19917 Apr 19 19:12 section_03_spec.json
+-rwxrwxrwx 1 waterbeen waterbeen  7166 Apr 19 19:12 section_03_spec.md
+-rwxrwxrwx 1 waterbeen waterbeen  4828 Apr 19 19:12 section_04_spec.json
+-rwxrwxrwx 1 waterbeen waterbeen  2890 Apr 19 19:12 section_04_spec.md
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, pathlib
+for p in ['extracted/section_03_asset_manifest.json','extracted/section_04_asset_manifest.json']:
+    path=pathlib.Path(p)
+    print(p, 'exists', path.exists())
+    if path.exists():
+        data=json.loads(path.read_text(encoding='utf-8'))
+        print(' version',data.get('manifest_version'),'assets',len(data.get('assets',[])))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+extracted/section_03_asset_manifest.json exists False
+extracted/section_04_asset_manifest.json exists False
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, pathlib
+for p in ['extracted/section_03_spec.json','extracted/section_04_spec.json','extracted.v1.backup/section_03_spec.json','extracted.v1.backup/section_04_spec.json']:
+    path=pathlib.Path(p)
+    if not path.exists():
+        print(p, 'MISSING')
+        continue
+    obj=json.loads(path.read_text(encoding='utf-8'))
+    t=obj.get('text_nodes',[])
+    f=obj.get('frame_nodes',[])
+    v=obj.get('vector_nodes',[])
+    print(p, 'schema', obj.get('schema_version'), 'text',len(t),'frame',len(f),'vector',len(v))
+    if f and isinstance(f[0],dict):
+        keys=sorted(k for k in f[0].keys() if k in {'fills_v2','effects','opacity','blendMode','strokes','strokeWeight','strokeAlign','rectangleCornerRadii','layoutSizingHorizontal','layoutSizingVertical','layoutGrow','layoutAlign','componentId'})
+        print(' frame0 keys', keys)
+    if t and isinstance(t[0],dict):
+        keys=sorted(k for k in t[0].keys() if k in {'effects','opacity','blendMode','characterStyleOverrides','styleOverrideTable','textCase','textDecoration','paragraphSpacing','paragraphIndent'})
+        print(' text0 keys', keys)
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+extracted/section_03_spec.json schema 2.0.0 text 12 frame 33 vector 0
+ frame0 keys ['effects', 'fills_v2', 'layoutAlign', 'layoutGrow', 'layoutSizingHorizontal', 'layoutSizingVertical', 'strokeAlign', 'strokeWeight', 'strokes']
+ text0 keys ['characterStyleOverrides', 'paragraphIndent', 'paragraphSpacing', 'textCase', 'textDecoration']
+extracted/section_04_spec.json schema 2.0.0 text 4 frame 5 vector 0
+ frame0 keys ['effects', 'fills_v2', 'layoutAlign', 'layoutGrow', 'layoutSizingHorizontal', 'layoutSizingVertical', 'strokeAlign', 'strokeWeight', 'strokes']
+ text0 keys ['characterStyleOverrides', 'paragraphIndent', 'paragraphSpacing', 'textCase', 'textDecoration']
+extracted.v1.backup/section_03_spec.json schema 1 text 12 frame 33 vector 0
+ frame0 keys []
+ text0 keys []
+extracted.v1.backup/section_04_spec.json schema 1 text 4 frame 5 vector 0
+ frame0 keys []
+ text0 keys []
+exec
+/bin/bash -lc "sed -n '1720,1835p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "sed -n '1,180p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+        "parent_id",
+    ]
+    lines.append(render_table(vector_columns, vector_nodes))
+    lines.append("")
+
+    lines.append(f"## interactions ({len(interactions)})")
+    interaction_columns = ["node_id", "url", "openInNewTab"]
+    lines.append(render_table(interaction_columns, interactions))
+    lines.append("")
+
+    image_rows = [{"imageRef": key, "url": value} for key, value in images.items()]
+    lines.append(f"## images ({len(image_rows)})")
+    lines.append(render_table(["imageRef", "url"], image_rows))
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def asset_manifest_name(base_name: str) -> str:
+    return f"{base_name}_asset_manifest.json"
+ succeeded in 0ms:
+#!/usr/bin/env python3
+"""Extract a Figma section into stable spec.json + spec.md outputs.
+
+Usage:
+  python3 tools/figma-section-spec.py \
+    --file-key <FILE_KEY> \
+    --node-id <NODE_ID> \
+    --output <OUTPUT_DIR> \
+    [--name <PREFIX>]
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import html
+import json
+import os
+import re
+import sys
+exec
+/bin/bash -lc "sed -n '1,180p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Validate generated HTML/CSS against normalized Figma section specs.
+
+Usage:
+  python3 tools/figma-validate.py --spec extracted/section_spec.json --html output.html --css output.css
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+import types
+from dataclasses import dataclass, field
+from html import unescape
+from html.parser import HTMLParser
+from pathlib import Path
+from typing import Iterable
+exec
+/bin/bash -lc "sed -n '1,220p' tests/unit/test_component_id_extract.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02exec
+/bin/bash -lc "sed -n '1,240p' tests/unit/test_vector_path_geometry.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import importlib.util
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+
+
+def _load_module():
+    module_name = "figma_section_spec_req032_vector_paths"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+ succeeded in 0ms:
+from __future__ import annotations
+
+import importlib.util
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+
+
+def _load_module():
+    module_name = "figma_section_spec_req032_component_id"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+exec
+/bin/bash -lc "sed -n '1,220p' tests/unit/test_validate_asset_manifest_exists.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_VALIDATE = ROOT / "tools" / "figma-validate.py"
+
+
+def test_v2_asset_manifest_missing_fails_validation(tmp_path: Path) -> None:
+    spec_payload = {
+        "schema_version": "2.0.0",
+        "section": {"id": "1:1", "name": "S", "bbox": {"x": 0, "y": 0, "w": 100, "h": 100}},
+        "text_nodes": [],
+        "frame_nodes": [
+            {
+                "id": "1:2",
+exec
+/bin/bash -lc "sed -n '2360,2575p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+                        expected_radius = effect.get("radius")
+                        actual_radius = blur_radius(filter_value)
+                        if not isinstance(expected_radius, (int, float)) or actual_radius is None or abs(actual_radius - float(expected_radius)) > 1.0:
+                            add_violation(
+                                violations,
+                                "v2.effects.blur.match",
+                                frame,
+                                f"backdrop-filter: blur({render_value(expected_radius)}px)",
+                                f"{render_value(filter_value)} @ {rule_display}",
+                            )
+
+            opacity_prop = props.get("opacity")
+            opacity_value = opacity_prop.value if opacity_prop else None
+            if not opacity_matches(frame.get("opacity"), opacity_value):
+                add_violation(
+                    violations,
+                    "v2.opacity.match",
+                    frame,
+                    render_value(frame.get("opacity")),
+                    f"{render_value(opacity_value)} @ {rule_display}",
+codex
+REQ-032 관련 기존 유닛 테스트와 validator/spec 스크립트 동작을 확인했습니다. 이제 신규 3개 테스트 파일을 추가할 설계를 확정한 뒤 바로 편집하고, 마지막에 요구하신 테스트 실행 로그를 수집하겠습니다.
+exec
+/bin/bash -lc "rg -n \"def print_version_info|version_info|V2_DETAIL_CATEGORIES|POLICY_HANDLER_MAP\" tools/figma-validate.py; sed -n '520,670p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+63:V2_DETAIL_CATEGORIES = (
+79:V2_CATEGORIES = V1_CATEGORIES + (POLICY_1_CATEGORY,) + V2_DETAIL_CATEGORIES
+86:POLICY_HANDLER_MAP = {
+237:    if not args.version_info and (not args.spec or not args.html or not args.css):
+257:def print_version_info() -> None:
+2515:    if args.version_info:
+2516:        print_version_info()
+    colors: list[str] = []
+    for match in re.findall(r"#[0-9a-fA-F]{3,6}", value):
+        normalized = normalize_hex(match)
+        if normalized:
+            colors.append(normalized)
+    return colors
+
+
+def top_level_split(text: str, delimiter: str) -> list[str]:
+    parts: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    quote = ""
+exec
+/bin/bash -lc "sed -n '220,330p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+
+
+@dataclass(frozen=True)
+class FrameMatchContext:
+    depth: int
+    area: float | None
+    path_hint: str
+    blocked_rule_keys: tuple[tuple[int, tuple[str, ...]], ...] = ()
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Validate HTML/CSS output against normalized Figma section spec")
+    parser.add_argument("--spec", required=False, help="Path to section_spec.json")
+    parser.add_argument("--html", required=False, help="Path to generated HTML")
+    parser.add_argument("--css", required=False, help="Path to generated CSS")
+    parser.add_argument("--version-info", action="store_true", help="Print v1/v2 category map and exit")
+    args = parser.parse_args()
+    if not args.version_info and (not args.spec or not args.html or not args.css):
+        parser.error("--spec, --html, --css are required unless --version-info is used")
+    return args
+exec
+/bin/bash -lc "sed -n '900,1045p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
+            handle.write(text)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+def atomic_write_json(path: str, data: dict, *, sort_keys: bool = False) -> None:
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
+    fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=directory or ".")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
+            json.dump(data, handle, ensure_ascii=False, indent=2, sort_keys=sort_keys)
+            handle.write("\n")
+        os.replace(tmp_path, path)
+    finally:
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, copy, importlib.util, sys
+from pathlib import Path
+root=Path('.')
+path=root/'tools/figma-section-spec.py'
+spec=importlib.util.spec_from_file_location('mod', path)
+mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+for name in ['section_03_spec.json','section_04_spec.json']:
+    before=json.loads((root/'extracted'/name).read_text(encoding='utf-8'))
+    after=mod.ensure_v2_payload_shape(copy.deepcopy(before))
+    def added_nodes(before_nodes, after_nodes):
+        added=set()
+        for b,a in zip(before_nodes, after_nodes):
+            if isinstance(b,dict) and isinstance(a,dict):
+                added.update(set(a)-set(b))
+        return added
+    print('\\n',name)
+    print('added top', set(after)-set(before))
+    print('added text', sorted(added_nodes(before.get('text_nodes',[]), after.get('text_nodes',[]))))
+    print('added frame', sorted(added_nodes(before.get('frame_nodes',[]), after.get('frame_nodes',[]))))
+    print('added vector', sorted(added_nodes(before.get('vector_nodes',[]), after.get('vector_nodes',[]))))
+    # check value changes in common keys
+    changed=[]
+    def walk(b,a,p=''):
+        if isinstance(b,dict) and isinstance(a,dict):
+            for k,v in b.items():
+                if k in a:
+                    walk(v,a[k], p+'.'+k if p else k)
+        elif isinstance(b,list) and isinstance(a,list):
+            for i,(bi,ai) in enumerate(zip(b,a)):
+                walk(bi,ai,f'{p}[{i}]')
+        else:
+            if b"'!=a:
+                changed.append((p,b,a))
+    walk(before,after)
+    print('"'changed existing count',len(changed))
+    print('sample',changed[:8])
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 exited 1 in 38ms:
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tools/figma-section-spec.py", line 68, in <module>
+    @dataclass
+     ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1268, in dataclass
+    return wrap(cls)
+           ^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 1258, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 983, in _process_class
+    and _is_type(type, cls, dataclasses, dataclasses.KW_ONLY,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/dataclasses.py", line 749, in _is_type
+    ns = sys.modules.get(cls.__module__).__dict__
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute '__dict__'. Did you mean: '__dir__'?
+codex
+회귀 키 비교를 위해 `ensure_v2_payload_shape` 전후 diff를 계산하는 중이며, 동적 import 시 모듈 등록 이슈가 있어 동일 방식(기존 테스트와 같은 `sys.modules` 등록)으로 재실행해 정확한 추가 키 목록을 뽑겠습니다.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import copy, importlib.util, json, sys
+from pathlib import Path
+root=Path('.')
+module_name='figma_section_spec_probe'
+spec=importlib.util.spec_from_file_location(module_name, root/'tools/figma-section-spec.py')
+module=importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+sys.modules[module_name]=module
+spec.loader.exec_module(module)
+for name in ['section_03_spec.json','section_04_spec.json']:
+    before=json.loads((root/'extracted'/name).read_text(encoding='utf-8'))
+    after=module.ensure_v2_payload_shape(copy.deepcopy(before))
+
+    def added_nodes(before_nodes, after_nodes):
+        added=set()
+        for b,a in zip(before_nodes, after_nodes):
+            if isinstance(b,dict) and isinstance(a,dict):
+                added.update(set(a)-set(b))
+        return added
+
+    changed=[]
+    def walk(b,a,p=''):
+        if isinstance(b,dict) and isinstance(a,dict):
+            for k,v in b.items():
+                if k in a:
+                    walk(v,a[k], p+'.'+k if p else k)
+            return
+        if isinstance(b,list) and isinstance(a,list):
+            for i,(bi,ai) in enumerate(zip(b,a)):
+                walk(bi,ai,f'{p}[{i}]')
+            return
+        if b"'!=a:
+            changed.append((p,b,a))
+
+    walk(before,after)
+    print('"'\\n'+name)
+    print('added top:', sorted(set(after)-set(before)))
+    print('added text:', sorted(added_nodes(before.get('text_nodes',[]), after.get('text_nodes',[]))))
+    print('added frame:', sorted(added_nodes(before.get('frame_nodes',[]), after.get('frame_nodes',[]))))
+    print('added vector:', sorted(added_nodes(before.get('vector_nodes',[]), after.get('vector_nodes',[]))))
+    print('changed existing count:', len(changed))
+    if changed:
+        for item in changed[:10]:
+            print(' changed', item)
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+
+section_03_spec.json
+added top: []
+added text: ['blendMode', 'effects', 'opacity', 'styleOverrideTable']
+added frame: ['blendMode', 'componentId', 'componentSetId', 'opacity', 'rectangleCornerRadii']
+added vector: []
+changed existing count: 357
+ changed ('text_nodes[0].characterStyleOverrides', None, [0, 0])
+ changed ('text_nodes[0].textCase', None, 'ORIGINAL')
+ changed ('text_nodes[0].textDecoration', None, 'NONE')
+ changed ('text_nodes[0].paragraphSpacing', None, 0)
+ changed ('text_nodes[0].paragraphIndent', None, 0)
+ changed ('text_nodes[1].characterStyleOverrides', None, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+ changed ('text_nodes[1].textCase', None, 'ORIGINAL')
+ changed ('text_nodes[1].textDecoration', None, 'NONE')
+ changed ('text_nodes[1].paragraphSpacing', None, 0)
+ changed ('text_nodes[1].paragraphIndent', None, 0)
+
+section_04_spec.json
+added top: []
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json
+from pathlib import Path
+p=Path('tests/fixtures/req029/landing_post_impl_baseline.json')
+print('exists',p.exists())
+if p.exists():
+    data=json.loads(p.read_text(encoding='utf-8'))
+    print('exit_code',data.get('exit_code'))
+PY" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+exists True
+exit_code 1
+exec
+/bin/bash -lc "sed -n '720,790p' tools/figma-section-spec.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+
+
+def build_asset_manifest(payload: dict) -> dict:
+    assets: list[dict[str, str]] = []
+    image_refs_seen: set[str] = set()
+    vector_refs_seen: set[str] = set()
+
+    frame_nodes = payload.get("frame_nodes")
+    if isinstance(frame_nodes, list):
+        for index, frame in enumerate(frame_nodes):
+            if not isinstance(frame, dict):
+                continue
+            node_id = node_identifier(frame, "frame", index)
+            fills_v2 = frame.get("fills_v2")
+            if not isinstance(fills_v2, list):
+                continue
+            for fill in fills_v2:
+                if not isinstance(fill, dict):
+                    continue
+                if fill.get("type") != "IMAGE":
+codex
+편집 단계로 들어가겠습니다. `REQ-031` 패턴을 기반으로 `test_req032_endtoend.sh`, `test_req032_add_only.py`, `test_asset_manifest_determinism.py` 3개를 새로 추가하고, 구현 코드(`tools/*`)는 수정하지 않겠습니다.
+file update
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/integration/test_req032_endtoend.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+if [[ ! -f "$BASELINE_PATH" ]]; then
+  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
+  exit 1
+fi
+
+BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(payload.get("exit_code", ""))
+PY
+)"
+
+if [[ -z "$BASELINE_EXIT" ]]; then
+  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
+  exit 1
+fi
+
+run_and_capture() {
+  local label="$1"
+  shift
+  local logfile="$TMP_DIR/${label}.log"
+
+  local ec=0
+  if "$@" >"$logfile" 2>&1; then
+    ec=0
+  else
+    ec=$?
+  fi
+
+  echo "===== ${label} ====="
+  cat "$logfile"
+  echo "[EXIT] ${label}=${ec}"
+  echo
+
+  return "$ec"
+}
+
+assert_matches_baseline() {
+  local label="$1"
+  local ec="$2"
+
+  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
+    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
+    exit 1
+  fi
+}
+
+set +e
+run_and_capture "figma_validate_section_03" \
+  python3 tools/figma-validate.py \
+  --spec extracted/section_03_spec.json \
+  --html landing/index.html \
+  --css landing/css/common.css
+SECTION_03_EC=$?
+set -e
+assert_matches_baseline "section_03" "$SECTION_03_EC"
+
+set +e
+run_and_capture "figma_validate_section_04" \
+  python3 tools/figma-validate.py \
+  --spec extracted/section_04_spec.json \
+  --html landing/index.html \
+  --css landing/css/common.css
+SECTION_04_EC=$?
+set -e
+assert_matches_baseline "section_04" "$SECTION_04_EC"
+
+VERSION_LOG="$TMP_DIR/version_info.log"
+python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
+cat "$VERSION_LOG"
+
+for category in \
+  "v2.componentId.match" \
+  "v2.assetManifest.exists"; do
+  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
+    echo "[FAIL] missing category in --version-info: ${category}" >&2
+    exit 1
+  fi
+done
+
+OUT_DEFAULT="$TMP_DIR/manifest_default"
+set +e
+run_and_capture "emit_manifest_default" \
+  python3 tools/figma-section-spec.py \
+  --from-spec extracted/section_03_spec.json \
+  --output "$OUT_DEFAULT" \
+  --name section_03
+EMIT_DEFAULT_EC=$?
+set -e
+if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
+  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
+  exit 1
+fi
+
+DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
+if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
+  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
+  exit 1
+fi
+
+OUT_DISABLED="$TMP_DIR/manifest_disabled"
+set +e
+run_and_capture "emit_manifest_disabled" \
+  python3 tools/figma-section-spec.py \
+  --from-spec extracted/section_03_spec.json \
+  --output "$OUT_DISABLED" \
+  --name section_03 \
+  --no-emit-asset-manifest
+EMIT_DISABLED_EC=$?
+set -e
+if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
+  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
+  exit 1
+fi
+
+DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
+if [[ -f "$DISABLED_MANIFEST" ]]; then
+  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
+  exit 1
+fi
+
+echo "[PASS] REQ-032 end-to-end validation checks completed"
+apply_patch(auto_approved=true) exited 0 in 169ms:
+Success. Updated the following files:
+A tests/integration/test_req032_endtoend.sh
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+
+file update
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_req032_add_only.py
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+EXTRACTED_DIR = ROOT / "extracted"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
+REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
+REQ031_TEXT_KEYS = {
+    "characterStyleOverrides",
+    "styleOverrideTable",
+    "textCase",
+    "textDecoration",
+    "paragraphSpacing",
+    "paragraphIndent",
+}
+REQ031_FRAME_KEYS = {
+    "strokes",
+    "strokeWeight",
+    "strokeAlign",
+    "rectangleCornerRadii",
+    "layoutSizingHorizontal",
+    "layoutSizingVertical",
+    "layoutGrow",
+    "layoutAlign",
+}
+REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
+REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
+
+NORMALIZATION_ALLOWED_KEYS = (
+    REQ030_TEXT_KEYS
+    | REQ030_FRAME_KEYS
+    | REQ031_TEXT_KEYS
+    | REQ031_FRAME_KEYS
+    | REQ032_FRAME_KEYS
+    | REQ032_VECTOR_KEYS
+)
+
+
+def _load_module():
+    module_name = "figma_section_spec_req032_add_only"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
+    if isinstance(before, dict):
+        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
+        for key, value in before.items():
+            assert key in after, f"missing key at {path or '<root>'}: {key}"
+            if key in NORMALIZATION_ALLOWED_KEYS:
+                continue
+            next_path = f"{path}.{key}" if path else key
+            _assert_existing_keys_preserved(value, after[key], path=next_path)
+        return
+    if isinstance(before, list):
+        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
+        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
+        for idx, (before_item, after_item) in enumerate(zip(before, after)):
+            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
+            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
+        return
+    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
+
+
+def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
+    added: set[str] = set()
+    for before, after in zip(before_nodes, after_nodes):
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            continue
+        added.update(set(after.keys()) - set(before.keys()))
+    return added
+
+
+def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
+    module = _load_module()
+
+    for name in TARGET_SPECS:
+        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
+        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
+
+        assert transformed["schema_version"] == "2.0.0"
+        _assert_existing_keys_preserved(before, transformed)
+
+        before_text_nodes = before.get("text_nodes", [])
+        after_text_nodes = transformed.get("text_nodes", [])
+        before_frame_nodes = before.get("frame_nodes", [])
+        after_frame_nodes = transformed.get("frame_nodes", [])
+        before_vector_nodes = before.get("vector_nodes", [])
+        after_vector_nodes = transformed.get("vector_nodes", [])
+
+        assert len(before_text_nodes) == len(after_text_nodes)
+        assert len(before_frame_nodes) == len(after_frame_nodes)
+        assert len(before_vector_nodes) == len(after_vector_nodes)
+
+        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
+        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
+        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
+
+        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
+        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
+        assert added_vector_keys <= REQ032_VECTOR_KEYS
+
+        for frame_node in after_frame_nodes:
+            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
+
+        for vector_node in after_vector_nodes:
+            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+apply_patch(auto_approved=true) exited 0 in 213ms:
+Success. Updated the following files:
+A tests/regression/test_req032_add_only.py
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+file update
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_asset_manifest_determinism.py
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+
+
+def _load_module():
+    module_name = "figma_section_spec_req032_manifest_determinism"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _manifest_bytes(payload: dict) -> bytes:
+    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+
+
+def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
+    module = _load_module()
+    payload = {
+        "frame_nodes": [
+            {
+                "id": "f-2",
+                "fills_v2": [
+                    {"type": "IMAGE", "imageRef": "img-z"},
+                    {"type": "IMAGE", "imageRef": "img-a"},
+                ],
+            },
+            {
+                "id": "f-1",
+                "fills_v2": [
+                    {"type": "IMAGE", "imageRef": "img-a"},
+                ],
+            },
+        ],
+        "vector_nodes": [
+            {
+                "id": "v-2",
+                "fillGeometryPathData": ["M3 3L4 4Z"],
+                "strokeGeometryPathData": [],
+            },
+            {
+                "id": "v-1",
+                "fillGeometryPathData": ["M0 0L1 1Z"],
+                "strokeGeometryPathData": ["M1 1L2 2Z"],
+            },
+        ],
+    }
+
+    manifest_1 = module.build_asset_manifest(payload)
+    manifest_2 = module.build_asset_manifest(payload)
+
+    bytes_1 = _manifest_bytes(manifest_1)
+    bytes_2 = _manifest_bytes(manifest_2)
+
+    assert manifest_1 == manifest_2
+    assert bytes_1 == bytes_2
+
+    digest_1 = hashlib.sha256(bytes_1).hexdigest()
+    digest_2 = hashlib.sha256(bytes_2).hexdigest()
+    assert digest_1 == digest_2
+
+    assert manifest_1["assets"] == sorted(
+        manifest_1["assets"],
+        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
+    )
+apply_patch(auto_approved=true) exited 0 in 261ms:
+Success. Updated the following files:
+A tests/regression/test_asset_manifest_determinism.py
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+exec
+/bin/bash -lc 'ls -l tests/integration/test_req032_endtoend.sh tests/regression/test_req032_add_only.py tests/regression/test_asset_manifest_determinism.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 0ms:
+-rwxrwxrwx 1 waterbeen waterbeen 3353 Apr 19 19:16 tests/integration/test_req032_endtoend.sh
+-rwxrwxrwx 1 waterbeen waterbeen 2219 Apr 19 19:16 tests/regression/test_asset_manifest_determinism.py
+-rwxrwxrwx 1 waterbeen waterbeen 4607 Apr 19 19:16 tests/regression/test_req032_add_only.py
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+codex
+신규 파일 3개를 추가 완료했습니다. 이제 필수 검증으로 신규 pytest 2건과 `tests/integration/test_req032_endtoend.sh`를 실행하고, 결과 핵심 출력(카테고리 확인/토글 동작/PASS 여부)을 정리해 전달하겠습니다.
+exec
+/bin/bash -lc 'pytest -q tests/regression/test_req032_add_only.py tests/regression/test_asset_manifest_determinism.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 419ms:
+..                                                                       [100%]
+2 passed in 0.24s
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+exec
+/bin/bash -lc 'bash tests/integration/test_req032_endtoend.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 492ms:
+===== figma_validate_section_03 =====
+카테고리 | 노드 | 기대값 | 실제값
+텍스트 위변조 | 842:88 (VS) | VS | HTML 텍스트 미발견
+텍스트 위변조 | 842:92 (채우기만 하는 공장형 이식) | 채우기만 하는
+공장형 이식 | HTML 텍스트 미발견
+텍스트 위변조 | 842:98 (혹시 몰라 더 심는 것에 맞춘 초점) | 혹시 몰라 더 심는 것에 맞춘 초점 | HTML 텍스트 미발견
+텍스트 위변조 | 842:103 (불필요한 채취 가능성 증가) | 불필요한 채취 가능성 증가 | HTML 텍스트 미발견
+텍스트 위변조 | 842:108 (고객에게 돌아가는 부담) | 고객에게 돌아가는 부담 | HTML 텍스트 미발견
+텍스트 위변조 | 842:110 (VS) | VS | HTML 텍스트 미발견
+텍스트 위변조 | 842:119 (를 살리는) | 를 살리는 | HTML 텍스트 미발견
+텍스트 위변조 | 842:120 (MASTER 이식) | MASTER 이식 | HTML 텍스트 미발견
+텍스트 위변조 | 842:126 (필요한 모수를 철저히 계산하는 데이터 상담) | 필요한 모수를 철저히 계산하는 데이터 상담 | HTML 텍스트 미발견
+텍스트 위변조 | 842:131 (후두부 자원까지 고려한 채취) | 후두부 자원까지 고려한 채취 | HTML 텍스트 미발견
+텍스트 위변조 | 842:136 (1년 뒤의 생착을 고려한 이식 계획) | 1년 뒤의 생착을 고려한 이식 계획 | HTML 텍스트 미발견
+텍스트 위변조 | 842:137 (누구나 모제림을 흉내 낼 순 있지만, 1997년부터 축적된 오리지널의 시스템은 따라할 수 없습니다. 모제림은 수술 경험 없는 신입 원장을 철저히 배제하고, 수술 시작부터 끝까지 마스터 집도의가 직접 책임집니다.) | 누구나 모제림을 흉내 낼 순 있지만, 1997년부터 축적된 오리지널의 시스템은 따라할 수 없습니다.
+모제림은 수술 경험 없는 신입 원장을 철저히 배제하고, 수술 시작부터 끝까지 마스터 집도의가 직접 책임집니다. | HTML 텍스트 미발견
+frame padding/gap 반영 | 842:84 (Section_03) | padding-top=220, padding-right=246, padding-bottom=67, padding-left=246 | 미매칭 (frame 842:84) (frame 842:84)
+clamp 적용 | 842:84 (Section_03) | padding-top=220 requires clamp() | - @ 미매칭 (frame 842:84)
+clamp 적용 | 842:84 (Section_03) | padding-right=246 requires clamp() | - @ 미매칭 (frame 842:84)
+clamp 적용 | 842:84 (Section_03) | padding-left=246 requires clamp() | - @ 미매칭 (frame 842:84)
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+codex
+필수 실행은 모두 통과했습니다. 마지막으로 변경 파일과 상태를 점검하고, 요청하신 실행 출력의 핵심 부분을 포함해 결과를 정리해 전달하겠습니다.
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02 succeeded in 1.31s:
+?? tests/integration/test_req032_endtoend.sh
+?? tests/regression/test_asset_manifest_determinism.py
+?? tests/regression/test_req032_add_only.py
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+codex
+변경 완료했습니다. 구현 코드(`tools/*`)는 수정하지 않고 테스트만 추가했습니다.
+
+**추가 파일**
+- [tests/integration/test_req032_endtoend.sh](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/integration/test_req032_endtoend.sh)
+- [tests/regression/test_req032_add_only.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_req032_add_only.py)
+- [tests/regression/test_asset_manifest_determinism.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_asset_manifest_determinism.py)
+
+**반영 내용**
+1. `test_req032_endtoend.sh`
+- `figma-validate.py --version-info`에 신규 카테고리 2개 확인:
+  - `v2.componentId.match`
+  - `v2.assetManifest.exists`
+- `section_03/04` validate exit code가 baseline(`tests/fixtures/req029/landing_post_impl_baseline.json`)과 일치하는지 검증.
+- `figma-section-spec.py`의 asset manifest 토글 검증:
+  - 기본값: `section_03_asset_manifest.json` 생성됨
+  - `--no-emit-asset-manifest`: 생성되지 않음
+
+2. `test_req032_add_only.py`
+- REQ-029/030/031 축 기존 키 보존 회귀 확인.
+- REQ-032 신규 축(`componentId`, `componentSetId`, vector path keys) 외 추가 키 제한 검증.
+
+3. `test_asset_manifest_determinism.py`
+- 동일 입력 2회 `build_asset_manifest()` 결과를 JSON byte 단위(`sort_keys=True`, `indent=2`, trailing newline)로 비교.
+- SHA-256 digest 동일성 및 asset 정렬 순서 결정성 검증.
+
+**실행 결과 (요청하신 출력 포함)**
+
+```bash
+$ pytest -q tests/regression/test_req032_add_only.py tests/regression/test_asset_manifest_determinism.py
+..                                                                       [100%]
+2 passed in 0.24s
+```
+
+```bash
+$ bash tests/integration/test_req032_endtoend.sh
+[EXIT] figma_validate_section_03=1
+[EXIT] figma_validate_section_04=1
+...
+- v2.componentId.match
+- v2.assetManifest.exists
+===== emit_manifest_default =====
+/tmp/.../manifest_default/section_03_spec.json
+/tmp/.../manifest_default/section_03_spec.md
+/tmp/.../manifest_default/section_03_asset_manifest.json
+[EXIT] emit_manifest_default=0
+
+===== emit_manifest_disabled =====
+/tmp/.../manifest_disabled/section_03_spec.json
+/tmp/.../manifest_disabled/section_03_spec.md
+[EXIT] emit_manifest_disabled=0
+
+[PASS] REQ-032 end-to-end validation checks completed
+```
+
+참고: 자기탐색 지시의 `prompts/phase2-impl.md`는 현재 worktree 루트에는 없고, `.gran-maestro/requests`에도 `REQ-032` 디렉터리가 없어 직접 대조는 불가했습니다. 대신 `tests/integration/test_req031_endtoend.sh`, `tests/regression/test_req031_add_only.py` 패턴을 기준으로 동일 스타일로 구현했습니다.
+file update:
+diff --git a/tests/integration/test_req032_endtoend.sh b/tests/integration/test_req032_endtoend.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..9c1a4162787d16785efa7ac1febbe735532dcf6a
+--- /dev/null
++++ b/tests/integration/test_req032_endtoend.sh
+@@ -0,0 +1,138 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++cd "$ROOT_DIR"
++
++TMP_DIR="$(mktemp -d)"
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++trap cleanup EXIT
++
++BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
++if [[ ! -f "$BASELINE_PATH" ]]; then
++  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
++import json
++import sys
++from pathlib import Path
++
++payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
++print(payload.get("exit_code", ""))
++PY
++)"
++
++if [[ -z "$BASELINE_EXIT" ]]; then
++  echo "[FAIL] baseline exit_code is empty in ${BASELINE_PATH}" >&2
++  exit 1
++fi
++
++run_and_capture() {
++  local label="$1"
++  shift
++  local logfile="$TMP_DIR/${label}.log"
++
++  local ec=0
++  if "$@" >"$logfile" 2>&1; then
++    ec=0
++  else
++    ec=$?
++  fi
++
++  echo "===== ${label} ====="
++  cat "$logfile"
++  echo "[EXIT] ${label}=${ec}"
++  echo
++
++  return "$ec"
++}
++
++assert_matches_baseline() {
++  local label="$1"
++  local ec="$2"
++
++  if [[ "$ec" -ne "$BASELINE_EXIT" ]]; then
++    echo "[FAIL] ${label} expected baseline exit ${BASELINE_EXIT}, got ${ec}" >&2
++    exit 1
++  fi
++}
++
++set +e
++run_and_capture "figma_validate_section_03" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_03_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_03_EC=$?
++set -e
++assert_matches_baseline "section_03" "$SECTION_03_EC"
++
++set +e
++run_and_capture "figma_validate_section_04" \
++  python3 tools/figma-validate.py \
++  --spec extracted/section_04_spec.json \
++  --html landing/index.html \
++  --css landing/css/common.css
++SECTION_04_EC=$?
++set -e
++assert_matches_baseline "section_04" "$SECTION_04_EC"
++
++VERSION_LOG="$TMP_DIR/version_info.log"
++python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
++cat "$VERSION_LOG"
++
++for category in \
++  "v2.componentId.match" \
++  "v2.assetManifest.exists"; do
++  if ! grep -F -- "- ${category}" "$VERSION_LOG" >/dev/null; then
++    echo "[FAIL] missing category in --version-info: ${category}" >&2
++    exit 1
++  fi
++done
++
++OUT_DEFAULT="$TMP_DIR/manifest_default"
++set +e
++run_and_capture "emit_manifest_default" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DEFAULT" \
++  --name section_03
++EMIT_DEFAULT_EC=$?
++set -e
++if [[ "$EMIT_DEFAULT_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_default expected exit 0, got ${EMIT_DEFAULT_EC}" >&2
++  exit 1
++fi
++
++DEFAULT_MANIFEST="$OUT_DEFAULT/section_03_asset_manifest.json"
++if [[ ! -f "$DEFAULT_MANIFEST" ]]; then
++  echo "[FAIL] expected manifest file missing: ${DEFAULT_MANIFEST}" >&2
++  exit 1
++fi
++
++OUT_DISABLED="$TMP_DIR/manifest_disabled"
++set +e
++run_and_capture "emit_manifest_disabled" \
++  python3 tools/figma-section-spec.py \
++  --from-spec extracted/section_03_spec.json \
++  --output "$OUT_DISABLED" \
++  --name section_03 \
++  --no-emit-asset-manifest
++EMIT_DISABLED_EC=$?
++set -e
++if [[ "$EMIT_DISABLED_EC" -ne 0 ]]; then
++  echo "[FAIL] emit_manifest_disabled expected exit 0, got ${EMIT_DISABLED_EC}" >&2
++  exit 1
++fi
++
++DISABLED_MANIFEST="$OUT_DISABLED/section_03_asset_manifest.json"
++if [[ -f "$DISABLED_MANIFEST" ]]; then
++  echo "[FAIL] manifest should not exist with --no-emit-asset-manifest: ${DISABLED_MANIFEST}" >&2
++  exit 1
++fi
++
++echo "[PASS] REQ-032 end-to-end validation checks completed"
+diff --git a/tests/regression/test_asset_manifest_determinism.py b/tests/regression/test_asset_manifest_determinism.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe98de8a9145e6a63bad4fda26e0bf713692fd19
+--- /dev/null
++++ b/tests/regression/test_asset_manifest_determinism.py
+@@ -0,0 +1,76 @@
++from __future__ import annotations
++
++import hashlib
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_manifest_determinism"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _manifest_bytes(payload: dict) -> bytes:
++    return (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
++
++
++def test_asset_manifest_is_byte_exact_deterministic_for_same_input() -> None:
++    module = _load_module()
++    payload = {
++        "frame_nodes": [
++            {
++                "id": "f-2",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-z"},
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++            {
++                "id": "f-1",
++                "fills_v2": [
++                    {"type": "IMAGE", "imageRef": "img-a"},
++                ],
++            },
++        ],
++        "vector_nodes": [
++            {
++                "id": "v-2",
++                "fillGeometryPathData": ["M3 3L4 4Z"],
++                "strokeGeometryPathData": [],
++            },
++            {
++                "id": "v-1",
++                "fillGeometryPathData": ["M0 0L1 1Z"],
++                "strokeGeometryPathData": ["M1 1L2 2Z"],
++            },
++        ],
++    }
++
++    manifest_1 = module.build_asset_manifest(payload)
++    manifest_2 = module.build_asset_manifest(payload)
++
++    bytes_1 = _manifest_bytes(manifest_1)
++    bytes_2 = _manifest_bytes(manifest_2)
++
++    assert manifest_1 == manifest_2
++    assert bytes_1 == bytes_2
++
++    digest_1 = hashlib.sha256(bytes_1).hexdigest()
++    digest_2 = hashlib.sha256(bytes_2).hexdigest()
++    assert digest_1 == digest_2
++
++    assert manifest_1["assets"] == sorted(
++        manifest_1["assets"],
++        key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]),
++    )
+diff --git a/tests/regression/test_req032_add_only.py b/tests/regression/test_req032_add_only.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..bbd53e8ebac499868522a724f84fccd235cd3a3b
+--- /dev/null
++++ b/tests/regression/test_req032_add_only.py
+@@ -0,0 +1,120 @@
++from __future__ import annotations
++
++import copy
++import importlib.util
++import json
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
++EXTRACTED_DIR = ROOT / "extracted"
++TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
++
++REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
++REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
++REQ031_TEXT_KEYS = {
++    "characterStyleOverrides",
++    "styleOverrideTable",
++    "textCase",
++    "textDecoration",
++    "paragraphSpacing",
++    "paragraphIndent",
++}
++REQ031_FRAME_KEYS = {
++    "strokes",
++    "strokeWeight",
++    "strokeAlign",
++    "rectangleCornerRadii",
++    "layoutSizingHorizontal",
++    "layoutSizingVertical",
++    "layoutGrow",
++    "layoutAlign",
++}
++REQ032_FRAME_KEYS = {"componentId", "componentSetId"}
++REQ032_VECTOR_KEYS = {"viewBox", "fillGeometryPathData", "strokeGeometryPathData"}
++
++NORMALIZATION_ALLOWED_KEYS = (
++    REQ030_TEXT_KEYS
++    | REQ030_FRAME_KEYS
++    | REQ031_TEXT_KEYS
++    | REQ031_FRAME_KEYS
++    | REQ032_FRAME_KEYS
++    | REQ032_VECTOR_KEYS
++)
++
++
++def _load_module():
++    module_name = "figma_section_spec_req032_add_only"
++    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
++    module = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    sys.modules[module_name] = module
++    spec.loader.exec_module(module)
++    return module
++
++
++def _assert_existing_keys_preserved(before: object, after: object, *, path: str = "") -> None:
++    if isinstance(before, dict):
++        assert isinstance(after, dict), f"type mismatch at {path or '<root>'}"
++        for key, value in before.items():
++            assert key in after, f"missing key at {path or '<root>'}: {key}"
++            if key in NORMALIZATION_ALLOWED_KEYS:
++                continue
++            next_path = f"{path}.{key}" if path else key
++            _assert_existing_keys_preserved(value, after[key], path=next_path)
++        return
++    if isinstance(before, list):
++        assert isinstance(after, list), f"type mismatch at {path or '<root>'}"
++        assert len(before) == len(after), f"length mismatch at {path or '<root>'}"
++        for idx, (before_item, after_item) in enumerate(zip(before, after)):
++            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
++            _assert_existing_keys_preserved(before_item, after_item, path=next_path)
++        return
++    assert before == after, f"value mismatch at {path or '<root>'}: {before!r} != {after!r}"
++
++
++def _collect_added_node_keys(before_nodes: list[dict], after_nodes: list[dict]) -> set[str]:
++    added: set[str] = set()
++    for before, after in zip(before_nodes, after_nodes):
++        if not isinstance(before, dict) or not isinstance(after, dict):
++            continue
++        added.update(set(after.keys()) - set(before.keys()))
++    return added
++
++
++def test_req032_add_only_preserves_existing_v2_keys_and_adds_only_req032_axes() -> None:
++    module = _load_module()
++
++    for name in TARGET_SPECS:
++        before = json.loads((EXTRACTED_DIR / name).read_text(encoding="utf-8"))
++        transformed = module.ensure_v2_payload_shape(copy.deepcopy(before))
++
++        assert transformed["schema_version"] == "2.0.0"
++        _assert_existing_keys_preserved(before, transformed)
++
++        before_text_nodes = before.get("text_nodes", [])
++        after_text_nodes = transformed.get("text_nodes", [])
++        before_frame_nodes = before.get("frame_nodes", [])
++        after_frame_nodes = transformed.get("frame_nodes", [])
++        before_vector_nodes = before.get("vector_nodes", [])
++        after_vector_nodes = transformed.get("vector_nodes", [])
++
++        assert len(before_text_nodes) == len(after_text_nodes)
++        assert len(before_frame_nodes) == len(after_frame_nodes)
++        assert len(before_vector_nodes) == len(after_vector_nodes)
++
++        added_text_keys = _collect_added_node_keys(before_text_nodes, after_text_nodes)
++        added_frame_keys = _collect_added_node_keys(before_frame_nodes, after_frame_nodes)
++        added_vector_keys = _collect_added_node_keys(before_vector_nodes, after_vector_nodes)
++
++        assert added_text_keys <= REQ030_TEXT_KEYS | {"styleOverrideTable"}
++        assert added_frame_keys <= REQ030_FRAME_KEYS | REQ031_FRAME_KEYS | REQ032_FRAME_KEYS
++        assert added_vector_keys <= REQ032_VECTOR_KEYS
++
++        for frame_node in after_frame_nodes:
++            assert REQ032_FRAME_KEYS <= set(frame_node.keys())
++
++        for vector_node in after_vector_nodes:
++            assert REQ032_VECTOR_KEYS <= set(vector_node.keys())
+
+tokens used
+81,401
+변경 완료했습니다. 구현 코드(`tools/*`)는 수정하지 않고 테스트만 추가했습니다.
+
+**추가 파일**
+- [tests/integration/test_req032_endtoend.sh](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/integration/test_req032_endtoend.sh)
+- [tests/regression/test_req032_add_only.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_req032_add_only.py)
+- [tests/regression/test_asset_manifest_determinism.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-032-task-02/tests/regression/test_asset_manifest_determinism.py)
+
+**반영 내용**
+1. `test_req032_endtoend.sh`
+- `figma-validate.py --version-info`에 신규 카테고리 2개 확인:
+  - `v2.componentId.match`
+  - `v2.assetManifest.exists`
+- `section_03/04` validate exit code가 baseline(`tests/fixtures/req029/landing_post_impl_baseline.json`)과 일치하는지 검증.
+- `figma-section-spec.py`의 asset manifest 토글 검증:
+  - 기본값: `section_03_asset_manifest.json` 생성됨
+  - `--no-emit-asset-manifest`: 생성되지 않음
+
+2. `test_req032_add_only.py`
+- REQ-029/030/031 축 기존 키 보존 회귀 확인.
+- REQ-032 신규 축(`componentId`, `componentSetId`, vector path keys) 외 추가 키 제한 검증.
+
+3. `test_asset_manifest_determinism.py`
+- 동일 입력 2회 `build_asset_manifest()` 결과를 JSON byte 단위(`sort_keys=True`, `indent=2`, trailing newline)로 비교.
+- SHA-256 digest 동일성 및 asset 정렬 순서 결정성 검증.
+
+**실행 결과 (요청하신 출력 포함)**
+
+```bash
+$ pytest -q tests/regression/test_req032_add_only.py tests/regression/test_asset_manifest_determinism.py
+..                                                                       [100%]
+2 passed in 0.24s
+```
+
+```bash
+$ bash tests/integration/test_req032_endtoend.sh
+[EXIT] figma_validate_section_03=1
+[EXIT] figma_validate_section_04=1
+...
+- v2.componentId.match
+- v2.assetManifest.exists
+===== emit_manifest_default =====
+/tmp/.../manifest_default/section_03_spec.json
+/tmp/.../manifest_default/section_03_spec.md
+/tmp/.../manifest_default/section_03_asset_manifest.json
+[EXIT] emit_manifest_default=0
+
+===== emit_manifest_disabled =====
+/tmp/.../manifest_disabled/section_03_spec.json
+/tmp/.../manifest_disabled/section_03_spec.md
+[EXIT] emit_manifest_disabled=0
+
+[PASS] REQ-032 end-to-end validation checks completed
+```
+
+참고: 자기탐색 지시의 `prompts/phase2-impl.md`는 현재 worktree 루트에는 없고, `.gran-maestro/requests`에도 `REQ-032` 디렉터리가 없어 직접 대조는 불가했습니다. 대신 `tests/integration/test_req031_endtoend.sh`, `tests/regression/test_req031_add_only.py` 패턴을 기준으로 동일 스타일로 구현했습니다.

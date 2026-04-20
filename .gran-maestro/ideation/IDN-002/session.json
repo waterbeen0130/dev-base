@@ -1,0 +1,65 @@
+{
+  "id": "IDN-002",
+  "topic": "dev-base 폴더 개선점 + Figma→코드 fidelity 완벽화를 위한 JSON 공식화 가능성",
+  "focus": null,
+  "status": "completed",
+  "created_at": "2026-04-19T04:08:50.000Z",
+  "dispatch_started_at": "2026-04-19T04:10:00.000Z",
+  "participants": [
+    {
+      "key": "architect(codex)",
+      "role": "architect",
+      "perspective": "파이프라인 전체 구조·단계 분리·데이터 흐름 관점에서 현재 tools/ + rules/ + .gran-maestro/ 구성의 설계 결함과 개선 포인트 식별",
+      "type": "opinion",
+      "status": "pending",
+      "provider": "codex",
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "key": "figma-fidelity(codex)",
+      "role": "figma-fidelity",
+      "perspective": "Figma 원본 ↔ 생성 HTML/CSS 간 충실도(fidelity) 관점에서 현재 spec 정규화가 놓치고 있는 시각적/구조적 필드(그림자·그라디언트·blend mode·이미지·마스크·constraints·autolayout align·opacity 등)를 식별하고 보강 제안",
+      "type": "opinion",
+      "status": "pending",
+      "provider": "codex",
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "key": "quality(codex)",
+      "role": "quality",
+      "perspective": "validate-semantic.py / figma-validate.py / post-impl-verify.py의 규칙 커버리지와 false-positive/negative 관점에서 검증 체계의 빈틈과 rules.yaml ↔ spec ↔ html/css 3자 일관성 문제를 식별",
+      "type": "opinion",
+      "status": "pending",
+      "provider": "codex",
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "key": "schema(gemini)",
+      "role": "schema-designer",
+      "perspective": "'Figma와 완전 동일한 추출물'을 보장하는 결정적(deterministic) JSON 스키마 설계 관점에서 현재 section_spec.json의 확장 필요 필드, 스키마 버저닝, 타입 시스템, JSON Schema/Pydantic 공식화 가능성을 제안",
+      "type": "opinion",
+      "status": "pending",
+      "provider": "gemini",
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "key": "risk(claude)",
+      "role": "risk-analyst",
+      "perspective": "현재 spec 기반 구현에서 발생 가능한 실패 모드(깨지는 케이스·복구 불가 케이스·엣지 엘리먼트)와 공식화 시 오히려 생길 수 있는 경직성/유지보수 리스크를 식별",
+      "type": "opinion",
+      "status": "pending",
+      "provider": "claude",
+      "started_at": null,
+      "completed_at": null
+    }
+  ],
+  "critics": {
+    "claude-critic": { "status": "pending", "provider": "claude" }
+  },
+  "critic_count": 1,
+  "participant_config": { "codex": 3, "gemini": 1, "claude": 1 }
+}

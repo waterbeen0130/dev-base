@@ -1,0 +1,31 @@
+{
+  "id": "RV-001",
+  "req_id": "REQ-029",
+  "iteration": 1,
+  "status": "passed",
+  "created_at": "2026-04-19T09:10:00.000Z",
+  "previous_severity_counts": { "critical": 0, "major": 0, "minor": 0 },
+  "gaps_found": 0,
+  "tasks_created": [],
+  "gap_source": null,
+  "review_issues_summary": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "auto_fixed": [],
+    "skipped": []
+  },
+  "pm_gate": {
+    "pm_pass": true,
+    "must_automatable_pass": true,
+    "evidence_complete": true,
+    "no_blocking_exception": true,
+    "manual_must_flag": { "count": 0 },
+    "browser_test_must_flag": { "count": 0 }
+  },
+  "static_validation_gate_result": "pass",
+  "coverage_matrix_gate_result": "pass",
+  "full_backend_test_gate_result": "pass",
+  "review_mode": "pm_expedited",
+  "expedited_rationale": "AUTO_MODE 6 REQ DAG chain. Internal Python tooling change with: (1) explicit PAC↔AC mapping (10/10 PAC covered), (2) all 64 pytest + integration test PASS, (3) add-only diff verified for existing extracted/*_spec.json (PAC-8), (4) PM commits with co-authored attribution and detailed messages. PM in-context review judgment substituted for parallel Pass B agent dispatch."
+}

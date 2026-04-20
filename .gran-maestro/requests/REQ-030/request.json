@@ -1,0 +1,30 @@
+{
+  "id": "REQ-030",
+  "title": "[B] spec v2 — fills[] type 분기(SOLID/GRADIENT_LINEAR/GRADIENT_RADIAL/IMAGE) + effects[] + opacity + blendMode",
+  "original_request": "Phase A 2단계 — figma-section-spec.py의 fills 추출을 type 분기 구조로 확장(IMAGE는 imageRef/scaleMode/crop, GRADIENT는 stops/handles 보존). effects[] · opacity · blendMode 신규 필드 추출. figma-validate.py에 신규 검증 카테고리 추가. REQ-029(semver+v1/v2 분기 파서) 완료 후 시작.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-19T06:43:14.000Z",
+  "completed_at": "2026-04-19T10:30:00.000Z",
+  "auto_approve": false,
+  "source_plan": "PLN-009",
+  "linked_debug": "DBG-001",
+  "linked_intent": "INTENT-005",
+  "linked_ideation": "IDN-002",
+  "dag_auto_chain": false,
+  "merge_commit": "7fa6cd2",
+  "tasks": [
+    { "id": "01", "title": "[B] fills + effects + opacity + blendMode + validate v2 카테고리", "status": "committed", "agent": "codex-dev", "spec": "tasks/01/spec.md", "commit_hash": "79d6922" },
+    { "id": "02", "title": "[B-test] 통합/회귀 테스트 + empty fills graceful", "status": "committed", "agent": "codex-dev", "spec": "tasks/02/spec.md", "commit_hash": "a38c78b", "depends_on": ["01"] }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": ["REQ-033"],
+    "blocks": ["REQ-031"]
+  },
+  "stitch_screens": [],
+  "review_iterations": [
+    { "rv_id": "RV-001", "created_at": "2026-04-19T10:25:00.000Z", "gaps_found": 0, "tasks_created": [], "status": "completed", "review_mode": "pm_expedited" }
+  ],
+  "review_summary": { "iteration": 1, "status": "passed" }
+}

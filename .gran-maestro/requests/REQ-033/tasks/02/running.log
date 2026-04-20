@@ -1,0 +1,1343 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019da54b-ea87-7903-978a-8b6faf633d3e
+--------
+user
+# Implementation Request — REQ-033/02 (Integration Test)
+
+- Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02
+- 선행: REQ-029 ~ REQ-031, REQ-032, REQ-033/01 (7099b9a)
+
+## 구현 컨텍스트 (PM 작성)
+
+REQ-033/01 (7099b9a) 가 _stub_handler 차단 + 누락 규칙 등록 + drift cache 내장을 완료. 본 task 02 는 통합/회귀만 추가:
+
+1. `tests/integration/test_req033_endtoend.sh`:
+   - `check-rules-drift.py` (인자 없이) 실행 시 `[OK] N/N rules in sync` 출력 확인
+   - `post-impl-verify.py` 실행 시 drift cache 동작 (첫 실행 → 캐시 생성, 두번째 → up-to-date)
+   - rules.yaml 임의 touch 후 post-impl-verify 재실행 → drift check 재실행됨 확인
+2. `tests/regression/test_req033_existing_validators.py`:
+   - REQ-029 의 정책 3건 enforcement (margin-bottom / rules_conflict / constraints) 가 본 REQ 변경 후에도 PASS 유지
+   - REQ-030/031/032 의 v2 카테고리들이 정상 작동 (figma-validate --version-info 가 모든 v2 카테고리 출력)
+3. `tests/unit/test_meaningful_page_name_clarity.py`:
+   - meaningful_page_name 의 description 명확화 후 (파일명 + 본문 모두 검사) HTML 본문에 의미 없는 페이지명 (`page_1`, `sub_01`) 이 있으면 FAIL, 의미있는 영문명 (`greeting`, `products`) 이면 PASS
+
+[REFERENCE_CONTEXT]
+current_date: 2026-04-19
+model_cutoff: 2026-01
+references: none
+[/REFERENCE_CONTEXT]
+
+## 자기탐색 지시
+
+1. REQ-033/01 prompts/phase2-impl.md 의 spec 참조
+2. REQ-031/032 task 02 패턴 참조
+
+## 규칙
+
+- task 01 의 구현 코드 절대 수정 금지
+- git commit 금지
+- stdlib + pytest 만 사용
+- [MANDATORY] 완료 전 신규 테스트 + endtoend.sh 실행 후 응답에 출력 포함
+- worktree 내부에서만 작업
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_code_intel starting
+mcp: omx_trace starting
+mcp: omx_wiki starting
+mcp: omx_state starting
+mcp: omx_memory starting
+mcp: omx_code_intel ready
+mcp: omx_trace ready
+mcp: omx_state ready
+mcp: omx_memory ready
+mcp: omx_wiki ready
+mcp startup: ready: omx_code_intel, omx_trace, omx_state, omx_memory, omx_wiki
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청하신 REQ-033/02는 구현 코드 변경 없이 통합/회귀 테스트만 추가하는 작업으로 이해했습니다. 먼저 작업 전제에 맞게 `AGENTS.md`와 `.omx` 상태/메모리를 확인하고, 기존 테스트 패턴(REQ-031/032 task 02)과 REQ-033/01 스펙을 읽은 뒤 테스트를 작성하겠습니다.
+exec
+/bin/bash -lc 'ls -la .omx || true && find .omx -maxdepth 3 -type f 2>/dev/null | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+total 0
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:31 .
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:31 ..
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:31 logs
+drwxrwxrwx 1 waterbeen waterbeen 4096 Apr 19 19:31 state
+.omx/logs/omx-2026-04-19.jsonl
+.omx/state/session.json
+exec
+/bin/bash -lc 'find .. -name AGENTS.md -print' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02exec
+/bin/bash -lc 'pwd && ls -la' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02
+total 9152
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 .
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 ..
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 .claude
+-rwxrwxrwx 1 waterbeen waterbeen      55 Apr 19 19:31 .git
+-rwxrwxrwx 1 waterbeen waterbeen      92 Apr 19 19:31 .gitignore
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 .gran-maestro
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 .omx
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 .playwright-mcp
+-rwxrwxrwx 1 waterbeen waterbeen   21329 Apr 19 19:31 AGENTS.md
+-rwxrwxrwx 1 waterbeen waterbeen   21166 Apr 19 19:31 CLAUDE.md
+-rwxrwxrwx 1 waterbeen waterbeen   12332 Apr 19 19:31 HANDOVER_2026-04-12.md
+-rwxrwxrwx 1 waterbeen waterbeen   12589 Apr 19 19:31 HANDOVER_2026-04-13.md
+-rwxrwxrwx 1 waterbeen waterbeen   20753 Apr 19 19:31 HANDOVER_2026-04-13_v2.md
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 docs
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 extracted
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 extracted.v1.backup
+drwxrwxrwx 1 waterbeen waterbeen    4096 Apr 19 19:31 landing
+-rwxrwxrwx 1 waterbeen waterbeen  537819 Apr 19 19:31 mojelim_01_hero.png
+ succeeded in 576ms:
+../REQ-033-task-01/AGENTS.md
+../REQ-033-task-02/AGENTS.md
+codex
+`.omx` 런타임 상태를 확인했고, 이 워크트리에는 `AGENTS.md` 하나만 적용됩니다. 지금 `.omx/state/session.json`과 REQ-033/01 스펙/기존 테스트 패턴을 읽어 테스트 설계를 맞추겠습니다.
+exec
+/bin/bash -lc 'cat .omx/state/session.json' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+{
+  "session_id": "019da54b-ea87-7903-978a-8b6faf633d3e",
+  "native_session_id": "019da54b-ea87-7903-978a-8b6faf633d3e",
+  "started_at": "2026-04-19T10:31:50.327Z",
+  "cwd": "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02",
+  "pid": 40426,
+  "platform": "linux",
+  "pid_start_ticks": 3056356,
+  "pid_cmdline": "/home/waterbeen/.nvm/versions/node/v22.21.1/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex/codex exec --full-auto -m gpt-5.3-codex -C /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 # Implementation Request — REQ-033/02 (Integration Test) - Worktree: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 - 선행: REQ-029 ~ REQ-031, REQ-032, REQ-033/01 (7099b9a) ## 구현 컨텍스트 (PM 작성) REQ-033/01 (7099b9a) 가 _stub_handler 차단 + 누락 규칙 등록 + drift cache 내장을 완료. 본 task 02 는 통합/회귀만 추가: 1. `tests/integration/test_req033_endtoend.sh`: - `check-rules-drift.py` (인자 없이) 실행 시 `[OK] N/N rules in sync` 출력 확인 - `post-impl-verify.py` 실행 시 drift cache 동작 (첫 실행 → 캐시 생성, 두번째 → up-to-date) - rules.yaml 임의 touch 후 post-impl-verify 재실행 → drift check 재실행됨 확인 2. `tests/regression/test_req033_existing_validators.py`: - REQ-029 의 정책 3건 enforcement (margin-bottom / rules_conflict / constraints) 가 본 REQ 변경 후에도 PASS 유지 - REQ-030/031/032 의 v2 카테고리들이 정상 작동 (figma-validate --version-info 가 모든 v2 카테고리 출력) 3. `tests/unit/test_meaningful_page_name_clarity.py`: - meaningful_page_name 의 description 명확화 후 (파일명 + 본문 모두 검사) HTML 본문에 의미 없는 페이지명 (`page_1`, `sub_01`) 이 있으면 FAIL, 의미있는 영문명 (`greeting`, `products`) 이면 PASS [REFERENCE_CONTEXT] current_date: 2026-04-19 model_cutoff: 2026-01 references: none [/REFERENCE_CONTEXT] ## 자기탐색 지시 1. REQ-033/01 prompts/phase2-impl.md 의 spec 참조 2. REQ-031/032 task 02 패턴 참조 ## 규칙 - task 01 의 구현 코드 절대 수정 금지 - git commit 금지 - stdlib + pytest 만 사용 - [MANDATORY] 완료 전 신규 테스트 + endtoend.sh 실행 후 응답에 출력 포함 - worktree 내부에서만 작업"
+}
+exec
+/bin/bash -lc "sed -n '1,240p' prompts/phase2-impl.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 exited 2 in 0ms:
+sed: can't read prompts/phase2-impl.md: No such file or directory
+exec
+/bin/bash -lc 'find tests -maxdepth 3 -type f | sort' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+tests/__init__.py
+tests/conftest.py
+tests/fixtures/dirty.css
+tests/fixtures/dirty.html
+tests/fixtures/figma_node_sample.json
+tests/fixtures/repair/dirty.css
+tests/fixtures/repair/dirty.html
+tests/fixtures/req029/landing_post_impl_baseline.json
+tests/fixtures/req029/policy1_vertical_spacing_spec.json
+tests/fixtures/req029/policy3_rules_conflict_node.json
+tests/integration/test_post_impl_drift_cache.sh
+tests/integration/test_req029_endtoend.sh
+tests/integration/test_req029_landing_baseline.sh
+tests/integration/test_req030_endtoend.sh
+tests/integration/test_req030_landing_baseline.sh
+tests/integration/test_req031_endtoend.sh
+tests/integration/test_req032_endtoend.sh
+tests/regression/test_asset_manifest_determinism.py
+tests/regression/test_backup_byte_exact.py
+tests/regression/test_determinism.py
+exec
+/bin/bash -lc "find . -path '*prompts*' -type f | sort" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02exec
+/bin/bash -lc "rg -n \"phase2-impl\\.md|REQ-033/01|req033|task 02|REQ-031|REQ-032\" -S" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 113ms:
+tests/integration/test_req032_endtoend.sh:138:echo "[PASS] REQ-032 end-to-end validation checks completed"
+tests/integration/test_req031_endtoend.sh:100:echo "[PASS] REQ-031 end-to-end validation checks completed"
+ succeeded in 375ms:
+./.gran-maestro/debug/DBG-001/prompts/codex-prompt.md
+./.gran-maestro/debug/DBG-001/prompts/gemini-prompt.md
+./.gran-maestro/discussion/DSC-001/rounds/00/prompts/claude-prompt.md
+./.gran-maestro/discussion/DSC-001/rounds/00/prompts/codex-2-prompt.md
+./.gran-maestro/discussion/DSC-001/rounds/00/prompts/codex-3-prompt.md
+./.gran-maestro/discussion/DSC-001/rounds/00/prompts/codex-prompt.md
+./.gran-maestro/discussion/DSC-001/rounds/00/prompts/gemini-prompt.md
+./.gran-maestro/discussion/DSC-002/rounds/00/prompts/architect(codex)-prompt.md
+./.gran-maestro/discussion/DSC-002/rounds/00/prompts/combined-prompts.txt
+./.gran-maestro/discussion/DSC-002/rounds/00/prompts/critique-claude-prompt.md
+./.gran-maestro/discussion/DSC-002/rounds/00/prompts/frontend(gemini)-prompt.md
+./.gran-maestro/discussion/DSC-002/rounds/00/prompts/risk(claude)-prompt.md
+./.gran-maestro/explore/EXP-001/prompts/explore-codex-prompt.md
+./.gran-maestro/explore/EXP-001/prompts/explore-gemini-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/claude-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/codex-2-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/codex-3-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/codex-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/critique-claude-prompt.md
+./.gran-maestro/ideation/IDN-001/prompts/gemini-prompt.md
+codex
+`prompts/phase2-impl.md`는 루트에 없어서 요청 문서 경로를 탐색 중입니다. REQ-033/01 스펙 파일과 REQ-031/032 task 02 테스트 패턴을 `.gran-maestro/requests/...`에서 직접 찾아 기준으로 삼겠습니다.
+exec
+/bin/bash -lc "find .gran-maestro/requests -maxdepth 5 -type f | rg 'REQ-03(1|2|3)|req-03(1|2|3)|phase2-impl\\.md|task-02|tasks/02' -n" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02exec
+/bin/bash -lc "find .gran-maestro/requests -maxdepth 5 -type d | rg 'REQ-033|REQ-032|REQ-031' -n" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 exited 1 in 55ms:
+
+ succeeded in 57ms:
+3:.gran-maestro/requests/REQ-001/tasks/01/prompts/phase2-impl.md
+8:.gran-maestro/requests/REQ-002/tasks/01/prompts/phase2-impl.md
+11:.gran-maestro/requests/REQ-002/tasks/02/spec.md
+14:.gran-maestro/requests/REQ-003/tasks/01/prompts/phase2-impl.md
+17:.gran-maestro/requests/REQ-003/tasks/02/spec.md
+19:.gran-maestro/requests/REQ-004/tasks/01/prompts/phase2-impl.md
+21:.gran-maestro/requests/REQ-004/tasks/02/prompts/phase2-impl.md
+22:.gran-maestro/requests/REQ-004/tasks/02/spec.md
+23:.gran-maestro/requests/REQ-004/tasks/03/prompts/phase2-impl.md
+27:.gran-maestro/requests/REQ-005/tasks/01/prompts/phase2-impl.md
+29:.gran-maestro/requests/REQ-005/tasks/02/prompts/phase2-impl.md
+30:.gran-maestro/requests/REQ-005/tasks/02/running.log
+31:.gran-maestro/requests/REQ-005/tasks/02/spec.md
+32:.gran-maestro/requests/REQ-005/tasks/03/prompts/phase2-impl.md
+35:.gran-maestro/requests/REQ-006/tasks/01/prompts/phase2-impl.md
+38:.gran-maestro/requests/REQ-006/tasks/02/prompts/phase2-impl.md
+39:.gran-maestro/requests/REQ-006/tasks/02/running.log
+40:.gran-maestro/requests/REQ-006/tasks/02/spec.md
+41:.gran-maestro/requests/REQ-006/tasks/03/prompts/phase2-impl.md
+44:.gran-maestro/requests/REQ-007/tasks/01/prompts/phase2-impl.md
+codex
+REQ-033 관련 요청 문서는 현재 워크트리에 없어서, 대체로 이미 존재하는 `REQ-031/032` 통합 테스트와 `post_impl_drift_cache` 테스트를 패턴 기준으로 잡겠습니다. 다음으로 대상 스크립트와 기존 검증 테스트를 읽고 바로 신규 파일 3개를 작성하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,240p' tests/integration/test_req031_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+if [[ ! -f "$BASELINE_PATH" ]]; then
+  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
+  exit 1
+fi
+
+BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req032_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+if [[ ! -f "$BASELINE_PATH" ]]; then
+  echo "[FAIL] baseline file not found: ${BASELINE_PATH}" >&2
+  exit 1
+fi
+
+BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_post_impl_drift_cache.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+CACHE_PATH="$ROOT_DIR/.gran-maestro/state/drift-cache.json"
+RULES_PATH="$ROOT_DIR/rules/rules.yaml"
+RULES_MTIME_ORIG="$(stat -c %Y "$RULES_PATH")"
+CACHE_BACKUP_PATH="$TMP_DIR/drift-cache.backup.json"
+CACHE_EXISTED=0
+
+if [[ -f "$CACHE_PATH" ]]; then
+  cp "$CACHE_PATH" "$CACHE_BACKUP_PATH"
+  CACHE_EXISTED=1
+fi
+
+cleanup() {
+  touch -m -d "@${RULES_MTIME_ORIG}" "$RULES_PATH" 2>/dev/null || true
+exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_req030_add_only.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_req031_add_only.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+EXTRACTED_DIR = ROOT / "extracted"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+REQ031_TEXT_KEYS = {
+    "characterStyleOverrides",
+    "styleOverrideTable",
+    "textCase",
+    "textDecoration",
+    "paragraphSpacing",
+exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_req032_add_only.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+BACKUP_DIR = ROOT / "extracted.v1.backup"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+
+def _load_module():
+    module_name = "figma_section_spec_req030_add_only"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+ succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC = ROOT / "tools" / "figma-section-spec.py"
+EXTRACTED_DIR = ROOT / "extracted"
+TARGET_SPECS = ("section_03_spec.json", "section_04_spec.json")
+
+REQ030_TEXT_KEYS = {"effects", "opacity", "blendMode"}
+REQ030_FRAME_KEYS = {"fills_v2", "effects", "opacity", "blendMode"}
+REQ031_TEXT_KEYS = {
+    "characterStyleOverrides",
+    "styleOverrideTable",
+    "textCase",
+codex
+기존 회귀 패턴 확인 완료했습니다. 이제 `meaningful_page_name` 규칙 구현 동작(파일명+본문 검사)과 drift 스크립트 출력 포맷을 코드에서 확인해, 테스트가 실제 메시지/동작과 정확히 맞도록 맞추겠습니다.
+exec
+/bin/bash -lc "sed -n '1,280p' tools/post-impl-verify.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Post-implementation verification for PM dispatch follow-up."""
+
+import argparse
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+
+CRITICAL_CATEGORIES = {
+    "텍스트 위변조",
+    "폰트 5필드 완결성",
+    "fills color hex 일치",
+}
+
+MAJOR_CATEGORIES = {
+    "lineHeight 비율 일치",
+exec
+/bin/bash -lc "sed -n '1,260p' tools/check-rules-drift.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Check rule drift across rules.yaml, validation_schema.json, and validate-semantic handlers."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import re
+import sys
+
+import yaml
+
+
+EXPECTED_SUMMARIES = {
+    "vertical_frame_itemspacing_uses_margin_bottom": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
+    "no_constraints_to_position_absolute_mapping": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
+    "figma_rules_conflict_uses_meta_marker": "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).",
+}
+
+exec
+/bin/bash -lc "rg -n \"meaningful_page_name|check-rules-drift|drift cache|cache up-to-date|check-rules-drift executed|version-info|v2\\.\" tools tests rules -S" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+rules/validation_schema.json:82:      "id": "meaningful_page_name",
+rules/rules.yaml:151:  - id: meaningful_page_name
+tools/validate-semantic.py:759:    if rule.get("id") == "meaningful_page_name":
+tests/unit/test_corner_radii_individual.py:112:    assert "v2.cornerRadii.match" in output
+rules/common.md:421:| `meaningful_page_name` | `error` | HTML 파일명은 페이지 내용을 반영한 의미 있는 영문명이어야 한다 (page_1.html, sub_01.html 금지). |
+rules/common.md:446:### meaningful_page_name (error)
+tests/unit/test_layout_sizing.py:130:    assert "v2.layoutSizing.match" in output
+tests/unit/test_validate_effects.py:76:    assert "v2.effects.shadow.match" in output
+tests/unit/test_drift_check_all_rules.py:10:DRIFT_CHECKER = ROOT / "tools" / "check-rules-drift.py"
+tests/unit/test_text_case_decoration.py:147:    assert "v2.textCase.match" in output
+tests/unit/test_text_case_decoration.py:148:    assert "v2.textDecoration.match" in output
+tests/unit/test_validate_asset_manifest_exists.py:62:    assert "v2.assetManifest.exists" in output
+tests/unit/test_strokes_extract.py:114:    assert "v2.strokes.match" in output
+tests/unit/test_v2_empty_fills_graceful.py:67:    assert "v2.fills.solid.match" not in output
+tests/unit/test_v2_empty_fills_graceful.py:68:    assert "v2.fills.gradient.match" not in output
+tests/unit/test_v2_empty_fills_graceful.py:69:    assert "v2.fills.image.match" not in output
+tools/migrate-spec-v1-to-v2.py:53:    parser = argparse.ArgumentParser(description="Migrate *_spec.json files from schema v1 to v2.")
+tests/integration/test_req032_endtoend.sh:85:python3 tools/figma-validate.py --version-info >"$VERSION_LOG"
+tests/integration/test_req032_endtoend.sh:89:  "v2.componentId.match" \
+tests/integration/test_req032_endtoend.sh:90:  "v2.assetManifest.exists"; do
+exec
+/bin/bash -lc "sed -n '120,230p' rules/rules.yaml" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+    category: html.naming
+    validation:
+      type: naming_pattern
+      target: html
+      pattern: "^[a-z][a-z0-9]*_[a-z0-9_]+$"
+
+  - id: no_forbidden_class
+    description: "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.naming
+    validation:
+      type: forbidden_substring
+      target: html
+      pattern: "sec_1|sec_2|section_01|box1|box2"
+    examples:
+      bad: "<section class=\"sec_1\">"
+      good: "<section class=\"about_intro\">"
+
+exec
+/bin/bash -lc "sed -n '700,860p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+            return ValidationResult(rule_id=rule["id"], severity=rule["severity"], passed=True)
+
+        first = violations[0]
+        return ValidationResult(
+            rule_id=rule["id"],
+            severity=rule["severity"],
+            passed=False,
+            message="; ".join(v.message for v in violations),
+            location=_format_violation_location(first),
+        )
+
+    return adapter
+
+
+def _handler_error_result(rule: dict, exc: Exception) -> ValidationResult:
+    return ValidationResult(
+        rule_id=rule["id"],
+        severity=rule["severity"],
+        passed=True,
+        skipped=True,
+exec
+/bin/bash -lc "sed -n '60,130p' rules/validation_schema.json" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.",
+      "id": "generic_class_name",
+      "severity": "error",
+      "target": "html",
+      "type": "regex_must_not_match",
+      "pattern": "(sec_\\d+|section_\\d+|box\\d+)\""
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+exec
+/bin/bash -lc "sed -n '1,260p' tests/unit/test_policy1_margin_bottom.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02exec
+/bin/bash -lc "sed -n '1,320p' tests/unit/test_policy3_rules_conflict.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_VALIDATE = ROOT / "tools" / "figma-validate.py"
+POLICY1_SPEC_FIXTURE = ROOT / "tests" / "fixtures" / "req029" / "policy1_vertical_spacing_spec.json"
+
+
+def _run_validator_with_css(tmp_path: Path, css_text: str) -> subprocess.CompletedProcess[str]:
+    spec_path = tmp_path / "spec.json"
+    html_path = tmp_path / "index.html"
+    css_path = tmp_path / "common.css"
+
+    spec_path.write_text(POLICY1_SPEC_FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+    html_path.write_text(
+        "<html><body><div class='stack'><div class='item'>A</div><div class='item'>B</div></div></body></html>\n",
+ succeeded in 0ms:
+from __future__ import annotations
+
+import importlib.util
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_VALIDATE_PATH = ROOT / "tools" / "figma-validate.py"
+FIXTURE_PATH = ROOT / "tests" / "fixtures" / "req029" / "policy3_rules_conflict_node.json"
+
+
+def _load_figma_validate_module():
+    spec = importlib.util.spec_from_file_location("figma_validate", FIGMA_VALIDATE_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+exec
+/bin/bash -lc 'rg -n "constraints|position:absolute|no_constraints_to_position_absolute_mapping|POLICY-2|policy2" tests -S' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+tests/regression/test_migration_add_only.py:32:    "constraints",
+tests/fixtures/req029/policy1_vertical_spacing_spec.json:48:      "constraints": null,
+exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req029_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+SPEC_PATH="$TMP_DIR/req029_endtoend_spec.json"
+HTML_PATH="$TMP_DIR/index.html"
+CSS_PATH="$TMP_DIR/common.css"
+
+cat >"$SPEC_PATH" <<'JSON'
+{
+  "schema_version": "2.0.0",
+  "section": {
+exec
+/bin/bash -lc 'rg -n "vertical_frame_itemspacing_uses_margin_bottom|figma_rules_conflict_uses_meta_marker|no_constraints_to_position_absolute_mapping|check-rules-drift.py --policy-ids|policy-ids" tests tools -S' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+tools/figma-validate.py:82:    "vertical_frame_itemspacing_uses_margin_bottom": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
+tools/figma-validate.py:83:    "no_constraints_to_position_absolute_mapping": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
+tools/figma-validate.py:84:    "figma_rules_conflict_uses_meta_marker": "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).",
+tools/figma-validate.py:87:    "vertical_frame_itemspacing_uses_margin_bottom": "enforce_policy1_vertical_margin_bottom",
+tools/figma-validate.py:88:    "no_constraints_to_position_absolute_mapping": "enforce_policy2_constraints_extract_only",
+tools/figma-validate.py:89:    "figma_rules_conflict_uses_meta_marker": "enforce_policy3_rules_conflict_bypass",
+tools/figma-validate.py:1922:    if should_bypass_rule(frame, "vertical_frame_itemspacing_uses_margin_bottom", rules_conflict_seen):
+tools/check-rules-drift.py:16:    "vertical_frame_itemspacing_uses_margin_bottom": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
+tools/check-rules-drift.py:17:    "no_constraints_to_position_absolute_mapping": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
+tools/check-rules-drift.py:18:    "figma_rules_conflict_uses_meta_marker": "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).",
+tools/check-rules-drift.py:24:    parser.add_argument("--policy-ids", nargs="+", help="Legacy policy-only mode (REQ-029 compatibility)")
+tools/check-rules-drift.py:36:        help="Path to figma-validate.py for legacy --policy-ids mode",
+exec
+/bin/bash -lc "sed -n '1,260p' tests/unit/test_drift_check_all_rules.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+DRIFT_CHECKER = ROOT / "tools" / "check-rules-drift.py"
+
+
+def test_check_rules_drift_all_rules_mode() -> None:
+    result = subprocess.run(
+        [sys.executable, str(DRIFT_CHECKER), "--all-rules"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+exec
+/bin/bash -lc 'rg -n "def enforce_policy2_constraints_extract_only|def enforce_policy1_vertical_margin_bottom|def enforce_policy3_rules_conflict_bypass|POLICY-2|constraints" tools/figma-validate.py -n -S' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+83:    "no_constraints_to_position_absolute_mapping": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
+88:    "no_constraints_to_position_absolute_mapping": "enforce_policy2_constraints_extract_only",
+1908:def enforce_policy1_vertical_margin_bottom(
+1946:def enforce_policy2_constraints_extract_only(frame: dict) -> bool:
+1951:def enforce_policy3_rules_conflict_bypass(node: dict, rule_id: str, seen: set[tuple[str, str]]) -> bool:
+2270:            enforce_policy2_constraints_extract_only(frame)
+exec
+/bin/bash -lc "sed -n '860,1080p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+
+def parse_flex_grow(properties: dict[str, PropertyValue]) -> float | None:
+    flex_grow = properties.get("flex-grow")
+    if flex_grow:
+        parsed = parse_numeric_value(flex_grow.value)
+        if parsed is not None:
+            return parsed
+
+    flex = properties.get("flex")
+    if flex:
+        tokens = split_whitespace_tokens(flex.value)
+        if tokens:
+            parsed = parse_numeric_value(tokens[0])
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def is_auto_or_fit_content(value: str | None) -> bool:
+    if value is None:
+exec
+/bin/bash -lc "sed -n '1080,1300p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+            declarations[prop] = value
+    return declarations
+
+
+def find_matching_brace(css: str, start_brace: int) -> int:
+    depth = 0
+    quote = ""
+    index = start_brace
+    while index < len(css):
+        char = css[index]
+        if quote:
+            if char == quote:
+                quote = ""
+            index += 1
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            index += 1
+            continue
+        if char == "{":
+exec
+/bin/bash -lc "sed -n '1860,2030p' tools/figma-validate.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+    if conflict_rule_id != rule_id:
+        return False
+    log_rules_conflict_once(node, conflict_rule_id, figma_value, applied_value, seen)
+    return True
+
+
+def selector_scope_prefixes(rule: CSSRule | None) -> list[str]:
+    if rule is None:
+        return []
+    prefixes: list[str] = []
+    for selector in rule.selectors:
+        base = strip_pseudos(selector).strip()
+        if base:
+            prefixes.append(base)
+    return prefixes
+
+
+def has_margin_bottom_mapping(
+    frame_rule: CSSRule | None,
+    css_rules: list[CSSRule],
+exec
+/bin/bash -lc 'rg -n "page_1|sub_01|meaningful_page_name|forbidden pattern matched in filename|forbidden pattern matched" tests -S' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 exited 1 in 0ms:
+
+exec
+/bin/bash -lc "sed -n '1,260p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env python3
+"""Post-generation validator for semantic HTML/CSS.
+
+Usage:
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css
+  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
+"""
+
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
+
+exec
+/bin/bash -lc "rg -n \"def load_rules|def validate_all|def run|if __name__ == '__main__'|CUSTOM_HANDLERS|ENUM_VALIDATORS\" tools/validate-semantic.py -n" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+1337:ENUM_VALIDATORS: Dict[str, Callable] = {
+2704:CUSTOM_HANDLERS: Dict[str, Callable] = {
+2832:        if handler_name not in CUSTOM_HANDLERS:
+2833:            CUSTOM_HANDLERS[handler_name] = _stub_handler
+2894:def run_validation(
+2933:            handler = CUSTOM_HANDLERS.get(handler_name, _stub_handler)
+2937:        enum_handler = ENUM_VALIDATORS.get(vtype)
+exec
+/bin/bash -lc "sed -n '2800,3035p' tools/validate-semantic.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+    "minimal_aria": _safe_custom_handler(minimal_aria),
+    "mobile_spacing_half": _safe_custom_handler(mobile_spacing_half),
+    "text_node_one_to_one": _safe_custom_handler(text_node_one_to_one),
+    "no_adjacent_text_merge": _safe_custom_handler(no_adjacent_text_merge),
+    "text_newline_preserved": _safe_custom_handler(text_newline_preserved),
+    "newline_converted_to_br": _safe_custom_handler(newline_converted_to_br),
+    "override_span_split_required": _safe_custom_handler(override_span_split_required),
+    "style_diff_span_required": _safe_custom_handler(style_diff_span_required),
+    "no_style_flatten": _safe_custom_handler(no_style_flatten),
+    "no_layout_info_loss": _safe_custom_handler(no_layout_info_loss),
+    "visible_node_not_dropped": _safe_custom_handler(visible_node_not_dropped),
+    "divider_node_preserved": _safe_custom_handler(divider_node_preserved),
+    "figma_values_pre_extracted": _safe_custom_handler(figma_values_pre_extracted),
+    "no_plausible_value_fill": _safe_custom_handler(no_plausible_value_fill),
+    "agent_distribution_enforced": _safe_custom_handler(agent_distribution_enforced),
+    "coordinate_row_layout": _safe_custom_handler(coordinate_row_layout),
+    "aspect_ratio_preferred": _safe_custom_handler(aspect_ratio_preferred),
+    "multiline_ellipsis_pattern": _safe_custom_handler(multiline_ellipsis_pattern),
+    # Alias IDs that point to existing legacy handlers via rule.validation.custom_handler
+    "font_size_pc_rem": _adapt_legacy_check(check_font_size_base),
+exec
+/bin/bash -lc "sed -n '1,250p' tests/integration/test_req030_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+BASELINE_PATH="tests/fixtures/req029/landing_post_impl_baseline.json"
+BASELINE_EXIT=""
+if [[ -f "$BASELINE_PATH" ]]; then
+  BASELINE_EXIT="$(python3 - "$BASELINE_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+codex
+구현 방향을 확정했습니다. 코드 수정 없이 테스트만 아래처럼 추가합니다.
+
+1. `tests/integration/test_req033_endtoend.sh`
+- `check-rules-drift.py` 기본 실행 결과가 `"[OK] N/N rules in sync"`인지 확인
+- `post-impl-verify.py` 1회차에서 drift check 실행 + cache 파일 생성 확인
+- 2회차에서 `"[DRIFT] cache up-to-date"` 확인
+- `rules/rules.yaml` touch 후 3회차에서 drift check 재실행 확인
+
+2. `tests/regression/test_req033_existing_validators.py`
+- REQ-029 정책 3건(`margin-bottom`, `rules_conflict`, `constraints`)이 `check-rules-drift --policy-ids`에서 모두 `[OK]` 유지되는지 검증
+- 정책 1 런타임 동작(정상 `margin-bottom` 매핑 시 PASS) 회귀 검증
+- 정책 3 `rules_conflict` bypass/log-once 동작 회귀 검증
+- `figma-validate --version-info`에서 REQ-030/031/032의 v2 카테고리 전체 노출 검증
+
+3. `tests/unit/test_meaningful_page_name_clarity.py`
+- `meaningful_page_name` 설명이 `rules.yaml`/`validation_schema.json` 모두에서 파일명+본문 검사 의도를 담는지 검증
+- 파일명(`page_1`) 위반 FAIL, 본문(`sub_01`) 위반 FAIL, 의미있는 영문명(`greeting`, `products`) PASS 검증
+
+바로 파일 생성/수정 후 테스트 실행하고, 마지막에 신규 테스트 + endtoend 스크립트 실행 로그를 보고하겠습니다.
+codex
+이제 신규 테스트 파일 3개를 생성하겠습니다. 먼저 `REQ-033` 통합 스크립트를 만들고, 이어서 회귀/유닛 테스트를 추가한 뒤 실행 검증으로 넘어가겠습니다.
+exec
+/bin/bash -lc "cat > tests/integration/test_req033_endtoend.sh <<'EOF'
+#"'!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+CACHE_PATH="$ROOT_DIR/.gran-maestro/state/drift-cache.json"
+RULES_PATH="$ROOT_DIR/rules/rules.yaml"
+RULES_MTIME_ORIG="$(stat -c %Y "$RULES_PATH")"
+CACHE_BACKUP_PATH="$TMP_DIR/drift-cache.backup.json"
+CACHE_EXISTED=0
+
+if [[ -f "$CACHE_PATH" ]]; then
+  cp "$CACHE_PATH" "$CACHE_BACKUP_PATH"
+  CACHE_EXISTED=1
+fi
+
+cleanup() {
+  touch -m -d "@${RULES_MTIME_ORIG}" "$RULES_PATH" 2>/dev/null || true
+  if [[ "$CACHE_EXISTED" -eq 1 ]]; then
+    mkdir -p "$(dirname "$CACHE_PATH")"
+    cp "$CACHE_BACKUP_PATH" "$CACHE_PATH"
+  else
+    rm -f "$CACHE_PATH"
+  fi
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+run_and_capture() {
+  local label="$1"
+  shift
+  local logfile="$TMP_DIR/${label}.log"
+
+  set +e
+  "$@" >"$logfile" 2>&1
+  local ec=$?
+  set -e
+
+  echo "===== ${label} ====="
+  cat "$logfile"
+  echo "[EXIT] ${label}=${ec}"
+  echo
+
+  return "$ec"
+}
+
+set +e
+run_and_capture "check_rules_drift_default" '"\\
+  python3 tools/check-rules-drift.py
+DRIFT_EC="'$?
+set -e
+if [[ "$DRIFT_EC" -ne 0 ]]; then
+  echo "[FAIL] check-rules-drift.py expected exit 0, got ${DRIFT_EC}" >&2
+  exit 1
+fi
+if ! grep -E "'"\\[OK\\][[:space:]]+[0-9]+/[0-9]+[[:space:]]+rules in sync\" \""'$TMP_DIR/check_rules_drift_default.log" >/dev/null; then
+  echo "[FAIL] check-rules-drift default output missing sync summary" >&2
+  exit 1
+fi
+
+rm -f "$CACHE_PATH"
+
+set +e
+run_and_capture "post_impl_verify_first" '"\\
+  python3 tools/post-impl-verify.py \\
+    --no-figma \\
+    --no-repair \\
+    --html landing/index.html \\
+    --css landing/css/common.css
+FIRST_EC="'$?
+set -e
+if [[ "$FIRST_EC" -ne 0 ]]; then
+  echo "[FAIL] first post-impl-verify expected exit 0, got ${FIRST_EC}" >&2
+  exit 1
+fi
+if [[ ! -f "$CACHE_PATH" ]]; then
+  echo "[FAIL] drift cache was not created: ${CACHE_PATH}" >&2
+  exit 1
+fi
+if ! grep -F "[DRIFT] check-rules-drift executed" "$TMP_DIR/post_impl_verify_first.log" >/dev/null; then
+  echo "[FAIL] first post-impl-verify should execute drift check" >&2
+  exit 1
+fi
+
+set +e
+run_and_capture "post_impl_verify_second" '"\\
+  python3 tools/post-impl-verify.py \\
+    --no-figma \\
+    --no-repair \\
+    --html landing/index.html \\
+    --css landing/css/common.css
+SECOND_EC="'$?
+set -e
+if [[ "$SECOND_EC" -ne 0 ]]; then
+  echo "[FAIL] second post-impl-verify expected exit 0, got ${SECOND_EC}" >&2
+  exit 1
+fi
+if ! grep -F "[DRIFT] cache up-to-date" "$TMP_DIR/post_impl_verify_second.log" >/dev/null; then
+  echo "[FAIL] second post-impl-verify should use drift cache" >&2
+  exit 1
+fi
+
+touch -m "$RULES_PATH"
+
+set +e
+run_and_capture "post_impl_verify_after_touch" '"\\
+  python3 tools/post-impl-verify.py \\
+    --no-figma \\
+    --no-repair \\
+    --html landing/index.html \\
+    --css landing/css/common.css
+THIRD_EC="'$?
+set -e
+if [[ "$THIRD_EC" -ne 0 ]]; then
+  echo "[FAIL] third post-impl-verify expected exit 0, got ${THIRD_EC}" >&2
+  exit 1
+fi
+if ! grep -F "[DRIFT] check-rules-drift executed" "$TMP_DIR/post_impl_verify_after_touch.log" >/dev/null; then
+  echo "[FAIL] third post-impl-verify should re-run drift check after rules touch" >&2
+  exit 1
+fi
+
+echo "[PASS] REQ-033 end-to-end integration checks completed"
+EOF
+chmod +x tests/integration/test_req033_endtoend.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+
+exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_req033_endtoend.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+CACHE_PATH="$ROOT_DIR/.gran-maestro/state/drift-cache.json"
+RULES_PATH="$ROOT_DIR/rules/rules.yaml"
+RULES_MTIME_ORIG="$(stat -c %Y "$RULES_PATH")"
+CACHE_BACKUP_PATH="$TMP_DIR/drift-cache.backup.json"
+CACHE_EXISTED=0
+
+if [[ -f "$CACHE_PATH" ]]; then
+  cp "$CACHE_PATH" "$CACHE_BACKUP_PATH"
+  CACHE_EXISTED=1
+fi
+
+cleanup() {
+  touch -m -d "@${RULES_MTIME_ORIG}" "$RULES_PATH" 2>/dev/null || true
+exec
+/bin/bash -lc "cat > tests/regression/test_req033_existing_validators.py <<'EOF'
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_VALIDATE = ROOT / \"tools\" / \"figma-validate.py\"
+DRIFT_CHECKER = ROOT / \"tools\" / \"check-rules-drift.py\"
+POLICY1_SPEC_FIXTURE = ROOT / \"tests\" / \"fixtures\" / \"req029\" / \"policy1_vertical_spacing_spec.json\"
+POLICY3_FIXTURE = ROOT / \"tests\" / \"fixtures\" / \"req029\" / \"policy3_rules_conflict_node.json\"
+
+REQ029_POLICY_IDS = [
+    \"vertical_frame_itemspacing_uses_margin_bottom\",
+    \"no_constraints_to_position_absolute_mapping\",
+    \"figma_rules_conflict_uses_meta_marker\",
+]
+
+REQ030_032_V2_CATEGORIES = [
+    \"v2.fills.solid.match\",
+    \"v2.fills.gradient.match\",
+    \"v2.fills.image.match\",
+    \"v2.effects.shadow.match\",
+    \"v2.effects.blur.match\",
+    \"v2.opacity.match\",
+    \"v2.blendMode.match\",
+    \"v2.strokes.match\",
+    \"v2.cornerRadii.match\",
+    \"v2.layoutSizing.match\",
+    \"v2.textCase.match\",
+    \"v2.textDecoration.match\",
+    \"v2.componentId.match\",
+    \"v2.assetManifest.exists\",
+]
+
+
+def _load_figma_validate_module():
+    spec = importlib.util.spec_from_file_location(\"figma_validate_req033_regression\", FIGMA_VALIDATE)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _run_policy1_with_css(tmp_path: Path, css_text: str) -> subprocess.CompletedProcess[str]:
+    spec_path = tmp_path / \"spec.json\"
+    html_path = tmp_path / \"index.html\"
+    css_path = tmp_path / \"common.css\"
+
+    spec_path.write_text(POLICY1_SPEC_FIXTURE.read_text(encoding=\"utf-8\"), encoding=\"utf-8\")
+    html_path.write_text(
+        \"<html><body><div class='stack'><div class='item'>A</div><div class='item'>B</div></div></body></html>\\n\",
+        encoding=\"utf-8\",
+    )
+    css_path.write_text(css_text.strip() + \"\\n\", encoding=\"utf-8\")
+
+    return subprocess.run(
+        [
+            sys.executable,
+            str(FIGMA_VALIDATE),
+            \"--spec\",
+            str(spec_path),
+            \"--html\",
+            str(html_path),
+            \"--css\",
+            str(css_path),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_req029_policy_enforcements_remain_passed(capsys, tmp_path: Path) -> None:
+    drift_result = subprocess.run(
+        [sys.executable, str(DRIFT_CHECKER), \"--policy-ids\", *REQ029_POLICY_IDS],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    drift_output = \"\\n\".join(part for part in (drift_result.stdout, drift_result.stderr) if part).strip()
+    assert drift_result.returncode == 0, drift_output
+    for policy_id in REQ029_POLICY_IDS:
+        assert f\"[OK] {policy_id}\" in drift_output, drift_output
+
+    policy1_proc = _run_policy1_with_css(
+        tmp_path,
+        \"\"\"
+        .stack { display: flex; flex-direction: column; }
+        .stack > .item { margin-bottom: 24px; }
+        \"\"\",
+    )
+    policy1_output = policy1_proc.stdout + policy1_proc.stderr
+    assert policy1_proc.returncode == 0, policy1_output
+    assert \"[POLICY-1]\" not in policy1_output
+
+    figma_validate = _load_figma_validate_module()
+    node = json.loads(POLICY3_FIXTURE.read_text(encoding=\"utf-8\"))
+    seen: set[tuple[str, str]] = set()
+
+    bypassed = figma_validate.enforce_policy3_rules_conflict_bypass(node, \"no_color_grid\", seen)
+    assert bypassed is True
+    first_log = capsys.readouterr().out
+    assert \"[RULES-CONFLICT]\" in first_log
+
+    bypassed_again = figma_validate.enforce_policy3_rules_conflict_bypass(node, \"no_color_grid\", seen)
+    assert bypassed_again is True
+    assert capsys.readouterr().out == \"\"
+
+
+def test_req030_031_032_v2_categories_exposed_in_version_info() -> None:
+    result = subprocess.run(
+        [sys.executable, str(FIGMA_VALIDATE), \"--version-info\"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    combined = \"\\n\".join(part for part in (result.stdout, result.stderr) if part).strip()
+    assert result.returncode == 0, combined
+
+    for category in REQ030_032_V2_CATEGORIES:
+        assert f\"- {category}\" in combined, combined
+EOF" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+
+codex
+회귀 테스트까지 추가했습니다. 마지막으로 `meaningful_page_name` 전용 유닛 테스트를 생성하고 즉시 실행 검증에 들어가겠습니다.
+exec
+/bin/bash -lc "cat > tests/unit/test_meaningful_page_name_clarity.py <<'EOF'
+from __future__ import annotations
+
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATE_SEMANTIC = ROOT / \"tools\" / \"validate-semantic.py\"
+RULES_YAML = ROOT / \"rules\" / \"rules.yaml\"
+VALIDATION_SCHEMA = ROOT / \"rules\" / \"validation_schema.json\"
+
+
+def _load_validate_semantic_module():
+    spec = importlib.util.spec_from_file_location(\"validate_semantic_req033_clarity\", VALIDATE_SEMANTIC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _find_rule_in_yaml(rule_id: str) -> dict:
+    payload = yaml.safe_load(RULES_YAML.read_text(encoding=\"utf-8\"))
+    rules = payload.get(\"rules\", []) if isinstance(payload, dict) else []
+    for rule in rules:
+        if isinstance(rule, dict) and rule.get(\"id\") == rule_id:
+            return rule
+    raise AssertionError(f\"rule not found in rules.yaml: {rule_id}\")
+
+
+def _find_rule_in_schema(rule_id: str) -> dict:
+    payload = json.loads(VALIDATION_SCHEMA.read_text(encoding=\"utf-8\"))
+    rules = payload.get(\"rules\", []) if isinstance(payload, dict) else []
+    for rule in rules:
+        if isinstance(rule, dict) and rule.get(\"id\") == rule_id:
+            return rule
+    raise AssertionError(f\"rule not found in validation_schema.json: {rule_id}\")
+
+
+def _run_meaningful_page_name(module, tmp_path: Path, *, filename: str, html_body: str):
+    html_path = tmp_path / filename
+    css_path = tmp_path / \"common.css\"
+
+    html_path.write_text(
+        f\"<"'!doctype html><html><head><meta charset='"'utf-8'><title>T</title></head><body>{html_body}</body></html>\\n\",
+        encoding=\"utf-8\",
+    )
+    css_path.write_text(\".root { display: block; }\\n\", encoding=\"utf-8\")
+
+    results = module.run_validation(
+        str(RULES_YAML),
+        str(html_path),
+        str(css_path),
+        profile=\"all\",
+    )
+
+    for result in results:
+        if result.rule_id == \"meaningful_page_name\":
+            return result
+    raise AssertionError(\"meaningful_page_name result missing\")
+
+
+def test_meaningful_page_name_description_mentions_filename_and_body() -> None:
+    yaml_rule = _find_rule_in_yaml(\"meaningful_page_name\")
+    schema_rule = _find_rule_in_schema(\"meaningful_page_name\")
+
+    for rule in (yaml_rule, schema_rule):
+        description = str(rule.get(\"description\", \"\"))
+        assert \"파일명\" in description
+        assert \"본문\" in description
+        assert \"page_1\" in description
+        assert \"sub_01\" in description
+
+
+def test_meaningful_page_name_fails_for_mechanical_filename_and_body(tmp_path: Path) -> None:
+    module = _load_validate_semantic_module()
+
+    filename_fail = _run_meaningful_page_name(
+        module,
+        tmp_path,
+        filename=\"page_1.html\",
+        html_body=\"<main class='greeting products'>Hello</main>\",
+    )
+    assert filename_fail.passed is False
+    assert \"forbidden pattern matched in filename\" in filename_fail.message
+
+    body_fail = _run_meaningful_page_name(
+        module,
+        tmp_path,
+        filename=\"greeting.html\",
+        html_body=\"<main class='sub_01'>Hello</main>\",
+    )
+    assert body_fail.passed is False
+    assert \"forbidden pattern matched\" in body_fail.message
+
+
+def test_meaningful_page_name_passes_for_meaningful_english_names(tmp_path: Path) -> None:
+    module = _load_validate_semantic_module()
+
+    result = _run_meaningful_page_name(
+        module,
+        tmp_path,
+        filename=\"greeting.html\",
+        html_body=\"<main class='greeting products'>Hello products page</main>\",
+    )
+
+    assert result.passed is True
+EOF" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+
+exec
+/bin/bash -lc "sed -n '1,260p' tests/unit/test_meaningful_page_name_clarity.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+from __future__ import annotations
+
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATE_SEMANTIC = ROOT / "tools" / "validate-semantic.py"
+RULES_YAML = ROOT / "rules" / "rules.yaml"
+VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+
+
+def _load_validate_semantic_module():
+    spec = importlib.util.spec_from_file_location("validate_semantic_req033_clarity", VALIDATE_SEMANTIC)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 1.49s:
+?? tests/integration/test_req033_endtoend.sh
+?? tests/regression/test_req033_existing_validators.py
+?? tests/unit/test_meaningful_page_name_clarity.py
+codex
+테스트 파일 생성은 끝났고 현재 변경은 신규 테스트 3개뿐입니다. 이제 필수 검증으로 신규 pytest 2개 + 통합 스크립트(`test_req033_endtoend.sh`)를 순차 실행해 실제 출력까지 확보하겠습니다.
+exec
+/bin/bash -lc 'pytest -q tests/regression/test_req033_existing_validators.py tests/unit/test_meaningful_page_name_clarity.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 1.10s:
+.....                                                                    [100%]
+5 passed in 0.87s
+exec
+/bin/bash -lc 'bash tests/integration/test_req033_endtoend.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 992ms:
+===== check_rules_drift_default =====
+[OK] 63/63 rules in sync
+[EXIT] check_rules_drift_default=0
+
+===== post_impl_verify_first =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_first=0
+
+===== post_impl_verify_second =====
+[DRIFT] cache up-to-date
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_second=0
+
+===== post_impl_verify_after_touch =====
+[DRIFT] check-rules-drift executed
+codex
+필수 검증이 모두 통과했습니다. 마지막으로 변경 파일/핵심 포인트/실행 출력을 정리해 전달하겠습니다.
+exec
+/bin/bash -lc 'git diff -- tests/integration/test_req033_endtoend.sh tests/regression/test_req033_existing_validators.py tests/unit/test_meaningful_page_name_clarity.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02 succeeded in 0ms:
+
+codex
+요청하신 REQ-033/02를 구현 코드 변경 없이 테스트만 추가했습니다.
+
+**변경 파일**
+- [tests/integration/test_req033_endtoend.sh](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/integration/test_req033_endtoend.sh)
+- [tests/regression/test_req033_existing_validators.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/regression/test_req033_existing_validators.py)
+- [tests/unit/test_meaningful_page_name_clarity.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/unit/test_meaningful_page_name_clarity.py)
+
+**적용 내용 요약**
+- `test_req033_endtoend.sh`:
+  - `check-rules-drift.py` 기본 실행 `[OK] N/N rules in sync` 검증
+  - `post-impl-verify.py` 1회차 drift 실행 + cache 생성 검증
+  - 2회차 cache up-to-date 검증
+  - `rules/rules.yaml` touch 후 drift 재실행 검증
+- `test_req033_existing_validators.py`:
+  - REQ-029 정책 3건(`margin-bottom`, `constraints`, `rules_conflict`) `--policy-ids` 동기화 PASS 검증
+  - 정책1 런타임 PASS 시나리오 회귀 검증
+  - 정책3 `rules_conflict` bypass/log-once 회귀 검증
+  - `figma-validate --version-info`에서 REQ-030/031/032 v2 카테고리 전체 노출 검증
+- `test_meaningful_page_name_clarity.py`:
+  - `meaningful_page_name` 설명이 `rules.yaml`/`validation_schema.json` 모두에서 파일명+본문 의도를 담는지 검증
+  - `page_1` 파일명 FAIL, `sub_01` 본문 FAIL, `greeting/products` PASS 검증
+
+**실행 결과 (요청하신 출력 포함)**
+
+```bash
+$ pytest -q tests/regression/test_req033_existing_validators.py tests/unit/test_meaningful_page_name_clarity.py
+.....                                                                    [100%]
+5 passed in 0.87s
+```
+
+```bash
+$ bash tests/integration/test_req033_endtoend.sh
+===== check_rules_drift_default =====
+[OK] 63/63 rules in sync
+[EXIT] check_rules_drift_default=0
+
+===== post_impl_verify_first =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_first=0
+
+===== post_impl_verify_second =====
+[DRIFT] cache up-to-date
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_second=0
+
+===== post_impl_verify_after_touch =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_after_touch=0
+
+[PASS] REQ-033 end-to-end integration checks completed
+```
+
+**단순화 포인트**
+- 기존 REQ-031/032/drift-cache 테스트 패턴 재사용으로 신규 로직 최소화
+- 기존 REQ-029 fixture 재사용으로 중복 fixture 생성 제거
+- `validate-semantic` 모듈 직접 호출로 불필요한 외부 의존/보조 스크립트 추가 없음
+
+**남은 리스크**
+- `post-impl-verify` 출력상 `validate-semantic`의 MAJOR/MINOR 이슈는 기존과 동일하게 non-blocking 상태로 남아 있습니다 (테스트 목적 범위 밖).
+tokens used
+69,802
+요청하신 REQ-033/02를 구현 코드 변경 없이 테스트만 추가했습니다.
+
+**변경 파일**
+- [tests/integration/test_req033_endtoend.sh](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/integration/test_req033_endtoend.sh)
+- [tests/regression/test_req033_existing_validators.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/regression/test_req033_existing_validators.py)
+- [tests/unit/test_meaningful_page_name_clarity.py](/mnt/d/dev-base/.gran-maestro/worktrees/REQ-033-task-02/tests/unit/test_meaningful_page_name_clarity.py)
+
+**적용 내용 요약**
+- `test_req033_endtoend.sh`:
+  - `check-rules-drift.py` 기본 실행 `[OK] N/N rules in sync` 검증
+  - `post-impl-verify.py` 1회차 drift 실행 + cache 생성 검증
+  - 2회차 cache up-to-date 검증
+  - `rules/rules.yaml` touch 후 drift 재실행 검증
+- `test_req033_existing_validators.py`:
+  - REQ-029 정책 3건(`margin-bottom`, `constraints`, `rules_conflict`) `--policy-ids` 동기화 PASS 검증
+  - 정책1 런타임 PASS 시나리오 회귀 검증
+  - 정책3 `rules_conflict` bypass/log-once 회귀 검증
+  - `figma-validate --version-info`에서 REQ-030/031/032 v2 카테고리 전체 노출 검증
+- `test_meaningful_page_name_clarity.py`:
+  - `meaningful_page_name` 설명이 `rules.yaml`/`validation_schema.json` 모두에서 파일명+본문 의도를 담는지 검증
+  - `page_1` 파일명 FAIL, `sub_01` 본문 FAIL, `greeting/products` PASS 검증
+
+**실행 결과 (요청하신 출력 포함)**
+
+```bash
+$ pytest -q tests/regression/test_req033_existing_validators.py tests/unit/test_meaningful_page_name_clarity.py
+.....                                                                    [100%]
+5 passed in 0.87s
+```
+
+```bash
+$ bash tests/integration/test_req033_endtoend.sh
+===== check_rules_drift_default =====
+[OK] 63/63 rules in sync
+[EXIT] check_rules_drift_default=0
+
+===== post_impl_verify_first =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_first=0
+
+===== post_impl_verify_second =====
+[DRIFT] cache up-to-date
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_second=0
+
+===== post_impl_verify_after_touch =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: PASS (critical=0, major=12, minor=1, exit=1, non-blocking)
+post-impl-verify: exit=0
+[EXIT] post_impl_verify_after_touch=0
+
+[PASS] REQ-033 end-to-end integration checks completed
+```
+
+**단순화 포인트**
+- 기존 REQ-031/032/drift-cache 테스트 패턴 재사용으로 신규 로직 최소화
+- 기존 REQ-029 fixture 재사용으로 중복 fixture 생성 제거
+- `validate-semantic` 모듈 직접 호출로 불필요한 외부 의존/보조 스크립트 추가 없음
+
+**남은 리스크**
+- `post-impl-verify` 출력상 `validate-semantic`의 MAJOR/MINOR 이슈는 기존과 동일하게 non-blocking 상태로 남아 있습니다 (테스트 목적 범위 밖).
