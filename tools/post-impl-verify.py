@@ -68,6 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", dest="json_output", help="Emit JSON output")
     parser.add_argument("--no-repair", action="store_true", help="Disable one-pass auto-repair loop")
     parser.add_argument("--no-figma", action="store_true", help="Skip figma-validate step (not recommended)")
+    parser.add_argument("--structural-diff", action="store_true", help="Run structural diff gate")
     return parser.parse_args()
 
 
@@ -460,6 +461,27 @@ def run_auto_repair(args: argparse.Namespace) -> dict[str, object]:
             report_path.unlink(missing_ok=True)
 
 
+def run_structural_diff(args: argparse.Namespace) -> dict[str, object]:
+    tools_dir = Path(__file__).resolve().parent
+    structural_command = [
+        sys.executable,
+        str(tools_dir / "structural-diff.py"),
+        "--html",
+        str(Path(args.html)),
+        "--css",
+        str(Path(args.css)),
+        "--spec",
+        str(Path(args.spec)),
+    ]
+    exit_code, output = run_validator(structural_command)
+    return {
+        "exit_code": exit_code,
+        "status": "PASS" if exit_code == 0 else "DRIFT",
+        "blocking": exit_code != 0,
+        "raw_output": output,
+    }
+
+
 def needs_auto_repair(figma_result: dict[str, object], semantic_result: dict[str, object]) -> bool:
     return (
         int(figma_result["critical"]) > 0
@@ -484,6 +506,7 @@ def render_text_output(
     semantic_result: dict[str, object],
     overall_exit_code: int,
     auto_repair_result: dict[str, object] | None = None,
+    structural_result: dict[str, object] | None = None,
 ) -> str:
     lines: list[str] = []
     if auto_repair_result is not None:
@@ -518,6 +541,11 @@ def render_text_output(
         ),
         ]
     )
+
+    if structural_result is not None:
+        lines.append(f"[STRUCTURAL] {structural_result['status']}")
+        if structural_result["status"] != "PASS" and structural_result["raw_output"]:
+            lines.append(str(structural_result["raw_output"]))
 
     for violation in figma_result["violations"]:
         message = (
@@ -566,7 +594,7 @@ def main() -> int:
             print("post-impl-verify: exit=1")
             return 1
 
-    if not args.spec and not args.no_figma:
+    if not args.spec and (not args.no_figma or args.structural_diff):
         fatal = "[FATAL] --spec is required"
         if args.json_output:
             print(
@@ -613,6 +641,11 @@ def main() -> int:
         semantic_result = parse_validate_semantic_output(semantic_output, semantic_exit_code)
 
     overall_exit_code = determine_exit_code(figma_result, semantic_result)
+    structural_result: dict[str, object] | None = None
+    if args.structural_diff:
+        structural_result = run_structural_diff(args)
+        if bool(structural_result["blocking"]):
+            overall_exit_code = 1
 
     payload = {
         "drift_check": drift_result,
@@ -627,11 +660,21 @@ def main() -> int:
             "exit_code": overall_exit_code,
         },
     }
+    if structural_result is not None:
+        payload["structural_diff"] = structural_result
 
     if args.json_output:
         print(json.dumps(payload, ensure_ascii=False))
     else:
-        print(render_text_output(figma_result, semantic_result, overall_exit_code, auto_repair_result))
+        print(
+            render_text_output(
+                figma_result,
+                semantic_result,
+                overall_exit_code,
+                auto_repair_result,
+                structural_result,
+            )
+        )
 
     return int(overall_exit_code)
 
