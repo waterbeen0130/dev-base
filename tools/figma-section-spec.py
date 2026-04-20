@@ -1136,6 +1136,112 @@ def normalize_hex_color(value: object) -> str | None:
     return f"#{digits.lower()}"
 
 
+def _get_fills_color(node: dict) -> str | None:
+    fills = node.get("fills")
+    if isinstance(fills, list):
+        for fill in fills:
+            if not isinstance(fill, dict):
+                continue
+            if fill.get("type") != "SOLID":
+                continue
+            color = fill.get("color")
+            if isinstance(color, str):
+                normalized = normalize_hex_color(color)
+            else:
+                normalized = to_hex_from_rgb(color)
+            if normalized:
+                return normalized
+
+    fills_v2 = node.get("fills_v2")
+    if isinstance(fills_v2, list):
+        for fill in fills_v2:
+            if not isinstance(fill, dict):
+                continue
+            if fill.get("type") != "SOLID":
+                continue
+            normalized = normalize_hex_color(fill.get("color"))
+            if normalized:
+                return normalized
+
+    for key in ("color", "fills_color", "fills"):
+        normalized = normalize_hex_color(node.get(key))
+        if normalized:
+            return normalized
+
+    return None
+
+
+def _shared_fills_color(instances: list[dict]) -> str | None:
+    colors = [_get_fills_color(instance) for instance in instances]
+    first_color = colors[0] if colors else None
+    if first_color and all(color == first_color for color in colors):
+        return first_color
+    return None
+
+
+def extract_component_groups(spec: dict) -> list[dict]:
+    """Group repeated component instances into shared style and scoped overrides."""
+    groups: defaultdict[str, list[dict]] = defaultdict(list)
+    text_nodes = spec.get("text_nodes")
+    frame_nodes = spec.get("frame_nodes")
+    nodes = (text_nodes if isinstance(text_nodes, list) else []) + (
+        frame_nodes if isinstance(frame_nodes, list) else []
+    )
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        component_id = node.get("componentId")
+        if isinstance(component_id, str) and component_id:
+            groups[component_id].append(node)
+
+    result: list[dict] = []
+    override_axes = ("characters", "fontWeight", "fontSize")
+
+    for component_id, instances in groups.items():
+        if len(instances) < 2:
+            continue
+
+        first = instances[0]
+        shared_style = {}
+        for key, value in first.items():
+            if key in {"id", "name"} or key.startswith("bbox"):
+                continue
+            if all(instance.get(key) == value for instance in instances):
+                shared_style[key] = value
+
+        shared_color = _shared_fills_color(instances)
+        overrides = []
+        for instance in instances:
+            diff = {}
+            for axis in override_axes:
+                if axis in instance and instance.get(axis) != shared_style.get(axis):
+                    diff[axis] = instance.get(axis)
+
+            instance_color = _get_fills_color(instance)
+            if instance_color and shared_color is None:
+                diff["fills_color"] = instance_color
+            elif instance_color and instance_color != shared_color:
+                diff["fills_color"] = instance_color
+
+            overrides.append(
+                {
+                    "node_id": instance.get("id"),
+                    "diff": diff,
+                }
+            )
+
+        result.append(
+            {
+                "componentId": component_id,
+                "instances": [instance.get("id") for instance in instances],
+                "shared_style": shared_style,
+                "overrides": overrides,
+            }
+        )
+
+    return result
+
+
 def normalize_bbox_for_codegen(bbox: object) -> dict[str, float] | None:
     if not isinstance(bbox, dict):
         return None
@@ -1756,6 +1862,7 @@ def main() -> int:
         payload["images"] = {key: images[key] for key in sorted(images.keys())} if isinstance(images, dict) else {}
         payload = ensure_v2_payload_shape(payload)
         payload = preprocess_payload(payload)
+        payload["component_groups"] = extract_component_groups(payload)
         extracted = extraction_result_from_payload(payload)
         source_node_id = payload.get("section", {}).get("id")
         node_id = source_node_id if isinstance(source_node_id, str) and source_node_id.strip() else "from-spec"
@@ -1776,6 +1883,7 @@ def main() -> int:
         }
         payload = ensure_v2_payload_shape(payload)
         payload = preprocess_payload(payload)
+        payload["component_groups"] = extract_component_groups(payload)
         extracted = extraction_result_from_payload(payload)
         node_id = args.node_id
         default_output_name = default_name(args.node_id)
