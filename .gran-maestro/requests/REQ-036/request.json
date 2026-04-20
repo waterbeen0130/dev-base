@@ -1,0 +1,19 @@
+{
+  "id": "REQ-036",
+  "title": "[C] structural diff gate — Playwright DOM tree 해시 + spec frame_nodes 비교 + post-impl-verify 통합",
+  "original_request": "Phase C (PLN-010 2/3) — tools/structural-diff.py 신규 작성. Playwright Python으로 HTML을 headless Chromium 렌더링한 뒤 DOM tree를 정규화 해시(tag + sorted(class_list) + children_index_path)로 변환. Figma spec의 frame_nodes 구조 해시와 비교해 STRUCTURE_DRIFT 검출. tools/post-impl-verify.py에 --structural-diff optional flag 통합. pyproject.toml에 playwright>=1.42 추가.",
+  "status": "pending_dependency",
+  "current_phase": 0,
+  "created_at": "2026-04-20T02:07:58.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-010",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": ["REQ-035"],
+    "relatedTo": ["REQ-035", "REQ-037"],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "linked_intent": "INTENT-006"
+}

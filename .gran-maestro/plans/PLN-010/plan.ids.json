@@ -1,0 +1,12 @@
+[
+  { "id": "PAC-1", "text": "rules/models.py의 Pydantic v2 모델이 SSOT로 동작하고, python -m rules.models 실행으로 rules/validation_schema.json이 자동 생성된다. 수동 편집 경로는 제거된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "tools/check-rules-drift.py가 Pydantic 모델 ↔ rules.yaml ↔ figma-validate 핸들러 3자 정합을 100% 유지하며, 63/63 rules in sync가 유지된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "기존 pytest 전체 (PLN-009 기준 113 passed)가 회귀 없이 통과한다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-4", "text": "tools/structural-diff.py가 Playwright headless Chromium 렌더링 DOM tree를 정규화 해시로 변환하고, Figma spec frame_nodes 구조 해시와 비교해 STRUCTURE_DRIFT를 검출한다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "DOM 해시 정규화 규칙 (tag + sorted(class_list) + children_index_path, text/id/inline style 제외)이 문서화되고 구현된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "tools/post-impl-verify.py에 --structural-diff optional flag가 통합되어, 해당 flag 활성 시 structural diff 결과를 검증 결과에 포함한다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-7", "text": "tools/figma-section-spec.py의 post-process 단계가 동일 componentId 인스턴스들을 그룹핑하여 spec.json component_groups 배열을 생성한다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-8", "text": "각 그룹마다 shared CSS base class와 인스턴스별 override (characters / fills[].color / fontWeight / fontSize 4축)가 분리된 형태로 spec.json에 표현된다.", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-9", "text": "동일 componentId 인스턴스가 2개 이상 존재하는 fixture에서, 생성 CSS 중복 선언 감소량이 측정되고 결과가 테스트에 기록된다.", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-10", "text": "기존 figma-section-spec.py / figma-validate.py / post-impl-verify.py가 Phase A 대비 회귀 없이 동작하고, v2 spec.json 기존 필드는 byte-exact 보존된다.", "grade": "SHOULD", "tags": ["IMPACT", "TIER-B"] }
+]

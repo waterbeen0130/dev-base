@@ -1,0 +1,19 @@
+{
+  "id": "REQ-037",
+  "title": "[D] componentId 재사용 로직 — 동일 componentId 인스턴스 그룹핑 + shared CSS + 인스턴스별 override 분리",
+  "original_request": "Phase D (PLN-010 3/3) — tools/figma-section-spec.py에 post-process 단계 추가. 동일 componentId 인스턴스들을 그룹핑하여 shared CSS base class 생성. 인스턴스별 override는 characters / fills[].color / fontWeight / fontSize 4축 차이만 별도 선언. 출력 spec.json에 component_groups 배열 추가 (기존 v2 spec 필드 byte-exact 보존, add-only diff).",
+  "status": "pending_dependency",
+  "current_phase": 0,
+  "created_at": "2026-04-20T02:07:58.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-010",
+  "dag_auto_chain": false,
+  "tasks": [],
+  "dependencies": {
+    "blockedBy": ["REQ-035"],
+    "relatedTo": ["REQ-035", "REQ-036"],
+    "blocks": []
+  },
+  "stitch_screens": [],
+  "linked_intent": "INTENT-006"
+}
