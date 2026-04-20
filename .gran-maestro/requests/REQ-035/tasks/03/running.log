@@ -1,0 +1,1512 @@
+OpenAI Codex v0.116.0 (research preview)
+--------
+workdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+model: gpt-5.4
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR, /home/waterbeen/.codex/memories]
+reasoning effort: high
+reasoning summaries: none
+session id: 019da8c2-0cd8-7de0-81b3-d44d6fe126b1
+--------
+user
+# Implementation Request — REQ-035 / Task 03
+
+**Request**: REQ-035 (Phase B — Pydantic SSOT 자동 파생)
+**Task**: 03 — 통합 회귀 테스트 + PAC-3 전체 수렴
+**Worktree**: `/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03`
+**Spec**: `/mnt/d/dev-base/.gran-maestro/requests/REQ-035/tasks/03/spec.md`
+**Plan**: `/mnt/d/dev-base/.gran-maestro/plans/PLN-010/plan.md`
+
+**선행 작업 (이미 완료)**:
+- Task 01 (`5b6a966`): rules/models.py + validation_schema 자동 생성
+- Task 02 (`e028e41`): check-rules-drift 승격 + figma-validate handler Pydantic 재정렬
+
+---
+
+## 구현 컨텍스트
+
+Task 01, Task 02 구현 완료 후 **통합 회귀 검증** 및 **증분 테스트** 를 실행하여 PAC-3 (기존 pytest 회귀 없음) 를 최종 수렴한다. 이 태스크는 **테스트 추가/보강만** 수행하며, 구현 코드 수정은 없음.
+
+## 자기탐색 지시
+
+0. `§0 Context Manifest` Read:
+   - `tests/regression/test_determinism.py` (결정성 회귀)
+   - `tests/integration/test_post_impl_drift_cache.sh` (drift cache 회귀)
+   - `tests/regression/test_phase_a_summary.py` (Phase A commit 추적 — 존재 시)
+   - `tests/regression/test_backup_byte_exact.py` (backup byte exact)
+   - `.gran-maestro/plans/PLN-010/plan.md` 의 PAC-3 전체 수렴 조건
+
+1. 전체 pytest 실행 → baseline 확인:
+   ```bash
+   cd /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+   pytest tests/ -v 2>&1 | tail -30
+   ```
+   - 기대: Task 02 기준 123+ passed / 0 failed
+
+2. **결정성 회귀 검증**:
+   ```bash
+   pytest tests/regression/test_determinism.py -v
+   ```
+   - 기대: 100회 byte-exact PASS
+
+3. **drift cache 회귀 검증**:
+   ```bash
+   bash tests/integration/test_post_impl_drift_cache.sh
+   ```
+   - 2회 연속 실행 시 2번째 "cache hit" 로그 확인
+   - integration test가 없으면 skip
+
+4. **신규 통합 테스트 추가** (선택적, 목표 수렴):
+   - `tests/integration/test_pln010_phase_b_summary.py` 또는 `tests/regression/test_pln010_phase_b_summary.py` (신규):
+     - git log 에 `[REQ-035/01]` 및 `[REQ-035/02]` 커밋이 존재하는지 확인
+     - `python -m rules.models` 실행이 `rules/validation_schema.json` 을 성공적으로 재생성하는지 확인
+     - `python3 tools/check-rules-drift.py --all` 이 exit 0 + "63/63 rules in sync" 출력하는지 확인
+     - 3개 assertion 을 통과해야 전체 REQ-035 완결로 간주
+   - 이 테스트가 PAC-3 전체 수렴 증거가 된다
+
+5. **최종 전체 회귀**:
+   ```bash
+   pytest tests/ -v 2>&1 | tail -40
+   ```
+   - 기대: Task 02 기준 123 + 신규 Task 03 테스트 추가분 passed / 0 failed
+
+6. **git 커밋 금지** — PM 이 직접 커밋.
+
+## 규칙
+
+- 코드 구현 (tools/, rules/) 은 수정하지 않는다 — 테스트 추가만
+- 기존 테스트 파일 내용 변경 금지 (PLN-009 테스트 보존)
+- Task 01, Task 02 산출물 (rules/models.py, check-rules-drift.py 등) 은 수정 금지
+- 신규 테스트는 `tests/regression/` 또는 `tests/integration/` 에 배치
+- 코드 주석은 영어만
+
+## 작업 디렉토리
+
+`/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03`
+
+## [MANDATORY] 응답에 반드시 포함할 것
+
+1. 1번 baseline pytest 출력 (last 30 lines)
+2. 2번 결정성 회귀 출력
+3. 3번 drift cache 회귀 출력 (있으면)
+4. 4번 신규 테스트 파일 전체 내용
+5. 5번 최종 회귀 출력 (summary 포함: `=== N passed, M skipped, 0 failed ===`)
+warning: Codex could not find system bubblewrap at /usr/bin/bwrap. Please install bubblewrap with your package manager. Codex will use the vendored bubblewrap in the meantime.
+warning: Under-development features enabled: child_agents_md, codex_hooks. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /home/waterbeen/.codex/config.toml.
+mcp: omx_trace starting
+mcp: omx_state starting
+mcp: omx_wiki starting
+mcp: omx_code_intel starting
+mcp: omx_memory starting
+mcp: omx_trace ready
+mcp: omx_code_intel ready
+mcp: omx_memory ready
+mcp: omx_wiki ready
+mcp: omx_state ready
+mcp startup: ready: omx_trace, omx_code_intel, omx_memory, omx_wiki, omx_state
+hook SessionStart: Loading OMX session context
+hook SessionStart (completed)
+  context: OMX native SessionStart detected. Load workspace conventions from AGENTS.md, restore relevant .omx runtime/project memory context, and continue from existing mode state before making changes.
+hook UserPromptSubmit: Applying OMX prompt routing
+codex
+요청 범위가 테스트 추가와 검증으로 제한되어 있어서 먼저 AGENTS/OMX 상태와 지정된 spec/plan, 기존 테스트를 읽어 경계를 확인하겠습니다. 그 다음 baseline을 잡고 신규 테스트를 추가한 뒤 전체 회귀까지 돌리겠습니다.
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'spec.md' -g 'plan.md' -g 'test_determinism.py' -g 'test_post_impl_drift_cache.sh' -g 'test_phase_a_summary.py' -g 'test_backup_byte_exact.py' -g '.omx/**'" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+AGENTS.md
+tests/regression/test_determinism.py
+tests/integration/test_post_impl_drift_cache.sh
+tests/regression/test_backup_byte_exact.py
+tests/unit/test_phase_a_summary.py
+tool omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03"})
+omx_memory.project_memory_read({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03"}) success in 4ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"exists\": false\n}"
+    }
+  ]
+}
+tool omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03"})
+omx_state.state_list_active({"workingDirectory":"/mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03"}) success in 50ms:
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"active_modes\":[]}"
+    }
+  ]
+}
+codex
+확인 결과 활성 OMX 모드는 없고 프로젝트 메모리도 비어 있습니다. 이제 지정된 manifest 파일과 PAC-3 조건을 읽어서 신규 테스트가 기존 의도와 충돌하지 않도록 맞추겠습니다.
+exec
+/bin/bash -lc "sed -n '1,240p' AGENTS.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+# oh-my-codex - Intelligent Multi-Agent Orchestration
+
+You are running with oh-my-codex (OMX), a multi-agent orchestration layer for Codex CLI.
+Your role is to coordinate specialized agents, tools, and skills so work is completed accurately and efficiently.
+
+<guidance_schema_contract>
+Canonical guidance schema for this template is defined in `docs/guidance-schema.md`.
+
+Required schema sections and this template's mapping:
+- **Role & Intent**: title + opening paragraphs.
+- **Operating Principles**: `<operating_principles>`.
+- **Execution Protocol**: delegation/model routing/agent catalog/skills/team pipeline sections.
+- **Constraints & Safety**: keyword detection, cancellation, and state-management rules.
+- **Verification & Completion**: `<verification>` + continuation checks in `<execution_protocols>`.
+- **Recovery & Lifecycle Overlays**: runtime/team overlays are appended by marker-bounded runtime hooks.
+
+Keep runtime marker contracts stable and non-destructive when overlays are applied:
+- `<!-- OMX:RUNTIME:START --> ... <!-- OMX:RUNTIME:END -->`
+- `<!-- OMX:TEAM:WORKER:START --> ... <!-- OMX:TEAM:WORKER:END -->`
+</guidance_schema_contract>
+exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_determinism.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc "sed -n '1,260p' tests/integration/test_post_impl_drift_cache.sh" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc "sed -n '1,260p' tests/regression/test_backup_byte_exact.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc "sed -n '1,240p' /mnt/d/dev-base/.gran-maestro/requests/REQ-035/tasks/03/spec.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc "sed -n '1,260p' /mnt/d/dev-base/.gran-maestro/plans/PLN-010/plan.md" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+BACKUP_DIR = ROOT / "extracted.v1.backup"
+HASH_FIXTURE = ROOT / "tests" / "fixtures" / "req029_backup_hashes.json"
+
+
+def _sha256(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def test_backup_is_byte_exact_to_req029_hash_fixture() -> None:
+    backup_files = sorted(path for path in BACKUP_DIR.rglob("*") if path.is_file())
+    assert backup_files, "extracted.v1.backup/ 에 파일이 없습니다"
+    expected_hashes = json.loads(HASH_FIXTURE.read_text(encoding="utf-8"))
+ succeeded in 0ms:
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+TMP_DIR="$(mktemp -d)"
+CACHE_PATH="$ROOT_DIR/.gran-maestro/state/drift-cache.json"
+RULES_PATH="$ROOT_DIR/rules/rules.yaml"
+RULES_MTIME_ORIG="$(stat -c %Y "$RULES_PATH")"
+CACHE_BACKUP_PATH="$TMP_DIR/drift-cache.backup.json"
+CACHE_EXISTED=0
+
+if [[ -f "$CACHE_PATH" ]]; then
+  cp "$CACHE_PATH" "$CACHE_BACKUP_PATH"
+  CACHE_EXISTED=1
+fi
+
+cleanup() {
+  touch -m -d "@${RULES_MTIME_ORIG}" "$RULES_PATH" 2>/dev/null || true
+ succeeded in 0ms:
+from __future__ import annotations
+
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[2]
+FIGMA_SECTION_SPEC_PATH = ROOT / "tools" / "figma-section-spec.py"
+FIXTURE_PATH = ROOT / "tests" / "fixtures" / "figma_node_sample.json"
+
+
+def _load_figma_section_spec_module():
+    module_name = "figma_section_spec"
+    spec = importlib.util.spec_from_file_location(module_name, FIGMA_SECTION_SPEC_PATH)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+ succeeded in 0ms:
+# Spec — REQ-035 / Task 03: 통합 회귀 테스트 + PAC-3 전체 수렴
+
+**Assigned Agent**: `[config: codex-dev] codex-dev` (Python test)
+**Status**: pending
+**Plan**: PLN-010
+**Linked Intent**: INTENT-006
+**Template**: `templates/test-spec.md` 기반
+
+---
+
+## §0 Context Manifest
+
+- Task 01 / Task 02 산출물 (rules/models.py, 재정렬된 check-rules-drift.py 및 figma-validate.py)
+- 전체 pytest suite (`tests/`)
+- PLN-009 기준선: 113 passed / 33 skipped / 0 failed
+
+## §1 요약
+
+Task 01, Task 02 구현 완료 후 **전체 회귀 검증** 및 **증분 테스트** 를 실행하여 PAC-3 (기존 pytest 회귀 없음) 를 최종 수렴한다.
+
+ succeeded in 0ms:
+# Plan: PLN-010
+
+**생성일**: 2026-04-20T02:04:04.000Z
+**주제**: Figma→Code 파이프라인 v3 — Pydantic SSOT + structural diff gate + componentId 재사용
+**Cynefin 도메인**: Complicated
+**연관**: PLN-009 (Phase A 완료, Phase B/C 명시적 후속), INTENT-005 (동일 intent 체인)
+**실행 모드**: 자율 (-a) — 자동 체인 (mst:request → approve → accept)
+
+---
+
+## 요청 (Refined)
+
+PLN-009 Phase A 완료 후, 명시적으로 제외됐던 **Phase B (Pydantic SSOT)** 와 **Phase C (structural diff gate)**, 그리고 PLN-009 REQ-032 에서 추출만 하고 재사용 로직은 미구현이었던 **componentId 재사용 (Phase D)** 을 단일 PLN 내 3개 REQ 로 분리 실행한다.
+
+- **Phase B** (REQ-035): Pydantic v2 모델을 SSOT 로 도입하여 `rules/validation_schema.json` 을 자동 파생. figma-validate 핸들러 계약도 동일 모델 기반으로 재정렬하여 rules↔schema↔handler 3자 drift 를 **구조적으로 불가능**하게 만든다.
+- **Phase C** (REQ-036): Playwright Python 으로 HTML 을 실 브라우저 렌더링한 뒤, DOM tree 를 정규화 해시로 변환하여 Figma spec 의 frame_nodes 해시와 비교한다. 픽셀 diff 는 OS 폰트 차이로 불안정하므로 명시적 제외 (PLN-009 critic 지적 반영).
+- **Phase D** (REQ-037): Phase A (REQ-032) 에서 이미 추출된 componentId 를 활용하여, 동일 componentId 인스턴스들을 공유 CSS 클래스로 묶고 인스턴스별 override 만 분리한다.
+
+## 범위 예산 (Appetite)
+
+codex
+기존 테스트 구조는 단순한 pytest 회귀와 bash 통합 테스트가 섞여 있고, drift cache 스크립트는 상태 파일을 백업/복구하도록 이미 보호되어 있습니다. 먼저 요청한 baseline 전체 pytest를 그대로 실행해 현재 실패 여부를 확인하겠습니다.
+exec
+/bin/bash -lc "sed -n '1,240p' tests/unit/test_phase_a_summary.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+from __future__ import annotations
+
+import re
+import subprocess
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+REQ_TAG_PATTERNS = {
+    "REQ-029": re.compile(r"\[REQ-029(?:/\d+)?\]"),
+    "REQ-030": re.compile(r"\[REQ-030(?:/\d+)?\]"),
+    "REQ-031": re.compile(r"\[REQ-031(?:/\d+)?\]"),
+    "REQ-032": re.compile(r"\[REQ-032(?:/\d+)?\]"),
+    "REQ-033": re.compile(r"\[REQ-033(?:/\d+)?\]"),
+    "REQ-034": re.compile(r"\[REQ-034(?:/\d+)?\]"),
+}
+
+
+def test_phase_a_req_commits_are_present_in_git_log() -> None:
+    result = subprocess.run(
+exec
+/bin/bash -lc 'pytest tests/ -v 2>&1 | tail -30' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 18.74s:
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 82%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 85%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 87%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload0-rule_id] PASSED [ 89%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload1-file] PASSED [ 89%]
+tests/unit/test_schema_autogen.py::test_python_module_regenerates_validation_schema_with_same_rule_ids PASSED [ 90%]
+tests/unit/test_schema_autogen.py::test_python_module_preserves_type_and_severity_enums PASSED [ 91%]
+tests/unit/test_schema_autogen_header.py::test_validation_schema_has_auto_generated_comment PASSED [ 91%]
+tests/unit/test_strokes_extract.py::test_strokes_are_extracted_with_weight_and_align PASSED [ 92%]
+tests/unit/test_strokes_extract.py::test_v2_strokes_category_reports_border_mismatch PASSED [ 92%]
+tests/unit/test_stub_handler_blocks.py::test_stub_handler_blocks_with_major_failure PASSED [ 93%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_and_paragraph_values_are_extracted PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_defaults_are_explicit PASSED [ 94%]
+codex
+Baseline은 `123 passed, 33 skipped`로 깨끗합니다. 다음은 단독 결정성 테스트와 drift cache 통합 스크립트를 실행해, 신규 테스트를 추가하기 전 필수 회귀 증거를 확보하겠습니다.
+exec
+/bin/bash -lc 'pytest tests/regression/test_determinism.py -v' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'bash tests/integration/test_post_impl_drift_cache.sh' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 421ms:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+configfile: pyproject.toml
+collecting ... collected 1 item
+
+tests/regression/test_determinism.py::test_normalization_is_byte_exact_deterministic_across_100_runs PASSED [100%]
+
+============================== 1 passed in 0.20s ===============================
+ exited 1 in 662ms:
+===== first_run =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: FAIL (critical=0, major=12, minor=1, exit=1, blocking)
+post-impl-verify: exit=1
+[EXIT] first_run=1
+
+[FAIL] first_run: expected exit 0, got 1
+codex
+결정성 테스트는 통과했습니다. drift cache 스크립트는 첫 실행에서 semantic major 12건 때문에 exit 1로 중단되어, cache-hit 단계까지 도달하지 못했습니다. 기존 파일 수정은 금지되어 있으므로 이 실패 원인을 기록하고, 신규 pytest 통합 테스트는 요청된 Phase B 완결 조건에만 좁게 추가하겠습니다.
+exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'git log --oneline --decorate --all -30' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'python3 -m rules.models' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'rg -n "REQ-035|63/63|rules.models|check-rules-drift|validation_schema" tests rules tools pyproject.toml' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'python3 tools/check-rules-drift.py --all' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 6ms:
+tests/unit/test_schema_autogen_header.py:8:VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+tests/unit/test_schema_autogen_header.py:11:def test_validation_schema_has_auto_generated_comment() -> None:
+tests/unit/test_schema_autogen_header.py:14:    assert "AUTO-GENERATED FROM rules/models.py" in payload.get("$comment", "")
+tests/unit/test_pydantic_rules_load.py:3:from rules.models import RuleDefinition, load_rules
+tests/unit/test_schema_autogen.py:10:VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+tests/unit/test_schema_autogen.py:17:def test_python_module_regenerates_validation_schema_with_same_rule_ids() -> None:
+tests/unit/test_schema_autogen.py:21:        [sys.executable, "-m", "rules.models"],
+tests/unit/test_schema_autogen.py:41:        [sys.executable, "-m", "rules.models"],
+ succeeded in 24ms:
+
+ succeeded in 183ms:
+e028e41 (HEAD -> gran-maestro/REQ-035-T03, gran-maestro/REQ-035-T02) [REQ-035/02] Phase B — check-rules-drift 승격 + figma-validate handler Pydantic 재정렬 (PLN-010 2/6)
+5b6a966 (gran-maestro/REQ-035-T01) [REQ-035/01] Phase B — Pydantic v2 SSOT 모델 + validation_schema 자동 생성 (PLN-010 1/6)
+c72f69f (main, gran-maestro/REQ-035) chore(PLN-010): REQ-035/036/037 scaffolding + plan + spec
+f19c90e (tag: pre-token-purge-backup, origin/main) chore: 루트 정리 — 오래된 output/핸드오버/플레이라이트 로그 제거 + PLN-009 워크플로우 메타 추가
+22154b8 [REQ-034] Phase A 마무리 — post-impl-verify 강화 + repair JSON 계약 + figma-validate v2 통합 + 전체 회귀 (PLN-009 6/6)
+9b52fc4 [REQ-033] Phase A — validator drift 완전 제거 + post-impl-verify drift cache (PLN-009 5/6)
+8f5e2f1 [REQ-032] Phase A — componentId/componentSetId + vector path + asset_manifest (PLN-009 4/6)
+4ece8be [REQ-031] Phase A — strokes + cornerRadii + layoutSizing + characterStyleOverrides + textCase/Decoration (PLN-009 3/6)
+0d8c6c2 [REQ-030] Phase A — fills type 분기 + effects + opacity + blendMode + figma-validate v2 카테고리 (PLN-009 2/6)
+969ffe5 [REQ-029] Phase A 정책 3건 + schema_version semver + migration 스크립트 + v1/v2 분기 파서 (PLN-009 1/6)
+a56cf8a [REQ-028] C: figma-section-spec.py Deterministic Codegen + 디자인 토큰 (PLN-008 5/5 — DBG-001)
+ae0118e [WIP-merge] 이전 세션 validator 개선 통합 (wip/pre-session-validators)
+bf3ff1e [REQ-027] D: Rule-ID 체크리스트 + 위반 JSON 브리프 전환 (PLN-008 4/5 — DBG-001 H1/H5)
+19de88d [REQ-026] B: repair-from-violations.py + post-impl auto-fix 루프 (PLN-008 3/5 — DBG-001 H3)
+32e6e1d [REQ-025] E: Spec-only 원칙 강제 — CLAUDE.md MCP 직접 해석 경로 삭제 (PLN-008 2/5 — DBG-001 H6)
+cddda8d [REQ-024] 규칙 슬림 + 충돌 제거 + post-impl-verify 파서 멀티라인 대응 (PLN-008 1/5 — DBG-001)
+647fe3f (wip/pre-session-validators) [WIP] pre-session validators backup (이전 Claude 세션)
+bea45ce [REQ-019] validate-semantic.py 신규 6규칙 + --profile 분기 (PLN-007 Layer A — DSC-002 합의)
+9edf16c [REQ-015] tools/post-impl-verify.py + CLAUDE.md PM 자동 검증 가이드 (PLN-005 5/5)
+c8608b7 [REQ-014] publishing/impl-request.md 5종 인라인 주입 (PLN-005 4/5)
+ succeeded in 276ms:
+[OK] 63/63 rules in sync
+ succeeded in 1.88s:
+?? .claude/hooks/.mst-hook-version
+?? .claude/hooks/mst-session-init.sh
+?? .claude/hooks/mst-stop-hook.sh
+?? .gran-maestro/state/drift-cache.json
+codex
+Phase B commands themselves are healthy: `python3 -m rules.models` exits 0, and `python3 tools/check-rules-drift.py --all` reports `63/63 rules in sync`. I’m adding one focused regression file under `tests/regression/` that captures the two REQ-035 commits, schema regeneration, and all-rules drift convergence without touching implementation files.
+file update
+A /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03/tests/regression/test_pln010_phase_b_summary.py
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+REQ_035_TAG_PATTERNS = {
+    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
+    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
+}
+
+
+def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_req035_phase_b_commits_are_present_in_git_log() -> None:
+    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+    assert result.returncode == 0, combined
+
+    log_lines = result.stdout.splitlines()
+    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
+        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
+
+
+def test_rules_models_module_regenerates_committed_validation_schema() -> None:
+    original_schema = VALIDATION_SCHEMA.read_bytes()
+
+    try:
+        result = _run([sys.executable, "-m", "rules.models"])
+        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+        assert result.returncode == 0, combined
+
+        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
+        payload = json.loads(regenerated_schema.decode("utf-8"))
+        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT"
+        assert regenerated_schema == original_schema
+    finally:
+        if VALIDATION_SCHEMA.read_bytes() != original_schema:
+            VALIDATION_SCHEMA.write_bytes(original_schema)
+
+
+def test_all_rules_drift_check_converges_for_phase_b() -> None:
+    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+
+    assert result.returncode == 0, combined
+    assert "63/63 rules in sync" in combined
+apply_patch(auto_approved=true) exited 0 in 210ms:
+Success. Updated the following files:
+A tests/regression/test_pln010_phase_b_summary.py
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..70bdc7e74c96eac30de86317c0add83e9d10767e
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..70bdc7e74c96eac30de86317c0add83e9d10767e
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+codex
+신규 테스트 파일을 추가했습니다. 한 가지 문자열 리터럴을 ASCII-safe하게 다듬은 뒤, 새 테스트만 먼저 실행해서 실패 범위를 좁히겠습니다.
+file update
+M /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03/tests/regression/test_pln010_phase_b_summary.py
+@@ -47,3 +47,3 @@
+         payload = json.loads(regenerated_schema.decode("utf-8"))
+-        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT"
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
+         assert regenerated_schema == original_schema
+apply_patch(auto_approved=true) exited 0 in 243ms:
+Success. Updated the following files:
+M tests/regression/test_pln010_phase_b_summary.py
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+exec
+/bin/bash -lc "sed -n '1,240p' tests/regression/test_pln010_phase_b_summary.py" in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+REQ_035_TAG_PATTERNS = {
+    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
+    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
+}
+
+
+def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+exec
+/bin/bash -lc 'pytest tests/regression/test_pln010_phase_b_summary.py -v' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 983ms:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+configfile: pyproject.toml
+collecting ... collected 3 items
+
+tests/regression/test_pln010_phase_b_summary.py::test_req035_phase_b_commits_are_present_in_git_log PASSED [ 33%]
+tests/regression/test_pln010_phase_b_summary.py::test_rules_models_module_regenerates_committed_validation_schema PASSED [ 66%]
+tests/regression/test_pln010_phase_b_summary.py::test_all_rules_drift_check_converges_for_phase_b PASSED [100%]
+
+============================== 3 passed in 0.84s ===============================
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+codex
+새 테스트 3개는 단독으로 통과했습니다. 이제 전체 pytest를 다시 실행해 최종 PAC-3 회귀 수렴 여부와 추가된 총 pass 수를 확인하겠습니다.
+exec
+/bin/bash -lc 'pytest tests/ -v 2>&1 | tail -40' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 17.04s:
+tests/unit/test_handler_pydantic_signature.py::test_missing_pydantic_handler_returns_major_fail PASSED [ 76%]
+tests/unit/test_layout_sizing.py::test_layout_sizing_defaults_and_values_are_extracted PASSED [ 77%]
+tests/unit/test_layout_sizing.py::test_v2_layout_sizing_category_reports_mismatch PASSED [ 77%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_description_mentions_filename_and_body PASSED [ 78%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_fails_for_mechanical_filename_and_body PASSED [ 79%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_passes_for_meaningful_english_names PASSED [ 79%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_flags_50px PASSED [ 80%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_allows_100px_or_more PASSED [ 81%]
+tests/unit/test_opacity_blendmode.py::test_opacity_and_blendmode_are_explicit_on_frame_and_text PASSED [ 81%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_normalize_text_node PASSED [ 82%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 83%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 84%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 86%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 88%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+codex
+최종 전체 pytest는 `126 passed, 33 skipped`로 통과했습니다. 마지막으로 변경 파일과 작업트리 상태를 확인해 구현 코드가 변경되지 않았고 신규 테스트만 추가됐는지 검산하겠습니다.
+exec
+/bin/bash -lc 'git diff -- tests/regression/test_pln010_phase_b_summary.py' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 0ms:
+
+exec
+/bin/bash -lc 'git diff --stat' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03exec
+/bin/bash -lc 'git status --short' in /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03 succeeded in 1.06s:
+
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+ succeeded in 1.41s:
+?? .claude/hooks/.mst-hook-version
+?? .claude/hooks/mst-session-init.sh
+?? .claude/hooks/mst-stop-hook.sh
+?? .gran-maestro/state/drift-cache.json
+?? tests/regression/test_pln010_phase_b_summary.py
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+codex
+완료했습니다. 구현 코드는 수정하지 않았고, 신규 테스트 파일만 추가했습니다: `tests/regression/test_pln010_phase_b_summary.py`.
+
+주의: `bash tests/integration/test_post_impl_drift_cache.sh`는 현재 첫 실행에서 semantic major 12건으로 exit 1이 나서 cache-hit 단계까지 도달하지 못했습니다. 기존 스크립트/구현 수정은 금지되어 있어 그대로 증거를 남겼습니다. 최종 pytest 회귀는 통과했습니다.
+
+**1. Baseline Pytest Last 30 Lines**
+```text
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 82%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 85%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 87%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload0-rule_id] PASSED [ 89%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload1-file] PASSED [ 89%]
+tests/unit/test_schema_autogen.py::test_python_module_regenerates_validation_schema_with_same_rule_ids PASSED [ 90%]
+tests/unit/test_schema_autogen.py::test_python_module_preserves_type_and_severity_enums PASSED [ 91%]
+tests/unit/test_schema_autogen_header.py::test_validation_schema_has_auto_generated_comment PASSED [ 91%]
+tests/unit/test_strokes_extract.py::test_strokes_are_extracted_with_weight_and_align PASSED [ 92%]
+tests/unit/test_strokes_extract.py::test_v2_strokes_category_reports_border_mismatch PASSED [ 92%]
+tests/unit/test_stub_handler_blocks.py::test_stub_handler_blocks_with_major_failure PASSED [ 93%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_and_paragraph_values_are_extracted PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_defaults_are_explicit PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_v2_text_case_and_decoration_categories_report_mismatch PASSED [ 95%]
+tests/unit/test_v2_default_keys.py::test_v2_default_keys_are_explicit_for_frame_and_text_nodes PASSED [ 96%]
+tests/unit/test_v2_empty_fills_graceful.py::test_v2_empty_fills_are_gracefully_skipped PASSED [ 96%]
+tests/unit/test_validate_asset_manifest_exists.py::test_v2_asset_manifest_missing_fails_validation PASSED [ 97%]
+tests/unit/test_validate_effects.py::test_v2_effects_shadow_category_fails_when_drop_shadow_css_is_missing PASSED [ 98%]
+tests/unit/test_validate_gradient.py::test_v2_gradient_fill_category_passes_when_css_gradient_contains_stop_colors PASSED [ 98%]
+tests/unit/test_validate_image.py::test_v2_image_fill_category_passes_when_css_has_background_image_url PASSED [ 99%]
+tests/unit/test_vector_path_geometry.py::test_vector_geometry_paths_are_preserved_without_transformation PASSED [100%]
+
+======================= 123 passed, 33 skipped in 18.43s =======================
+```
+
+**2. Determinism Regression Output**
+```text
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+configfile: pyproject.toml
+collecting ... collected 1 item
+
+tests/regression/test_determinism.py::test_normalization_is_byte_exact_deterministic_across_100_runs PASSED [100%]
+
+============================== 1 passed in 0.20s ===============================
+```
+
+**3. Drift Cache Regression Output**
+```text
+===== first_run =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: FAIL (critical=0, major=12, minor=1, exit=1, blocking)
+post-impl-verify: exit=1
+[EXIT] first_run=1
+
+[FAIL] first_run: expected exit 0, got 1
+```
+
+**4. New Test File**
+`tests/regression/test_pln010_phase_b_summary.py`
+```python
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+REQ_035_TAG_PATTERNS = {
+    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
+    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
+}
+
+
+def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_req035_phase_b_commits_are_present_in_git_log() -> None:
+    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+    assert result.returncode == 0, combined
+
+    log_lines = result.stdout.splitlines()
+    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
+        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
+
+
+def test_rules_models_module_regenerates_committed_validation_schema() -> None:
+    original_schema = VALIDATION_SCHEMA.read_bytes()
+
+    try:
+        result = _run([sys.executable, "-m", "rules.models"])
+        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+        assert result.returncode == 0, combined
+
+        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
+        payload = json.loads(regenerated_schema.decode("utf-8"))
+        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
+        assert regenerated_schema == original_schema
+    finally:
+        if VALIDATION_SCHEMA.read_bytes() != original_schema:
+            VALIDATION_SCHEMA.write_bytes(original_schema)
+
+
+def test_all_rules_drift_check_converges_for_phase_b() -> None:
+    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+
+    assert result.returncode == 0, combined
+    assert "63/63 rules in sync" in combined
+```
+
+**5. Final Regression Output**
+```text
+tests/unit/test_handler_pydantic_signature.py::test_missing_pydantic_handler_returns_major_fail PASSED [ 76%]
+tests/unit/test_layout_sizing.py::test_layout_sizing_defaults_and_values_are_extracted PASSED [ 77%]
+tests/unit/test_layout_sizing.py::test_v2_layout_sizing_category_reports_mismatch PASSED [ 77%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_description_mentions_filename_and_body PASSED [ 78%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_fails_for_mechanical_filename_and_body PASSED [ 79%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_passes_for_meaningful_english_names PASSED [ 79%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_flags_50px PASSED [ 80%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_allows_100px_or_more PASSED [ 81%]
+tests/unit/test_opacity_blendmode.py::test_opacity_and_blendmode_are_explicit_on_frame_and_text PASSED [ 81%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_normalize_text_node PASSED [ 82%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 83%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 84%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 86%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 88%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload0-rule_id] PASSED [ 89%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload1-file] PASSED [ 89%]
+tests/unit/test_schema_autogen.py::test_python_module_regenerates_validation_schema_with_same_rule_ids PASSED [ 90%]
+tests/unit/test_schema_autogen.py::test_python_module_preserves_type_and_severity_enums PASSED [ 91%]
+tests/unit/test_schema_autogen_header.py::test_validation_schema_has_auto_generated_comment PASSED [ 91%]
+tests/unit/test_strokes_extract.py::test_strokes_are_extracted_with_weight_and_align PASSED [ 92%]
+tests/unit/test_strokes_extract.py::test_v2_strokes_category_reports_border_mismatch PASSED [ 93%]
+tests/unit/test_stub_handler_blocks.py::test_stub_handler_blocks_with_major_failure PASSED [ 93%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_and_paragraph_values_are_extracted PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_defaults_are_explicit PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_v2_text_case_and_decoration_categories_report_mismatch PASSED [ 95%]
+tests/unit/test_v2_default_keys.py::test_v2_default_keys_are_explicit_for_frame_and_text_nodes PASSED [ 96%]
+tests/unit/test_v2_empty_fills_graceful.py::test_v2_empty_fills_are_gracefully_skipped PASSED [ 96%]
+tests/unit/test_validate_asset_manifest_exists.py::test_v2_asset_manifest_missing_fails_validation PASSED [ 97%]
+tests/unit/test_validate_effects.py::test_v2_effects_shadow_category_fails_when_drop_shadow_css_is_missing PASSED [ 98%]
+tests/unit/test_validate_gradient.py::test_v2_gradient_fill_category_passes_when_css_gradient_contains_stop_colors PASSED [ 98%]
+tests/unit/test_validate_image.py::test_v2_image_fill_category_passes_when_css_has_background_image_url PASSED [ 99%]
+tests/unit/test_vector_path_geometry.py::test_vector_geometry_paths_are_preserved_without_transformation PASSED [100%]
+
+======================= 126 passed, 33 skipped in 16.83s =======================
+```
+
+Changed files: `tests/regression/test_pln010_phase_b_summary.py` only.  
+Simplifications made: kept the Task 03 proof in one focused regression file with three direct assertions and no implementation changes.  
+Remaining risk: the existing drift cache shell regression currently fails before cache validation because semantic validation is blocking with 12 major issues.
+file update:
+diff --git a/tests/regression/test_pln010_phase_b_summary.py b/tests/regression/test_pln010_phase_b_summary.py
+new file mode 100755
+index 0000000000000000000000000000000000000000..1c04b6f2107630e2919cb2cbc56d7c32b490afc1
+--- /dev/null
++++ b/tests/regression/test_pln010_phase_b_summary.py
+@@ -0,0 +1,60 @@
++from __future__ import annotations
++
++import json
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[2]
++VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
++REQ_035_TAG_PATTERNS = {
++    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
++    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
++}
++
++
++def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(
++        command,
++        cwd=ROOT,
++        text=True,
++        capture_output=True,
++        check=False,
++    )
++
++
++def test_req035_phase_b_commits_are_present_in_git_log() -> None:
++    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++    assert result.returncode == 0, combined
++
++    log_lines = result.stdout.splitlines()
++    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
++        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
++
++
++def test_rules_models_module_regenerates_committed_validation_schema() -> None:
++    original_schema = VALIDATION_SCHEMA.read_bytes()
++
++    try:
++        result = _run([sys.executable, "-m", "rules.models"])
++        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++        assert result.returncode == 0, combined
++
++        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
++        payload = json.loads(regenerated_schema.decode("utf-8"))
++        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
++        assert regenerated_schema == original_schema
++    finally:
++        if VALIDATION_SCHEMA.read_bytes() != original_schema:
++            VALIDATION_SCHEMA.write_bytes(original_schema)
++
++
++def test_all_rules_drift_check_converges_for_phase_b() -> None:
++    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
++    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
++
++    assert result.returncode == 0, combined
++    assert "63/63 rules in sync" in combined
+
+tokens used
+62,025
+완료했습니다. 구현 코드는 수정하지 않았고, 신규 테스트 파일만 추가했습니다: `tests/regression/test_pln010_phase_b_summary.py`.
+
+주의: `bash tests/integration/test_post_impl_drift_cache.sh`는 현재 첫 실행에서 semantic major 12건으로 exit 1이 나서 cache-hit 단계까지 도달하지 못했습니다. 기존 스크립트/구현 수정은 금지되어 있어 그대로 증거를 남겼습니다. 최종 pytest 회귀는 통과했습니다.
+
+**1. Baseline Pytest Last 30 Lines**
+```text
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 82%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 85%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 87%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload0-rule_id] PASSED [ 89%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload1-file] PASSED [ 89%]
+tests/unit/test_schema_autogen.py::test_python_module_regenerates_validation_schema_with_same_rule_ids PASSED [ 90%]
+tests/unit/test_schema_autogen.py::test_python_module_preserves_type_and_severity_enums PASSED [ 91%]
+tests/unit/test_schema_autogen_header.py::test_validation_schema_has_auto_generated_comment PASSED [ 91%]
+tests/unit/test_strokes_extract.py::test_strokes_are_extracted_with_weight_and_align PASSED [ 92%]
+tests/unit/test_strokes_extract.py::test_v2_strokes_category_reports_border_mismatch PASSED [ 92%]
+tests/unit/test_stub_handler_blocks.py::test_stub_handler_blocks_with_major_failure PASSED [ 93%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_and_paragraph_values_are_extracted PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_defaults_are_explicit PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_v2_text_case_and_decoration_categories_report_mismatch PASSED [ 95%]
+tests/unit/test_v2_default_keys.py::test_v2_default_keys_are_explicit_for_frame_and_text_nodes PASSED [ 96%]
+tests/unit/test_v2_empty_fills_graceful.py::test_v2_empty_fills_are_gracefully_skipped PASSED [ 96%]
+tests/unit/test_validate_asset_manifest_exists.py::test_v2_asset_manifest_missing_fails_validation PASSED [ 97%]
+tests/unit/test_validate_effects.py::test_v2_effects_shadow_category_fails_when_drop_shadow_css_is_missing PASSED [ 98%]
+tests/unit/test_validate_gradient.py::test_v2_gradient_fill_category_passes_when_css_gradient_contains_stop_colors PASSED [ 98%]
+tests/unit/test_validate_image.py::test_v2_image_fill_category_passes_when_css_has_background_image_url PASSED [ 99%]
+tests/unit/test_vector_path_geometry.py::test_vector_geometry_paths_are_preserved_without_transformation PASSED [100%]
+
+======================= 123 passed, 33 skipped in 18.43s =======================
+```
+
+**2. Determinism Regression Output**
+```text
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/d/dev-base/.gran-maestro/worktrees/REQ-035-T03
+configfile: pyproject.toml
+collecting ... collected 1 item
+
+tests/regression/test_determinism.py::test_normalization_is_byte_exact_deterministic_across_100_runs PASSED [100%]
+
+============================== 1 passed in 0.20s ===============================
+```
+
+**3. Drift Cache Regression Output**
+```text
+===== first_run =====
+[DRIFT] check-rules-drift executed
+figma-validate: PASS (critical=0, major=0, ignore=0, exit=0)
+validate-semantic: FAIL (critical=0, major=12, minor=1, exit=1, blocking)
+post-impl-verify: exit=1
+[EXIT] first_run=1
+
+[FAIL] first_run: expected exit 0, got 1
+```
+
+**4. New Test File**
+`tests/regression/test_pln010_phase_b_summary.py`
+```python
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+VALIDATION_SCHEMA = ROOT / "rules" / "validation_schema.json"
+REQ_035_TAG_PATTERNS = {
+    "REQ-035/01": re.compile(r"\[REQ-035/01\]"),
+    "REQ-035/02": re.compile(r"\[REQ-035/02\]"),
+}
+
+
+def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_req035_phase_b_commits_are_present_in_git_log() -> None:
+    result = _run(["git", "log", "--oneline", "--decorate", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+    assert result.returncode == 0, combined
+
+    log_lines = result.stdout.splitlines()
+    for req_name, pattern in REQ_035_TAG_PATTERNS.items():
+        assert any(pattern.search(line) for line in log_lines), f"missing commit subject tag: {req_name}"
+
+
+def test_rules_models_module_regenerates_committed_validation_schema() -> None:
+    original_schema = VALIDATION_SCHEMA.read_bytes()
+
+    try:
+        result = _run([sys.executable, "-m", "rules.models"])
+        combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+        assert result.returncode == 0, combined
+
+        regenerated_schema = VALIDATION_SCHEMA.read_bytes()
+        payload = json.loads(regenerated_schema.decode("utf-8"))
+        assert payload.get("$comment") == "AUTO-GENERATED FROM rules/models.py \u2014 DO NOT EDIT"
+        assert regenerated_schema == original_schema
+    finally:
+        if VALIDATION_SCHEMA.read_bytes() != original_schema:
+            VALIDATION_SCHEMA.write_bytes(original_schema)
+
+
+def test_all_rules_drift_check_converges_for_phase_b() -> None:
+    result = _run([sys.executable, "tools/check-rules-drift.py", "--all"])
+    combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+
+    assert result.returncode == 0, combined
+    assert "63/63 rules in sync" in combined
+```
+
+**5. Final Regression Output**
+```text
+tests/unit/test_handler_pydantic_signature.py::test_missing_pydantic_handler_returns_major_fail PASSED [ 76%]
+tests/unit/test_layout_sizing.py::test_layout_sizing_defaults_and_values_are_extracted PASSED [ 77%]
+tests/unit/test_layout_sizing.py::test_v2_layout_sizing_category_reports_mismatch PASSED [ 77%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_description_mentions_filename_and_body PASSED [ 78%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_fails_for_mechanical_filename_and_body PASSED [ 79%]
+tests/unit/test_meaningful_page_name_clarity.py::test_meaningful_page_name_passes_for_meaningful_english_names PASSED [ 79%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_flags_50px PASSED [ 80%]
+tests/unit/test_no_clamp_threshold.py::test_no_clamp_under_100_allows_100px_or_more PASSED [ 81%]
+tests/unit/test_opacity_blendmode.py::test_opacity_and_blendmode_are_explicit_on_frame_and_text PASSED [ 81%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_normalize_text_node PASSED [ 82%]
+tests/unit/test_paragraph_spacing_indent.py::test_paragraph_spacing_indent_defaults_are_zero_in_ensure_v2_payload_shape PASSED [ 83%]
+tests/unit/test_phase_a_summary.py::test_phase_a_req_commits_are_present_in_git_log PASSED [ 83%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_passes_when_vertical_itemspacing_uses_margin_bottom PASSED [ 84%]
+tests/unit/test_policy1_margin_bottom.py::test_policy1_fails_when_vertical_itemspacing_uses_gap PASSED [ 84%]
+tests/unit/test_policy3_rules_conflict.py::test_policy3_rules_conflict_meta_bypasses_rule_and_logs_once PASSED [ 85%]
+tests/unit/test_post_impl_no_spec_fatal.py::test_post_impl_requires_spec_when_figma_validation_is_enabled PASSED [ 86%]
+tests/unit/test_post_impl_semantic_major_exit1.py::test_semantic_major_is_blocking_and_forces_exit_1 PASSED [ 86%]
+tests/unit/test_pydantic_rules_load.py::test_load_rules_returns_63_pydantic_rule_definitions PASSED [ 87%]
+tests/unit/test_pyproject_deps.py::test_pyproject_declares_pydantic_v2_dependency PASSED [ 88%]
+tests/unit/test_repair_convergence.py::test_repair_stops_early_when_violation_count_no_longer_changes PASSED [ 88%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload0-rule_id] PASSED [ 89%]
+tests/unit/test_repair_violation_schema.py::test_repair_rejects_violations_missing_required_fields[violation_payload1-file] PASSED [ 89%]
+tests/unit/test_schema_autogen.py::test_python_module_regenerates_validation_schema_with_same_rule_ids PASSED [ 90%]
+tests/unit/test_schema_autogen.py::test_python_module_preserves_type_and_severity_enums PASSED [ 91%]
+tests/unit/test_schema_autogen_header.py::test_validation_schema_has_auto_generated_comment PASSED [ 91%]
+tests/unit/test_strokes_extract.py::test_strokes_are_extracted_with_weight_and_align PASSED [ 92%]
+tests/unit/test_strokes_extract.py::test_v2_strokes_category_reports_border_mismatch PASSED [ 93%]
+tests/unit/test_stub_handler_blocks.py::test_stub_handler_blocks_with_major_failure PASSED [ 93%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_and_paragraph_values_are_extracted PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_text_case_decoration_defaults_are_explicit PASSED [ 94%]
+tests/unit/test_text_case_decoration.py::test_v2_text_case_and_decoration_categories_report_mismatch PASSED [ 95%]
+tests/unit/test_v2_default_keys.py::test_v2_default_keys_are_explicit_for_frame_and_text_nodes PASSED [ 96%]
+tests/unit/test_v2_empty_fills_graceful.py::test_v2_empty_fills_are_gracefully_skipped PASSED [ 96%]
+tests/unit/test_validate_asset_manifest_exists.py::test_v2_asset_manifest_missing_fails_validation PASSED [ 97%]
+tests/unit/test_validate_effects.py::test_v2_effects_shadow_category_fails_when_drop_shadow_css_is_missing PASSED [ 98%]
+tests/unit/test_validate_gradient.py::test_v2_gradient_fill_category_passes_when_css_gradient_contains_stop_colors PASSED [ 98%]
+tests/unit/test_validate_image.py::test_v2_image_fill_category_passes_when_css_has_background_image_url PASSED [ 99%]
+tests/unit/test_vector_path_geometry.py::test_vector_geometry_paths_are_preserved_without_transformation PASSED [100%]
+
+======================= 126 passed, 33 skipped in 16.83s =======================
+```
+
+Changed files: `tests/regression/test_pln010_phase_b_summary.py` only.  
+Simplifications made: kept the Task 03 proof in one focused regression file with three direct assertions and no implementation changes.  
+Remaining risk: the existing drift cache shell regression currently fails before cache validation because semantic validation is blocking with 12 major issues.
