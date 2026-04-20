@@ -1,0 +1,27 @@
+{
+  "id": "REQ-038",
+  "title": "validator 강화 — no_forbidden_class regex 확장 + HTML 주석 제외",
+  "original_request": "validate-semantic.py의 no_forbidden_class 규칙이 (1) sec_1|sec_2 리터럴만 잡고 sec_\\d+ 전체 범위를 커버하지 못함, (2) HTML 주석 내부까지 스캔하여 false positive 발생. 두 가지를 모두 해결하여 파이프라인 정확도 향상.",
+  "current_phase": 1,
+  "created_at": "2026-04-20T04:30:00.000Z",
+  "auto_approve": true,
+  "source_plan": null,
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "validator 강화 — no_forbidden_class regex 확장 + HTML 주석 제외",
+      "status": "pending",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    }
+  ],
+  "status": "spec_ready",
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [],
+    "blocks": []
+  },
+  "stitch_screens": []
+}
