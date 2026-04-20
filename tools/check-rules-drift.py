@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Check rule drift across rules.yaml, validation_schema.json, and validate-semantic handlers."""
+"""Check rule drift across Pydantic rules, generated schema, and figma handlers."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
 import sys
+from types import ModuleType
+from typing import Any
 
 import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from rules.models import RuleDefinition, generate_schema, load_rules
 
 
 EXPECTED_SUMMARIES = {
@@ -22,18 +32,24 @@ EXPECTED_SUMMARIES = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate drift across rule sources.")
     parser.add_argument("--policy-ids", nargs="+", help="Legacy policy-only mode (REQ-029 compatibility)")
-    parser.add_argument("--all-rules", action="store_true", help="Check all rule IDs across 3 sources")
+    parser.add_argument(
+        "--all",
+        "--all-rules",
+        dest="all_rules",
+        action="store_true",
+        help="Check all rule IDs across 3 sources",
+    )
     parser.add_argument("--rules-yaml", default="rules/rules.yaml")
     parser.add_argument("--validation-schema", default="rules/validation_schema.json")
     parser.add_argument(
         "--semantic-validator",
         default="tools/validate-semantic.py",
-        help="Path to validate-semantic.py for handler/type coverage checks",
+        help="Accepted for REQ-033 compatibility; all-rule drift now uses figma-validate.py",
     )
     parser.add_argument(
         "--validator",
         default="tools/figma-validate.py",
-        help="Path to figma-validate.py for legacy --policy-ids mode",
+        help="Path to figma-validate.py for handler registry checks",
     )
     args = parser.parse_args()
     if not args.policy_ids and not args.all_rules:
@@ -45,26 +61,85 @@ def load_text(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
 
-def load_rules_yaml(path: str) -> list[dict]:
+def _read_yaml(path: str) -> dict[str, Any]:
     payload = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
-    rules = payload.get("rules", []) if isinstance(payload, dict) else []
-    return [rule for rule in rules if isinstance(rule, dict)]
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path}: YAML root must be a mapping")
+    return payload
 
 
-def load_validation_schema(path: str) -> list[dict]:
+def _read_json(path: str) -> dict[str, Any]:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    rules = payload.get("rules", []) if isinstance(payload, dict) else []
-    return [rule for rule in rules if isinstance(rule, dict)]
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path}: JSON root must be a mapping")
+    return payload
 
 
-def _rule_map_by_id(rules: list[dict]) -> dict[str, dict]:
-    result: dict[str, dict] = {}
+def load_rules_yaml(path: str) -> list[dict[str, Any]]:
+    payload = _read_yaml(path)
+    rules = payload.get("rules", [])
+    return [rule for rule in rules if isinstance(rule, dict)] if isinstance(rules, list) else []
+
+
+def load_validation_schema(path: str) -> list[dict[str, Any]]:
+    payload = _read_json(path)
+    rules = payload.get("rules", [])
+    return [rule for rule in rules if isinstance(rule, dict)] if isinstance(rules, list) else []
+
+
+def _rule_map_by_id(rules: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    result: dict[str, dict[str, Any]] = {}
     for rule in rules:
         rule_id = str(rule.get("id", "")).strip()
-        if not rule_id:
-            continue
-        result[rule_id] = rule
+        if rule_id:
+            result[rule_id] = rule
     return result
+
+
+def _pydantic_rule_map(rules: list[RuleDefinition]) -> dict[str, RuleDefinition]:
+    return {rule.id: rule for rule in rules}
+
+
+def _canonical_hash(value: Any) -> str:
+    rendered = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
+
+
+def _rule_dump(rule: RuleDefinition) -> dict[str, Any]:
+    return rule.model_dump(mode="json", by_alias=True, exclude_none=True)
+
+
+def _flatten_yaml_rule(raw_rule: dict[str, Any]) -> dict[str, Any]:
+    validation = raw_rule.get("validation")
+    validation_map = validation if isinstance(validation, dict) else {}
+    flattened = {
+        "applies_to": raw_rule.get("applies_to"),
+        "category": raw_rule.get("category"),
+        "description": raw_rule.get("description"),
+        "id": raw_rule.get("id"),
+        "severity": raw_rule.get("severity"),
+        "target": validation_map.get("target"),
+        "type": validation_map.get("type"),
+        "pattern": validation_map.get("pattern"),
+        "custom_handler": validation_map.get("custom_handler"),
+        "selector": validation_map.get("selector"),
+        "priority": raw_rule.get("priority"),
+        "rationale": raw_rule.get("rationale"),
+        "examples": raw_rule.get("examples"),
+    }
+    canonical = {key: value for key, value in flattened.items() if value is not None}
+    if "selector" not in canonical:
+        custom_handler = canonical.get("custom_handler")
+        validation_type = canonical.get("type")
+        if custom_handler:
+            canonical["selector"] = f"custom:{custom_handler}"
+        elif validation_type and "pattern" not in canonical:
+            canonical["selector"] = f"type:{validation_type}"
+    return canonical
+
+
+def _canonical_rule_list_hash(rule_map: dict[str, dict[str, Any]]) -> str:
+    return _canonical_hash([rule_map[rule_id] for rule_id in sorted(rule_map)])
 
 
 def _parse_validator_keys(text: str, mapping_name: str) -> set[str]:
@@ -74,19 +149,7 @@ def _parse_validator_keys(text: str, mapping_name: str) -> set[str]:
     return {key for key in re.findall(r'"([^"]+)"\s*:', block.group(1))}
 
 
-def _parse_validate_semantic_capabilities(path: str) -> tuple[set[str], set[str]]:
-    text = load_text(path)
-    custom_handlers = _parse_validator_keys(text, "CUSTOM_HANDLERS: Dict\\[str, Callable\\]")
-    enum_validators = _parse_validator_keys(text, "ENUM_VALIDATORS: Dict\\[str, Callable\\]")
-    if not custom_handlers:
-        # fallback for small formatting differences
-        custom_handlers = _parse_validator_keys(text, "CUSTOM_HANDLERS")
-    if not enum_validators:
-        enum_validators = _parse_validator_keys(text, "ENUM_VALIDATORS")
-    return custom_handlers, enum_validators
-
-
-def _policy_rule_entry(rules: list[dict], rule_id: str) -> tuple[str, str] | None:
+def _policy_rule_entry(rules: list[dict[str, Any]], rule_id: str) -> tuple[str, str] | None:
     for rule in rules:
         if rule.get("id") != rule_id:
             continue
@@ -95,11 +158,10 @@ def _policy_rule_entry(rules: list[dict], rule_id: str) -> tuple[str, str] | Non
     return None
 
 
-def _schema_rule_entry(rules: list[dict], rule_id: str) -> tuple[str, str] | None:
+def _schema_rule_entry(rules: list[dict[str, Any]], rule_id: str) -> tuple[str, str] | None:
     for rule in rules:
-        if rule.get("id") != rule_id:
-            continue
-        return str(rule.get("description", "")), str(rule.get("custom_handler", ""))
+        if rule.get("id") == rule_id:
+            return str(rule.get("description", "")), str(rule.get("custom_handler", ""))
     return None
 
 
@@ -119,6 +181,25 @@ def _validator_policy_maps(text: str) -> tuple[dict[str, str], dict[str, str]]:
 
 def _handler_exists(text: str, handler_name: str) -> bool:
     return re.search(rf"^def\s+{re.escape(handler_name)}\s*\(", text, flags=re.M) is not None
+
+
+def _load_figma_validate_module(path: str) -> ModuleType:
+    module_path = Path(path)
+    spec = importlib.util.spec_from_file_location("figma_validate_drift_check", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"could not load figma validator module: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _figma_handler_registry(path: str) -> dict[str, Any]:
+    module = _load_figma_validate_module(path)
+    registry = getattr(module, "RULE_HANDLER_REGISTRY", None)
+    if not isinstance(registry, dict):
+        raise RuntimeError("figma-validate.py does not expose RULE_HANDLER_REGISTRY")
+    return dict(registry)
 
 
 def run_policy_mode(args: argparse.Namespace) -> int:
@@ -181,60 +262,86 @@ def run_policy_mode(args: argparse.Namespace) -> int:
 
 
 def run_all_rules_mode(args: argparse.Namespace) -> int:
-    rules_yaml = load_rules_yaml(args.rules_yaml)
-    schema_rules = load_validation_schema(args.validation_schema)
-    custom_handlers, enum_validators = _parse_validate_semantic_capabilities(args.semantic_validator)
+    try:
+        pydantic_by_id = _pydantic_rule_map(load_rules())
+        yaml_by_id = {
+            rule_id: _flatten_yaml_rule(rule)
+            for rule_id, rule in _rule_map_by_id(load_rules_yaml(args.rules_yaml)).items()
+        }
+        schema_payload = _read_json(args.validation_schema)
+        schema_by_id = _rule_map_by_id(load_validation_schema(args.validation_schema))
+        generated_schema = generate_schema()
+        figma_handlers = _figma_handler_registry(args.validator)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[DRIFT] failed to load rule sources: {exc}")
+        return 1
 
-    rules_by_id = _rule_map_by_id(rules_yaml)
-    schema_by_id = _rule_map_by_id(schema_rules)
-    all_rule_ids = sorted(set(rules_by_id) | set(schema_by_id))
+    pydantic_canonical = {rule_id: _rule_dump(rule) for rule_id, rule in pydantic_by_id.items()}
+    generated_rules_by_id = _rule_map_by_id(generated_schema.get("rules", []))
+    figma_handler_ids = {str(rule_id) for rule_id in figma_handlers}
 
     drifts: list[str] = []
+    all_rule_ids = sorted(set(pydantic_by_id) | set(yaml_by_id) | set(schema_by_id) | figma_handler_ids)
+    layers = (
+        ("Pydantic SSOT", set(pydantic_by_id)),
+        ("rules.yaml", set(yaml_by_id)),
+        ("validation_schema.json", set(schema_by_id)),
+        ("figma-validate handler registry", figma_handler_ids),
+    )
+
     for rule_id in all_rule_ids:
-        in_rules = rule_id in rules_by_id
-        in_schema = rule_id in schema_by_id
-        if not in_rules:
-            drifts.append(f"{rule_id}: missing in rules.yaml")
-            continue
-        if not in_schema:
-            drifts.append(f"{rule_id}: missing in validation_schema.json")
-            continue
+        missing_layers = [name for name, ids in layers if rule_id not in ids]
+        if missing_layers:
+            drifts.append(f"{rule_id}: missing in {', '.join(missing_layers)}")
 
-        rules_rule = rules_by_id[rule_id]
-        schema_rule = schema_by_id[rule_id]
-        rules_validation = rules_rule.get("validation", {}) if isinstance(rules_rule.get("validation"), dict) else {}
-        rules_type = str(rules_validation.get("type", "")).strip()
-        schema_type = str(schema_rule.get("type", "")).strip()
+    for rule_id in sorted(pydantic_by_id):
+        expected = pydantic_canonical[rule_id]
+        yaml_rule = yaml_by_id.get(rule_id)
+        schema_rule = schema_by_id.get(rule_id)
+        generated_rule = generated_rules_by_id.get(rule_id)
 
-        if rules_type != schema_type:
-            drifts.append(f"{rule_id}: validation type mismatch rules.yaml({rules_type}) vs validation_schema.json({schema_type})")
-            continue
+        if yaml_rule is not None and _canonical_hash(yaml_rule) != _canonical_hash(expected):
+            drifts.append(
+                f"{rule_id}: rules.yaml normalized hash mismatch "
+                f"rules.yaml({_canonical_hash(yaml_rule)[:12]}) vs Pydantic({_canonical_hash(expected)[:12]})"
+            )
+        if schema_rule is not None and _canonical_hash(schema_rule) != _canonical_hash(expected):
+            drifts.append(
+                f"{rule_id}: validation_schema.json rule hash mismatch "
+                f"schema({_canonical_hash(schema_rule)[:12]}) vs Pydantic({_canonical_hash(expected)[:12]})"
+            )
+        if (
+            generated_rule is not None
+            and schema_rule is not None
+            and _canonical_hash(generated_rule) != _canonical_hash(schema_rule)
+        ):
+            drifts.append(
+                f"{rule_id}: generated schema rule hash mismatch "
+                f"generated({_canonical_hash(generated_rule)[:12]}) vs file({_canonical_hash(schema_rule)[:12]})"
+            )
 
-        if rules_type == "custom":
-            rules_handler = str(rules_validation.get("custom_handler", "")).strip()
-            schema_handler = str(schema_rule.get("custom_handler", "")).strip()
-            if not rules_handler:
-                drifts.append(f"{rule_id}: missing in rules.yaml custom_handler")
-                continue
-            if not schema_handler:
-                drifts.append(f"{rule_id}: missing in validation_schema.json custom_handler")
-                continue
-            if rules_handler != schema_handler:
-                drifts.append(f"{rule_id}: handler mismatch rules.yaml({rules_handler}) vs validation_schema.json({schema_handler})")
-                continue
-            if rules_handler not in custom_handlers:
-                drifts.append(f"{rule_id}: missing in validate-semantic.py handler map ({rules_handler})")
-                continue
-        else:
-            if rules_type not in enum_validators:
-                drifts.append(f"{rule_id}: missing in validate-semantic.py enum validators ({rules_type})")
+    if _canonical_hash(schema_payload) != _canonical_hash(generated_schema):
+        drifts.append(
+            "validation_schema.json: file hash mismatch "
+            f"generated({_canonical_hash(generated_schema)[:12]}) vs file({_canonical_hash(schema_payload)[:12]})"
+        )
+
+    non_callables = sorted(rule_id for rule_id, handler in figma_handlers.items() if not callable(handler))
+    for rule_id in non_callables:
+        drifts.append(f"{rule_id}: figma-validate handler registry entry is not callable")
 
     if drifts:
         for item in drifts:
             print(f"[DRIFT] {item}")
+        print(
+            "[DRIFT] source hashes "
+            f"rules.yaml={_canonical_rule_list_hash(yaml_by_id)[:12]} "
+            f"validation_schema.json={_canonical_rule_list_hash(schema_by_id)[:12]} "
+            f"generated_schema={_canonical_hash(generated_schema)[:12]}"
+        )
         return 1
 
-    total = len(all_rule_ids)
+    total = len(pydantic_by_id)
     print(f"[OK] {total}/{total} rules in sync")
     return 0
 

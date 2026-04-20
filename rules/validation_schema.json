@@ -1,4 +1,94 @@
 {
+  "$comment": "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT",
+  "version": 1,
+  "validation_types": [
+    "regex_must_not_match",
+    "regex_must_match",
+    "regex_should_match",
+    "ast_selector_count",
+    "value_equals_mapping",
+    "html_tag_required",
+    "forbidden_substring",
+    "required_substring",
+    "naming_pattern",
+    "numeric_range",
+    "custom"
+  ],
+  "profiles": [
+    "common",
+    "basic",
+    "landing",
+    "figma",
+    "enhancement"
+  ],
+  "severities": [
+    "error",
+    "warning",
+    "info",
+    "deprecated"
+  ],
+  "categories": [
+    {
+      "id": "css.layout"
+    },
+    {
+      "id": "css.color"
+    },
+    {
+      "id": "css.format"
+    },
+    {
+      "id": "css.units"
+    },
+    {
+      "id": "css.naming"
+    },
+    {
+      "id": "css.variables"
+    },
+    {
+      "id": "css.selector"
+    },
+    {
+      "id": "css.typography"
+    },
+    {
+      "id": "css.border"
+    },
+    {
+      "id": "css.spacing"
+    },
+    {
+      "id": "html.structure"
+    },
+    {
+      "id": "html.semantic"
+    },
+    {
+      "id": "html.naming"
+    },
+    {
+      "id": "html.image"
+    },
+    {
+      "id": "html.text"
+    },
+    {
+      "id": "accessibility"
+    },
+    {
+      "id": "figma.mapping"
+    },
+    {
+      "id": "figma.fidelity"
+    },
+    {
+      "id": "process"
+    },
+    {
+      "id": "enhancement.workflow"
+    }
+  ],
   "rules": [
     {
       "applies_to": [
@@ -13,6 +103,7 @@
       "target": "html",
       "type": "numeric_range",
       "pattern": "depth<=5",
+      "priority": 200,
       "rationale": "과도한 wrapper 중첩 방지로 마크업 단순화"
     },
     {
@@ -27,7 +118,8 @@
       "severity": "warning",
       "target": "html",
       "type": "naming_pattern",
-      "pattern": "^[a-z0-9_]+$"
+      "pattern": "^[a-z0-9_]+$",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -41,7 +133,8 @@
       "severity": "warning",
       "target": "html",
       "type": "naming_pattern",
-      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_]+$"
+      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_]+$",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -55,7 +148,12 @@
       "severity": "error",
       "target": "html",
       "type": "forbidden_substring",
-      "pattern": "sec_1|sec_2|section_01|box1|box2"
+      "pattern": "sec_1|sec_2|section_01|box1|box2",
+      "priority": 100,
+      "examples": {
+        "bad": "<section class=\"sec_1\">",
+        "good": "<section class=\"about_intro\">"
+      }
     },
     {
       "applies_to": [
@@ -69,7 +167,8 @@
       "severity": "error",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "(sec_\\d+|section_\\d+|box\\d+)\""
+      "pattern": "(sec_\\d+|section_\\d+|box\\d+)\"",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -83,7 +182,8 @@
       "severity": "error",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "(page_\\d+|sub_\\d+|page_[a-z]$)"
+      "pattern": "(page_\\d+|sub_\\d+|page_[a-z]$)",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -98,7 +198,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "page_filename_class_prefix_match",
-      "selector": "custom:page_filename_class_prefix_match"
+      "selector": "custom:page_filename_class_prefix_match",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -112,7 +213,8 @@
       "severity": "info",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "<body[^>]*class=\"page_"
+      "pattern": "<body[^>]*class=\"page_",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -127,7 +229,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_common_area_prefix",
-      "selector": "custom:check_common_area_prefix"
+      "selector": "custom:check_common_area_prefix",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -142,7 +245,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_selector_format",
-      "selector": "custom:check_selector_format"
+      "selector": "custom:check_selector_format",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -157,7 +261,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_duplicate_selectors",
-      "selector": "custom:check_duplicate_selectors"
+      "selector": "custom:check_duplicate_selectors",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -172,7 +277,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_media_indent",
-      "selector": "custom:check_media_indent"
+      "selector": "custom:check_media_indent",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -187,7 +293,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_media_indent",
-      "selector": "custom:check_media_indent"
+      "selector": "custom:check_media_indent",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -202,7 +309,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_empty_media_block",
-      "selector": "custom:_check_empty_media_block"
+      "selector": "custom:_check_empty_media_block",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -216,7 +324,8 @@
       "severity": "info",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "clamp\\(\\s*([0-9]|[1-9][0-9])px"
+      "pattern": "clamp\\(\\s*([0-9]|[1-9][0-9])px",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -231,7 +340,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_clamp_under_100",
-      "selector": "custom:check_clamp_under_100"
+      "selector": "custom:check_clamp_under_100",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -246,7 +356,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_raw_calc_vw",
-      "selector": "custom:check_raw_calc_vw"
+      "selector": "custom:check_raw_calc_vw",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -261,7 +372,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_raw_calc_vw",
-      "selector": "custom:check_raw_calc_vw"
+      "selector": "custom:check_raw_calc_vw",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -276,7 +388,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_large_side_padding",
-      "selector": "custom:check_large_side_padding"
+      "selector": "custom:check_large_side_padding",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -291,7 +404,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_max_width_pattern",
-      "selector": "custom:check_max_width_pattern"
+      "selector": "custom:check_max_width_pattern",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -305,7 +419,12 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "(?<!rgba)\\brgb\\(|hsl\\("
+      "pattern": "(?<!rgba)\\brgb\\(|hsl\\(",
+      "priority": 100,
+      "examples": {
+        "bad": "color: rgb(255,255,255);",
+        "good": "color: #fff;"
+      }
     },
     {
       "applies_to": [
@@ -320,7 +439,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_no_hex8_literal",
-      "selector": "custom:_check_no_hex8_literal"
+      "selector": "custom:_check_no_hex8_literal",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -334,7 +454,8 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "display\\s*:\\s*grid|float\\s*:\\s*(left|right)"
+      "pattern": "display\\s*:\\s*grid|float\\s*:\\s*(left|right)",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -349,7 +470,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_no_column_gap",
-      "selector": "custom:check_no_column_gap"
+      "selector": "custom:check_no_column_gap",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -364,7 +486,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_important",
-      "selector": "custom:check_important"
+      "selector": "custom:check_important",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -379,7 +502,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_box_sizing_redundant",
-      "selector": "custom:_check_box_sizing_redundant"
+      "selector": "custom:_check_box_sizing_redundant",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -393,7 +517,12 @@
       "severity": "error",
       "target": "css",
       "type": "forbidden_substring",
-      "pattern": "999px"
+      "pattern": "999px",
+      "priority": 100,
+      "examples": {
+        "bad": "border-radius: 999px;",
+        "good": "border-radius: 2em;"
+      }
     },
     {
       "applies_to": [
@@ -406,7 +535,8 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "\\.[a-z0-9_-]+\\s*\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border"
+      "pattern": "\\.[a-z0-9_-]+\\s*\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -419,7 +549,8 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)"
+      "pattern": "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -433,7 +564,12 @@
       "severity": "error",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "line-height\\s*:\\s*[\\d.]+px"
+      "pattern": "line-height\\s*:\\s*[\\d.]+px",
+      "priority": 100,
+      "examples": {
+        "bad": "line-height: 25.866px;",
+        "good": "line-height: 1.45;"
+      }
     },
     {
       "applies_to": [
@@ -448,7 +584,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_line_height_tidy_ratio",
-      "selector": "custom:_check_line_height_tidy_ratio"
+      "selector": "custom:_check_line_height_tidy_ratio",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -463,7 +600,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_letter_spacing_unit",
-      "selector": "custom:check_letter_spacing_unit"
+      "selector": "custom:check_letter_spacing_unit",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -476,7 +614,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_font_size_base",
-      "selector": "custom:check_font_size_base"
+      "selector": "custom:check_font_size_base",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -488,7 +627,8 @@
       "severity": "warning",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "font-size\\s*:\\s*[\\d.]+rem"
+      "pattern": "font-size\\s*:\\s*[\\d.]+rem",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -503,7 +643,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_landing_unit_mixed_scale",
-      "selector": "custom:_check_landing_unit_mixed_scale"
+      "selector": "custom:_check_landing_unit_mixed_scale",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -518,7 +659,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "_check_font_family_redundant",
-      "selector": "custom:_check_font_family_redundant"
+      "selector": "custom:_check_font_family_redundant",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -532,7 +674,8 @@
       "severity": "warning",
       "target": "css",
       "type": "required_substring",
-      "pattern": "keep-all"
+      "pattern": "keep-all",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -544,7 +687,8 @@
       "severity": "warning",
       "target": "css",
       "type": "required_substring",
-      "pattern": "font-size:clamp("
+      "pattern": "font-size:clamp(",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -559,7 +703,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_root_vars",
-      "selector": "custom:check_root_vars"
+      "selector": "custom:check_root_vars",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -574,7 +719,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "root_var_naming",
-      "selector": "custom:root_var_naming"
+      "selector": "custom:root_var_naming",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -586,7 +732,8 @@
       "severity": "warning",
       "target": "css",
       "type": "required_substring",
-      "pattern": "--padding,--header_h,--width,--point-color-1"
+      "pattern": "--padding,--header_h,--width,--point-color-1",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -600,7 +747,8 @@
       "severity": "error",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "style=\""
+      "pattern": "style=\"",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -614,7 +762,8 @@
       "severity": "warning",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "<div[^>]*>\\s*</div>"
+      "pattern": "<div[^>]*>\\s*</div>",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -628,7 +777,8 @@
       "severity": "warning",
       "target": "html",
       "type": "numeric_range",
-      "pattern": "inner_wrapper<=1"
+      "pattern": "inner_wrapper<=1",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -642,7 +792,8 @@
       "severity": "error",
       "target": "html",
       "type": "regex_must_not_match",
-      "pattern": "<figure|<figcaption|<main\\b|<article\\b"
+      "pattern": "<figure|<figcaption|<main\\b|<article\\b",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -657,7 +808,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_nav_structure",
-      "selector": "custom:check_nav_structure"
+      "selector": "custom:check_nav_structure",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -672,7 +824,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_list_pattern",
-      "selector": "custom:check_list_pattern"
+      "selector": "custom:check_list_pattern",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -687,7 +840,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_img_wrapper",
-      "selector": "custom:check_img_wrapper"
+      "selector": "custom:check_img_wrapper",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -702,7 +856,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "img_alt_concise",
-      "selector": "custom:img_alt_concise"
+      "selector": "custom:img_alt_concise",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -716,7 +871,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_image_naming",
-      "selector": "custom:check_image_naming"
+      "selector": "custom:check_image_naming",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -731,7 +887,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "minimal_aria",
-      "selector": "custom:minimal_aria"
+      "selector": "custom:minimal_aria",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -746,7 +903,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_p_tag_misuse",
-      "selector": "custom:check_p_tag_misuse"
+      "selector": "custom:check_p_tag_misuse",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -761,7 +919,8 @@
       "target": "html",
       "type": "custom",
       "custom_handler": "check_p_tag_misuse",
-      "selector": "custom:check_p_tag_misuse"
+      "selector": "custom:check_p_tag_misuse",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -776,7 +935,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "selector_scoped",
-      "selector": "custom:selector_scoped"
+      "selector": "custom:selector_scoped",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -790,7 +950,8 @@
       "severity": "warning",
       "target": "css",
       "type": "regex_must_not_match",
-      "pattern": "\\.(font|weight|color|size)_"
+      "pattern": "\\.(font|weight|color|size)_",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -805,7 +966,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_excessive_individual_classes",
-      "selector": "custom:check_excessive_individual_classes"
+      "selector": "custom:check_excessive_individual_classes",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -817,7 +979,8 @@
       "severity": "warning",
       "target": "html",
       "type": "required_substring",
-      "pattern": "reset.css"
+      "pattern": "reset.css",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -831,7 +994,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "check_reset_duplicate",
-      "selector": "custom:check_reset_duplicate"
+      "selector": "custom:check_reset_duplicate",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -844,7 +1008,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "mobile_spacing_half",
-      "selector": "custom:mobile_spacing_half"
+      "selector": "custom:mobile_spacing_half",
+      "priority": 300
     },
     {
       "applies_to": [
@@ -856,7 +1021,8 @@
       "severity": "warning",
       "target": "css",
       "type": "required_substring",
-      "pattern": "[data-delay]"
+      "pattern": "[data-delay]",
+      "priority": 200
     },
     {
       "applies_to": [
@@ -872,7 +1038,8 @@
       "target": "css",
       "type": "custom",
       "custom_handler": "enforce_policy1_vertical_margin_bottom",
-      "selector": "custom:enforce_policy1_vertical_margin_bottom"
+      "selector": "custom:enforce_policy1_vertical_margin_bottom",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -888,7 +1055,8 @@
       "target": "spec",
       "type": "custom",
       "custom_handler": "enforce_policy2_constraints_extract_only",
-      "selector": "custom:enforce_policy2_constraints_extract_only"
+      "selector": "custom:enforce_policy2_constraints_extract_only",
+      "priority": 100
     },
     {
       "applies_to": [
@@ -904,8 +1072,28 @@
       "target": "spec",
       "type": "custom",
       "custom_handler": "enforce_policy3_rules_conflict_bypass",
-      "selector": "custom:enforce_policy3_rules_conflict_bypass"
+      "selector": "custom:enforce_policy3_rules_conflict_bypass",
+      "priority": 100
     }
   ],
-  "version": 1
+  "model_json_schema": {
+    "title": "ValidationSchema",
+    "type": "object",
+    "properties": {
+      "version": {},
+      "validation_types": {},
+      "profiles": {},
+      "severities": {},
+      "categories": {},
+      "rules": {}
+    },
+    "required": [
+      "version",
+      "validation_types",
+      "profiles",
+      "severities",
+      "categories",
+      "rules"
+    ]
+  }
 }

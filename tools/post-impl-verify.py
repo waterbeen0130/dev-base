@@ -52,7 +52,7 @@ V2_CATEGORIES = V1_CATEGORIES + (
 DRIFT_SOURCE_FILES = (
     "rules/rules.yaml",
     "rules/validation_schema.json",
-    "tools/validate-semantic.py",
+    "tools/figma-validate.py",
 )
 DRIFT_CACHE_RELATIVE_PATH = Path(".gran-maestro/state/drift-cache.json")
 

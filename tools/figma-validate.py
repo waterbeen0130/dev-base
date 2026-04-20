@@ -17,7 +17,13 @@ from dataclasses import dataclass, field
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Callable, Iterable
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from rules.models import RuleDefinition, load_rules
 
 
 if __name__ not in sys.modules:
@@ -227,6 +233,27 @@ class FrameMatchContext:
     blocked_rule_keys: tuple[tuple[int, tuple[str, ...]], ...] = ()
 
 
+@dataclass(frozen=True)
+class RuleHandlerResult:
+    rule_id: str
+    severity: str
+    passed: bool
+    skipped: bool = False
+    message: str = ""
+
+
+@dataclass(frozen=True)
+class RuleDispatchContext:
+    spec: dict[str, Any] | None = None
+    spec_path: str | None = None
+    text_nodes: list[dict] | None = None
+    frame_nodes: list[dict] | None = None
+    interactions: list[dict] | None = None
+    text_candidates: list[ElementMatch] | None = None
+    css_rules: list[CSSRule] | None = None
+    root: DOMElement | None = None
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate HTML/CSS output against normalized Figma section spec")
     parser.add_argument("--spec", required=False, help="Path to section_spec.json")
@@ -255,6 +282,8 @@ def parse_schema_branch(schema_version: object) -> str:
 
 
 def print_version_info() -> None:
+    total = len(V1_CATEGORIES) + len(V2_DETAIL_CATEGORIES)
+    print(f"category counts: v1={len(V1_CATEGORIES)}, v2={len(V2_DETAIL_CATEGORIES)}, total={total}")
     print("v1 categories:")
     for name in V1_CATEGORIES:
         print(f"- {name}")
@@ -1950,6 +1979,60 @@ def enforce_policy2_constraints_extract_only(frame: dict) -> bool:
 
 def enforce_policy3_rules_conflict_bypass(node: dict, rule_id: str, seen: set[tuple[str, str]]) -> bool:
     return should_bypass_rule(node, rule_id, seen)
+
+
+def _rule_severity(rule: RuleDefinition) -> str:
+    severity = rule.severity
+    return severity.value if hasattr(severity, "value") else str(severity)
+
+
+def _rule_handler_name(rule: RuleDefinition) -> str:
+    return rule.custom_handler or rule.id
+
+
+def _stub_handler(rule: RuleDefinition, _context: RuleDispatchContext | None = None) -> RuleHandlerResult:
+    handler_name = _rule_handler_name(rule)
+    return RuleHandlerResult(
+        rule_id=rule.id,
+        severity="warning",
+        passed=False,
+        skipped=False,
+        message=f"[STUB-PASS BLOCKED] handler {handler_name} not implemented — treating as MAJOR FAIL",
+    )
+
+
+def _figma_policy_handler(rule: RuleDefinition, _context: RuleDispatchContext | None = None) -> RuleHandlerResult:
+    return RuleHandlerResult(
+        rule_id=rule.id,
+        severity=_rule_severity(rule),
+        passed=True,
+        skipped=True,
+        message="validated_by_figma_validate_runtime",
+    )
+
+
+PYDANTIC_POLICY_HANDLERS: dict[str, Callable[[RuleDefinition, RuleDispatchContext | None], RuleHandlerResult]] = {
+    "vertical_frame_itemspacing_uses_margin_bottom": _figma_policy_handler,
+    "no_constraints_to_position_absolute_mapping": _figma_policy_handler,
+    "figma_rules_conflict_uses_meta_marker": _figma_policy_handler,
+}
+
+
+def build_rule_handler_registry(
+    rules: Iterable[RuleDefinition] | None = None,
+) -> dict[str, Callable[[RuleDefinition, RuleDispatchContext | None], RuleHandlerResult]]:
+    source_rules = list(rules) if rules is not None else load_rules()
+    registry = {rule.id: _stub_handler for rule in source_rules}
+    registry.update(PYDANTIC_POLICY_HANDLERS)
+    return registry
+
+
+RULE_HANDLER_REGISTRY = build_rule_handler_registry()
+
+
+def dispatch_rule_handler(rule: RuleDefinition, context: RuleDispatchContext | None = None) -> RuleHandlerResult:
+    handler = RULE_HANDLER_REGISTRY.get(rule.id, _stub_handler)
+    return handler(rule, context)
 
 
 def validate_text_nodes(
