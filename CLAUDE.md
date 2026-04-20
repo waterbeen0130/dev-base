@@ -231,6 +231,34 @@ python3 D:/dev-base/tools/validate-semantic.py --html {output.html} --css css/co
 
 ---
 
+## 구조 불변 원칙 (PLN-010 REQ-040 — CRITICAL)
+
+> **실패 사례 (목포플레이파크 REQ-039/041)**: validator 통과만 목표로 wrapper 를 임의 삭제하여 Figma DOM 계층이 깨졌고, 최종 시각 일치도가 오히려 낮아짐.
+
+AI 구현자는 validator 합격 여부와 **독립적으로** 아래 4 원칙을 항상 준수한다:
+
+1. **text byte-exact**: `spec.text_nodes[].characters` 는 NBSP(`\xa0`), line separator(`\u2028`), 연속 공백, 줄바꿈(`\n`) 까지 **그대로 복사**. 정리/축약/정규화 금지. `&nbsp;` 또는 유니코드 원본을 HTML 에 반영.
+2. **DOM 계층 보존**: `spec.frame_nodes` 의 부모-자식 관계를 HTML 요소 계층으로 매핑. "의미 없어 보이는 wrapper" 도 Figma 에 있으면 유지. `max_dom_depth` 초과 시에만 최소 축소 + 근거 주석.
+3. **수치 정확성**: fills hex, frame padding, itemSpacing 을 소수점까지 CSS 에 반영. 100px 이상은 `clamp()` 필수.
+4. **이미지 원본만 사용**: `asset_manifest.json` 등록 이미지만 `<img src>` 에 사용. AI "비슷한 이미지" 합성 절대 금지 → `asset_manifest_consistency` CRITICAL.
+
+### 검증 (4개 모두 통과 필수)
+
+```bash
+# 합본 검증 (REQ-040)
+python3 tools/figma-validate.py --spec-dir extracted/ --html output.html --css output.css
+# 코드 컨벤션
+python3 tools/validate-semantic.py --html output.html --css output.css --profile {basic|landing|all}
+# DOM 구조 해시 (Phase C)
+python3 tools/structural-diff.py --html output.html --dump-hash
+# 종합 후처리
+python3 tools/post-impl-verify.py --spec-dir extracted/ --html output.html --css output.css --profile {basic|landing|all}
+```
+
+통과 조건: **CRITICAL 0건 + validate-semantic ALL PASS + exit 0**.
+
+---
+
 ## PLN-004 Figma 워크플로우 (CRITICAL — 반드시 이 순서 준수)
 
 > **raw Figma API / Figma MCP 응답을 직접 해석해 HTML/CSS를 작성하는 것을 금지한다.**
