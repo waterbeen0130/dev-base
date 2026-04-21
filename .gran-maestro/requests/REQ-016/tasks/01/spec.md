@@ -86,6 +86,16 @@
 - **Then**: 새 `A_Main_spec.json` / `A_Main_spec.md`가 생성되고, AC-002~004 불변식을 다시 충족한다.
 - **Test**: 재생성 후 `python3 tests/test_figma_section_spec.py --spec "/mnt/d/위링/2026-04-15 목포플레이파크/extracted/A_Main_spec.json"` → exit 0.
 
+## §3.2 Test Scenarios (Pre-Impl)
+
+- AC-001: `python3 -c "import json; d=json.load(open('tests/fixtures/figma_mokpo_a_main.json'))['nodes']['134:6708']['document']; assert d['id']=='134:6708' and isinstance(d.get('children'), list); print('OK')"`
+- AC-002: `python3 tests/test_figma_section_spec.py` (characters == join(character_segments) 불변식 + root-cause.md 작성)
+- AC-003: `python3 tests/test_figma_section_spec.py` (raw↔spec 필드 교차 매칭, "RAW↔SPEC match: N/N OK" 출력)
+- AC-004: `python3 tests/test_figma_section_spec.py` (instance child TEXT override 검증 assertion)
+- AC-005: `python3 tests/test_figma_section_spec.py` (fixture 회귀 통합 실행, exit 0)
+- AC-006: `python3 tests/test_figma_section_spec.py` (`test_backward_compatible_schema` 서브테스트) 또는 `python3 tests/test_schema_compat.py`
+- AC-007: `python3 tests/test_figma_section_spec.py --spec "/mnt/d/위링/2026-04-15 목포플레이파크/extracted/A_Main_spec.json"` (목포 산출물 재생성 후 회귀)
+
 ## §3.3 PAC Mapping
 
 | PAC ID | Grade | Mapped Spec AC IDs | Coverage |
