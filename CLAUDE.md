@@ -240,7 +240,7 @@ AI 구현자는 validator 합격 여부와 **독립적으로** 아래 4 원칙�
 1. **text byte-exact**: `spec.text_nodes[].characters` 는 NBSP(`\xa0`), line separator(`\u2028`), 연속 공백, 줄바꿈(`\n`) 까지 **그대로 복사**. 정리/축약/정규화 금지. `&nbsp;` 또는 유니코드 원본을 HTML 에 반영.
 2. **DOM 계층 보존**: `spec.frame_nodes` 의 부모-자식 관계를 HTML 요소 계층으로 매핑. "의미 없어 보이는 wrapper" 도 Figma 에 있으면 유지. `max_dom_depth` 초과 시에만 최소 축소 + 근거 주석.
 3. **수치 정확성**: fills hex, frame padding, itemSpacing 을 소수점까지 CSS 에 반영. 100px 이상은 `clamp()` 필수.
-4. **이미지 원본만 사용**: `asset_manifest.json` 등록 이미지만 `<img src>` 에 사용. AI "비슷한 이미지" 합성 절대 금지 → `asset_manifest_consistency` CRITICAL.
+4. **이미지 원본만 사용**: per-section `{section}_asset_manifest.json` 에 등록된 이미지만 `<img src>` 에 사용. AI "비슷한 이미지" 합성 절대 금지 → `asset_manifest_consistency` CRITICAL.
 
 ### 검증 (4개 모두 통과 필수)
 
