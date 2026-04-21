@@ -1,0 +1,10 @@
+[
+  { "id": "PAC-1", "text": "figma-validate.py 가 CRITICAL 위반 존재 시 exit 1 반환", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "validate-semantic.py 가 CRITICAL 위반 존재 시 exit 1 반환", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "validate-semantic.py 를 dev-base 외 디렉토리에서 호출해도 rules/rules.yaml 정상 로드", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "단위 테스트: CRITICAL 있는 fixture 에서 두 validator 가 exit 1, 없는 fixture 에서 exit 0", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "copy-assets.py (또는 post-impl-verify 확장) 가 asset_manifest 기반으로 output/img/ 자동 복사", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "퍼블리싱 브리프 템플릿이 50줄 이내로 축소되고 핵심 규칙이 체크리스트 형식", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-7", "text": "mst.py resolve-model gemini 가 429 오류 시 fallback 모델 반환", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-8", "text": "REQ-046 디에스솔루션 output 재검증 시 figma-validate exit 1 정상 반환 (거짓 PASS 감지)", "grade": "SHOULD", "tags": ["TIER-B"] }
+]
