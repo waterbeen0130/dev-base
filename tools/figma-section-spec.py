@@ -19,13 +19,17 @@ import os
 import re
 import sys
 import tempfile
+import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from urllib import error, parse, request
 
+import requests
+
 
 FIGMA_API_BASE = "https://api.figma.com"
+MAX_ASSET_DOWNLOAD_BYTES = 10 * 1024 * 1024
 SCHEMA_VERSION_V2 = "2.0.0"
 V2_TOP_LEVEL_NULL_KEYS = ("_extra",)
 V2_SECTION_NULL_KEYS = ("_extra",)
@@ -89,6 +93,12 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="Emit <name>_asset_manifest.json alongside spec output",
     )
+    parser.add_argument(
+        "--download-assets",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Download SVG/PNG asset files and record local_path/format/hash in the asset manifest",
+    )
     args = parser.parse_args()
 
     if args.from_spec:
@@ -104,6 +114,10 @@ def parse_args() -> argparse.Namespace:
 def fail(message: str, code: int = 1) -> None:
     print(message, file=sys.stderr)
     raise SystemExit(code)
+
+
+def warn(message: str) -> None:
+    print(f"warning: {message}", file=sys.stderr)
 
 
 def require_figma_token() -> str:
@@ -719,7 +733,208 @@ def sha256_hex(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def build_asset_manifest(payload: dict) -> dict:
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def safe_asset_filename(value: str) -> str:
+    return value.replace(":", "_").replace("/", "_").replace("\\", "_")
+
+
+def atomic_write_bytes(path: str | Path, data: bytes) -> None:
+    path = str(path)
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
+    fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=directory or ".")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+def _asset_download_key(asset: dict) -> tuple[str, str] | None:
+    kind = asset.get("kind")
+    ref = asset.get("ref")
+    if isinstance(kind, str) and kind and isinstance(ref, str) and ref:
+        return (kind, ref)
+    return None
+
+
+def _asset_api_request(
+    file_key: str,
+    token: str,
+    node_ids: list[str],
+    export_format: str,
+) -> dict[str, str | None]:
+    if not node_ids:
+        return {}
+
+    url = f"{FIGMA_API_BASE}/v1/images/{parse.quote(file_key)}"
+    params = {"ids": ",".join(node_ids), "format": export_format, "scale": "1"}
+    headers = {"X-Figma-Token": token, "Accept": "application/json"}
+    delays = (1, 2, 4)
+
+    for attempt in range(len(delays) + 1):
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=30)
+        except requests.RequestException as exc:
+            warn(f"Figma images API request failed for {export_format}: {exc}")
+            return {}
+
+        if response.status_code == 429 and attempt < len(delays):
+            time.sleep(delays[attempt])
+            continue
+
+        if response.status_code != 200:
+            warn(f"Figma images API request failed for {export_format} ({response.status_code}); skipping assets")
+            return {}
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            warn(f"Figma images API returned invalid JSON for {export_format}: {exc}")
+            return {}
+
+        images = payload.get("images")
+        if not isinstance(images, dict):
+            warn(f"Figma images API response missing images map for {export_format}; skipping assets")
+            return {}
+
+        result: dict[str, str | None] = {}
+        for node_id, asset_url in images.items():
+            if isinstance(node_id, str):
+                result[node_id] = asset_url if isinstance(asset_url, str) and asset_url else None
+        return result
+
+    warn(f"Figma images API rate limited for {export_format}; skipping assets")
+    return {}
+
+
+def _download_asset_url(asset_url: str, label: str) -> bytes | None:
+    try:
+        response = requests.get(asset_url, timeout=60, stream=True)
+    except requests.RequestException as exc:
+        warn(f"Asset download failed for {label}: {exc}")
+        return None
+
+    if response.status_code != 200:
+        warn(f"Asset download failed for {label} ({response.status_code})")
+        return None
+
+    content_length = response.headers.get("Content-Length") if hasattr(response, "headers") else None
+    if isinstance(content_length, str):
+        try:
+            if int(content_length) > MAX_ASSET_DOWNLOAD_BYTES:
+                warn(f"Asset download skipped for {label}: file exceeds 10MB")
+                return None
+        except ValueError:
+            pass
+
+    chunks: list[bytes] = []
+    total = 0
+    try:
+        iterator = response.iter_content(chunk_size=8192)
+    except AttributeError:
+        iterator = (getattr(response, "content", b""),)
+
+    for chunk in iterator:
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > MAX_ASSET_DOWNLOAD_BYTES:
+            warn(f"Asset download skipped for {label}: file exceeds 10MB")
+            return None
+        chunks.append(chunk)
+
+    data = b"".join(chunks)
+    if not data:
+        warn(f"Asset download skipped for {label}: empty response")
+        return None
+    return data
+
+
+def download_assets(
+    assets: list[dict],
+    file_key: str,
+    token: str,
+    output_dir: str | Path,
+    section_name: str,
+) -> dict[tuple[str, str], dict[str, str]]:
+    """Download manifest assets via Figma images API and return manifest fields."""
+    output_root = Path(output_dir)
+    downloads: dict[tuple[str, str], dict[str, str]] = {}
+    request_groups = {
+        "vector": {
+            "format": "svg",
+            "folder": "vectors",
+            "node_ids": [],
+            "by_node_id": defaultdict(list),
+        },
+        "image": {
+            "format": "png",
+            "folder": "images",
+            "node_ids": [],
+            "by_node_id": defaultdict(list),
+        },
+    }
+
+    for asset in assets:
+        key = _asset_download_key(asset)
+        if key is None:
+            continue
+        kind, _ref = key
+        group = request_groups.get(kind)
+        if group is None:
+            continue
+        spec_node_id = asset.get("spec_node_id")
+        if not isinstance(spec_node_id, str) or not spec_node_id:
+            continue
+        group["node_ids"].append(spec_node_id)
+        group["by_node_id"][spec_node_id].append(asset)
+
+    for kind, group in request_groups.items():
+        node_ids = sorted(set(group["node_ids"]))
+        api_images = _asset_api_request(file_key, token, node_ids, group["format"])
+        for node_id in node_ids:
+            assets_for_node = group["by_node_id"].get(node_id, [])
+            if not isinstance(assets_for_node, list):
+                continue
+            asset_url = api_images.get(node_id)
+            if not asset_url:
+                warn(f"Figma images API returned no URL for {kind} node {node_id}; skipping asset")
+                continue
+
+            data = _download_asset_url(asset_url, node_id)
+            if data is None:
+                continue
+
+            for asset in assets_for_node:
+                key = _asset_download_key(asset)
+                if key is None:
+                    continue
+                ref = asset["ref"]
+                filename = f"{safe_asset_filename(ref)}.{group['format']}"
+                local_path = Path(section_name) / group["folder"] / filename
+                output_path = output_root / local_path
+                atomic_write_bytes(output_path, data)
+                downloads[key] = {
+                    "local_path": local_path.as_posix(),
+                    "format": group["format"],
+                    "hash": sha256_bytes(data),
+                }
+
+    return downloads
+
+
+def build_asset_manifest(
+    payload: dict,
+    downloaded_assets: dict[tuple[str, str], dict[str, str]] | None = None,
+) -> dict:
     assets: list[dict[str, str]] = []
     image_refs_seen: set[str] = set()
     vector_refs_seen: set[str] = set()
@@ -742,14 +957,15 @@ def build_asset_manifest(payload: dict) -> dict:
                 if not isinstance(image_ref, str) or not image_ref or image_ref in image_refs_seen:
                     continue
                 image_refs_seen.add(image_ref)
-                assets.append(
-                    {
-                        "ref": image_ref,
-                        "kind": "image",
-                        "hash": image_ref,
-                        "spec_node_id": node_id,
-                    }
-                )
+                asset = {
+                    "ref": image_ref,
+                    "kind": "image",
+                    "hash": image_ref,
+                    "spec_node_id": node_id,
+                }
+                if downloaded_assets is not None:
+                    asset.update(downloaded_assets.get(("image", image_ref), {}))
+                assets.append(asset)
 
     vector_nodes = payload.get("vector_nodes")
     if isinstance(vector_nodes, list):
@@ -761,14 +977,15 @@ def build_asset_manifest(payload: dict) -> dict:
                 continue
             vector_refs_seen.add(node_id)
             path_content = vector_path_content(vector_node)
-            assets.append(
-                {
-                    "ref": node_id,
-                    "kind": "vector",
-                    "hash": sha256_hex(path_content),
-                    "spec_node_id": node_id,
-                }
-            )
+            asset = {
+                "ref": node_id,
+                "kind": "vector",
+                "hash": sha256_hex(path_content),
+                "spec_node_id": node_id,
+            }
+            if downloaded_assets is not None:
+                asset.update(downloaded_assets.get(("vector", node_id), {}))
+            assets.append(asset)
 
     assets.sort(key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]))
     return {"assets": assets}
@@ -1899,6 +2116,18 @@ def main() -> int:
     manifest_path = os.path.join(args.output, asset_manifest_name(name))
     if args.emit_asset_manifest:
         manifest_payload = build_asset_manifest(payload)
+        if args.download_assets:
+            if args.from_spec:
+                warn("--download-assets requires live Figma API input; skipping asset downloads for --from-spec")
+            else:
+                downloaded_assets = download_assets(
+                    manifest_payload["assets"],
+                    args.file_key,
+                    token,
+                    args.output,
+                    name,
+                )
+                manifest_payload = build_asset_manifest(payload, downloaded_assets)
         atomic_write_json(manifest_path, manifest_payload, sort_keys=True)
 
     print(json_path)
