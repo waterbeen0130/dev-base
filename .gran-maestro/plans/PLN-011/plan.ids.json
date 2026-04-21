@@ -1,0 +1,12 @@
+[
+  { "id": "PAC-1", "text": "D:/위링/2026-04-21 디에스솔루션/ 에 init-project.py --publishing 기반 초기 구조가 생성되어 있다 (.claude/settings.local.json, .gran-maestro/config.json, CLAUDE.md 등)", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "extracted/ 디렉토리에 MAIN 페이지의 모든 섹션 {section}_spec.md + {section}_spec.json 파일이 존재한다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "asset_manifest.json 이 생성되고 모든 이미지 fills 가 매핑되어 있다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "output/a_main/index.html + output/a_main/common.css 가 생성되고 spec 의 text_nodes[].characters 가 byte-exact 로 HTML 에 반영되어 있다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "figma-validate.py 가 모든 섹션에 대해 exit 0", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "validate-semantic.py --profile basic 이 CRITICAL 0건으로 exit 0", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-7", "text": "post-impl-verify.py --converge 가 exit 0", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-8", "text": "structural-diff.py --dump-hash 가 spec DOM 계층과 일치", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-9", "text": "실행 로그(running.log)와 수렴 루프 반복 횟수가 REQ 폴더에 기록되어 있다", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-10", "text": "드릴 런에서 발견된 파이프라인 이슈 목록이 리포트 형식으로 요약되어 있다", "grade": "SHOULD", "tags": ["TIER-B"] }
+]

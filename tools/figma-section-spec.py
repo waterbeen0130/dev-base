@@ -77,6 +77,7 @@ class ExtractionResult:
     vector_nodes: list[dict]
     interactions: list[dict]
     image_refs: set[str]
+    excluded_nodes: list[dict] | None = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -1019,9 +1020,23 @@ def walk_and_extract(root: dict) -> ExtractionResult:
     vector_nodes: list[dict] = []
     interactions: list[dict] = []
     image_refs: set[str] = set()
+    excluded_nodes: list[dict] = []
 
     def walk(node: dict, *, parent_id=None) -> None:
         if not isinstance(node, dict):
+            return
+
+        # AC-001: skip nodes flagged visible:false and record them for audit
+        if node.get("visible") is False:
+            excluded_nodes.append(
+                {
+                    "node_id": node.get("id"),
+                    "name": node.get("name"),
+                    "type": node.get("type"),
+                    "parent_id": parent_id,
+                    "reason": "visible:false",
+                }
+            )
             return
 
         interactions.extend(extract_url_interactions(node))
@@ -1055,10 +1070,23 @@ def walk_and_extract(root: dict) -> ExtractionResult:
         vector_nodes=vector_nodes,
         interactions=interactions,
         image_refs=image_refs,
+        excluded_nodes=excluded_nodes,
     )
 
 
 def fetch_node_document(file_key: str, node_id: str, token: str) -> dict:
+    doc, _ = fetch_node_document_with_meta(file_key, node_id, token)
+    return doc
+
+
+def fetch_node_document_with_meta(file_key: str, node_id: str, token: str) -> tuple[dict, dict]:
+    """Fetch node document along with file-level metadata (e.g. lastModified).
+
+    Returns (document, meta) where meta contains keys like ``last_modified`` when
+    the Figma API exposes them. Meta values may be empty strings when the API
+    payload lacks the field.
+    """
+
     query = parse.urlencode({"ids": node_id, "depth": 8})
     data = api_get_json(f"/v1/files/{parse.quote(file_key)}/nodes?{query}", token)
 
@@ -1081,7 +1109,14 @@ def fetch_node_document(file_key: str, node_id: str, token: str) -> dict:
     if not isinstance(doc, dict):
         fail(f"Figma response missing document for node: {node_id}")
 
-    return doc
+    # AC-002: surface the file-level lastModified timestamp to the caller so it
+    # can be recorded in spec.json for freshness comparisons.
+    last_modified = data.get("lastModified")
+    if not isinstance(last_modified, str):
+        last_modified = ""
+    meta = {"last_modified": last_modified.strip()}
+
+    return doc, meta
 
 
 def fetch_images_map(file_key: str, token: str, image_refs: set[str]) -> dict[str, str]:
@@ -1224,6 +1259,41 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
     return payload
 
 
+def read_preserved_spec_fields(path_str: str) -> dict:
+    """Read fields that must survive re-extraction from an existing spec.json.
+
+    Used to preserve user-authored metadata like ``allow_missing_selectors``
+    (AC-003) when re-running the extractor on the same section. Returns an empty
+    dict when the file does not exist or fails to parse — this is a best-effort
+    read and must never fail the extraction pipeline.
+    """
+
+    preserved: dict = {}
+    path = Path(path_str)
+    if not path.exists():
+        return preserved
+    try:
+        raw = path.read_text(encoding="utf-8")
+        existing = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        return preserved
+    if not isinstance(existing, dict):
+        return preserved
+
+    allow_missing = existing.get("allow_missing_selectors")
+    if isinstance(allow_missing, list):
+        cleaned = [item for item in allow_missing if isinstance(item, str)]
+        preserved["allow_missing_selectors"] = cleaned
+
+    # Retain the last-known freshness stamp as a fallback when the new API
+    # response omits it (AC-002 best-effort preservation).
+    previous_stamp = existing.get("_source_last_modified")
+    if isinstance(previous_stamp, str) and previous_stamp.strip():
+        preserved["_source_last_modified_previous"] = previous_stamp.strip()
+
+    return preserved
+
+
 def load_spec_payload(path_str: str) -> dict:
     path = Path(path_str)
     try:
@@ -1246,6 +1316,9 @@ def load_spec_payload(path_str: str) -> dict:
 def extraction_result_from_payload(payload: dict) -> ExtractionResult:
     images = payload.get("images")
     image_refs = set(images.keys()) if isinstance(images, dict) else set()
+    excluded_nodes = payload.get("excluded_nodes")
+    if not isinstance(excluded_nodes, list):
+        excluded_nodes = []
     return ExtractionResult(
         section=payload.get("section", {}),
         text_nodes=payload.get("text_nodes", []),
@@ -1253,6 +1326,7 @@ def extraction_result_from_payload(payload: dict) -> ExtractionResult:
         vector_nodes=payload.get("vector_nodes", []),
         interactions=payload.get("interactions", []),
         image_refs=image_refs,
+        excluded_nodes=excluded_nodes,
     )
 
 
@@ -2068,6 +2142,8 @@ def default_name(node_id: str) -> str:
 
 def main() -> int:
     args = parse_args()
+    file_last_modified = ""
+    extraction_excluded: list[dict] = []
     if args.from_spec:
         payload = load_spec_payload(args.from_spec)
         payload["schema_version"] = SCHEMA_VERSION_V2
@@ -2081,13 +2157,24 @@ def main() -> int:
         payload = preprocess_payload(payload)
         payload["component_groups"] = extract_component_groups(payload)
         extracted = extraction_result_from_payload(payload)
+        # Carry over excluded_nodes already present in the source spec (from a
+        # previous live extraction). New exclusions are only produced by the
+        # live fetch path.
+        existing_excluded = payload.get("excluded_nodes")
+        if isinstance(existing_excluded, list):
+            extraction_excluded = [item for item in existing_excluded if isinstance(item, dict)]
+        existing_stamp = payload.get("_source_last_modified")
+        if isinstance(existing_stamp, str):
+            file_last_modified = existing_stamp.strip()
         source_node_id = payload.get("section", {}).get("id")
         node_id = source_node_id if isinstance(source_node_id, str) and source_node_id.strip() else "from-spec"
         default_output_name = default_name_from_spec_path(args.from_spec)
     else:
         token = require_figma_token()
-        root = fetch_node_document(args.file_key, args.node_id, token)
+        root, meta = fetch_node_document_with_meta(args.file_key, args.node_id, token)
+        file_last_modified = meta.get("last_modified", "") or ""
         extracted = walk_and_extract(root)
+        extraction_excluded = list(extracted.excluded_nodes or [])
         images = fetch_images_map(args.file_key, token, extracted.image_refs)
         payload = {
             "schema_version": SCHEMA_VERSION_V2,
@@ -2109,6 +2196,28 @@ def main() -> int:
     os.makedirs(args.output, exist_ok=True)
     json_path = os.path.join(args.output, f"{name}_spec.json")
     md_path = os.path.join(args.output, f"{name}_spec.md")
+
+    # AC-003: preserve allow_missing_selectors authored by humans in an existing
+    # spec.json at the same output location (best-effort — never fails).
+    preserved_fields = read_preserved_spec_fields(json_path)
+    allow_missing_selectors = preserved_fields.get("allow_missing_selectors")
+    if allow_missing_selectors is None:
+        existing_allow = payload.get("allow_missing_selectors")
+        if isinstance(existing_allow, list):
+            allow_missing_selectors = [item for item in existing_allow if isinstance(item, str)]
+    if allow_missing_selectors is None:
+        allow_missing_selectors = []
+    payload["allow_missing_selectors"] = allow_missing_selectors
+
+    # AC-002: record freshness stamp (fall back to last-known value when the new
+    # API response omits it, so downstream tooling always has a baseline).
+    if not file_last_modified:
+        file_last_modified = preserved_fields.get("_source_last_modified_previous", "") or ""
+    payload["_source_last_modified"] = file_last_modified
+
+    # AC-001: expose the list of nodes that were dropped for visibility reasons
+    # so validators can explain missing selectors without guessing.
+    payload["excluded_nodes"] = extraction_excluded
 
     atomic_write_json(json_path, payload)
     atomic_write_text(md_path, render_markdown(payload, node_id))

@@ -1,9 +1,0 @@
-=== 검증 결과: 2건 위반 ===
-CRITICAL: 0 | MAJOR: 2 | MINOR: 0
-
-[MAJOR] page_prefix_required — body class missing for page prefix rule ()
-[MAJOR] page_filename_class_prefix_match — class prefix mismatch: expected 'index_*', got 'hero' (/mnt/c/Users/water/Downloads/260410_모제림_비절개랜딩/html/index.html)
-
-(skipped custom/enum checks: 16)
-
-⚠️  MAJOR 위반이 있습니다. 수정을 권장합니다.

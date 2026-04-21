@@ -1,0 +1,25 @@
+{
+  "id": "REQ-043",
+  "title": "디에스솔루션 MAIN 페이지 end-to-end 파이프라인 드릴 런 + 검증",
+  "original_request": "현재 보완한 이 폴더 내 로직으로 피그마 추출을 해보고 결과에 대해 검증. FIGMA_TOKEN=위링토큰. URL: https://www.figma.com/design/JLCP6dWG63kJVBlND7bVZl/%EB%94%94%EC%97%90%EC%8A%A4%EC%86%94%EB%A3%A8%EC%85%98?node-id=130-10972&t=duFZ3WAEyIXwjsgh-1 — 페이지 📌Main_Sub (260417) 내 MAIN 페이지 추출.",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-21T04:26:52.000Z",
+  "completed_at": "2026-04-21T04:45:00.000Z",
+  "auto_approve": true,
+  "completion_note": "드릴 런 목적 달성 — spec 생성까지 완료, 파이프라인 갭 (asset export 미구현) 발견 후 gemini dispatch 중단. drill-report.md 참조",
+  "source_plan": "PLN-011",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "디에스솔루션 MAIN 페이지 HTML/CSS 구현 (spec sheet 기반)",
+      "status": "pending",
+      "agent": "gemini-dev",
+      "spec": "tasks/01/spec.md",
+      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005", "AC-006", "AC-007", "AC-008", "AC-009", "AC-010"]
+    }
+  ],
+  "dependencies": { "blockedBy": [], "relatedTo": ["PLN-009", "PLN-010"], "blocks": [] },
+  "stitch_screens": []
+}

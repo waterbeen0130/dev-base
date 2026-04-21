@@ -1,0 +1,11 @@
+[
+  { "id": "PAC-1", "text": "figma-section-spec.py --download-assets 실행 시 VECTOR 노드에 대해 Figma images API 로 SVG 파일이 extracted/{section}/vectors/{node_id_safe}.svg 에 저장된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-2", "text": "같은 플래그 사용 시 IMAGE 타입 fills 에 대해 PNG 파일이 extracted/{section}/images/{image_ref}.png 에 저장된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-3", "text": "{section}_asset_manifest.json 의 각 asset 항목에 local_path + 실제 SHA-256 hash + format 필드가 기록된다", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-4", "text": "--download-assets 미지정 시 기존 동작이 그대로 유지된다 (기존 spec 파일 회귀 테스트 통과)", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-5", "text": "init-project.py 가 .gran-maestro/ 미존재 시 자동 생성하고, --publishing 실패 시 exit 1", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-6", "text": "figma-validate.py 의 asset_manifest_consistency 검증이 local_path 필드 기반으로 동작 (하위 호환 fallback 포함)", "grade": "MUST", "tags": ["TIER-A"] },
+  { "id": "PAC-7", "text": "CLAUDE.md 의 통합 asset_manifest.json 언급이 제거되고 per-section 구조로 명시됨", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-8", "text": "디에스솔루션 MAIN REQ-043 재시도가 4종 게이트 전부 exit 0 통과", "grade": "SHOULD", "tags": ["TIER-B"] },
+  { "id": "PAC-9", "text": "실행 로그(running.log)에 다운로드 대상 수 + 소요 시간이 기록된다", "grade": "SHOULD", "tags": ["TIER-B"] }
+]

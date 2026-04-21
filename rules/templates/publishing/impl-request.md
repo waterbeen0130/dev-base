@@ -25,10 +25,67 @@
 
 ## 규칙
 
+> **외주 에이전트는 `D:/dev-base/rules/` 폴더 직접 접근이 불가하므로, 아래 규칙을 인라인 고정 텍스트로 주입한다.**
+> common.md / gemini.md 핵심 규칙을 발췌한 것이며, `brief-checksum.py`가 본 섹션 존재 여부를 자동 검증한다.
+
+### 작업 범위 규칙
+
 - spec §2 범위 외 파일 수정 금지
 - 추가 기능/리팩토링/스타일 변경 금지
 - git commit 금지 (PM이 직접 커밋)
 - 완료 전 수락 조건 self-check 필수
+
+### CSS 핵심 규칙
+
+- 각 CSS 셀렉터 규칙은 **한 줄로** 작성한다 (여러 줄 펼침 금지) — `.btn{color:#fff;padding:10px}`
+- 같은 셀렉터를 중복 선언하지 않는다 — 하나로 합쳐 한 줄에 선언
+- 미디어쿼리 내부 규칙은 줄바꿈으로 분리하되 들여쓰기 없이 컬럼 0에서 시작
+- 색상은 **hex 전용** (`#fff`, `#090944`) — `rgb()` / `hsl()` 금지, 투명도 필요 시만 `rgba()`
+- 레이아웃은 **flexbox 전용** — CSS Grid / float 금지
+- `line-height`는 **무단위 비율만** 사용 (`1.3`, `1.45`) — `25.866px` 같은 computed px 금지
+- `letter-spacing`은 **em 단위 기본** (`-0.025em`) — px 금지 (2px 이하 미세 조정 예외)
+- `border-radius`는 원형 `50%` / pill `2em` — `999px` 금지
+- padding/margin/gap은 **고정 px**, 100px 이상만 `clamp()` 허용 — 100px 미만 clamp 금지
+- `calc()`, `vw` 단독 사용 금지 (clamp 내부에서만 허용)
+- `!important` 금지 (유틸리티 예외)
+- 클래스 네이밍은 **snake_case 전용**, `{페이지}_{역할}` 프리픽스 패턴 (예: `mp_form`, `greeting_list`)
+- `sec_1`, `section_01`, `box1` 같은 범용 클래스명 금지
+- 유틸리티 클래스(`.font_serif`, `.weight_bold`) 금지 — 부모 셀렉터에서 직접 처리
+- 한국어 텍스트 단락/헤딩에 `word-break: keep-all` 적용
+- `:root` 변수는 줄당 하나씩, `--width` / `--padding` / `--point-color-N` 패턴 사용
+- 섹션 폭 공식 준수: `--width = Figma content + 40`, `--padding = 20px`, `.cont` 래퍼에서만 max-width 사용
+
+### HTML 핵심 규칙
+
+- `<figure>`, `<figcaption>`, `<main>`, `<article>` 태그 **사용 금지** — `<div class="img_area">` + `<span>` 사용
+- 인라인 `style` 속성 금지
+- 빈 `<div>` 금지, 내부 wrapper div는 최대 1개 (DOM 최대 깊이 5단계)
+- 모든 이미지에 짧은 `alt` 필수 (한국어 문장 전체 금지)
+- `<nav>` 안에는 `ul>li>a` 구조 강제 (직접 `<a>` 나열 금지)
+- `<p>` 태그는 다음 중 하나 충족 시에만 사용: `\n` 포함 / 95자 초과 / 종결어 반복 — 짧은 라벨은 `<span>`
+- 모든 요소에 개별 클래스 부여 금지 — 부모+태그 선택자(`.parent h2`, `.parent li a`) 우선
+- header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스 금지
+- HTML 파일명은 의미 있는 영문 snake_case (메인은 `index.html`) — `page_1.html` / `sub_01.html` 금지
+- 파일명 = CSS 프리픽스 (예: `greeting.html` → `greeting_`)
+
+### Figma MCP 값 사용 규칙
+
+- Figma 작업은 `figma-section-spec.py`로 생성된 `extracted/*_spec.md` / `*_spec.json`만 참조
+- CSS 값은 spec 추출값만 사용 — "그럴듯한"/"합리적인" 추측값 사용 금지
+- raw Figma API / MCP 응답을 직접 해석해 값 추론 금지
+- Figma 속성 → CSS 변환 매핑:
+  - `layoutMode: HORIZONTAL` → `display:flex; flex-direction:row`
+  - `layoutMode: VERTICAL` → flex(정렬 제어 필요) 또는 block + `margin-top`
+  - `itemSpacing` → 간격 균일(max-min ≤ 3px)이면 `gap`, 비균일이면 개별 `margin`
+  - `paddingLeft/Right/Top/Bottom` → `padding` shorthand
+  - `fills` → `background` / `color` (hex 변환)
+  - `lineHeightPx` → 무단위 `line-height` 비율로 변환
+  - `letterSpacing` → `em` 단위 `letter-spacing`
+  - `cornerRadius` → `border-radius` (원형 50% / pill 2em)
+  - `strokes` → `border` (strokes.visible=true일 때만)
+- 섹션 단위로 MCP 호출 (전체 페이지 한 번에 처리 금지)
+- 구분선/디바이더(얇은 fill-only 프레임)는 반드시 DOM 요소로 보존, CSS border로 대체 금지
+- 구현 완료 후 `validate-semantic.py` + `figma-validate.py` 둘 다 exit 0 필수
 
 ## 코딩 규칙 (CRITICAL — 반드시 준수)
 
