@@ -1,0 +1,20 @@
+{
+  "sprint_id": "S01",
+  "status": "done",
+  "planned": [
+    "DOD-001 폐기 도구 완전 삭제"
+  ],
+  "completed": [
+    "tools/.deprecated/ 11개 삭제 + post-impl-verify.py + 관련 테스트 18건 삭제 + validate-semantic.py 의 --fix/auto-repair 제거 + build-rules.py 의 build-prompts 참조 제거"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-04-21T13:13:45.992254+00:00",
+  "sprint_kind": "foundational",
+  "user_observable_change": null,
+  "foundational_reason": "파이프라인 정리 작업. 다음 DoD(새 가이드 작성)에서 사용자 관찰 가능한 변화 발생 예정",
+  "summary": "DOD-001 완료. 106 tests passed / 0 failed. 폐기 키워드 grep 0건 (scripts/ 디렉토리 없음 제외)"
+}

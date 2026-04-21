@@ -134,20 +134,14 @@ rule_ids:
 ## 구현 후 필수 검증 (전 항목 통과 필수)
 
 ```bash
-# 합본 검증 (REQ-040 — 권장 경로)
-python3 D:/dev-base/tools/figma-validate.py --spec-dir extracted/ --html output.html --css output.css
-# expected: CRITICAL 0 (text byte-exact / asset_manifest / fills color / text 위변조)
-
-# 코드 컨벤션
-python3 D:/dev-base/tools/validate-semantic.py --html output.html --css output.css --profile {basic|landing|all}
-# expected: ✅ ALL PASS
-
-# 구조 diff (Phase C)
-python3 D:/dev-base/tools/structural-diff.py --html output.html --dump-hash
-
-# 종합 후처리
-python3 D:/dev-base/tools/post-impl-verify.py --spec-dir extracted/ --html output.html --css output.css --profile {basic|landing|all}
-# expected: exit 0
+# PM 검증 (신뢰 카테고리 + 컨벤션 + broken link 통합)
+python3 D:/dev-base/tools/pm-verify.py \
+  --spec-dir extracted/ \
+  --html output.html \
+  --css output.css \
+  --img img/ \
+  --profile {basic|landing}
+# expected: exit 0 (Figma 신뢰 카테고리 0 + 컨벤션 CRITICAL/MAJOR 0 + broken link 0)
 ```
 
-**통과 조건**: 4개 명령 전부 exit 0 + CRITICAL 0건.
+**통과 조건**: pm-verify.py exit 0.

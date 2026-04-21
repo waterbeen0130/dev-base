@@ -3,7 +3,6 @@
 
 Usage:
   python3 tools/validate-semantic.py --html output/index.html --css output/common.css
-  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
 """
 
 
@@ -2994,73 +2993,24 @@ def _result_to_violation(result: ValidationResult) -> Violation:
     )
 
 
-def _run_auto_fix(html_path: str, css_path: str) -> dict[str, object]:
-    tools_dir = Path(__file__).resolve().parent
-    report_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(prefix="validate-fix-", suffix=".json", delete=False) as temp_file:
-            report_path = Path(temp_file.name)
-        command = [
-            sys.executable,
-            str(tools_dir / "repair-from-violations.py"),
-            "--html",
-            html_path,
-            "--css",
-            css_path,
-            "--report",
-            str(report_path),
-        ]
-        proc = subprocess.run(command, text=True, capture_output=True, check=False)
-        payload: dict[str, object] = {}
-        if report_path.exists():
-            payload = json.loads(report_path.read_text(encoding="utf-8"))
-        payload["exit_code"] = proc.returncode
-        payload["raw_output"] = "\n".join(part for part in [proc.stdout.strip(), proc.stderr.strip()] if part)
-        return payload
-    except Exception as exc:  # pragma: no cover - defensive
-        return {
-            "total_fixed": 0,
-            "by_category": {},
-            "files_modified": [],
-            "unfixable_count": 0,
-            "dry_run": False,
-            "exit_code": 2,
-            "raw_output": str(exc),
-        }
-    finally:
-        if report_path and report_path.exists():
-            report_path.unlink(missing_ok=True)
-
-
-def _render_auto_fix_line(result: dict[str, object]) -> str:
-    by_category = result.get("by_category", {})
-    category_summary = "none"
-    if isinstance(by_category, dict):
-        non_zero = [f"{key}:{value}" for key, value in by_category.items() if int(value) > 0]
-        if non_zero:
-            category_summary = ", ".join(non_zero)
-    return f"[auto-fix] {result.get('total_fixed', 0)} violations fixed (category: {category_summary})"
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate semantic HTML/CSS against project rules")
     parser.add_argument("--html", required=True, help="HTML file path")
     parser.add_argument("--css", required=True, help="CSS file path")
     parser.add_argument("--img", help="Image directory path")
-    parser.add_argument("--fix", action="store_true", help="Run deterministic auto-fix before validation")
     parser.add_argument(
         "--profile",
         choices=["all", "basic", "landing"],
         help="Validation profile (default: auto from .project-type, fallback: all)",
     )
     parser.add_argument("--mapping", help="mapping.json path (T02)")
-    parser.add_argument("--rules", default="rules/rules.yaml", help="Rules YAML path")
+    parser.add_argument(
+        "--rules",
+        default=str(Path(__file__).resolve().parent.parent / "rules" / "rules.yaml"),
+        help="Rules YAML path",
+    )
     args = parser.parse_args()
     resolved_profile = args.profile or _resolve_profile_from_project_type(args.html, args.css)
-
-    if args.fix:
-        auto_fix_result = _run_auto_fix(args.html, args.css)
-        print(_render_auto_fix_line(auto_fix_result))
 
     results = run_validation(
         rules_path=args.rules,

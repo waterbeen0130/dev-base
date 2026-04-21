@@ -1,0 +1,15 @@
+{
+  "id": "AGI-002",
+  "agi_id": "AGI-002",
+  "status": "completed",
+  "current_sprint": 3,
+  "steering_every": 3,
+  "objective": {
+    "path": "objective/objective.md",
+    "version": 1
+  },
+  "queue": [],
+  "refs": [],
+  "created_at": "2026-04-21T12:28:53.404432+00:00",
+  "updated_at": "2026-04-21T15:14:48.039886+00:00"
+}

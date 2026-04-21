@@ -1,4 +1,4 @@
-# AUTO-GENERATED MARKER GUIDE (for tools/build-rules.py — REQ-005 T02)
+# AUTO-GENERATED MARKER GUIDE (for tools/build-rules.py)
 # ---------------------------------------------------------------
 # This file is the SINGLE SOURCE OF TRUTH for all project rules.
 # Edit rules HERE, then run `python3 tools/build-rules.py` to regenerate:
@@ -6,7 +6,6 @@
 #   - rules/basic.md
 #   - rules/landing.md
 #   - rules/validation_schema.json
-#   - tools/build-prompts.py PROFILE_RULES dict
 #
 # Generated artifacts MUST contain a header comment such as:
 #   <!-- AUTO-GENERATED FROM rules/rules.yaml — DO NOT EDIT -->
@@ -14,13 +13,12 @@
 # ---------------------------------------------------------------
 
 schema_version: 1
-generated_at: null  # T02 build-rules.py fills this when regenerating artifacts
+generated_at: null  # build-rules.py fills this when regenerating artifacts
 
 description: |
   Single Source of Truth for all rules in this project.
-  Edit this file directly. tools/build-rules.py (REQ-005 T02) will regenerate
-  rules/common.md, basic.md, landing.md, validation_schema.json,
-  and tools/build-prompts.py PROFILE_RULES dict from this file.
+  Edit this file directly. tools/build-rules.py will regenerate
+  rules/common.md, basic.md, landing.md, validation_schema.json from this file.
 
 validation_types:
   - regex_must_not_match    # CSS/HTML가 패턴에 매칭되면 위반

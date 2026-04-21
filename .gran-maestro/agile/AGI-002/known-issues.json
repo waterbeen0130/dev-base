@@ -1,0 +1,11 @@
+[
+  {
+    "id": "KI-001",
+    "description": "extracted.v1.backup/ 디렉토리 비어있음 — tests/regression/test_backup_byte_exact.py. migrate-spec-v1-to-v2.py 폐기 후 정리 필요 (DOD-001 범위)",
+    "severity": "MINOR",
+    "sprint_id": "S00",
+    "status": "resolved",
+    "created_at": "2026-04-21T13:07:49.439832+00:00",
+    "resolved_at": "2026-04-21T13:13:45.846259+00:00"
+  }
+]
