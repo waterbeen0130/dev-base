@@ -276,7 +276,7 @@ Gran Maestro 워크플로우에서는 claude-dev / codex-dev / gemini-dev 에이
 - 간결한 응답
 - 실용적 솔루션
 - 최소한의 변경
-- pm-verify 통과 후만 commit / 보고
+- pm-verify 통과 후만 완료 보고
 
 ---
 

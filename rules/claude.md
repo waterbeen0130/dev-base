@@ -150,7 +150,7 @@ python3 D:/dev-base/tools/pm-verify.py \
   --spec-dir extracted/ --html index.html \
   --css css/common.css --img img/ --profile {basic|landing}
 ```
-exit 0 이어야 commit 허용.
+exit 0 이어야 완료 보고 허용.
 
 ### Step 6: Playwright 시각 비교
 1920px 렌더 → Figma PNG 와 사용자 비교 → 자연어 피드백 → 수정 → Step 5 또는 Step 4 복귀
@@ -186,7 +186,7 @@ OMX 는 Codex CLI 기반 멀티 에이전트 오케스트레이션 레이어로,
 - 간결한 응답
 - 실용적 솔루션
 - 최소한의 변경
-- pm-verify 통과 후만 commit 보고
+- pm-verify 통과 후만 완료 보고
 
 ---
 
