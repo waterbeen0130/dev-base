@@ -82,6 +82,8 @@ COMMON_CSS_SKELETON = """@charset "utf-8";
 @import url("reset.css");
 @import url("font.css");
 
+/* reset.css covers: font-family, font-size, color, a text-decoration, img max-width */
+
 :root {
 \t--width:1480px;
 \t--padding:20px;
@@ -89,12 +91,9 @@ COMMON_CSS_SKELETON = """@charset "utf-8";
 \t--point-color-1:#438eca;
 }
 
-html, body {height:auto; font-size:16px;}
-body {font-family:'Pretendard', sans-serif; color:#212121; background:#fff; word-break:keep-all;}
-a {color:inherit; text-decoration:none;}
 .cont {width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}
 .img_area {display:inline-block; overflow:hidden; line-height:0;}
-.img_area img {display:block; max-width:100%;}
+.img_area img {display:block;}
 
 [data-delay] {position:relative; transition:all 1s ease; opacity:0;}
 [data-direction="left"] {left:-40px;}

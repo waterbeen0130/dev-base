@@ -1,6 +1,6 @@
 # Gemini 규칙
 
-Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 실행 에이전트**입니다.
+Gemini CLI 기반 AI 전용 규칙입니다. Gran Maestro 워크플로우에서 대용량/복잡 레이아웃 태스크에 사용됩니다.
 
 ---
 
@@ -29,6 +29,7 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
   - `itemSpacing` → 간격 동일하면 gap, 다르면 개별 margin
   - `padding*` → `padding` (shorthand)
   - `fills` → `background`/`color` (hex 변환, 투명도 시만 rgba)
+  - `fills` type이 `IMAGE`인 프레임 → `<div class="img_area"><img>` 구조. **프레임 bbox.w/bbox.h는 img/img_area가 아닌 부모 컨테이너에 적용** (예: `.main_card{width:300px;}`) — img/img_area에 width/height 직접 선언 금지
   - `lineHeightPx` → `line-height` (무단위 비율로 변환)
   - `letterSpacing` → `letter-spacing` (em 단위로 변환)
   - `cornerRadius` → `border-radius`
@@ -47,7 +48,7 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 - `<div>` + 클래스 기반 구조 우선. `<section>`은 주요 콘텐츠 섹션에만 사용
 - `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div class="img_area">` + `<span>` 사용
 - 모든 이미지에 `alt` 속성 필수 — **짧고 간결하게** (예: `alt="로고"`, 긴 한국어 문장 금지)
-- 이미지는 래퍼 div 안에 배치 (`.img_area` 등)
+- 이미지는 래퍼 div 안에 배치 (`.img_area` 등). **img 및 .img_area에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img_area의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - `aria-label`은 **텍스트가 없는 인터랙티브 요소에만** 사용
 - 줄바꿈: `<br>` 태그 사용, 반응형은 `<br class="mb_only">` / `<br class="pc_only">`
 - 빈 `<div>` 금지
@@ -104,7 +105,7 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 ## CSS 규칙
 
 ### 포맷 (CRITICAL — 반드시 준수)
-- **각 셀렉터 규칙은 한 줄로 작성** (여러 줄로 펼치지 않음)
+- **각 셀렉터 규칙은 한 줄로 작성** (여러 줄로 펼치지 않음). 단, **콤마 셀렉터 3개 이상**이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙임
 - **같은 셀렉터를 여러 번 선언하지 않음** — 하나의 셀렉터에 모든 속성을 합쳐서 한 줄로
 - **미디어쿼리 블록 안에서 각 규칙은 줄바꿈으로 분리** (한 줄에 모든 규칙을 이어붙이지 않음)
 - **미디어쿼리 내부 들여쓰기 없음** — 셀렉터는 컬럼 0에서 시작
@@ -141,7 +142,7 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 
 ### 값과 단위
 - font-size: **PC는 `rem`**, **모바일(768px 이하)은 고정 `px`**
-- 기본 폰트 베이스: `html,body{font-size:clamp(14px, 1.2vw, 16px);}`
+- 기본 폰트 베이스: reset.css에 선언됨 → common.css에서 **재선언 금지**
 - **line-height: 무단위 비율만** (`1.3`, `1.45`, `1.6`) — 절대 `25.866px` 같은 computed px 금지
 - **letter-spacing: `em` 단위 기본** (`-0.025em`), 2px 이하 미세 조정은 px 허용
 - **border-radius: 원형은 `50%`**, **pill은 `2em`** — `999px` 절대 금지
@@ -163,7 +164,12 @@ Gemini CLI 기반 AI 전용 규칙입니다. **퍼블리싱 프로젝트의 주 
 - **파일명 = CSS 프리픽스**: `greeting.html` → `greeting_` 프리픽스 → `greeting_section`, `greeting_list`
 
 ### 네이밍
-- **페이지 프리픽스**: `{페이지}_{역할}` (예: `mp_form`, `mp_list`)
+- **페이지 프리픽스**: `{페이지}_{역할}` 패턴
+  - `index.html` → `main_` prefix (예: `main_mv`, `main_intro`, `main_product`) — `index_` 도 허용
+  - `greeting.html` → `greeting_` (예: `greeting_title`, `greeting_desc`)
+  - 기타 서브페이지 → 파일명에서 `.html` 제거한 값이 prefix
+  - 자식 클래스에도 prefix 일관 적용: `main_intro_card`, `main_intro_card_icon`
+- **공통 영역은 prefix 없음**: `.header`, `.footer`, `.logo`, `.gnb`, `.utils`, `.sns`, `.copyright` 등은 prefix 없이 사용, 스코핑으로 충돌 방지 (`.header .logo`, `.footer .logo`)
 - **snake_case** 전용 (`^[a-z0-9_]+$`)
 - `sec_1`, `sec_2`, `section_01` 같은 범용 이름 금지
 - 공통 접미사: `_area`, `_wrap`, `_list`, `_item`, `_inner`, `_cont`
@@ -311,7 +317,7 @@ parent_id 규칙:
 
 - 각 TEXT 노드 → **독립 HTML 요소로 1:1 매핑**
 - 인접 TEXT 노드 병합 금지
-- `\n` → `<br>` 변환 필수
+- **`\n` / ` ` → `<br>` 변환 필수 (CRITICAL)**: spec.json 텍스트의 줄바꿈을 HTML `<br>` 태그로 반드시 변환. HTML에 `\n`을 그냥 두면 브라우저가 무시함. 연속 `\n\n`은 블록 분리(`</p><p>`) 또는 `<br><br>`
 - `characterStyleOverrides` 있으면 → 오버라이드 구간별 `<span>` 분리 필수
 - `styleOverrideTable` 병합은 누적 방식 (common.md 참조)
 
@@ -346,7 +352,7 @@ python3 D:/dev-base/tools/validate-semantic.py --html <output.html> --css <outpu
 
 ## 피할 것
 - Figma JSON을 직접 읽고 값을 추측하는 것
-- CSS 셀렉터 여러 줄 펼침
+- CSS 셀렉터 여러 줄 펼침 (콤마 셀렉터 3개+ 시 셀렉터만 줄바꿈 허용)
 - 같은 셀렉터 중복 선언
 - computed px line-height (`25.866px`)
 - `999px` border-radius

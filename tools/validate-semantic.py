@@ -2816,6 +2816,7 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "no_adjacent_text_merge": _safe_custom_handler(no_adjacent_text_merge),
     "text_newline_preserved": _safe_custom_handler(text_newline_preserved),
     "newline_converted_to_br": _safe_custom_handler(newline_converted_to_br),
+    "check_newline_to_br": _safe_custom_handler(newline_converted_to_br),
     "override_span_split_required": _safe_custom_handler(override_span_split_required),
     "style_diff_span_required": _safe_custom_handler(style_diff_span_required),
     "no_style_flatten": _safe_custom_handler(no_style_flatten),

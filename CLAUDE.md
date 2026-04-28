@@ -124,7 +124,7 @@ Claude AI 어시스턴트 전용 규칙. Figma → 퍼블리싱 새 워크플로
 - `calc()` / `vw` 단독 사용 (`clamp()` 내부에서만 허용)
 - `border-radius: 999px` (원형은 `50%`, pill 은 `2em`)
 - `sec_1`, `sec_2` 같은 범용 클래스명
-- CSS 셀렉터를 여러 줄로 펼치기 (각 규칙은 한 줄)
+- CSS 셀렉터를 여러 줄로 펼치기 (각 규칙은 한 줄, 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈 허용)
 - 미디어쿼리 내부 들여쓰기
 - 한국어 CSS 주석 (영어만)
 
@@ -136,7 +136,7 @@ Claude AI 어시스턴트 전용 규칙. Figma → 퍼블리싱 새 워크플로
 - **padding/margin/gap**: 고정 `px` (≥100px 만 `clamp()`)
 - **border-radius**: 원형 `50%`, pill `2em`, 일반 `{n}px`
 - **레이아웃**: `flexbox` 전용
-- **각 셀렉터 규칙**: 한 줄 형식
+- **각 셀렉터 규칙**: 한 줄 형식 (콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄)
 - **미디어쿼리**: 블록 안 각 규칙 줄바꿈 분리, 들여쓰기 없음
 
 ### :root 변수 (landing 프로젝트 필수)
@@ -150,16 +150,19 @@ Claude AI 어시스턴트 전용 규칙. Figma → 퍼블리싱 새 워크플로
 ```
 
 ### .cont 패턴 (section_width_formula)
-섹션은 full-bleed + background, 너비 제한은 `.cont` 내부에서만:
-```css
-.cont {width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}
-```
+섹션은 full-bleed + background, 너비 제한은 `.cont` 내부에서만.
+`.cont` CSS 는 common.css skeleton 에 이미 선언됨 — **섹션 CSS 에서 재선언 금지**.
 
 ### 이미지 래퍼 (img_area)
-모든 `<img>` 는 `.img_area` 래퍼 안에:
+모든 `<img>` 는 `.img_area` 래퍼 안에. `.img_area` CSS 는 common.css skeleton 에 이미 선언됨 — **재선언 금지**.
+**img 및 .img_area에 고정 width/height 금지** — 크기가 필요하면 부모 컨테이너에서 제어한다.
 ```html
 <span class="img_area"><img src="./img/logo.png" alt="..."></span>
 ```
+
+### reset.css 중복 선언 금지 (CRITICAL)
+reset.css 에 이미 선언된 속성을 common.css 나 섹션 CSS 에서 재선언하지 않는다:
+`font-family`, `font-size`, `color`, `a text-decoration`, `img max-width`, `line-height` 등.
 
 ### GSAP 패턴 (landing 필수)
 ```css
@@ -174,9 +177,11 @@ Claude AI 어시스턴트 전용 규칙. Figma → 퍼블리싱 새 워크플로
 ### Step 1: Figma 자산 추출 (spec.json + asset_manifest)
 ```bash
 python3 D:/dev-base/tools/figma-section-spec.py \
-  --file-key {KEY} --node-id {SECTION_ID} --output extracted/
+  --file-key {KEY} --node-id {SECTION_ID} --output extracted/ \
+  --download-assets
 ```
-- 결과: `extracted/{section}_spec.json` + `.md` + `_asset_manifest.json` + `{section}/vectors/*.svg`
+- `--download-assets` 필수 — 없으면 이미지가 디자인 사이즈(1:1)로 추출되지 않음
+- 결과: `extracted/{section}_spec.json` + `.md` + `_asset_manifest.json` + `{section}/images/*.png` + `{section}/vectors/*.svg`
 - spec.json 의 `text_nodes[].characters` 는 **byte-exact** 그대로 사용 (NBSP, 줄바꿈, 연속 공백 모두 보존)
 - raw Figma API / Figma MCP 응답을 직접 해석하는 것 금지
 
@@ -190,6 +195,7 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
   --scale 1
 ```
 - 섹션 PNG + IMAGE fill imageRef 자동 다운로드
+- ⚠️ **시각 참조 전용** — 이 출력(`figma-png/`)은 원본 해상도이며 프로젝트 자산으로 사용 금지. 프로젝트 이미지는 Step 1 의 `--download-assets` 결과(디자인 1:1 사이즈)만 사용
 
 ### Step 3: 자산 복사
 ```bash
@@ -198,28 +204,19 @@ python3 D:/dev-base/tools/asset-copy.py \
 ```
 - manifest 의 `spec_node_id` 기준 (`;` 보존) 으로 `img/` 에 복사
 
-### Step 4: 외주 AI 자동 선정 (DOD-004 완료 후)
-```bash
-python3 D:/dev-base/tools/select-ai.py \
-  --extracted extracted/ --figma-png .gran-maestro/figma-png/ \
-  --img img/ --project-type landing --json
-```
-- 정량 지표(자산/섹션/프레임 깊이/텍스트) + LLM 판단 혼합으로 gemini/codex/claude 선정
-- 출력: 선정 AI + 사유 + 신뢰도
-
-### Step 5: 외주 AI 구현 (PNG 시각 + spec.json 정밀)
-선정된 AI 에게 아래 입력 전달:
+### Step 4: OMX 로 HTML/CSS 코드 추출
+OMX (oh-my-codex) 를 사용하여 코드를 추출한다. 입력:
 - `extracted/{section}_spec.json` (정확한 텍스트/폰트/색상/패딩)
 - `.gran-maestro/figma-png/{section}.png` (시각 참조)
-- 이 `CLAUDE.md` (룰 강제)
+- 이 `CLAUDE.md` + `rules/common.md` (룰 강제)
 
-외주 브리프 필수 포함 사항:
+코드 추출 시 필수 준수 사항:
 - spec.json 의 텍스트는 byte-exact 사용 강제
 - PNG 시각 참조로 구조 결정
 - 공통 영역 prefix 없음 / 페이지 prefix 강제
 - 자체 검증 결과를 raw 출력 그대로 보고 (거짓 보고 금지)
 
-### Step 6: PM 검증
+### Step 5: PM 검증
 ```bash
 python3 D:/dev-base/tools/pm-verify.py \
   --spec-dir extracted/ --html index.html \
@@ -228,28 +225,20 @@ python3 D:/dev-base/tools/pm-verify.py \
 - 신뢰 카테고리 (텍스트 byte-exact + 폰트 5필드 + 색상 + 컨벤션 + broken link) 만 리포트
 - 노이즈 카테고리 (layoutSizing / opacity / frame matching 등) 는 집계만, 게이트 X
 
-### Step 7: Playwright 시각 비교
+### Step 6: Playwright 시각 비교
 - 1920px 렌더 → PNG 저장 → 사용자에게 Figma PNG 와 나란히 제시
-- 자연어 피드백 → 수정 → Step 6 또는 Step 5 복귀
+- 자연어 피드백 → 수정 → Step 5 또는 Step 4 복귀
 
 ---
 
-## 외주 에이전트 (퍼블리싱 프로젝트)
+## 코드 추출 에이전트
 
-Claude 는 PM / 오케스트레이터 역할. HTML/CSS 구현은 **외주**:
+HTML/CSS 코드 추출은 **OMX (oh-my-codex)** 를 기본 사용한다.
+OMX 는 Codex CLI 기반 멀티 에이전트 오케스트레이션 레이어로, AGENTS.md 와 프로젝트 룰을 자동 로드한다.
 
-| 프로젝트 유형 | 주 에이전트 | 선정 기준 |
-|-------------|-----------|----------|
-| 대용량 / 복잡 레이아웃 / 텍스트 다수 | gemini-dev | frontend + large-context |
-| 모션 / 인터랙션 / 코드 정밀 | codex-dev | code + test |
-| 단순 인라인 수정 / 문서 / 설정 | claude-dev | small-inline |
+Gran Maestro 워크플로우에서는 claude-dev / codex-dev / gemini-dev 에이전트 디스패치도 가능하나, 사용자가 직접 코드 추출 시 OMX 를 우선 사용한다.
 
-**`select-ai.py`** 가 PNG + 정량 지표로 자동 선정 (DOD-004 완료 후 정식 도입).
-
-### 외주 브리프 규칙 (반드시 포함)
-```markdown
-## 코딩 규칙 (CRITICAL — 반드시 준수)
-
+### 코드 추출 시 필수 준수 사항
 - `D:/dev-base/rules/common.md` 전체 Read + 모든 내용 준수
 - `D:/dev-base/CLAUDE.md` 전체 Read
 - 공통 영역 (header/footer/logo/gnb) prefix 없음
@@ -259,7 +248,6 @@ Claude 는 PM / 오케스트레이터 역할. HTML/CSS 구현은 **외주**:
 - 색상 hex, letter-spacing em, font-size px (landing)
 - 완료 전 `python3 D:/dev-base/tools/pm-verify.py ...` 실행하고 raw 출력 그대로 보고
 - 거짓 보고 금지 — 위반 잔여 시 모두 나열
-```
 
 ---
 

@@ -65,7 +65,7 @@
 
 ### 들여쓰기
 - HTML: 4-space
-- CSS 셀렉터: 한 줄 형식
+- CSS 셀렉터: 한 줄 형식 (콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈)
 
 ---
 
@@ -101,11 +101,11 @@
 ```
 
 ### .cont 패턴
-```css
-.cont {width:100%; max-width:var(--width); margin:0 auto; padding:0 var(--padding);}
-```
+common.css skeleton 에 이미 선언됨 — **섹션 CSS 에서 재선언 금지**.
 
 ### 이미지 래퍼
+`.img_area` CSS 는 common.css skeleton 에 이미 선언됨 — **재선언 금지**.
+**img 및 .img_area에 고정 width/height 금지** — 크기가 필요하면 부모 컨테이너에서 제어한다.
 ```html
 <span class="img_area"><img src="./img/logo.png" alt="..."></span>
 ```
@@ -132,19 +132,19 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
 python3 D:/dev-base/tools/asset-copy.py --extracted extracted/ --img img/
 ```
 
-### Step 4: 외주 AI 자동 선정
-```bash
-python3 D:/dev-base/tools/select-ai.py \
-  --extracted extracted/ --figma-png .gran-maestro/figma-png/ \
-  --img img/ --project-type {basic|landing} --json
-```
+### Step 4: OMX 로 HTML/CSS 코드 추출
+OMX (oh-my-codex) 를 사용하여 코드를 추출한다. 입력:
+- `extracted/{section}_spec.json` (정확한 텍스트/폰트/색상/패딩)
+- `.gran-maestro/figma-png/{section}.png` (시각 참조)
+- 이 CLAUDE.md + `D:/dev-base/rules/common.md` (룰 강제)
 
-### Step 5: 선정된 AI 가 HTML/CSS 구현
+코드 추출 시 필수 준수:
 - spec.json 의 텍스트는 byte-exact 사용 (NBSP, `\n`, 연속 공백 보존)
-- PNG 는 시각 참조
-- 이 CLAUDE.md 의 룰 강제
+- PNG 시각 참조로 구조 결정
+- 공통 영역 prefix 없음 / 페이지 prefix 강제
+- 자체 검증 결과를 raw 출력 그대로 보고 (거짓 보고 금지)
 
-### Step 6: PM 검증
+### Step 5: PM 검증
 ```bash
 python3 D:/dev-base/tools/pm-verify.py \
   --spec-dir extracted/ --html index.html \
@@ -152,20 +152,15 @@ python3 D:/dev-base/tools/pm-verify.py \
 ```
 exit 0 이어야 commit 허용.
 
-### Step 7: Playwright 시각 비교
-1920px 렌더 → Figma PNG 와 사용자 비교 → 자연어 피드백 → 수정 → Step 6 재실행
+### Step 6: Playwright 시각 비교
+1920px 렌더 → Figma PNG 와 사용자 비교 → 자연어 피드백 → 수정 → Step 5 또는 Step 4 복귀
 
 ---
 
-## 외주 AI 선정 기준
+## 코드 추출 에이전트
 
-| 프로젝트 유형 | 선정 AI | 이유 |
-|-------------|--------|------|
-| 대용량 / 복잡 / 텍스트 다수 | gemini-dev | frontend + large-context |
-| 모션 / 인터랙션 / 코드 정밀 | codex-dev | code + test |
-| 단순 인라인 수정 / 문서 | claude-dev | small-inline |
-
-`select-ai.py` 가 PNG 정량 지표 + LLM 판단 혼합으로 자동 선정.
+HTML/CSS 코드 추출은 **OMX (oh-my-codex)** 를 기본 사용한다.
+OMX 는 Codex CLI 기반 멀티 에이전트 오케스트레이션 레이어로, AGENTS.md 와 프로젝트 룰을 자동 로드한다.
 
 ---
 

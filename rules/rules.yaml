@@ -113,7 +113,7 @@ rules:
       pattern: "^[a-z0-9_]+$"
 
   - id: page_prefix_required
-    description: "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다."
+    description: "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다. index.html은 main_ 또는 index_ prefix를 사용한다 (예: main_mv, main_intro). 기타 서브페이지는 파일명이 prefix (greeting.html → greeting_). 자식 클래스에도 prefix 일관 적용 (main_intro_card). 공통 영역(header/footer/gnb/logo)은 prefix 없이 사용."
     severity: warning
     priority: 200
     applies_to: [common, basic, landing]
@@ -195,7 +195,7 @@ rules:
   # ===== CSS format / structure =====
 
   - id: selector_single_line
-    description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지)."
+    description: "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지). 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙인다."
     severity: warning
     priority: 200
     applies_to: [common, basic, landing]
@@ -644,6 +644,17 @@ rules:
       target: html
       custom_handler: check_img_wrapper
 
+  - id: img_no_fixed_size
+    description: "img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 크기가 필요하면 부모 컨테이너에서 제어한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: css.image
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_img_no_fixed_size
+
   - id: img_alt_concise
     description: "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지)."
     severity: info
@@ -698,6 +709,18 @@ rules:
       type: custom
       target: html
       custom_handler: check_p_tag_misuse
+
+  - id: newline_to_br_required
+    description: "spec.json 텍스트의 \\n 및 \\u2028은 HTML에서 반드시 <br> 태그로 변환한다. HTML 원문에 \\n을 그냥 두면 브라우저가 무시하므로 <br>로 명시 변환 필수. 연속 \\n\\n은 블록 분리(</p><p>) 또는 <br><br>로 처리."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.text
+    rationale: "거의 모든 프로젝트에서 외주 에이전트가 \\n → <br> 변환을 누락하여 줄바꿈이 사라지는 문제 반복 발생."
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_newline_to_br
 
   # ===== CSS selector hierarchy =====
 
