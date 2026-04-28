@@ -170,16 +170,16 @@ rules:
       target: html
       custom_handler: page_filename_class_prefix_match
 
-  - id: body_page_class_unnecessary
-    description: "body 태그에 page_ 클래스를 부여하지 않는다 (불필요)."
-    severity: info
-    priority: 300
+  - id: no_body_class
+    description: "body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지."
+    severity: error
+    priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
     validation:
       type: regex_must_not_match
       target: html
-      pattern: "<body[^>]*class=\"page_"
+      pattern: "<body[^>]*\\bclass\\s*="
 
   - id: common_area_prefix
     description: "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다."

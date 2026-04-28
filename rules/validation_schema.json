@@ -1,100 +1,4 @@
 {
-  "$comment": "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT",
-  "version": 1,
-  "validation_types": [
-    "regex_must_not_match",
-    "regex_must_match",
-    "regex_should_match",
-    "ast_selector_count",
-    "value_equals_mapping",
-    "html_tag_required",
-    "forbidden_substring",
-    "required_substring",
-    "naming_pattern",
-    "numeric_range",
-    "custom"
-  ],
-  "profiles": [
-    "common",
-    "basic",
-    "landing",
-    "figma",
-    "enhancement"
-  ],
-  "severities": [
-    "error",
-    "warning",
-    "info",
-    "deprecated"
-  ],
-  "categories": [
-    {
-      "id": "css.layout"
-    },
-    {
-      "id": "css.color"
-    },
-    {
-      "id": "css.format"
-    },
-    {
-      "id": "css.units"
-    },
-    {
-      "id": "css.naming"
-    },
-    {
-      "id": "css.variables"
-    },
-    {
-      "id": "css.selector"
-    },
-    {
-      "id": "css.typography"
-    },
-    {
-      "id": "css.border"
-    },
-    {
-      "id": "css.spacing"
-    },
-    {
-      "id": "html.structure"
-    },
-    {
-      "id": "html.semantic"
-    },
-    {
-      "id": "html.naming"
-    },
-    {
-      "id": "html.image"
-    },
-    {
-      "id": "html.text"
-    },
-    {
-      "id": "accessibility"
-    },
-    {
-      "id": "figma.mapping"
-    },
-    {
-      "id": "figma.fidelity"
-    },
-    {
-      "id": "figma.text"
-    },
-    {
-      "id": "figma.asset"
-    },
-    {
-      "id": "process"
-    },
-    {
-      "id": "enhancement.workflow"
-    }
-  ],
   "rules": [
     {
       "applies_to": [
@@ -102,64 +6,13 @@
         "basic",
         "landing"
       ],
-      "category": "html.structure",
-      "description": "DOM 최대 깊이는 5단계를 초과하지 않는다.",
-      "id": "max_dom_depth",
-      "severity": "warning",
-      "target": "html",
-      "type": "numeric_range",
-      "pattern": "depth<=5",
-      "priority": 200,
-      "rationale": "과도한 wrapper 중첩 방지로 마크업 단순화"
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).",
-      "id": "snake_case_naming",
-      "severity": "warning",
-      "target": "html",
-      "type": "naming_pattern",
-      "pattern": "^[a-z0-9_]+$",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다.",
-      "id": "page_prefix_required",
-      "severity": "warning",
-      "target": "html",
-      "type": "naming_pattern",
-      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_]+$",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다.",
-      "id": "no_forbidden_class",
+      "category": "css.layout",
+      "description": "레이아웃은 flexbox만 사용한다 (Grid/float 금지).",
+      "id": "flexbox_layout",
+      "pattern": "display\\s*:\\s*grid|float\\s*:\\s*(left|right)",
       "severity": "error",
-      "target": "html",
-      "type": "forbidden_substring",
-      "pattern": "sec_\\d+|section_\\d+|box\\d+",
-      "priority": 100,
-      "examples": {
-        "bad": "<section class=\"sec_3\"><div class=\"box5\">",
-        "good": "<section class=\"about_intro\">"
-      }
+      "target": "css",
+      "type": "regex_must_not_match"
     },
     {
       "applies_to": [
@@ -167,251 +20,14 @@
         "basic",
         "landing"
       ],
-      "category": "html.naming",
-      "description": "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.",
-      "id": "generic_class_name",
+      "category": "css.layout",
+      "custom_handler": "check_no_column_gap",
+      "description": "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용).",
+      "id": "no_column_flex_gap",
+      "selector": "custom:check_no_column_gap",
       "severity": "error",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "(sec_\\d+|section_\\d+|box\\d+)\"",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다.",
-      "id": "meaningful_page_name",
-      "severity": "error",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "(page_\\d+|sub_\\d+|page_[a-z]$)",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_).",
-      "id": "page_filename_class_prefix_match",
-      "severity": "warning",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "page_filename_class_prefix_match",
-      "selector": "custom:page_filename_class_prefix_match",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "body 태그에 page_ 클래스를 부여하지 않는다 (불필요).",
-      "id": "body_page_class_unnecessary",
-      "severity": "info",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "<body[^>]*class=\"page_",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.naming",
-      "description": "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다.",
-      "id": "common_area_prefix",
-      "severity": "error",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_common_area_prefix",
-      "selector": "custom:check_common_area_prefix",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.format",
-      "description": "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지).",
-      "id": "selector_single_line",
-      "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "check_selector_format",
-      "selector": "custom:check_selector_format",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.selector",
-      "description": "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언).",
-      "id": "no_duplicate_selector",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_duplicate_selectors",
-      "selector": "custom:check_duplicate_selectors",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.format",
-      "description": "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다.",
-      "id": "media_query_format",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_media_indent",
-      "selector": "custom:check_media_indent",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.format",
-      "description": "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다.",
-      "id": "no_media_indent",
-      "severity": "info",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_media_indent",
-      "selector": "custom:check_media_indent",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.format",
-      "description": "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외).",
-      "id": "empty_media_block",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_empty_media_block",
-      "selector": "custom:_check_empty_media_block",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.units",
-      "description": "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용.",
-      "id": "clamp_threshold",
-      "severity": "info",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "clamp\\(\\s*([0-9]|[1-9][0-9])px",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.units",
-      "description": "padding/margin에 100px 미만 clamp()를 사용하지 않는다.",
-      "id": "no_clamp_under_100",
-      "severity": "info",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_clamp_under_100",
-      "selector": "custom:check_clamp_under_100",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.units",
-      "description": "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
-      "id": "no_raw_calc",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_raw_calc_vw",
-      "selector": "custom:check_raw_calc_vw",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.units",
-      "description": "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
-      "id": "no_raw_vw",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_raw_calc_vw",
-      "selector": "custom:check_raw_calc_vw",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.spacing",
-      "description": "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다.",
-      "id": "large_side_padding",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_large_side_padding",
-      "selector": "custom:check_large_side_padding",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.spacing",
-      "description": "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다.",
-      "id": "max_width_pattern",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_max_width_pattern",
-      "selector": "custom:check_max_width_pattern",
-      "priority": 200
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -422,15 +38,10 @@
       "category": "css.color",
       "description": "색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용.",
       "id": "hex_color_only",
+      "pattern": "(?<!rgba)\\brgb\\(|hsl\\(",
       "severity": "error",
       "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "(?<!rgba)\\brgb\\(|hsl\\(",
-      "priority": 100,
-      "examples": {
-        "bad": "color: rgb(255,255,255);",
-        "good": "color: #fff;"
-      }
+      "type": "regex_must_not_match"
     },
     {
       "applies_to": [
@@ -439,61 +50,13 @@
         "landing"
       ],
       "category": "css.color",
+      "custom_handler": "_check_no_hex8_literal",
       "description": "8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외).",
       "id": "no_hex8_literal",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_no_hex8_literal",
       "selector": "custom:_check_no_hex8_literal",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.layout",
-      "description": "레이아웃은 flexbox만 사용한다 (Grid/float 금지).",
-      "id": "flexbox_layout",
-      "severity": "error",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "display\\s*:\\s*grid|float\\s*:\\s*(left|right)",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.layout",
-      "description": "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용).",
-      "id": "no_column_flex_gap",
-      "severity": "error",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_no_column_gap",
-      "selector": "custom:check_no_column_gap",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.format",
-      "description": "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).",
-      "id": "no_important",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "check_important",
-      "selector": "custom:check_important",
-      "priority": 200
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -502,14 +65,13 @@
         "landing"
       ],
       "category": "css.format",
+      "custom_handler": "_check_box_sizing_redundant",
       "description": "universal reset(*, *::before, *::after) 외 box-sizing:border-box 중복 선언을 금지한다.",
       "id": "box_sizing_redundant",
+      "selector": "custom:_check_box_sizing_redundant",
       "severity": "info",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_box_sizing_redundant",
-      "selector": "custom:_check_box_sizing_redundant",
-      "priority": 300
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -517,81 +79,26 @@
         "basic",
         "landing"
       ],
-      "category": "css.border",
-      "description": "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지.",
-      "id": "border_radius_no_999",
-      "severity": "error",
-      "target": "css",
-      "type": "forbidden_substring",
-      "pattern": "999px",
-      "priority": 100,
-      "examples": {
-        "bad": "border-radius: 999px;",
-        "good": "border-radius: 2em;"
-      }
-    },
-    {
-      "applies_to": [
-        "common",
-        "figma"
-      ],
-      "category": "css.border",
-      "description": "레이아웃 패턴이나 .card+.card 같은 인접 셀렉터로 border를 추측해 넣지 않는다.",
-      "id": "no_heuristic_border",
-      "severity": "error",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "\\.[a-z0-9_-]+\\s*\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "figma"
-      ],
-      "category": "css.border",
-      "description": ".item+.item{border-left/top:...} 패턴 금지 — 대신 divider 노드를 DOM 요소로 사용한다.",
-      "id": "no_adjacent_selector_border",
-      "severity": "error",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지.",
-      "id": "line_height_ratio_only",
-      "severity": "error",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "line-height\\s*:\\s*[\\d.]+px",
-      "priority": 100,
-      "examples": {
-        "bad": "line-height: 25.866px;",
-        "good": "line-height: 1.45;"
-      }
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "line-height 무단위 비율은 정돈 후보 목록(1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.45, 1.5, 1.6, 1.667, 1.75, 1.8, 2.0) 중 하나를 사용한다.",
-      "id": "line_height_tidy_ratio",
+      "category": "css.format",
+      "custom_handler": "_check_empty_media_block",
+      "description": "@media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외).",
+      "id": "empty_media_block",
+      "selector": "custom:_check_empty_media_block",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_line_height_tidy_ratio",
-      "selector": "custom:_check_line_height_tidy_ratio",
-      "priority": 200
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "landing"
+      ],
+      "category": "css.format",
+      "description": "landing 프로젝트는 [data-delay] opacity/position 룰과 .section_on 토글 룰이 있어야 한다.",
+      "id": "gsap_animation_css_present",
+      "pattern": "[data-delay]",
+      "severity": "warning",
+      "target": "css",
+      "type": "required_substring"
     },
     {
       "applies_to": [
@@ -599,102 +106,144 @@
         "basic",
         "landing"
       ],
-      "category": "css.typography",
-      "description": "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용.",
-      "id": "letter_spacing_unit",
+      "category": "css.format",
+      "custom_handler": "check_media_indent",
+      "description": "@media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다.",
+      "id": "media_query_format",
+      "selector": "custom:check_media_indent",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "check_letter_spacing_unit",
-      "selector": "custom:check_letter_spacing_unit",
-      "priority": 200
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "custom_handler": "check_important",
+      "description": "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).",
+      "id": "no_important",
+      "selector": "custom:check_important",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "custom_handler": "check_media_indent",
+      "description": "@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다.",
+      "id": "no_media_indent",
+      "selector": "custom:check_media_indent",
+      "severity": "info",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
         "basic"
       ],
-      "category": "css.typography",
-      "description": "basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용.",
-      "id": "font_size_pc_rem",
+      "category": "css.format",
+      "description": "basic 프로젝트: reset.css는 별도 파일로 분리한다.",
+      "id": "reset_css_separate",
+      "pattern": "reset.css",
       "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_font_size_base",
-      "selector": "custom:check_font_size_base",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "landing 프로젝트: 모든 font-size는 PC/모바일 모두 고정 px만 사용 (rem 사용 금지).",
-      "id": "font_size_landing_px",
-      "severity": "warning",
-      "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "font-size\\s*:\\s*[\\d.]+rem",
-      "priority": 200
+      "target": "html",
+      "type": "required_substring"
     },
     {
       "applies_to": [
         "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "landing 프로파일에서 html/body font-size에 clamp|vw|rem|calc 혼용을 금지한다.",
-      "id": "landing_unit_mixed_scale",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_landing_unit_mixed_scale",
-      "selector": "custom:_check_landing_unit_mixed_scale",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "동일 font-family fallback 체인이 *, body, 개별 selector에 과다 반복되면 중복으로 간주한다.",
-      "id": "font_family_redundant",
-      "severity": "warning",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "_check_font_family_redundant",
-      "selector": "custom:_check_font_family_redundant",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "css.typography",
-      "description": "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다.",
-      "id": "word_break_korean",
-      "severity": "warning",
-      "target": "css",
-      "type": "required_substring",
-      "pattern": "keep-all",
-      "priority": 200
-    },
-    {
-      "applies_to": [
         "basic"
       ],
-      "category": "css.typography",
-      "description": "html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트).",
-      "id": "font_size_base",
+      "category": "css.format",
+      "custom_handler": "check_reset_duplicate",
+      "description": "common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중복 작성하지 않는다.",
+      "id": "reset_duplicate",
+      "selector": "custom:check_reset_duplicate",
       "severity": "warning",
       "target": "css",
-      "type": "required_substring",
-      "pattern": "font-size:clamp(",
-      "priority": 200
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "custom_handler": "check_selector_format",
+      "description": "각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지).",
+      "id": "selector_single_line",
+      "selector": "custom:check_selector_format",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.units",
+      "description": "100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용.",
+      "id": "clamp_threshold",
+      "pattern": "clamp\\(\\s*([0-9]|[1-9][0-9])px",
+      "severity": "info",
+      "target": "css",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.units",
+      "custom_handler": "check_clamp_under_100",
+      "description": "padding/margin에 100px 미만 clamp()를 사용하지 않는다.",
+      "id": "no_clamp_under_100",
+      "selector": "custom:check_clamp_under_100",
+      "severity": "info",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.units",
+      "custom_handler": "check_raw_calc_vw",
+      "description": "calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+      "id": "no_raw_calc",
+      "selector": "custom:check_raw_calc_vw",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.units",
+      "custom_handler": "check_raw_calc_vw",
+      "description": "vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.",
+      "id": "no_raw_vw",
+      "selector": "custom:check_raw_calc_vw",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -703,14 +252,13 @@
         "landing"
       ],
       "category": "css.variables",
+      "custom_handler": "check_root_vars",
       "description": ":root{} 안의 CSS 변수는 각 줄에 하나씩 선언한다 (한 줄에 여러 변수 금지).",
       "id": "root_var_line_separated",
+      "selector": "custom:check_root_vars",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "check_root_vars",
-      "selector": "custom:check_root_vars",
-      "priority": 200
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -719,14 +267,13 @@
         "landing"
       ],
       "category": "css.variables",
+      "custom_handler": "root_var_naming",
       "description": ":root 변수는 --point-color-N, --width, --padding 같은 패턴을 따른다 (시맨틱 이름 금지).",
       "id": "root_var_naming",
+      "selector": "custom:root_var_naming",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "root_var_naming",
-      "selector": "custom:root_var_naming",
-      "priority": 200
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -735,198 +282,10 @@
       "category": "css.variables",
       "description": "landing 프로젝트는 :root에 --padding, --header_h, --width, --point-color-1 4개 변수가 모두 존재해야 한다.",
       "id": "root_vars_required",
+      "pattern": "--padding,--header_h,--width,--point-color-1",
       "severity": "warning",
       "target": "css",
-      "type": "required_substring",
-      "pattern": "--padding,--header_h,--width,--point-color-1",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.semantic",
-      "description": "인라인 style 속성을 사용하지 않는다.",
-      "id": "no_inline_style",
-      "severity": "error",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "style=\"",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.semantic",
-      "description": "빈 div(<div></div>) 사용 금지.",
-      "id": "no_empty_div",
-      "severity": "warning",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "<div[^>]*>\\s*</div>",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.structure",
-      "description": "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지).",
-      "id": "inner_wrapper_limit",
-      "severity": "warning",
-      "target": "html",
-      "type": "numeric_range",
-      "pattern": "inner_wrapper<=1",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.semantic",
-      "description": "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다.",
-      "id": "forbidden_tag",
-      "severity": "error",
-      "target": "html",
-      "type": "regex_must_not_match",
-      "pattern": "<figure|<figcaption|<main\\b|<article\\b",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.semantic",
-      "description": "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지).",
-      "id": "nav_ul_li_structure",
-      "severity": "error",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_nav_structure",
-      "selector": "custom:check_nav_structure",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.semantic",
-      "description": "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지).",
-      "id": "list_pattern_required",
-      "severity": "warning",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_list_pattern",
-      "selector": "custom:check_list_pattern",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.image",
-      "description": "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외).",
-      "id": "img_wrapped",
-      "severity": "warning",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_img_wrapper",
-      "selector": "custom:check_img_wrapper",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "accessibility",
-      "description": "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지).",
-      "id": "img_alt_concise",
-      "severity": "info",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "img_alt_concise",
-      "selector": "custom:img_alt_concise",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "figma"
-      ],
-      "category": "html.image",
-      "description": "이미지 파일명은 snake_case 의미 있는 이름이어야 한다 (Figma node ID 그대로 금지).",
-      "id": "img_naming",
-      "severity": "error",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_image_naming",
-      "selector": "custom:check_image_naming",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "accessibility",
-      "description": "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지).",
-      "id": "minimal_aria",
-      "severity": "info",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "minimal_aria",
-      "selector": "custom:minimal_aria",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.text",
-      "description": "<p> 태그는 텍스트에 \\n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용.",
-      "id": "p_tag_condition_enforced",
-      "severity": "warning",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_p_tag_misuse",
-      "selector": "custom:check_p_tag_misuse",
-      "priority": 200
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
-      "category": "html.text",
-      "description": "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용.",
-      "id": "p_tag_misuse",
-      "severity": "info",
-      "target": "html",
-      "type": "custom",
-      "custom_handler": "check_p_tag_misuse",
-      "selector": "custom:check_p_tag_misuse",
-      "priority": 300
+      "type": "required_substring"
     },
     {
       "applies_to": [
@@ -935,14 +294,28 @@
         "landing"
       ],
       "category": "css.selector",
-      "description": "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양).",
-      "id": "selector_scoped",
+      "custom_handler": "check_excessive_individual_classes",
+      "description": "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다.",
+      "id": "excessive_individual_classes",
+      "selector": "custom:check_excessive_individual_classes",
+      "severity": "info",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.selector",
+      "custom_handler": "check_duplicate_selectors",
+      "description": "같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언).",
+      "id": "no_duplicate_selector",
+      "selector": "custom:check_duplicate_selectors",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "selector_scoped",
-      "selector": "custom:selector_scoped",
-      "priority": 200
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -953,11 +326,10 @@
       "category": "css.selector",
       "description": ".font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리.",
       "id": "no_utility_classes",
+      "pattern": "\\.(font|weight|color|size)_",
       "severity": "warning",
       "target": "css",
-      "type": "regex_must_not_match",
-      "pattern": "\\.(font|weight|color|size)_",
-      "priority": 200
+      "type": "regex_must_not_match"
     },
     {
       "applies_to": [
@@ -966,122 +338,525 @@
         "landing"
       ],
       "category": "css.selector",
-      "description": "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다.",
-      "id": "excessive_individual_classes",
-      "severity": "info",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_excessive_individual_classes",
-      "selector": "custom:check_excessive_individual_classes",
-      "priority": 300
-    },
-    {
-      "applies_to": [
-        "basic"
-      ],
-      "category": "css.format",
-      "description": "basic 프로젝트: reset.css는 별도 파일로 분리한다.",
-      "id": "reset_css_separate",
+      "custom_handler": "selector_scoped",
+      "description": "셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양).",
+      "id": "selector_scoped",
+      "selector": "custom:selector_scoped",
       "severity": "warning",
-      "target": "html",
-      "type": "required_substring",
-      "pattern": "reset.css",
-      "priority": 200
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
         "common",
-        "basic"
+        "basic",
+        "landing"
       ],
-      "category": "css.format",
-      "description": "common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중복 작성하지 않는다.",
-      "id": "reset_duplicate",
+      "category": "css.typography",
+      "custom_handler": "_check_font_family_redundant",
+      "description": "동일 font-family fallback 체인이 *, body, 개별 selector에 과다 반복되면 중복으로 간주한다.",
+      "id": "font_family_redundant",
+      "selector": "custom:_check_font_family_redundant",
       "severity": "warning",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "check_reset_duplicate",
-      "selector": "custom:check_reset_duplicate",
-      "priority": 200
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "basic"
+      ],
+      "category": "css.typography",
+      "description": "html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트).",
+      "id": "font_size_base",
+      "pattern": "font-size:clamp(",
+      "severity": "warning",
+      "target": "css",
+      "type": "required_substring"
+    },
+    {
+      "applies_to": [
+        "landing"
+      ],
+      "category": "css.typography",
+      "description": "landing 프로젝트: 모든 font-size는 PC/모바일 모두 고정 px만 사용 (rem 사용 금지).",
+      "id": "font_size_landing_px",
+      "pattern": "font-size\\s*:\\s*[\\d.]+rem",
+      "severity": "warning",
+      "target": "css",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "basic"
+      ],
+      "category": "css.typography",
+      "custom_handler": "check_font_size_base",
+      "description": "basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용.",
+      "id": "font_size_pc_rem",
+      "selector": "custom:check_font_size_base",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "custom_handler": "_check_landing_unit_mixed_scale",
+      "description": "landing 프로파일에서 html/body font-size에 clamp|vw|rem|calc 혼용을 금지한다.",
+      "id": "landing_unit_mixed_scale",
+      "selector": "custom:_check_landing_unit_mixed_scale",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "custom_handler": "check_letter_spacing_unit",
+      "description": "letter-spacing은 em 단위를 사용한다. px는 절대값 2px 이하 미세 조정 시에만 허용.",
+      "id": "letter_spacing_unit",
+      "selector": "custom:check_letter_spacing_unit",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "description": "line-height는 무단위 비율(1.3, 1.45)만 사용한다. 25.866px 같은 computed px 금지.",
+      "id": "line_height_ratio_only",
+      "pattern": "line-height\\s*:\\s*[\\d.]+px",
+      "severity": "error",
+      "target": "css",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "custom_handler": "_check_line_height_tidy_ratio",
+      "description": "line-height 무단위 비율은 정돈 후보 목록(1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.45, 1.5, 1.6, 1.667, 1.75, 1.8, 2.0) 중 하나를 사용한다.",
+      "id": "line_height_tidy_ratio",
+      "selector": "custom:_check_line_height_tidy_ratio",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.typography",
+      "description": "한국어 텍스트 단락/헤딩에는 word-break: keep-all을 적용한다.",
+      "id": "word_break_korean",
+      "pattern": "keep-all",
+      "severity": "warning",
+      "target": "css",
+      "type": "required_substring"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.border",
+      "description": "border-radius는 원형 50%, pill 2em을 사용한다. 999px는 금지.",
+      "id": "border_radius_no_999",
+      "pattern": "999px",
+      "severity": "error",
+      "target": "css",
+      "type": "forbidden_substring"
+    },
+    {
+      "applies_to": [
+        "common",
+        "figma"
+      ],
+      "category": "css.border",
+      "description": ".item+.item{border-left/top:...} 패턴 금지 — 대신 divider 노드를 DOM 요소로 사용한다.",
+      "id": "no_adjacent_selector_border",
+      "pattern": "\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border-(left|top|right|bottom)",
+      "severity": "error",
+      "target": "css",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "figma"
+      ],
+      "category": "css.border",
+      "description": "레이아웃 패턴이나 .card+.card 같은 인접 셀렉터로 border를 추측해 넣지 않는다.",
+      "id": "no_heuristic_border",
+      "pattern": "\\.[a-z0-9_-]+\\s*\\+\\s*\\.[a-z0-9_-]+\\s*\\{[^}]*border",
+      "severity": "error",
+      "target": "css",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.spacing",
+      "custom_handler": "check_large_side_padding",
+      "description": "좌우 padding 100px 이상이면 max-width + margin:auto 패턴으로 변환해야 한다.",
+      "id": "large_side_padding",
+      "selector": "custom:check_large_side_padding",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.spacing",
+      "custom_handler": "check_max_width_pattern",
+      "description": "좌우 padding 100px 이상이 발견되면 max-width 기반 레이아웃 패턴 사용을 권장한다.",
+      "id": "max_width_pattern",
+      "selector": "custom:check_max_width_pattern",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
         "basic"
       ],
       "category": "css.spacing",
+      "custom_handler": "mobile_spacing_half",
       "description": "basic 프로젝트 768px 이하: padding/margin은 PC 값의 약 절반 사용.",
       "id": "mobile_spacing_half",
+      "selector": "custom:mobile_spacing_half",
       "severity": "info",
       "target": "css",
-      "type": "custom",
-      "custom_handler": "mobile_spacing_half",
-      "selector": "custom:mobile_spacing_half",
-      "priority": 300
+      "type": "custom"
     },
     {
       "applies_to": [
+        "common",
+        "basic",
         "landing"
       ],
-      "category": "css.format",
-      "description": "landing 프로젝트는 [data-delay] opacity/position 룰과 .section_on 토글 룰이 있어야 한다.",
-      "id": "gsap_animation_css_present",
+      "category": "html.structure",
+      "description": "내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지).",
+      "id": "inner_wrapper_limit",
+      "pattern": "inner_wrapper<=1",
       "severity": "warning",
-      "target": "css",
-      "type": "required_substring",
-      "pattern": "[data-delay]",
-      "priority": 200
+      "target": "html",
+      "type": "numeric_range"
     },
     {
       "applies_to": [
-        "figma"
+        "common",
+        "basic",
+        "landing"
       ],
-      "category": "figma.text",
-      "description": "Figma spec의 text_nodes[].characters는 HTML에 byte-exact 존재해야 한다 (NBSP/특수공백 포함).",
-      "id": "text_byte_exact_required",
-      "severity": "error",
-      "target": "text",
-      "type": "custom",
-      "custom_handler": "validate_text_byte_exact",
-      "selector": "custom:validate_text_byte_exact",
-      "priority": 100,
-      "examples": {
-        "bad": "Figma '운영시간\\xa0  10:00' → HTML '운영시간 10:00' (NBSP 소실)",
-        "good": "byte-exact 복사"
-      }
+      "category": "html.structure",
+      "description": "DOM 최대 깊이는 5단계를 초과하지 않는다.",
+      "id": "max_dom_depth",
+      "pattern": "depth<=5",
+      "rationale": "과도한 wrapper 중첩 방지로 마크업 단순화",
+      "severity": "warning",
+      "target": "html",
+      "type": "numeric_range"
     },
     {
       "applies_to": [
-        "figma"
+        "common",
+        "basic",
+        "landing"
       ],
-      "category": "figma.asset",
-      "description": "asset_manifest.json 과 HTML <img src> 는 양방향 일치해야 한다 (통이미지 금지).",
-      "id": "asset_manifest_consistency",
+      "category": "html.semantic",
+      "description": "<figure>, <figcaption>, <main>, <article> 태그는 사용하지 않는다.",
+      "id": "forbidden_tag",
+      "pattern": "<figure|<figcaption|<main\\b|<article\\b",
       "severity": "error",
       "target": "html",
-      "type": "custom",
-      "custom_handler": "validate_asset_manifest_consistency",
-      "selector": "custom:validate_asset_manifest_consistency",
-      "priority": 100,
-      "examples": {
-        "bad": "HTML 에 asset_manifest 미등록 이미지 (AI 합성 의심)",
-        "good": "HTML 이미지 전부 asset_manifest 등록된 Figma 원본"
-      }
+      "type": "regex_must_not_match"
     },
     {
       "applies_to": [
         "common",
         "basic",
-        "landing",
-        "figma"
+        "landing"
       ],
-      "category": "figma.mapping",
-      "description": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
-      "id": "vertical_frame_itemspacing_uses_margin_bottom",
+      "category": "html.semantic",
+      "custom_handler": "check_list_pattern",
+      "description": "반복되는 <a> 태그는 ul>li 구조 안에 배치한다 (연속 <a> 2개 이상 금지).",
+      "id": "list_pattern_required",
+      "selector": "custom:check_list_pattern",
+      "severity": "warning",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.semantic",
+      "custom_handler": "check_nav_structure",
+      "description": "<nav> 안에는 ul>li>a 구조를 사용한다 (직접 <a> 나열 금지).",
+      "id": "nav_ul_li_structure",
+      "selector": "custom:check_nav_structure",
       "severity": "error",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "enforce_policy1_vertical_margin_bottom",
-      "selector": "custom:enforce_policy1_vertical_margin_bottom",
-      "priority": 100
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.semantic",
+      "description": "빈 div(<div></div>) 사용 금지.",
+      "id": "no_empty_div",
+      "pattern": "<div[^>]*>\\s*</div>",
+      "severity": "warning",
+      "target": "html",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.semantic",
+      "description": "인라인 style 속성을 사용하지 않는다.",
+      "id": "no_inline_style",
+      "pattern": "style=\"",
+      "severity": "error",
+      "target": "html",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "custom_handler": "check_common_area_prefix",
+      "description": "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다.",
+      "id": "common_area_prefix",
+      "selector": "custom:check_common_area_prefix",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.",
+      "id": "generic_class_name",
+      "pattern": "(sec_\\d+|section_\\d+|box\\d+)\"",
+      "severity": "error",
+      "target": "html",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다.",
+      "id": "meaningful_page_name",
+      "pattern": "(page_\\d+|sub_\\d+|page_[a-z]$)",
+      "severity": "error",
+      "target": "html",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지.",
+      "id": "no_body_class",
+      "pattern": "<body[^>]*\\bclass\\s*=",
+      "severity": "error",
+      "target": "html",
+      "type": "regex_must_not_match"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다.",
+      "id": "no_forbidden_class",
+      "pattern": "sec_\\d+|section_\\d+|box\\d+",
+      "severity": "error",
+      "target": "html",
+      "type": "forbidden_substring"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "custom_handler": "page_filename_class_prefix_match",
+      "description": "CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_).",
+      "id": "page_filename_class_prefix_match",
+      "selector": "custom:page_filename_class_prefix_match",
+      "severity": "warning",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다.",
+      "id": "page_prefix_required",
+      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_]+$",
+      "severity": "warning",
+      "target": "html",
+      "type": "naming_pattern"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.naming",
+      "description": "HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).",
+      "id": "snake_case_naming",
+      "pattern": "^[a-z0-9_]+$",
+      "severity": "warning",
+      "target": "html",
+      "type": "naming_pattern"
+    },
+    {
+      "applies_to": [
+        "common",
+        "figma"
+      ],
+      "category": "html.image",
+      "custom_handler": "check_image_naming",
+      "description": "이미지 파일명은 snake_case 의미 있는 이름이어야 한다 (Figma node ID 그대로 금지).",
+      "id": "img_naming",
+      "selector": "custom:check_image_naming",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.image",
+      "custom_handler": "check_img_wrapper",
+      "description": "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외).",
+      "id": "img_wrapped",
+      "selector": "custom:check_img_wrapper",
+      "severity": "warning",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.text",
+      "custom_handler": "check_p_tag_misuse",
+      "description": "<p> 태그는 텍스트에 \\n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용.",
+      "id": "p_tag_condition_enforced",
+      "selector": "custom:check_p_tag_misuse",
+      "severity": "warning",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "html.text",
+      "custom_handler": "check_p_tag_misuse",
+      "description": "20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용.",
+      "id": "p_tag_misuse",
+      "selector": "custom:check_p_tag_misuse",
+      "severity": "info",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "accessibility",
+      "custom_handler": "img_alt_concise",
+      "description": "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지).",
+      "id": "img_alt_concise",
+      "selector": "custom:img_alt_concise",
+      "severity": "info",
+      "target": "html",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "accessibility",
+      "custom_handler": "minimal_aria",
+      "description": "aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지).",
+      "id": "minimal_aria",
+      "selector": "custom:minimal_aria",
+      "severity": "info",
+      "target": "html",
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -1091,14 +866,29 @@
         "figma"
       ],
       "category": "figma.mapping",
+      "custom_handler": "enforce_policy2_constraints_extract_only",
       "description": "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.",
       "id": "no_constraints_to_position_absolute_mapping",
+      "selector": "custom:enforce_policy2_constraints_extract_only",
       "severity": "error",
       "target": "spec",
-      "type": "custom",
-      "custom_handler": "enforce_policy2_constraints_extract_only",
-      "selector": "custom:enforce_policy2_constraints_extract_only",
-      "priority": 100
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing",
+        "figma"
+      ],
+      "category": "figma.mapping",
+      "custom_handler": "enforce_policy1_vertical_margin_bottom",
+      "description": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
+      "id": "vertical_frame_itemspacing_uses_margin_bottom",
+      "selector": "custom:enforce_policy1_vertical_margin_bottom",
+      "severity": "error",
+      "target": "css",
+      "type": "custom"
     },
     {
       "applies_to": [
@@ -1108,34 +898,40 @@
         "figma"
       ],
       "category": "figma.fidelity",
+      "custom_handler": "enforce_policy3_rules_conflict_bypass",
       "description": "Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).",
       "id": "figma_rules_conflict_uses_meta_marker",
+      "selector": "custom:enforce_policy3_rules_conflict_bypass",
       "severity": "error",
       "target": "spec",
-      "type": "custom",
-      "custom_handler": "enforce_policy3_rules_conflict_bypass",
-      "selector": "custom:enforce_policy3_rules_conflict_bypass",
-      "priority": 100
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "figma"
+      ],
+      "category": "figma.text",
+      "custom_handler": "validate_text_byte_exact",
+      "description": "Figma spec의 text_nodes[].characters는 HTML에 byte-exact 존재해야 한다 (NBSP/특수공백 포함).",
+      "id": "text_byte_exact_required",
+      "selector": "custom:validate_text_byte_exact",
+      "severity": "error",
+      "target": "text",
+      "type": "custom"
+    },
+    {
+      "applies_to": [
+        "figma"
+      ],
+      "category": "figma.asset",
+      "custom_handler": "validate_asset_manifest_consistency",
+      "description": "asset_manifest.json 과 HTML <img src> 는 양방향 일치해야 한다 (통이미지 금지).",
+      "id": "asset_manifest_consistency",
+      "selector": "custom:validate_asset_manifest_consistency",
+      "severity": "error",
+      "target": "html",
+      "type": "custom"
     }
   ],
-  "model_json_schema": {
-    "title": "ValidationSchema",
-    "type": "object",
-    "properties": {
-      "version": {},
-      "validation_types": {},
-      "profiles": {},
-      "severities": {},
-      "categories": {},
-      "rules": {}
-    },
-    "required": [
-      "version",
-      "validation_types",
-      "profiles",
-      "severities",
-      "categories",
-      "rules"
-    ]
-  }
+  "version": 1
 }

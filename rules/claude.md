@@ -22,6 +22,7 @@
 - Figma 노드명 (`header_b`, `footer_bk`, `sec_1` 등) 을 HTML 클래스에 박기
 - `site_`, `g_`, `common_` 같은 추측 prefix
 - 한글 / `,` / `&` / `.` / 공백 등 특수문자 클래스명
+- `<body>` 태그에 class 속성 추가 (body는 공통 영역, 페이지별 class 금지)
 
 ### 검증 / 보고
 - 도구 단위 테스트 통과 = 파이프라인 통과로 간주

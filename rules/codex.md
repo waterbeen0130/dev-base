@@ -13,6 +13,7 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 ## 코드 스타일
 
 ### HTML
+- `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역이므로 페이지별 class 사용하지 않음
 - `<div>` + 클래스 기반 구조 우선. `<section>`은 주요 콘텐츠 섹션에만 사용
 - `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div class="img_area">` + `<p>` 또는 `<span>` 사용
 - 모든 이미지에 `alt` 속성 필수 — **짧고 간결하게** (예: `alt="로고"`, `alt="제품 이미지"`, 긴 한국어 문장 금지)

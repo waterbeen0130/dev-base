@@ -490,14 +490,14 @@ class SemanticValidator:
                 if re.match(r".*sec_\d+$", cls) or re.match(r".*section_\d+$", cls) or re.match(r".*box\d+$", cls):
                     self._add("generic-class-name", "CRITICAL", f"범용 클래스명 금지: .{cls} → 역할/내용을 반영한 이름 사용", 0, filepath)
 
-    def check_body_page_class(self, html: str, filepath: str):
-        """body에 불필요한 page_ 클래스 확인"""
-        match = re.search(r'<body[^>]*class="page_[^"]*"', html)
+    def check_body_class(self, html: str, filepath: str):
+        """body에 class 속성 사용 금지"""
+        match = re.search(r'<body[^>]*\bclass\s*=', html)
         if match:
             self._add(
-                "body-page-class",
-                "MINOR",
-                "body에 page_ 클래스 불필요 (규칙: body 태그에 페이지 프리픽스 클래스 불필요)",
+                "body-class",
+                "CRITICAL",
+                "body 태그에 class 금지 — body는 공통 영역이므로 페이지별 class 사용 불가",
                 0,
                 filepath,
             )
@@ -583,7 +583,7 @@ LEGACY_CHECK_METHODS = [
     "check_common_area_prefix",
     "check_excessive_individual_classes",
     "check_generic_class_names",
-    "check_body_page_class",
+    "check_body_class",
     "check_image_naming",
     "check_large_side_padding",
 ]
@@ -601,7 +601,7 @@ LEGACY_HTML_CHECKS = {
     "check_snake_case_classes",
     "check_common_area_prefix",
     "check_generic_class_names",
-    "check_body_page_class",
+    "check_body_class",
 }
 
 LEGACY_CSS_CHECKS = {
@@ -2752,7 +2752,7 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_common_area_prefix": _adapt_legacy_check(check_common_area_prefix),
     "check_excessive_individual_classes": _adapt_legacy_check(check_excessive_individual_classes),
     "check_generic_class_names": _adapt_legacy_check(check_generic_class_names),
-    "check_body_page_class": _adapt_legacy_check(check_body_page_class),
+    "check_body_class": _adapt_legacy_check(check_body_class),
     "check_image_naming": _adapt_legacy_check(check_image_naming),
     "check_large_side_padding": _adapt_legacy_check(check_large_side_padding),
     # REQ-019 new custom checks

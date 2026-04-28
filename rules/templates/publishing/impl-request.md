@@ -57,6 +57,7 @@
 
 ### HTML 핵심 규칙
 
+- `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역, 페이지별 class 사용하지 않음
 - `<figure>`, `<figcaption>`, `<main>`, `<article>` 태그 **사용 금지** — `<div class="img_area">` + `<span>` 사용
 - 인라인 `style` 속성 금지
 - 빈 `<div>` 금지, 내부 wrapper div는 최대 1개 (DOM 최대 깊이 5단계)
