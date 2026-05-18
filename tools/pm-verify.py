@@ -226,6 +226,26 @@ def main() -> int:
     print("PM 검증 — 신뢰할 수 있는 카테고리만 리포트")
     print("=" * 80)
 
+    # 0. spec font metadata pre-check
+    spec_dir = Path(args.spec_dir)
+    _spec_has_font = False
+    if spec_dir.exists():
+        import json as _json
+        for sf in sorted(spec_dir.glob("*_spec.json")):
+            try:
+                sd = _json.loads(sf.read_text(encoding="utf-8"))
+                tn = sd.get("text_nodes")
+                if isinstance(tn, list) and tn and any(
+                    isinstance(n, dict) and n.get("fontSize") for n in tn
+                ):
+                    _spec_has_font = True
+                    break
+            except Exception:
+                pass
+    if not _spec_has_font:
+        print("\n⚠️  WARNING: spec에 font 메타데이터 없음 — 폰트 5필드 검증 불가")
+        print("   figma-section-spec.py --download-assets 로 재추출하세요")
+
     # 1. figma-validate (trusted categories only)
     print("\n[1] Figma 충실도 (텍스트 + 폰트 + 색상)")
     rc_fig, out_fig = run([

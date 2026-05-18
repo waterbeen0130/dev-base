@@ -113,7 +113,7 @@ rules:
       pattern: "^[a-z0-9_]+$"
 
   - id: page_prefix_required
-    description: "각 페이지의 본문 클래스는 페이지 프리픽스({페이지}_{역할}) 패턴을 따른다. index.html은 main_ 또는 index_ prefix를 사용한다 (예: main_mv, main_intro). 기타 서브페이지는 파일명이 prefix (greeting.html → greeting_). 자식 클래스에도 prefix 일관 적용 (main_intro_card). 공통 영역(header/footer/gnb/logo)은 prefix 없이 사용."
+    description: "페이지 prefix는 섹션 컨테이너에만 부여한다 ({페이지}_{역할} 패턴, 예: main_intro, main_product). index.html은 main_ prefix를 사용한다. 기타 서브페이지는 파일명이 prefix (greeting.html → greeting_). 자식 요소는 짧은 역할명(.card, .list, .title_area)으로 선언하고 CSS는 .main_intro .card 형태로 부모 스코핑한다. 자식에 부모 prefix를 중첩하지 않는다 (.main_intro_card 금지 → .main_intro .card). 공통 영역(header/footer/gnb/logo/container/utils/sns)은 prefix 없이 사용."
     severity: warning
     priority: 200
     applies_to: [common, basic, landing]
@@ -182,11 +182,14 @@ rules:
       pattern: "<body[^>]*\\bclass\\s*="
 
   - id: common_area_prefix
-    description: "header/footer/gnb/logo 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다."
+    description: "header/footer/gnb/logo/container/utils/sns/copyright 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다. 공통 영역은 어떤 페이지(index.html, greeting.html 등)에 있어도 prefix 없이 사용한다. 이 규칙은 page_prefix_required 보다 항상 우선한다."
     severity: error
     priority: 100
     applies_to: [common, basic, landing]
     category: html.naming
+    examples:
+      bad: ".index_header, .main_footer, .sub_container, .index_gnb"
+      good: ".header, .footer, .container, .gnb (모든 페이지에서 prefix 없이 동일)"
     validation:
       type: custom
       target: html
@@ -634,7 +637,7 @@ rules:
       custom_handler: check_list_pattern
 
   - id: img_wrapped
-    description: "콘텐츠 이미지는 div.img_area 래퍼 안에 배치한다 (배경/로고/아이콘 제외)."
+    description: "모든 <img> 태그는 .img_area 래퍼 안에 배치한다 (CSS 배경 이미지만 제외). 로고, 아이콘, 파트너 로고 등 예외 없음."
     severity: warning
     priority: 200
     applies_to: [common, basic, landing]
@@ -645,7 +648,7 @@ rules:
       custom_handler: check_img_wrapper
 
   - id: img_no_fixed_size
-    description: "img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 크기가 필요하면 부모 컨테이너에서 제어한다."
+    description: "img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다."
     severity: error
     priority: 100
     applies_to: [common, basic, landing]
@@ -654,6 +657,25 @@ rules:
       type: custom
       target: css
       custom_handler: check_img_no_fixed_size
+
+  - id: no_background_size
+    description: "background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: css.image
+    examples:
+      bad:
+        - "background-size:cover → 삭제"
+        - "background-size:contain → 삭제"
+        - "background-size:200px 300px → 삭제"
+      good:
+        - "background-size 없이 background-image만 선언"
+        - "이미지 크기는 부모 컨테이너에서 제어"
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_background_size
 
   - id: img_alt_concise
     description: "img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지)."
@@ -747,9 +769,9 @@ rules:
       pattern: "\\.(font|weight|color|size)_"
 
   - id: excessive_individual_classes
-    description: "같은 접두사 클래스가 8개 이상이면 부모+태그 셀렉터로 축소를 검토한다."
-    severity: info
-    priority: 300
+    description: "같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다."
+    severity: warning
+    priority: 200
     applies_to: [common, basic, landing]
     category: css.selector
     validation:
@@ -871,3 +893,177 @@ rules:
       type: custom
       target: spec
       custom_handler: enforce_policy3_rules_conflict_bypass
+
+  # ===== AGI-003 new rules =====
+
+  - id: html_formatting
+    description: "HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. 자식 태그가 2개 이상이거나 줄 길이가 80자를 초과하면 반드시 줄바꿈한다."
+    severity: warning
+    priority: 300
+    applies_to: [common, basic, landing]
+    category: html.structure
+    rationale: "복잡한 중첩 태그를 한 줄로 이어붙이면 가독성이 저하됨"
+    validation:
+      type: custom
+      target: html
+      custom_handler: html_formatting
+
+  - id: no_decorative_empty_tag
+    description: "장식 목적의 빈 span/div/i 태그 사용을 금지한다. CSS ::before/::after 가상 선택자로 대체한다. 예외: 아이콘 폰트 <i>, 빈 셀 <td>, JavaScript 동적 조작 요소."
+    severity: warning
+    priority: 300
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    rationale: "의미 없는 빈 태그는 접근성 저하와 마크업 비대화를 유발"
+    validation:
+      type: custom
+      target: html
+      custom_handler: no_decorative_empty_tag
+
+  - id: media_query_by_section
+    description: "CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지."
+    severity: warning
+    priority: 300
+    applies_to: [common, basic, landing]
+    category: css.formatting
+    rationale: "3대 영역 단위 분리로 유지보수성 향상. 섹션별 과도한 분리 방지"
+    validation:
+      type: custom
+      target: css
+      custom_handler: media_query_by_section
+
+  - id: generic_class_parent_scope
+    description: "페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다."
+    severity: warning
+    priority: 300
+    applies_to: [common, basic, landing]
+    category: css.selector
+    rationale: "섹션 내부 클래스가 부모 스코핑 없이 단독 선언되면 다른 페이지/섹션과 충돌 가능"
+    validation:
+      type: custom
+      target: css
+      custom_handler: generic_class_parent_scope
+
+  # ===== AGI-003 추가 규칙 (이오스인테리어 프로젝트 피드백) =====
+
+  - id: no_section_id
+    description: "퍼블리싱에서 <section> 태그에 id 속성을 사용하지 않는다. 앵커 링크가 필요하면 내부 요소에 id를 부여한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.structure
+    rationale: "section id는 JS 프레임워크 패턴이며 퍼블리싱에서는 클래스 기반 선택이 표준"
+    validation:
+      type: regex_must_not_match
+      target: html
+      pattern: "<section[^>]*\\bid\\s*="
+    examples:
+      bad: "<section id=\"about\">"
+      good: "<section class=\"main_about\">"
+
+  - id: no_wrapper_class
+    description: "eos_site, wrap_all, page_wrapper 같은 비표준 전체 래퍼 클래스를 금지한다. 전체 페이지 래퍼가 필요하면 기존 body 또는 시멘틱 태그를 활용한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.naming
+    rationale: "비표준 래퍼는 불필요한 DOM 깊이를 추가하고 프로젝트 간 일관성을 해침"
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_no_wrapper_class
+    examples:
+      bad: "<div class=\"eos_site\">, <div class=\"wrap_all\">"
+      good: "body 직속으로 header/section/footer 배치"
+
+  - id: no_min_width_wrapper
+    description: "페이지 래퍼 또는 body에 min-width를 선언하지 않는다. 반응형 레이아웃에서 min-width는 모바일 대응을 방해한다."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.layout
+    rationale: "min-width:1200px 같은 선언은 모바일에서 가로 스크롤을 강제함"
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_min_width_wrapper
+
+  - id: font_variable_required
+    description: "non-reset 폰트 선언은 CSS 변수(--font, --font2 등)와 CDN @import를 사용한다. common.css에 직접 font-family:'Pretendard' 같은 하드코딩을 하지 않는다 (reset.css의 @font-face 선언은 예외)."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.typography
+    rationale: "폰트를 변수화하면 프로젝트 간 폰트 교체가 용이하고 CDN 관리가 통합됨"
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_font_variable_required
+
+  - id: child_prefix_nesting
+    description: "자식 클래스에 부모 prefix를 중첩하지 않는다. main_project_list 같은 패턴은 .main_project .list 로 부모 스코핑해야 한다. 섹션 컨테이너 자체(main_project)의 2-토큰 네이밍은 허용."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: css.naming
+    rationale: "prefix 중첩은 클래스명이 길어지고 스코핑 구조가 CSS에 반영되지 않음"
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_child_prefix_nesting
+    examples:
+      bad: ".main_project_list{...}, .main_intro_card_icon{...}"
+      good: ".main_project .list{...}, .main_intro .card img{...}"
+
+  - id: cont_class_required
+    description: "섹션 내부 너비 제한에는 .cont 공통 클래스를 사용한다. eos_inner, sec_inner, content_wrap 같은 커스텀 inner wrapper 클래스를 금지한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.naming
+    rationale: ".cont는 common.css에 전역 선언된 표준 패턴이며 커스텀 inner wrapper는 일관성을 해침"
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_cont_class_required
+    examples:
+      bad: "<div class=\"eos_inner\">, <div class=\"sec_inner\">"
+      good: "<div class=\"cont\">"
+
+  - id: reset_property_duplicate
+    description: "reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.format
+    rationale: "reset.css 중복은 유지보수 시 양쪽을 모두 수정해야 하는 문제 유발"
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_reset_property_duplicate
+
+  # ===== Spec schema validation (REQ-048) =====
+
+  - id: spec_typography_required
+    description: "spec.json text_nodes에 타이포그래피 메타데이터(fontSize/fontWeight/fontFamily)가 누락되면 코드 추출 진입을 차단한다. figma-section-spec.py --download-assets로 재추출 필요."
+    severity: error
+    priority: 50
+    applies_to: [common, basic, landing]
+    category: spec.schema
+    rationale: "타이포그래피 메타데이터 없는 spec으로 코드 추출 시 에이전트가 폰트값을 추측하여 오류 발생"
+    validation:
+      type: custom
+      target: spec
+      custom_handler: check_spec_typography_required
+
+  - id: spec_extraction_method_warning
+    description: "MCP 수동 폴백으로 추출된 spec.json은 타이포그래피 정확도가 미보장된다. figma-section-spec.py로 재추출 권장."
+    severity: warning
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: spec.schema
+    rationale: "MCP 수동 폴백은 id/characters만 추출하여 fontSize/fontWeight 등이 전면 누락됨"
+    validation:
+      type: custom
+      target: spec
+      custom_handler: check_spec_extraction_method_warning
