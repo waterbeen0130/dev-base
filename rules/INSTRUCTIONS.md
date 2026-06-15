@@ -54,6 +54,20 @@ python3 D:/dev-base/tools/pm-verify.py \
 ### Step 4 — 시각 비교
 - Playwright 1920px 렌더 → Figma PNG 와 나란히 비교 → 자연어 피드백 → Pass 1/2 복귀.
 
+### 워크플로우 원장 (순서·주체 증명, MANDATORY)
+각 단계 완료 시 `.gran-maestro/workflow-ledger.json` 에 단계를 append 한다:
+```json
+{"section": "main_visual", "steps": [
+  {"step": "extract",   "provider": "figma-section-spec", "ts": "..."},
+  {"step": "structure", "provider": "omx", "ts": "..."},
+  {"step": "values",    "provider": "omx", "ts": "..."},
+  {"step": "verify",    "provider": "pm-verify", "ts": "..."}
+]}
+```
+- `step` 은 `extract → structure(Pass1) → values(Pass2) → verify` 순서. `values` 가 `structure` 보다 먼저면 노드명 직역 위험으로 차단된다.
+- `structure`/`values` 의 `provider` 는 알려진 추출 주체(omx/codex/claude/gemini)여야 한다(미상 차단).
+- 검증: `python3 D:/dev-base/tools/check-workflow-order.py --ledger ...` + `check-extraction-provenance.py --ledger ...`
+
 ### Step 5 — (선택) 그누보드 스킨
 - `rules/gnuboard.md` 전체 Read 후 적용.
 
