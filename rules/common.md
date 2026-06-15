@@ -69,6 +69,7 @@ color: #fff;
 | --- | --- | --- |
 | `box_sizing_redundant` | `info` | universal reset(*, *::before, *::after) 외 box-sizing:border-box 중복 선언을 금지한다. |
 | `empty_media_block` | `warning` | @media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외). |
+| `media_query_by_section` | `warning` | CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지. |
 | `media_query_format` | `warning` | @media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다. |
 | `no_important` | `warning` | !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외). |
 | `no_media_indent` | `info` | @media 블록 내부 규칙에 들여쓰기를 사용하지 않는다. |
@@ -87,6 +88,13 @@ universal reset(*, *::before, *::after) 외 box-sizing:border-box 중복 선언�
 @media 블록 본문이 공백/주석뿐이면 빈 블록으로 간주하고 금지한다 (@media print 예외).
 
 **검증 핸들러**: `_check_empty_media_block`
+
+---
+### media_query_by_section (warning)
+
+CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지.
+
+**근거**: 3대 영역 단위 분리로 유지보수성 향상. 섹션별 과도한 분리 방지
 
 ---
 ### media_query_format (warning)
@@ -206,12 +214,29 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 
 | Rule ID | Severity | Description |
 | --- | --- | --- |
+| `common_area_child_scope` | `warning` | 공통영역 자식 클래스(.logo, .gnb, .utils, .sns, .copyright, .logo_txt 등)는 .header/.footer 부모 셀렉터와 함께 선언한다. 단독 선언(.logo{}, .gnb a{})은 header/footer 양쪽 충돌 위험으로 금지. |
 | `excessive_individual_classes` | `warning` | 같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다. |
 | `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. |
+| `global_class_standalone` | `warning` | 전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용. |
 | `no_duplicate_selector` | `warning` | 같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언). |
 | `no_utility_classes` | `warning` | .font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리. |
 | `selector_scoped` | `warning` | 셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양). |
 
+### common_area_child_scope (warning)
+
+공통영역 자식 클래스(.logo, .gnb, .utils, .sns, .copyright, .logo_txt 등)는 .header/.footer 부모 셀렉터와 함께 선언한다. 단독 선언(.logo{}, .gnb a{})은 header/footer 양쪽 충돌 위험으로 금지.
+
+**나쁜 예**:
+```css
+.logo{...}  /  .gnb a{...}
+```
+**좋은 예**:
+```css
+.header .logo{...}  /  .header .gnb a{...}
+```
+**검증 핸들러**: `check_common_area_child_scope`
+
+---
 ### excessive_individual_classes (warning)
 
 같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다.
@@ -224,6 +249,21 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다.
 
 **근거**: 섹션 내부 클래스가 부모 스코핑 없이 단독 선언되면 다른 페이지/섹션과 충돌 가능
+
+---
+### global_class_standalone (warning)
+
+전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용.
+
+**나쁜 예**:
+```css
+body .header{...}  /  html .cont{...}
+```
+**좋은 예**:
+```css
+.header{...}  /  .cont{...}  /  .main_intro .cont{...}
+```
+**검증 핸들러**: `check_global_class_standalone`
 
 ---
 ### no_duplicate_selector (warning)
@@ -354,19 +394,65 @@ border-radius: 2em;
 **검증 핸들러**: `check_max_width_pattern`
 
 ---
+## css / image
+
+| Rule ID | Severity | Description |
+| --- | --- | --- |
+| `img_no_fixed_size` | `error` | img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다. |
+| `no_background_size` | `error` | background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다. |
+
+### img_no_fixed_size (error)
+
+img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
+
+**검증 핸들러**: `check_img_no_fixed_size`
+
+---
+### no_background_size (error)
+
+background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다.
+
+**나쁜 예**:
+```css
+['background-size:cover → 삭제', 'background-size:contain → 삭제', 'background-size:200px 300px → 삭제']
+```
+**좋은 예**:
+```css
+['background-size 없이 background-image만 선언', '이미지 크기는 부모 컨테이너에서 제어']
+```
+**검증 핸들러**: `check_no_background_size`
+
+---
 ## HTML 구조
 
 | Rule ID | Severity | Description |
 | --- | --- | --- |
-| `html_formatting` | `warning` | HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. 자식 태그가 2개 이상이거나 줄 길이가 80자를 초과하면 반드시 줄바꿈한다. |
+| `html_formatting` | `error` | HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. 자식 태그가 2개 이상이거나 줄 길이가 80자를 초과하면 반드시 줄바꿈한다. |
 | `inner_wrapper_limit` | `warning` | 내부 wrapper div는 최대 1개로 제한한다 (불필요한 중첩 금지). |
 | `max_dom_depth` | `warning` | DOM 최대 깊이는 5단계를 초과하지 않는다. |
 | `no_section_id` | `error` | 퍼블리싱에서 <section> 태그에 id 속성을 사용하지 않는다. 앵커 링크가 필요하면 내부 요소에 id를 부여한다. |
 
-### html_formatting (warning)
+### html_formatting (error)
 
 HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. 자식 태그가 2개 이상이거나 줄 길이가 80자를 초과하면 반드시 줄바꿈한다.
 
+**나쁜 예**:
+```html
+<ul><li>A</li><li>B</li><li>C</li></ul>
+<div class="card"><span class="img_area"><img src="img/photo.jpg" alt=""></span><span class="title">Title</span></div>
+```
+**좋은 예**:
+```html
+<ul>
+    <li>A</li>
+    <li>B</li>
+    <li>C</li>
+</ul>
+<div class="card">
+    <span class="img_area"><img src="img/photo.jpg" alt=""></span>
+    <span class="title">Title</span>
+</div>
+```
 **근거**: 복잡한 중첩 태그를 한 줄로 이어붙이면 가독성이 저하됨
 
 ---
@@ -457,6 +543,7 @@ DOM 최대 깊이는 5단계를 초과하지 않는다.
 | `generic_class_name` | `error` | sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다. |
 | `meaningful_page_name` | `error` | 의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다. |
 | `no_body_class` | `error` | body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지. |
+| `no_figma_nodeid_class` | `error` | Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_v2 같은 {접두}_{f\|v\|t}{숫자} 패턴)를 금지한다. 디자이너 레이어 식별자이며 시맨틱 의미가 없다. 페이지 prefix + 역할명(main_intro, greeting_title)을 사용한다. |
 | `no_forbidden_class` | `error` | sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다. |
 | `no_wrapper_class` | `error` | eos_site, wrap_all, page_wrapper 같은 비표준 전체 래퍼 클래스를 금지한다. 전체 페이지 래퍼가 필요하면 기존 body 또는 시멘틱 태그를 활용한다. |
 | `page_filename_class_prefix_match` | `warning` | CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_). |
@@ -509,6 +596,20 @@ sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금�
 
 body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지.
 
+
+---
+### no_figma_nodeid_class (error)
+
+Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_v2 같은 {접두}_{f|v|t}{숫자} 패턴)를 금지한다. 디자이너 레이어 식별자이며 시맨틱 의미가 없다. 페이지 prefix + 역할명(main_intro, greeting_title)을 사용한다.
+
+**나쁜 예**:
+```html
+<div class="main_f0"><span class="main_v53"><p class="main_t12">
+```
+**좋은 예**:
+```html
+<div class="main_intro"><span class="main_visual">
+```
 
 ---
 ### no_forbidden_class (error)
@@ -654,48 +755,6 @@ Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으�
 Figma 값이 rules.yaml 위반을 유발하면 spec 노드에 `rules_conflict: { rule_id, figma_value, applied_value }` 메타를 기록하고, validator 는 해당 노드에서 그 rule 을 PASS 처리한다 (false-positive 방지).
 
 **검증 핸들러**: `enforce_policy3_rules_conflict_bypass`
-
----
-## css / formatting
-
-| Rule ID | Severity | Description |
-| --- | --- | --- |
-| `media_query_by_section` | `warning` | CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지. |
-
-### media_query_by_section (warning)
-
-CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지.
-
-**근거**: 3대 영역 단위 분리로 유지보수성 향상. 섹션별 과도한 분리 방지
-
----
-## css / image
-
-| Rule ID | Severity | Description |
-| --- | --- | --- |
-| `img_no_fixed_size` | `error` | img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다. |
-| `no_background_size` | `error` | background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다. |
-
-### img_no_fixed_size (error)
-
-img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
-
-**검증 핸들러**: `check_img_no_fixed_size`
-
----
-### no_background_size (error)
-
-background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다.
-
-**나쁜 예**:
-```css
-['background-size:cover → 삭제', 'background-size:contain → 삭제', 'background-size:200px 300px → 삭제']
-```
-**좋은 예**:
-```css
-['background-size 없이 background-image만 선언', '이미지 크기는 부모 컨테이너에서 제어']
-```
-**검증 핸들러**: `check_no_background_size`
 
 ---
 ## spec / schema

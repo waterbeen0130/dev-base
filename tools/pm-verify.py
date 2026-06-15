@@ -214,6 +214,7 @@ def main() -> int:
     parser.add_argument("--css", required=True)
     parser.add_argument("--img", help="Image directory for broken link check")
     parser.add_argument("--profile", default="landing")
+    parser.add_argument("--emit-report", help="Write verification evidence JSON (DOD-006) to this path")
     args = parser.parse_args()
 
     html_path = Path(args.html)
@@ -303,6 +304,28 @@ def main() -> int:
 
     # Gate
     fail = bool(trusted_fig or trusted_sem or missing)
+
+    # DOD-006: emit verification execution evidence (sha-bound to current files)
+    if args.emit_report:
+        import hashlib
+        import json as _json
+        from datetime import datetime, timezone
+        report = {
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+            "html_path": str(html_path),
+            "css_path": str(css_path),
+            "html_sha256": hashlib.sha256(html_path.read_bytes()).hexdigest(),
+            "css_sha256": hashlib.sha256(css_path.read_bytes()).hexdigest(),
+            "profile": args.profile,
+            "exit_code": 1 if fail else 0,
+            "passed": not fail,
+            "trusted_figma_violations": len(trusted_fig),
+            "trusted_semantic_violations": len(trusted_sem),
+            "broken_links": len(missing),
+        }
+        Path(args.emit_report).write_text(_json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"\n[evidence] 검증 증거 기록: {args.emit_report}")
+
     print("\n" + "=" * 80)
     if fail:
         print(f"결과: ✗ FAIL — Figma 위반 {len(trusted_fig)}, 컨벤션 위반 {len(trusted_sem)}, broken {len(missing)}")

@@ -1,0 +1,27 @@
+{
+  "agi_id": "AGI-004",
+  "version": 2,
+  "anchors": [
+    {"id": "AD-007", "source_file": "details/conversion-step-hardening.md", "text": "스크린샷-우선 2패스 (구조=시각, 값=spec)", "kind": "architecture_decision", "grade": "should", "domain_slug": "conversion-step-hardening", "dod_refs": ["DOD-009"]},
+    {"id": "AD-008", "source_file": "details/ai-agnostic-instructions.md", "text": "단일 소스 rules/INSTRUCTIONS.md + thin shim", "kind": "architecture_decision", "grade": "must", "domain_slug": "ai-agnostic-instructions", "dod_refs": ["DOD-012", "DOD-013"]},
+    {"id": "DOD-012", "source_file": "objective.md", "text": "룰/워크플로우 단일 소스 통합 (AI-agnostic)", "kind": "dod", "grade": "must", "domain_slug": "ai-agnostic-instructions", "dod_refs": ["DOD-012"]},
+    {"id": "DOD-013", "source_file": "objective.md", "text": "AI 무관 진입점 정비 (Gemini 포함)", "kind": "dod", "grade": "should", "domain_slug": "ai-agnostic-instructions", "dod_refs": ["DOD-013"]},
+    {"id": "AD-001", "source_file": "details/rule-encoding-gaps.md", "text": "Figma 노드명 직역 클래스 차단 규칙 신설 (no_figma_nodeid_class)", "kind": "architecture_decision", "grade": "must", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-001"]},
+    {"id": "AD-002", "source_file": "details/rule-encoding-gaps.md", "text": "의미론적 스코핑 규칙 인코딩(공통영역 자식/전역 클래스)", "kind": "architecture_decision", "grade": "must", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-002"]},
+    {"id": "AD-003", "source_file": "details/trust-noise-reclassification.md", "text": "억제는 false-positive 감소 목적이지 위반 은폐가 아니다", "kind": "architecture_decision", "grade": "should", "domain_slug": "trust-noise-reclassification", "dod_refs": ["DOD-008"]},
+    {"id": "AD-004", "source_file": "details/regression-fixtures.md", "text": "규칙 변경은 위반/클린 픽스처 쌍 + 회귀 실행을 동반한다", "kind": "architecture_decision", "grade": "must", "domain_slug": "regression-fixtures", "dod_refs": ["DOD-010"]},
+    {"id": "AD-005", "source_file": "details/conversion-step-hardening.md", "text": "사전 예방(추출 입력) + 사후 게이트(검증) 병행", "kind": "architecture_decision", "grade": "could", "domain_slug": "conversion-step-hardening", "dod_refs": ["DOD-009"]},
+    {"id": "AD-006", "source_file": "details/verification-execution-gate.md", "text": "검증 실행 증거 기반 완료 게이트 + 산출물 경계 인식", "kind": "architecture_decision", "grade": "must", "domain_slug": "verification-execution-gate", "dod_refs": ["DOD-006", "DOD-011"]},
+    {"id": "DOD-001", "source_file": "objective.md", "text": "Figma 노드명 직역 클래스 차단", "kind": "dod", "grade": "must", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-001"]},
+    {"id": "DOD-002", "source_file": "objective.md", "text": "공통영역 스코핑 / 전역 클래스 선언 규칙 검출", "kind": "dod", "grade": "must", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-002"]},
+    {"id": "DOD-003", "source_file": "objective.md", "text": "텍스트 부분 색상(character_segments) 누락 검출", "kind": "dod", "grade": "should", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-003"]},
+    {"id": "DOD-004", "source_file": "objective.md", "text": "폐기 도구/자동 생성·수리 스크립트 사용 검출", "kind": "dod", "grade": "should", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-004"]},
+    {"id": "DOD-005", "source_file": "objective.md", "text": "룰 커버리지 갭 측정 및 축소", "kind": "dod", "grade": "must", "domain_slug": "rule-encoding-gaps", "dod_refs": ["DOD-005"]},
+    {"id": "DOD-006", "source_file": "objective.md", "text": "검증 실행 증거 기반 완료 게이트", "kind": "dod", "grade": "must", "domain_slug": "verification-execution-gate", "dod_refs": ["DOD-006"]},
+    {"id": "DOD-007", "source_file": "objective.md", "text": "검증 우회/자가보고 탐지", "kind": "dod", "grade": "should", "domain_slug": "verification-execution-gate", "dod_refs": ["DOD-007"]},
+    {"id": "DOD-008", "source_file": "objective.md", "text": "신뢰/노이즈 분류 재점검", "kind": "dod", "grade": "should", "domain_slug": "trust-noise-reclassification", "dod_refs": ["DOD-008"]},
+    {"id": "DOD-009", "source_file": "objective.md", "text": "변환(추출) 단계 룰 강제 입력 보강", "kind": "dod", "grade": "could", "domain_slug": "conversion-step-hardening", "dod_refs": ["DOD-009"]},
+    {"id": "DOD-010", "source_file": "objective.md", "text": "회귀 테스트 픽스처 체계", "kind": "dod", "grade": "must", "domain_slug": "regression-fixtures", "dod_refs": ["DOD-010"]},
+    {"id": "DOD-011", "source_file": "objective.md", "text": "산출물 경계 인식", "kind": "dod", "grade": "should", "domain_slug": "verification-execution-gate", "dod_refs": ["DOD-011"]}
+  ]
+}

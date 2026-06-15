@@ -1521,6 +1521,28 @@ def manual_review(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="manual_review_required")
 
 
+def check_html_formatting(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Detect HTML lines with 2+ child elements that exceed 80 chars."""
+    TAG_RE = re.compile(r"<(?!/)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>")
+    violations = []
+    for i, line in enumerate(ctx.html_text.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("<!") or stripped.startswith("<?"):
+            continue
+        child_tags = TAG_RE.findall(stripped)
+        if len(child_tags) < 2:
+            continue
+        if len(line.rstrip()) <= 80:
+            continue
+        violations.append(f"line {i}: {len(child_tags)} child tags, {len(line.rstrip())} chars")
+    if violations:
+        msg = f"html_formatting: {len(violations)} line(s) need line breaks — " + "; ".join(violations[:5])
+        if len(violations) > 5:
+            msg += f" ... and {len(violations) - 5} more"
+        return ValidationResult(rule["id"], rule["severity"], False, message=msg)
+    return ValidationResult(rule["id"], rule["severity"], True, message="ok")
+
+
 def page_filename_class_prefix_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
     raw_stem = Path(ctx.html_path).stem.lower().replace("-", "_")
     page_prefix = PREFIX_OVERRIDE.get(raw_stem, raw_stem)
@@ -2771,6 +2793,65 @@ def check_img_no_fixed_size(rule: dict, ctx: ValidationContext) -> ValidationRes
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+# Common-area child classes are reused across header/footer, so they must be
+# parent-scoped (.header .logo) rather than declared standalone (CLAUDE.md).
+COMMON_AREA_CHILD_CLASSES = (
+    "logo_txt", "logo", "gnb", "utils", "copyright",
+    "sns_talk", "sns_youtube", "sns_instagram", "sns_facebook", "sns",
+    "icon_login", "icon_search", "icon_menu",
+)
+
+# Global classes are reused everywhere, so they must stand alone without a
+# body/html ancestor (CLAUDE.md). Section-level overrides (.main_intro .cont) are fine.
+GLOBAL_STANDALONE_CLASSES = ("header", "footer", "cont", "img_area")
+
+
+def _iter_selector_parts(css_text: str):
+    for block in re.finditer(r"([^{}]+)\{([^{}]*)\}", css_text):
+        selector = block.group(1).strip()
+        if not selector or selector.startswith("@"):
+            continue
+        for part in (p.strip() for p in selector.split(",")):
+            if part:
+                yield part
+
+
+def check_common_area_child_scope(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    violations: list[str] = []
+    for part in _iter_selector_parts(ctx.css_text):
+        if re.search(r"\.(header|footer)\b", part):
+            continue  # already parent-scoped by a common-area wrapper
+        for cls in COMMON_AREA_CHILD_CLASSES:
+            if re.search(rf"\.{cls}\b", part):
+                violations.append(f"{part} (.{cls} unscoped)")
+                break
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="공통영역 자식 클래스 단독선언 — .header/.footer 부모 스코핑 필요: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_global_class_standalone(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    violations: list[str] = []
+    for part in _iter_selector_parts(ctx.css_text):
+        if not re.search(r"\b(body|html)\b", part):
+            continue
+        for cls in GLOBAL_STANDALONE_CLASSES:
+            if re.search(rf"\.{cls}\b", part):
+                violations.append(part)
+                break
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="전역 클래스에 body/html 부모 금지 — 단독 선언: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     handler_name = _resolve_custom_handler_name(rule) or "unknown"
     return ValidationResult(
@@ -3012,6 +3093,10 @@ def check_reset_property_duplicate(rule: dict, ctx: ValidationContext) -> Valida
 CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
     "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
+    "check_common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
+    "common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
+    "check_global_class_standalone": _safe_custom_handler(check_global_class_standalone),
+    "global_class_standalone": _safe_custom_handler(check_global_class_standalone),
     "item_spacing_reflected": item_spacing_reflected,
     "enforce_policy1_vertical_margin_bottom": _safe_custom_handler(enforce_policy1_vertical_margin_bottom),
     "enforce_policy2_constraints_extract_only": _safe_custom_handler(enforce_policy2_constraints_extract_only),
@@ -3105,7 +3190,7 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_no_background_size": _adapt_legacy_check(check_no_background_size),
     "no_background_size": _adapt_legacy_check(check_no_background_size),
     # AGI-003 new rules (handler not yet implemented — skip to avoid false positive)
-    "html_formatting": _safe_custom_handler(manual_review),
+    "html_formatting": _safe_custom_handler(check_html_formatting),
     "no_decorative_empty_tag": _safe_custom_handler(manual_review),
     "media_query_by_section": _safe_custom_handler(manual_review),
     "generic_class_parent_scope": _safe_custom_handler(manual_review),

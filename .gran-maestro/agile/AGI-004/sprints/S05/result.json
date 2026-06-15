@@ -1,0 +1,26 @@
+{
+  "sprint_id": "S05",
+  "status": "done",
+  "planned": [
+    "DOD-012/013 단일소스 통합 + AI 진입점 shim화"
+  ],
+  "completed": [
+    "CLAUDE.md 468→68줄 shim",
+    "AGENTS.md 규칙중복 제거(OMX 프레임은 유지)",
+    "GEMINI.md 신규 생성",
+    "3개 진입점 모두 rules/INSTRUCTIONS.md 참조",
+    "규칙 본문 중복 0. rules.yaml/common.md/검증툴 미변경."
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T14:25:52.724802+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "이제 Claude/Codex/Gemini 어느 PM이든 단일 지시서(rules/INSTRUCTIONS.md) 하나만 읽으면 되고, 규칙은 rules.yaml 단일소스. 손으로 유지하던 규칙 중복(CLAUDE/AGENTS) 제거 + Gemini도 더 이상 빈손 아님.",
+  "foundational_reason": null,
+  "summary": "단일소스 통합 완료: 진입점 3개 shim화, 테스트 113 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

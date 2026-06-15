@@ -1,0 +1,26 @@
+{
+  "sprint_id": "S03",
+  "status": "done",
+  "planned": [
+    "DOD-002 공통영역 스코핑 + 전역 클래스 단독선언 규칙"
+  ],
+  "completed": [
+    "common_area_child_scope + global_class_standalone 핸들러 2종 신설(validate-semantic)",
+    "rules.yaml 2규칙 추가",
+    "EXPECTED_RULE_COUNT 82→84",
+    "schema 재생성",
+    "위반/클린 회귀 테스트 4건"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T13:47:36.076244+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": ".logo{}/.gnb a{} 같은 공통영역 자식 단독선언과 body .header{}/html .cont{} 같은 전역클래스 부모오염이 이제 검출·보고된다. .header .logo{}/.main_intro .cont{} 등 정상 패턴은 통과(오탐 0).",
+  "foundational_reason": null,
+  "summary": "DOD-002 달성: 스코핑 규칙 2종, 전체 113 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

@@ -1,0 +1,33 @@
+{
+  "sprint": "S01",
+  "dod_ref": null,
+  "classification": "pending",
+  "matching_score": null,
+  "inferred_intent": null,
+  "original_dod_text": null,
+  "source_plan": null,
+  "evidence": {
+    "commits": [
+      "392953763fad1654fe2359a0612d7cde3de98eec",
+      "9cb910146746e2caf7125ae209e34c0b32f5c9c2",
+      "4af29b4d3b9e188963b934538fe841f08d03e9e6",
+      "db72136a1d82cb9dd5ac45d5b905f008bc501b94",
+      "b76d990fb993c5e362c1fb898b12943bfe64bf3e",
+      "96c5a807ab5d9f4ff82f366c44af33a1f2fc2425",
+      "de126b8039cc8735029e60f4cd41479c7b158df6",
+      "a05d04800d2a2a77b029c88aa402637259e33314",
+      "98c644290dfa0c47e975ed135ed7c7eb29795f23",
+      "7740159016edff61676108674f3aa6c4a13d191e"
+    ],
+    "changed_files": [
+      "CLAUDE.md",
+      "rules/common.md",
+      "rules/rules.yaml",
+      "rules/validation_schema.json",
+      "tools/pm-verify.py",
+      "tools/validate-semantic.py"
+    ]
+  },
+  "generated_at": "2026-06-15T09:52:56.056555+00:00",
+  "todo": "LLM intent inference not yet wired"
+}

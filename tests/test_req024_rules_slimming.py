@@ -15,9 +15,15 @@ def _load_rules() -> list[dict]:
     return yaml.safe_load(RULES_PATH.read_text(encoding="utf-8"))["rules"]
 
 
-def test_rules_count_is_65_or_less():
+# REQ-024 introduced a slimming target (<=65). Later REQs (037/038/040/041/047/048)
+# added rules intentionally, so the exact ceiling moved. The authoritative count now
+# lives in rules.models.EXPECTED_RULE_COUNT; this test keeps a bloat tripwire that
+# stays in sync with that authoritative count instead of a stale magic number.
+def test_rules_count_matches_authoritative_count():
+    from rules.models import EXPECTED_RULE_COUNT
+
     rules = _load_rules()
-    assert len(rules) <= 65
+    assert len(rules) == EXPECTED_RULE_COUNT
 
 
 def test_duplicate_rule_pairs_are_collapsed():
