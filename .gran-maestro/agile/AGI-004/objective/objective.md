@@ -42,7 +42,7 @@
   - Object: figma-validate / pm-verify
   - Context: spec↔HTML 대조 검증 시
   - Target: character_segments 무시가 위반으로 보고된다
-<!-- dod:DOD-003 status:todo priority:should domain:rule-encoding-gaps -->
+<!-- dod:DOD-003 status:done priority:should domain:rule-encoding-gaps -->
 
 - [ ] **DOD-004**: 폐기 도구/자동 생성·수리 스크립트 사용 검출
   - Direction: 검출한다
@@ -50,7 +50,7 @@
   - Object: 검증 게이트(grep 기반)
   - Context: 산출물/작업 트리 검증 시
   - Target: 금지 도구 사용이 위반으로 보고된다
-<!-- dod:DOD-004 status:proposed_done priority:should domain:rule-encoding-gaps -->
+<!-- dod:DOD-004 status:done priority:should domain:rule-encoding-gaps -->
 
 - [ ] **DOD-005**: 룰 커버리지 갭 측정 및 축소
   - Direction: 줄인다
@@ -58,7 +58,7 @@
   - Object: rules.yaml / validate-semantic 커버리지
   - Context: 규칙↔검증 매핑 리포트 기준
   - Target: A/B급(기계 검증 가능) 미인코딩 항목이 문서화된 갭 목록 대비 측정 가능하게 감소하고, 미인코딩 잔여 항목과 사유가 리포트로 남는다
-<!-- dod:DOD-005 status:todo priority:must domain:rule-encoding-gaps -->
+<!-- dod:DOD-005 status:done priority:must domain:rule-encoding-gaps -->
 
 - [ ] **DOD-006**: 검증 실행 증거 기반 완료 게이트
   - Direction: 강제한다
@@ -74,7 +74,7 @@
   - Object: 완료 게이트
   - Context: 완료 보고 시점
   - Target: 실제 실행 흔적 부재가 탐지되어 차단된다
-<!-- dod:DOD-007 status:todo priority:should domain:verification-execution-gate -->
+<!-- dod:DOD-007 status:done priority:should domain:verification-execution-gate -->
 
 - [ ] **DOD-008**: 신뢰/노이즈 분류 재점검
   - Direction: 재분류한다
@@ -82,7 +82,7 @@
   - Object: pm-verify의 TRUSTED/NOISY 분류
   - Context: 검증 리포트 생성 시
   - Target: 각 항목이 "실제 위반을 가리는지" 판정·문서화되고, 잘못 억제된 항목은 신뢰 카테고리로 복귀한다
-<!-- dod:DOD-008 status:todo priority:should domain:trust-noise-reclassification -->
+<!-- dod:DOD-008 status:done priority:should domain:trust-noise-reclassification -->
 
 - [ ] **DOD-009**: 스크린샷-우선 2패스 변환 워크플로우 채택
   - Direction: 전환한다
@@ -114,7 +114,7 @@
   - Object: 검증 회귀 테스트
   - Context: 검증 툴 변경 시
   - Target: 위반 픽스처는 잡고 클린 픽스처는 통과(false positive 0)함을 반복 실행으로 확인할 수 있다
-<!-- dod:DOD-010 status:todo priority:must domain:regression-fixtures -->
+<!-- dod:DOD-010 status:done priority:must domain:regression-fixtures -->
 
 - [ ] **DOD-011**: 산출물 경계 인식
   - Direction: 규정·인식한다
@@ -122,7 +122,7 @@
   - Object: 검증 게이트
   - Context: 검증 대상 선정 시
   - Target: raw 추출 잔재가 최종 산출물로 오인·검증·전달되지 않도록 검증이 산출물 경계를 인식한다
-<!-- dod:DOD-011 status:todo priority:should domain:verification-execution-gate -->
+<!-- dod:DOD-011 status:done priority:should domain:verification-execution-gate -->
 
 ## 설계 결정 (Architecture Decisions)
 

@@ -1,0 +1,23 @@
+{
+  "sprint_id": "S08",
+  "status": "done",
+  "planned": [
+    "DOD-011 산출물 경계 인식"
+  ],
+  "completed": [
+    "tools/check-output-boundary.py 신설: deliverable 안 raw 추출 디렉토리(extracted/) + Figma 노드명 클래스 다수(8종+) raw 덤프 HTML 식별",
+    "회귀 테스트 3건"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T14:43:01.655858+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "extracted/ 같은 raw 추출 잔재나 노드명 클래스 덩어리 HTML이 최종 산출물로 오인·전달되는 것을 검출한다(제천 사태 직접 원인 방지).",
+  "foundational_reason": null,
+  "summary": "DOD-011 달성: 산출물 경계, 전체 125 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

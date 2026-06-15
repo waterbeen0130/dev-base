@@ -1,0 +1,17 @@
+{
+  "sprint_id": "S08",
+  "status": "done",
+  "succeeded": [
+    "산출물 경계 체커 + 테스트"
+  ],
+  "failed": [],
+  "velocity": {
+    "planned": 1,
+    "completed": 1,
+    "rate": 1.0
+  },
+  "known_limitations": "남은 DoD: 003(부분색상) 005(커버리지 리포트) 007(우회탐지) 008(노이즈 재점검) 010(픽스처 확장).",
+  "lessons_learned": "노드명 임계(8종+)로 raw 덤프 식별 — DOD-001 규칙과 상보적(라인 차단 vs 파일 경계).",
+  "direction": "Sprint9~: DOD-003 character_segments / DOD-005 커버리지 리포트 / DOD-008 노이즈 재점검.",
+  "timestamp": "2026-06-15T14:43:02.372107+00:00"
+}
