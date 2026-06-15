@@ -59,3 +59,11 @@
 {"timestamp": "2026-06-15T14:58:22.240047+00:00", "event": "agile.retrospective", "sprint_id": "S11", "status": "done"}
 {"timestamp": "2026-06-15T15:06:38.921646+00:00", "event": "agile.objective-transition", "dod": "DOD-005", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
 {"timestamp": "2026-06-15T15:06:39.337101+00:00", "event": "agile.objective-transition", "dod": "DOD-008", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T15:07:09.180005+00:00", "event": "agile.finalize.step.load_session", "ok": true}
+{"timestamp": "2026-06-15T15:07:09.256280+00:00", "event": "agile.finalize.step.collect_reqs", "ok": true, "req_ids": []}
+{"timestamp": "2026-06-15T15:07:09.260685+00:00", "event": "agile.finalize.step.inspect_reqs", "ok": true, "skipped_reqs": [], "pending_accept_reqs": []}
+{"timestamp": "2026-06-15T15:07:09.265635+00:00", "event": "agile.finalize.step.remove_worktrees", "ok": true, "removed_worktrees": []}
+{"timestamp": "2026-06-15T15:07:09.597228+00:00", "event": "agile.finalize.step.orphan_cleanup", "ok": true, "orphan_cleanup": {"orphans": [], "cleaned": [], "failed": []}}
+{"timestamp": "2026-06-15T15:07:09.927163+00:00", "event": "agile.finalize.step.boundary_check", "ok": true, "boundary_ok": null}
+{"timestamp": "2026-06-15T15:07:09.932778+00:00", "event": "agile.finalize.ok", "agi_id": "AGI-004", "accepted_reqs": [], "skipped_reqs": [], "pending_accept_reqs": [], "removed_worktrees": [], "orphan_cleanup": {"orphans": [], "cleaned": [], "failed": []}, "boundary_ok": null}
+{"timestamp": "2026-06-15T15:07:18.736747+00:00", "event": "agile.update", "fields": {"status": "completed"}}
