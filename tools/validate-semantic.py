@@ -2852,6 +2852,22 @@ def check_global_class_standalone(rule: dict, ctx: ValidationContext) -> Validat
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+def check_korean_css_comment(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """CSS comments must be English only (CLAUDE.md). Flag Hangul inside /* */."""
+    violations: list[str] = []
+    for match in re.finditer(r"/\*.*?\*/", ctx.css_text, re.DOTALL):
+        block = match.group(0)
+        if re.search(r"[가-힣]", block):
+            violations.append(block.strip()[:40])
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="CSS 주석은 영어만 — 한글 주석 발견: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     handler_name = _resolve_custom_handler_name(rule) or "unknown"
     return ValidationResult(
@@ -3097,6 +3113,8 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
     "check_global_class_standalone": _safe_custom_handler(check_global_class_standalone),
     "global_class_standalone": _safe_custom_handler(check_global_class_standalone),
+    "check_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
+    "no_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
     "item_spacing_reflected": item_spacing_reflected,
     "enforce_policy1_vertical_margin_bottom": _safe_custom_handler(enforce_policy1_vertical_margin_bottom),
     "enforce_policy2_constraints_extract_only": _safe_custom_handler(enforce_policy2_constraints_extract_only),

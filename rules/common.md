@@ -72,6 +72,7 @@ color: #fff;
 | `media_query_by_section` | `warning` | CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐츠 / footer) 단위로 기본 CSS 바로 아래에 해당 영역의 breakpoint를 작성한다. main 내부 개별 섹션마다 @media를 쪼개지 않고, main 전체 base CSS 후 main 전체 @media를 breakpoint별로 모아 작성한다. 파일 하단에 전체 미디어쿼리를 몰아넣는 구조도 금지. |
 | `media_query_format` | `warning` | @media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다. |
 | `no_important` | `warning` | !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외). |
+| `no_korean_css_comment` | `warning` | CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출. |
 | `no_media_indent` | `info` | @media 블록 내부 규칙에 들여쓰기를 사용하지 않는다. |
 | `reset_property_duplicate` | `warning` | reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다. |
 | `selector_single_line` | `warning` | 각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지). 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙인다. |
@@ -109,6 +110,21 @@ CSS 파일에서 미디어쿼리는 3대 영역(header / main 페이지 콘텐�
 !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).
 
 **검증 핸들러**: `check_important`
+
+---
+### no_korean_css_comment (warning)
+
+CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출.
+
+**나쁜 예**:
+```css
+/* 헤더 영역 */
+```
+**좋은 예**:
+```css
+/* header area */
+```
+**검증 핸들러**: `check_korean_css_comment`
 
 ---
 ### no_media_indent (info)
@@ -545,6 +561,7 @@ DOM 최대 깊이는 5단계를 초과하지 않는다.
 | `no_body_class` | `error` | body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지. |
 | `no_figma_nodeid_class` | `error` | Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_v2 같은 {접두}_{f\|v\|t}{숫자} 패턴)를 금지한다. 디자이너 레이어 식별자이며 시맨틱 의미가 없다. 페이지 prefix + 역할명(main_intro, greeting_title)을 사용한다. |
 | `no_forbidden_class` | `error` | sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다. |
+| `no_guess_prefix` | `warning` | site_, g_, common_ 같은 추측성 prefix 클래스를 금지한다. 공통영역은 prefix 없이(.header), 페이지 콘텐츠는 파일명 기반 prefix(main_, greeting_)를 사용한다. |
 | `no_wrapper_class` | `error` | eos_site, wrap_all, page_wrapper 같은 비표준 전체 래퍼 클래스를 금지한다. 전체 페이지 래퍼가 필요하면 기존 body 또는 시멘틱 태그를 활용한다. |
 | `page_filename_class_prefix_match` | `warning` | CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.html → greeting_). |
 | `page_prefix_required` | `warning` | 페이지 prefix는 섹션 컨테이너에만 부여한다 ({페이지}_{역할} 패턴, 예: main_intro, main_product). index.html은 main_ prefix를 사용한다. 기타 서브페이지는 파일명이 prefix (greeting.html → greeting_). 자식 요소는 짧은 역할명(.card, .list, .title_area)으로 선언하고 CSS는 .main_intro .card 형태로 부모 스코핑한다. 자식에 부모 prefix를 중첩하지 않는다 (.main_intro_card 금지 → .main_intro .card). 공통 영역(header/footer/gnb/logo/container/utils/sns)은 prefix 없이 사용. |
@@ -623,6 +640,20 @@ sec_1, sec_2, section_01 같은 범용 클래스명을 금지한다.
 **좋은 예**:
 ```html
 <section class="about_intro">
+```
+
+---
+### no_guess_prefix (warning)
+
+site_, g_, common_ 같은 추측성 prefix 클래스를 금지한다. 공통영역은 prefix 없이(.header), 페이지 콘텐츠는 파일명 기반 prefix(main_, greeting_)를 사용한다.
+
+**나쁜 예**:
+```html
+<div class="site_header"><span class="common_wrap">
+```
+**좋은 예**:
+```html
+<div class="header"><span class="main_intro">
 ```
 
 ---
