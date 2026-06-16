@@ -1,0 +1,24 @@
+# S02 Retrospective
+
+- status: done
+- timestamp: 2026-06-15T13:28:20.422384+00:00
+- known_limitations: DOD-010 회귀 하니스는 이 규칙으로 패턴 확립. 이후 규칙마다 위반/클린 픽스처 추가 필요.
+- direction: Sprint 3: DOD-002 공통영역 스코핑/전역클래스 규칙 또는 DOD-012 단일소스 통합
+
+## 성공 항목
+- no_figma_nodeid_class 규칙 + 회귀 테스트
+- end-to-end CRITICAL 차단 실증
+
+## 실패 항목
+- 없음
+
+## Velocity
+- planned: 2
+- completed: 1
+- rate: 0.5
+
+## Lessons Learned
+기존 run_validation 기반 인라인 위반/클린 테스트가 별도 fixtures 디렉토리보다 코드베이스 idiom에 부합. forbidden_substring regex로 핸들러 없이 신규 규칙 추가 가능.
+
+## Known Issues
+- 없음

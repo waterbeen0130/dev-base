@@ -43,6 +43,7 @@
 ### 2.3 이미지 노드
 
 - 모든 이미지는 `<div class="img_area">` 안에 배치
+- **img 및 .img_area에 고정 width/height 금지** — 크기가 필요하면 부모 컨테이너에서 제어
 - `<figure>`, `<figcaption>` 사용 금지
 
 ### 2.4 divider 노드
@@ -109,7 +110,7 @@
 .hero_title{font-size:1rem; font-weight:700; color:#090944;}
 .hero_desc{font-size:0.875rem; line-height:1.6; letter-spacing:-0.025em;}
 ```
-- **각 셀렉터 규칙은 한 줄**
+- **각 셀렉터 규칙은 한 줄** (콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄)
 - 같은 셀렉터 중복 선언 금지 — 하나로 합침
 
 ### 6.2 미디어쿼리 포맷
@@ -211,7 +212,7 @@
 - [ ] 네비게이션 메뉴가 `nav > ul > li > a` 구조
 - [ ] 인라인 스타일 없음
 - [ ] CSS Grid 사용 없음
-- [ ] 각 셀렉터가 한 줄 포맷
+- [ ] 각 셀렉터가 한 줄 포맷 (콤마 3개+ 시 셀렉터만 줄바꿈 허용)
 - [ ] 같은 셀렉터 중복 없음
 - [ ] 클래스명이 snake_case + 페이지 프리픽스
 - [ ] 이미지 파일명이 의미 있는 snake_case (Figma node ID 금지)

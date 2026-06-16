@@ -390,3 +390,8 @@ Run `omx setup` to install all components. Run `omx doctor` to verify installati
   `$analyze`, `$autopilot`, `$build-fix`, `$code-review`, `$deepsearch`, `$front...`(관련 키워드), `$security-review`, `$ultraqa`, `$ultrawork`, `$swarm`
 - 요청이 모호할수록, 먼저 실행 가능한 가장 짧은 단위로 진행 후 중간점검한다.
 
+### dev-base 규칙·워크플로우 (단일 소스)
+- HTML/CSS 규칙, Figma 변환 워크플로우(스크린샷-우선 2패스), 네이밍 원칙은 **`rules/INSTRUCTIONS.md`** 가 단일 소스다. 코드 작업 전 반드시 Read 한다.
+- 규칙 본문은 `rules/rules.yaml`(→ 자동생성 `rules/common.md`)이 단일 소스이며, 이 파일에 복제하지 않는다.
+- 완료 전 `tools/pm-verify.py` 실행 + raw 출력 보고 (거짓 보고 금지).
+

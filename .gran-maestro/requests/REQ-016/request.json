@@ -15,13 +15,25 @@
       "status": "pending",
       "agent": "codex-dev",
       "spec": "tasks/01/spec.md",
-      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005", "AC-006", "AC-007"]
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007"
+      ]
     }
   ],
   "dependencies": {
     "blockedBy": [],
     "relatedTo": [],
-    "blocks": ["REQ-017", "REQ-018"]
+    "blocks": [
+      "REQ-017",
+      "REQ-018"
+    ]
   },
-  "stitch_screens": []
+  "stitch_screens": [],
+  "updated_at": "2026-04-21T09:51:32.000Z"
 }

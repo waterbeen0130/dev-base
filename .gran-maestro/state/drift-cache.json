@@ -1,7 +1,7 @@
 {
   "sources": {
-    "rules/rules.yaml": 1776653120.1182125,
-    "rules/validation_schema.json": 1776655432.107438,
-    "tools/figma-validate.py": 1776653123.676941
+    "rules/rules.yaml": 1776662437.6685667,
+    "rules/validation_schema.json": 1776676107.658361,
+    "tools/figma-validate.py": 1776747981.8511095
   }
 }

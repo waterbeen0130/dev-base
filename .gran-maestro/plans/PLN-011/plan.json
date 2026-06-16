@@ -1,0 +1,10 @@
+{
+  "id": "PLN-011",
+  "title": "디에스솔루션 MAIN 페이지 end-to-end 파이프라인 드릴 런 + 검증",
+  "status": "completed",
+  "created_at": "2026-04-21T04:21:52.000Z",
+  "completed_at": "2026-04-21T04:45:00.000Z",
+  "cynefin_domain": "complicated",
+  "linked_requests": ["REQ-043"],
+  "completion_note": "드릴 런 목적 달성 — 파이프라인 갭 5건 발견 (특히 asset export 미구현). drill-report.md 가 PLN-012 소재"
+}

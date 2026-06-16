@@ -1,0 +1,9 @@
+{
+  "id": "PLN-013",
+  "title": "파이프라인 검증 결함 수정 + gemini 규칙 준수 개선 (REQ-046 드릴 V2 갭 #7~#12)",
+  "status": "active",
+  "created_at": "2026-04-21T06:00:00.000Z",
+  "cynefin_domain": "complicated",
+  "linked_requests": [],
+  "linked_reports": ["REQ-046/tasks/01/drill-report-v2.md"]
+}

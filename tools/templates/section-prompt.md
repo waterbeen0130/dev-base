@@ -10,7 +10,7 @@
 ## CSS 규칙 (CRITICAL)
 
 ### 선택자
-- 각 셀렉터 규칙은 **한 줄** (여러 줄 펼침 금지)
+- 각 셀렉터 규칙은 **한 줄** (여러 줄 펼침 금지). 단, **콤마 셀렉터 3개 이상**이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙임
 - **모든 요소에 개별 클래스 부여 금지** — 컨테이너 클래스만 유지
 - 내부 요소는 `.parent span`, `.parent h2` 등 부모+태그 선택자
 - 같은 태그 복수 시 `.parent span:first-of-type` / `.parent span + span`
@@ -26,17 +26,34 @@
 - font-family: reset.css에 Pretendard 선언됨 → Pretendard이면 **생략**
 - font-weight: 400은 기본값 → **생략**
 
+### reset.css/common.css 중복 선언 금지 (CRITICAL)
+아래는 reset.css 또는 common.css skeleton에 이미 선언됨 — **절대 재선언하지 말 것**:
+- `html,body{font-size:…}` — reset.css
+- `body{font-family:…; color:…; background:…}` — reset.css
+- `a{color:inherit; text-decoration:none}` — reset.css
+- `img{max-width:100%}` — reset.css
+- `.cont{…}` — common.css skeleton
+- `.img_area{…}`, `.img_area img{…}` — common.css skeleton
+- `#wrap{overflow:hidden}` — 필요 시 common.css에 1회만
+- `strong{font-weight:700}` — 브라우저 기본값
+
 ### 구조
+- `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역
 - 빈 div 금지
 - DOM 최대 깊이 5단계
 - 불필요 래퍼(자식 1개, 스타일 없음) 제거
 - 리스트형 반복(3개+) → `ul > li`
-- 이미지는 `div.img_area > img` 래퍼
+- 이미지는 `div.img_area > img` 래퍼. **img 및 .img_area에 고정 width/height 금지** — JSON bbox 크기는 img_area의 **부모 컨테이너**에 적용 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - 짧은 텍스트에 `<p>` 금지 → `<span>` 사용
 - 클래스: snake_case, `{page}_{역할}` 패턴
+  - `index.html` → `main_` prefix (예: `main_mv`, `main_intro`, `main_product`)
+  - 기타 서브페이지 → 파일명에서 `.html` 제거한 값이 prefix
+  - 자식에도 prefix 일관: `main_intro_card`, `main_intro_card_icon`
+- 공통 영역(header/footer/gnb/logo)은 prefix 없이 사용, 스코핑으로 충돌 방지
 - **`sec_1`, `sec_2`, `section_01` 같은 범용 숫자 이름 금지** — 반드시 역할명 사용 (예: `main_recommend`, `main_process`)
 - 피그마 노드 이름이 `sec_1`이어도 클래스명은 역할로 변환할 것
 - 텍스트를 임의 생성/추측 금지 — JSON TEXT 노드에 있는 텍스트만 사용
+- **줄바꿈 → `<br>` 변환 필수**: JSON 텍스트의 `\n`은 HTML `<br>` 태그로 변환한다. `\n`을 그냥 두거나 무시하면 안됨
 - 섹션 내부 래퍼는 `.cont` 클래스, 최대 1개
 
 ### 레이아웃

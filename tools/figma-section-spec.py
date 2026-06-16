@@ -19,13 +19,17 @@ import os
 import re
 import sys
 import tempfile
+import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from urllib import error, parse, request
 
+import requests
+
 
 FIGMA_API_BASE = "https://api.figma.com"
+MAX_ASSET_DOWNLOAD_BYTES = 10 * 1024 * 1024
 SCHEMA_VERSION_V2 = "2.0.0"
 V2_TOP_LEVEL_NULL_KEYS = ("_extra",)
 V2_SECTION_NULL_KEYS = ("_extra",)
@@ -73,6 +77,7 @@ class ExtractionResult:
     vector_nodes: list[dict]
     interactions: list[dict]
     image_refs: set[str]
+    excluded_nodes: list[dict] | None = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,6 +94,12 @@ def parse_args() -> argparse.Namespace:
         default=True,
         help="Emit <name>_asset_manifest.json alongside spec output",
     )
+    parser.add_argument(
+        "--download-assets",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Download SVG/PNG asset files and record local_path/format/hash in the asset manifest",
+    )
     args = parser.parse_args()
 
     if args.from_spec:
@@ -104,6 +115,10 @@ def parse_args() -> argparse.Namespace:
 def fail(message: str, code: int = 1) -> None:
     print(message, file=sys.stderr)
     raise SystemExit(code)
+
+
+def warn(message: str) -> None:
+    print(f"warning: {message}", file=sys.stderr)
 
 
 def require_figma_token() -> str:
@@ -719,7 +734,208 @@ def sha256_hex(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def build_asset_manifest(payload: dict) -> dict:
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def safe_asset_filename(value: str) -> str:
+    return value.replace(":", "_").replace("/", "_").replace("\\", "_")
+
+
+def atomic_write_bytes(path: str | Path, data: bytes) -> None:
+    path = str(path)
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
+    fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", dir=directory or ".")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+
+def _asset_download_key(asset: dict) -> tuple[str, str] | None:
+    kind = asset.get("kind")
+    ref = asset.get("ref")
+    if isinstance(kind, str) and kind and isinstance(ref, str) and ref:
+        return (kind, ref)
+    return None
+
+
+def _asset_api_request(
+    file_key: str,
+    token: str,
+    node_ids: list[str],
+    export_format: str,
+) -> dict[str, str | None]:
+    if not node_ids:
+        return {}
+
+    url = f"{FIGMA_API_BASE}/v1/images/{parse.quote(file_key)}"
+    params = {"ids": ",".join(node_ids), "format": export_format, "scale": "1"}
+    headers = {"X-Figma-Token": token, "Accept": "application/json"}
+    delays = (1, 2, 4)
+
+    for attempt in range(len(delays) + 1):
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=30)
+        except requests.RequestException as exc:
+            warn(f"Figma images API request failed for {export_format}: {exc}")
+            return {}
+
+        if response.status_code == 429 and attempt < len(delays):
+            time.sleep(delays[attempt])
+            continue
+
+        if response.status_code != 200:
+            warn(f"Figma images API request failed for {export_format} ({response.status_code}); skipping assets")
+            return {}
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            warn(f"Figma images API returned invalid JSON for {export_format}: {exc}")
+            return {}
+
+        images = payload.get("images")
+        if not isinstance(images, dict):
+            warn(f"Figma images API response missing images map for {export_format}; skipping assets")
+            return {}
+
+        result: dict[str, str | None] = {}
+        for node_id, asset_url in images.items():
+            if isinstance(node_id, str):
+                result[node_id] = asset_url if isinstance(asset_url, str) and asset_url else None
+        return result
+
+    warn(f"Figma images API rate limited for {export_format}; skipping assets")
+    return {}
+
+
+def _download_asset_url(asset_url: str, label: str) -> bytes | None:
+    try:
+        response = requests.get(asset_url, timeout=60, stream=True)
+    except requests.RequestException as exc:
+        warn(f"Asset download failed for {label}: {exc}")
+        return None
+
+    if response.status_code != 200:
+        warn(f"Asset download failed for {label} ({response.status_code})")
+        return None
+
+    content_length = response.headers.get("Content-Length") if hasattr(response, "headers") else None
+    if isinstance(content_length, str):
+        try:
+            if int(content_length) > MAX_ASSET_DOWNLOAD_BYTES:
+                warn(f"Asset download skipped for {label}: file exceeds 10MB")
+                return None
+        except ValueError:
+            pass
+
+    chunks: list[bytes] = []
+    total = 0
+    try:
+        iterator = response.iter_content(chunk_size=8192)
+    except AttributeError:
+        iterator = (getattr(response, "content", b""),)
+
+    for chunk in iterator:
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > MAX_ASSET_DOWNLOAD_BYTES:
+            warn(f"Asset download skipped for {label}: file exceeds 10MB")
+            return None
+        chunks.append(chunk)
+
+    data = b"".join(chunks)
+    if not data:
+        warn(f"Asset download skipped for {label}: empty response")
+        return None
+    return data
+
+
+def download_assets(
+    assets: list[dict],
+    file_key: str,
+    token: str,
+    output_dir: str | Path,
+    section_name: str,
+) -> dict[tuple[str, str], dict[str, str]]:
+    """Download manifest assets via Figma images API and return manifest fields."""
+    output_root = Path(output_dir)
+    downloads: dict[tuple[str, str], dict[str, str]] = {}
+    request_groups = {
+        "vector": {
+            "format": "svg",
+            "folder": "vectors",
+            "node_ids": [],
+            "by_node_id": defaultdict(list),
+        },
+        "image": {
+            "format": "png",
+            "folder": "images",
+            "node_ids": [],
+            "by_node_id": defaultdict(list),
+        },
+    }
+
+    for asset in assets:
+        key = _asset_download_key(asset)
+        if key is None:
+            continue
+        kind, _ref = key
+        group = request_groups.get(kind)
+        if group is None:
+            continue
+        spec_node_id = asset.get("spec_node_id")
+        if not isinstance(spec_node_id, str) or not spec_node_id:
+            continue
+        group["node_ids"].append(spec_node_id)
+        group["by_node_id"][spec_node_id].append(asset)
+
+    for kind, group in request_groups.items():
+        node_ids = sorted(set(group["node_ids"]))
+        api_images = _asset_api_request(file_key, token, node_ids, group["format"])
+        for node_id in node_ids:
+            assets_for_node = group["by_node_id"].get(node_id, [])
+            if not isinstance(assets_for_node, list):
+                continue
+            asset_url = api_images.get(node_id)
+            if not asset_url:
+                warn(f"Figma images API returned no URL for {kind} node {node_id}; skipping asset")
+                continue
+
+            data = _download_asset_url(asset_url, node_id)
+            if data is None:
+                continue
+
+            for asset in assets_for_node:
+                key = _asset_download_key(asset)
+                if key is None:
+                    continue
+                ref = asset["ref"]
+                filename = f"{safe_asset_filename(ref)}.{group['format']}"
+                local_path = Path(section_name) / group["folder"] / filename
+                output_path = output_root / local_path
+                atomic_write_bytes(output_path, data)
+                downloads[key] = {
+                    "local_path": local_path.as_posix(),
+                    "format": group["format"],
+                    "hash": sha256_bytes(data),
+                }
+
+    return downloads
+
+
+def build_asset_manifest(
+    payload: dict,
+    downloaded_assets: dict[tuple[str, str], dict[str, str]] | None = None,
+) -> dict:
     assets: list[dict[str, str]] = []
     image_refs_seen: set[str] = set()
     vector_refs_seen: set[str] = set()
@@ -742,14 +958,15 @@ def build_asset_manifest(payload: dict) -> dict:
                 if not isinstance(image_ref, str) or not image_ref or image_ref in image_refs_seen:
                     continue
                 image_refs_seen.add(image_ref)
-                assets.append(
-                    {
-                        "ref": image_ref,
-                        "kind": "image",
-                        "hash": image_ref,
-                        "spec_node_id": node_id,
-                    }
-                )
+                asset = {
+                    "ref": image_ref,
+                    "kind": "image",
+                    "hash": image_ref,
+                    "spec_node_id": node_id,
+                }
+                if downloaded_assets is not None:
+                    asset.update(downloaded_assets.get(("image", image_ref), {}))
+                assets.append(asset)
 
     vector_nodes = payload.get("vector_nodes")
     if isinstance(vector_nodes, list):
@@ -761,14 +978,15 @@ def build_asset_manifest(payload: dict) -> dict:
                 continue
             vector_refs_seen.add(node_id)
             path_content = vector_path_content(vector_node)
-            assets.append(
-                {
-                    "ref": node_id,
-                    "kind": "vector",
-                    "hash": sha256_hex(path_content),
-                    "spec_node_id": node_id,
-                }
-            )
+            asset = {
+                "ref": node_id,
+                "kind": "vector",
+                "hash": sha256_hex(path_content),
+                "spec_node_id": node_id,
+            }
+            if downloaded_assets is not None:
+                asset.update(downloaded_assets.get(("vector", node_id), {}))
+            assets.append(asset)
 
     assets.sort(key=lambda item: (item["kind"], item["ref"], item["spec_node_id"], item["hash"]))
     return {"assets": assets}
@@ -802,9 +1020,23 @@ def walk_and_extract(root: dict) -> ExtractionResult:
     vector_nodes: list[dict] = []
     interactions: list[dict] = []
     image_refs: set[str] = set()
+    excluded_nodes: list[dict] = []
 
     def walk(node: dict, *, parent_id=None) -> None:
         if not isinstance(node, dict):
+            return
+
+        # AC-001: skip nodes flagged visible:false and record them for audit
+        if node.get("visible") is False:
+            excluded_nodes.append(
+                {
+                    "node_id": node.get("id"),
+                    "name": node.get("name"),
+                    "type": node.get("type"),
+                    "parent_id": parent_id,
+                    "reason": "visible:false",
+                }
+            )
             return
 
         interactions.extend(extract_url_interactions(node))
@@ -838,10 +1070,23 @@ def walk_and_extract(root: dict) -> ExtractionResult:
         vector_nodes=vector_nodes,
         interactions=interactions,
         image_refs=image_refs,
+        excluded_nodes=excluded_nodes,
     )
 
 
 def fetch_node_document(file_key: str, node_id: str, token: str) -> dict:
+    doc, _ = fetch_node_document_with_meta(file_key, node_id, token)
+    return doc
+
+
+def fetch_node_document_with_meta(file_key: str, node_id: str, token: str) -> tuple[dict, dict]:
+    """Fetch node document along with file-level metadata (e.g. lastModified).
+
+    Returns (document, meta) where meta contains keys like ``last_modified`` when
+    the Figma API exposes them. Meta values may be empty strings when the API
+    payload lacks the field.
+    """
+
     query = parse.urlencode({"ids": node_id, "depth": 8})
     data = api_get_json(f"/v1/files/{parse.quote(file_key)}/nodes?{query}", token)
 
@@ -864,7 +1109,14 @@ def fetch_node_document(file_key: str, node_id: str, token: str) -> dict:
     if not isinstance(doc, dict):
         fail(f"Figma response missing document for node: {node_id}")
 
-    return doc
+    # AC-002: surface the file-level lastModified timestamp to the caller so it
+    # can be recorded in spec.json for freshness comparisons.
+    last_modified = data.get("lastModified")
+    if not isinstance(last_modified, str):
+        last_modified = ""
+    meta = {"last_modified": last_modified.strip()}
+
+    return doc, meta
 
 
 def fetch_images_map(file_key: str, token: str, image_refs: set[str]) -> dict[str, str]:
@@ -1007,6 +1259,41 @@ def ensure_v2_payload_shape(payload: dict) -> dict:
     return payload
 
 
+def read_preserved_spec_fields(path_str: str) -> dict:
+    """Read fields that must survive re-extraction from an existing spec.json.
+
+    Used to preserve user-authored metadata like ``allow_missing_selectors``
+    (AC-003) when re-running the extractor on the same section. Returns an empty
+    dict when the file does not exist or fails to parse — this is a best-effort
+    read and must never fail the extraction pipeline.
+    """
+
+    preserved: dict = {}
+    path = Path(path_str)
+    if not path.exists():
+        return preserved
+    try:
+        raw = path.read_text(encoding="utf-8")
+        existing = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        return preserved
+    if not isinstance(existing, dict):
+        return preserved
+
+    allow_missing = existing.get("allow_missing_selectors")
+    if isinstance(allow_missing, list):
+        cleaned = [item for item in allow_missing if isinstance(item, str)]
+        preserved["allow_missing_selectors"] = cleaned
+
+    # Retain the last-known freshness stamp as a fallback when the new API
+    # response omits it (AC-002 best-effort preservation).
+    previous_stamp = existing.get("_source_last_modified")
+    if isinstance(previous_stamp, str) and previous_stamp.strip():
+        preserved["_source_last_modified_previous"] = previous_stamp.strip()
+
+    return preserved
+
+
 def load_spec_payload(path_str: str) -> dict:
     path = Path(path_str)
     try:
@@ -1029,6 +1316,9 @@ def load_spec_payload(path_str: str) -> dict:
 def extraction_result_from_payload(payload: dict) -> ExtractionResult:
     images = payload.get("images")
     image_refs = set(images.keys()) if isinstance(images, dict) else set()
+    excluded_nodes = payload.get("excluded_nodes")
+    if not isinstance(excluded_nodes, list):
+        excluded_nodes = []
     return ExtractionResult(
         section=payload.get("section", {}),
         text_nodes=payload.get("text_nodes", []),
@@ -1036,6 +1326,7 @@ def extraction_result_from_payload(payload: dict) -> ExtractionResult:
         vector_nodes=payload.get("vector_nodes", []),
         interactions=payload.get("interactions", []),
         image_refs=image_refs,
+        excluded_nodes=excluded_nodes,
     )
 
 
@@ -1851,6 +2142,8 @@ def default_name(node_id: str) -> str:
 
 def main() -> int:
     args = parse_args()
+    file_last_modified = ""
+    extraction_excluded: list[dict] = []
     if args.from_spec:
         payload = load_spec_payload(args.from_spec)
         payload["schema_version"] = SCHEMA_VERSION_V2
@@ -1864,13 +2157,24 @@ def main() -> int:
         payload = preprocess_payload(payload)
         payload["component_groups"] = extract_component_groups(payload)
         extracted = extraction_result_from_payload(payload)
+        # Carry over excluded_nodes already present in the source spec (from a
+        # previous live extraction). New exclusions are only produced by the
+        # live fetch path.
+        existing_excluded = payload.get("excluded_nodes")
+        if isinstance(existing_excluded, list):
+            extraction_excluded = [item for item in existing_excluded if isinstance(item, dict)]
+        existing_stamp = payload.get("_source_last_modified")
+        if isinstance(existing_stamp, str):
+            file_last_modified = existing_stamp.strip()
         source_node_id = payload.get("section", {}).get("id")
         node_id = source_node_id if isinstance(source_node_id, str) and source_node_id.strip() else "from-spec"
         default_output_name = default_name_from_spec_path(args.from_spec)
     else:
         token = require_figma_token()
-        root = fetch_node_document(args.file_key, args.node_id, token)
+        root, meta = fetch_node_document_with_meta(args.file_key, args.node_id, token)
+        file_last_modified = meta.get("last_modified", "") or ""
         extracted = walk_and_extract(root)
+        extraction_excluded = list(extracted.excluded_nodes or [])
         images = fetch_images_map(args.file_key, token, extracted.image_refs)
         payload = {
             "schema_version": SCHEMA_VERSION_V2,
@@ -1893,12 +2197,46 @@ def main() -> int:
     json_path = os.path.join(args.output, f"{name}_spec.json")
     md_path = os.path.join(args.output, f"{name}_spec.md")
 
+    # AC-003: preserve allow_missing_selectors authored by humans in an existing
+    # spec.json at the same output location (best-effort — never fails).
+    preserved_fields = read_preserved_spec_fields(json_path)
+    allow_missing_selectors = preserved_fields.get("allow_missing_selectors")
+    if allow_missing_selectors is None:
+        existing_allow = payload.get("allow_missing_selectors")
+        if isinstance(existing_allow, list):
+            allow_missing_selectors = [item for item in existing_allow if isinstance(item, str)]
+    if allow_missing_selectors is None:
+        allow_missing_selectors = []
+    payload["allow_missing_selectors"] = allow_missing_selectors
+
+    # AC-002: record freshness stamp (fall back to last-known value when the new
+    # API response omits it, so downstream tooling always has a baseline).
+    if not file_last_modified:
+        file_last_modified = preserved_fields.get("_source_last_modified_previous", "") or ""
+    payload["_source_last_modified"] = file_last_modified
+
+    # AC-001: expose the list of nodes that were dropped for visibility reasons
+    # so validators can explain missing selectors without guessing.
+    payload["excluded_nodes"] = extraction_excluded
+
     atomic_write_json(json_path, payload)
     atomic_write_text(md_path, render_markdown(payload, node_id))
 
     manifest_path = os.path.join(args.output, asset_manifest_name(name))
     if args.emit_asset_manifest:
         manifest_payload = build_asset_manifest(payload)
+        if args.download_assets:
+            if args.from_spec:
+                warn("--download-assets requires live Figma API input; skipping asset downloads for --from-spec")
+            else:
+                downloaded_assets = download_assets(
+                    manifest_payload["assets"],
+                    args.file_key,
+                    token,
+                    args.output,
+                    name,
+                )
+                manifest_payload = build_asset_manifest(payload, downloaded_assets)
         atomic_write_json(manifest_path, manifest_payload, sort_keys=True)
 
     print(json_path)

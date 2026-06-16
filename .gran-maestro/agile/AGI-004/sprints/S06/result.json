@@ -1,0 +1,22 @@
+{
+  "sprint_id": "S06",
+  "status": "done",
+  "planned": [
+    "DOD-006 검증 실행 증거 기반 완료 게이트"
+  ],
+  "completed": [
+    "pm-verify.py --emit-report(파일 sha256+통과여부+타임스탬프 증거 JSON) + tools/verify-evidence-gate.py(증거 없음/미통과/검증후변경 시 차단) + 회귀 테스트 4건"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T14:30:22.469726+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "검증이 실제 실행·통과했다는 증거(파일 sha 일치 + passed) 없이는 완료/전달이 차단된다. 검증 후 파일을 바꾸면 stale로 재차단 — 자가보고만으로 '검증 끝남' 통과 불가.",
+  "foundational_reason": null,
+  "summary": "DOD-006 달성: 증거 게이트, 전체 117 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

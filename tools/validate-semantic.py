@@ -3,7 +3,6 @@
 
 Usage:
   python3 tools/validate-semantic.py --html output/index.html --css output/common.css
-  python3 tools/validate-semantic.py --html output/index.html --css output/common.css --fix
 """
 
 
@@ -87,14 +86,10 @@ class SemanticValidator:
                     )
 
     def check_img_wrapper(self, html: str, filepath: str):
-        """콘텐츠 이미지가 img_area 래퍼 없이 사용되는지 확인 (배경/로고/아이콘 제외)"""
+        """모든 <img> 태그가 .img_area 래퍼 안에 있는지 확인 (CSS 배경 이미지만 제외, 로고/아이콘도 포함)"""
         lines = html.split("\n")
         for i, line in enumerate(lines, 1):
             if "<img " not in line:
-                continue
-            if any(skip in line for skip in ["_bg", "logo", "ic_", "sns_", "alt=\"메뉴\""]):
-                continue
-            if "<p>" in line or "<p " in line:
                 continue
             if "img_area" not in line:
                 prev = lines[max(0, i - 2):i]
@@ -307,12 +302,18 @@ class SemanticValidator:
                 self._add("no-empty-div", "MAJOR", f"빈 div 발견: {line.strip()[:50]}", i, filepath)
 
     def check_dom_depth(self, html: str, filepath: str):
-        """DOM 최대 깊이 5단계 확인"""
+        """DOM 최대 깊이 5단계 확인 (table 관련 태그는 깊이 카운트 제외)"""
+        _TABLE_TAGS = {"table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption"}
         depth = 0
         for i, line in enumerate(html.split("\n"), 1):
-            opens = len(re.findall(r"<(?:div|ul|li|nav|header|footer|section)\b", line))
-            closes = len(re.findall(r"</(?:div|ul|li|nav|header|footer|section)>", line))
-            depth += opens - closes
+            opens = re.findall(r"<(div|ul|li|nav|header|footer|section|table|thead|tbody|tfoot|tr|th|td|caption)\b", line)
+            closes = re.findall(r"</(div|ul|li|nav|header|footer|section|table|thead|tbody|tfoot|tr|th|td|caption)>", line)
+            for tag in opens:
+                if tag not in _TABLE_TAGS:
+                    depth += 1
+            for tag in closes:
+                if tag not in _TABLE_TAGS:
+                    depth -= 1
             if depth > 5:
                 self._add("max-dom-depth", "MAJOR", f"DOM 깊이 {depth}단계 (최대 5)", i, filepath)
                 break
@@ -448,6 +449,9 @@ class SemanticValidator:
             "btn_menu",
             "btn_close",
             "total_menu",
+            "container",
+            "utils",
+            "sns",
         ]
         classes = re.findall(r'class="([^"]*)"', html)
         for cls_str in classes:
@@ -474,11 +478,11 @@ class SemanticValidator:
                 prefix = "_".join(parts[:2])
                 prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
         for prefix, count in prefix_count.items():
-            if count > 8:
+            if count > 5:
                 self._add(
                     "excessive-classes",
-                    "MINOR",
-                    f".{prefix}_* 계열 클래스 {count}개 — 부모+태그 선택자로 축소 검토",
+                    "MAJOR",
+                    f".{prefix}_* 계열 클래스 {count}개 — 부모 스코핑(.parent .child) + 태그 선택자로 축소 필요",
                     0,
                     filepath,
                 )
@@ -491,17 +495,25 @@ class SemanticValidator:
                 if re.match(r".*sec_\d+$", cls) or re.match(r".*section_\d+$", cls) or re.match(r".*box\d+$", cls):
                     self._add("generic-class-name", "CRITICAL", f"범용 클래스명 금지: .{cls} → 역할/내용을 반영한 이름 사용", 0, filepath)
 
-    def check_body_page_class(self, html: str, filepath: str):
-        """body에 불필요한 page_ 클래스 확인"""
-        match = re.search(r'<body[^>]*class="page_[^"]*"', html)
+    def check_body_class(self, html: str, filepath: str):
+        """body에 class 속성 사용 금지"""
+        match = re.search(r'<body[^>]*\bclass\s*=', html)
         if match:
             self._add(
-                "body-page-class",
-                "MINOR",
-                "body에 page_ 클래스 불필요 (규칙: body 태그에 페이지 프리픽스 클래스 불필요)",
+                "body-class",
+                "CRITICAL",
+                "body 태그에 class 금지 — body는 공통 영역이므로 페이지별 class 사용 불가",
                 0,
                 filepath,
             )
+
+    def check_no_background_size(self, css: str, filepath: str):
+        """background-size is unnecessary — --download-assets provides 1:1 images"""
+        for match in re.finditer(r"([^{]+)\{([^}]+)\}", css):
+            selector = match.group(1).strip()
+            body = match.group(2)
+            if re.search(r"background-size\s*:", body):
+                self._add("no-background-size", "CRITICAL", f"background-size 금지 — --download-assets가 1:1 사이즈로 추출하므로 불필요: {selector}", 0, filepath)
 
     # ===== Image Checks =====
 
@@ -584,9 +596,10 @@ LEGACY_CHECK_METHODS = [
     "check_common_area_prefix",
     "check_excessive_individual_classes",
     "check_generic_class_names",
-    "check_body_page_class",
+    "check_body_class",
     "check_image_naming",
     "check_large_side_padding",
+    "check_no_background_size",
 ]
 
 LEGACY_HTML_CHECKS = {
@@ -602,7 +615,7 @@ LEGACY_HTML_CHECKS = {
     "check_snake_case_classes",
     "check_common_area_prefix",
     "check_generic_class_names",
-    "check_body_page_class",
+    "check_body_class",
 }
 
 LEGACY_CSS_CHECKS = {
@@ -625,6 +638,7 @@ LEGACY_CSS_CHECKS = {
     "check_utility_classes",
     "check_excessive_individual_classes",
     "check_large_side_padding",
+    "check_no_background_size",
 }
 
 
@@ -1266,6 +1280,9 @@ def _extract_class_names(html_text: str) -> list[str]:
     return names
 
 
+PREFIX_OVERRIDE = {"index": "main"}
+
+
 def validate_naming_pattern(rule: dict, ctx: ValidationContext) -> ValidationResult:
     pattern = rule["validation"].get("pattern", "")
     target = rule["validation"].get("target", "html")
@@ -1276,14 +1293,18 @@ def validate_naming_pattern(rule: dict, ctx: ValidationContext) -> ValidationRes
 
     if target == "html":
         if rule["id"] == "page_prefix_required":
-            body_match = re.search(r"<body[^>]*class=\"([^\"]+)\"", ctx.html_text)
-            if not body_match:
-                return ValidationResult(rule["id"], rule["severity"], False, message="body class missing for page prefix rule")
-            body_classes = [token for token in body_match.group(1).split() if token]
-            invalid = [name for name in body_classes if not regex.match(name)]
-            if invalid:
-                return ValidationResult(rule["id"], rule["severity"], False, message=f"invalid body class naming: {', '.join(invalid)}")
-            return ValidationResult(rule["id"], rule["severity"], True)
+            raw_stem = Path(ctx.html_path).stem.lower().replace("-", "_")
+            expected_prefix = PREFIX_OVERRIDE.get(raw_stem, raw_stem)
+            section_classes = re.findall(r'<section[^>]*class="([^"]*)"', ctx.html_text)
+            all_section_tokens: list[str] = []
+            for cls_str in section_classes:
+                all_section_tokens.extend(cls_str.split())
+            if any(token.startswith(f"{expected_prefix}_") for token in all_section_tokens):
+                return ValidationResult(rule["id"], rule["severity"], True)
+            if not all_section_tokens:
+                return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no section elements found")
+            return ValidationResult(rule["id"], rule["severity"], False,
+                message=f"no section class with prefix '{expected_prefix}_' found")
 
         invalid = [name for name in _extract_class_names(ctx.html_text) if not regex.match(name)]
         if invalid:
@@ -1500,8 +1521,31 @@ def manual_review(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="manual_review_required")
 
 
+def check_html_formatting(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Detect HTML lines with 2+ child elements that exceed 80 chars."""
+    TAG_RE = re.compile(r"<(?!/)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>")
+    violations = []
+    for i, line in enumerate(ctx.html_text.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("<!") or stripped.startswith("<?"):
+            continue
+        child_tags = TAG_RE.findall(stripped)
+        if len(child_tags) < 2:
+            continue
+        if len(line.rstrip()) <= 80:
+            continue
+        violations.append(f"line {i}: {len(child_tags)} child tags, {len(line.rstrip())} chars")
+    if violations:
+        msg = f"html_formatting: {len(violations)} line(s) need line breaks — " + "; ".join(violations[:5])
+        if len(violations) > 5:
+            msg += f" ... and {len(violations) - 5} more"
+        return ValidationResult(rule["id"], rule["severity"], False, message=msg)
+    return ValidationResult(rule["id"], rule["severity"], True, message="ok")
+
+
 def page_filename_class_prefix_match(rule: dict, ctx: ValidationContext) -> ValidationResult:
-    page_prefix = Path(ctx.html_path).stem.lower().replace("-", "_")
+    raw_stem = Path(ctx.html_path).stem.lower().replace("-", "_")
+    page_prefix = PREFIX_OVERRIDE.get(raw_stem, raw_stem)
     classes = _extract_class_names(ctx.html_text)
     if not classes:
         return ValidationResult(rule["id"], rule["severity"], False, message="no_class_found")
@@ -2632,6 +2676,74 @@ def _check_figma_cardinality_match(rule: dict, ctx: "ValidationContext") -> Vali
     )
 
 
+def _check_spec_typography_required(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Reject spec.json where text_nodes lack typography metadata (fontSize, fontWeight, etc.)."""
+    import json as _json
+
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    required_fields = ("fontSize", "fontWeight", "fontFamily")
+    violations = []
+    for path in spec_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        text_nodes = data.get("text_nodes")
+        if not isinstance(text_nodes, list) or not text_nodes:
+            continue
+        missing_count = sum(
+            1 for node in text_nodes
+            if isinstance(node, dict) and not any(node.get(f) for f in required_fields)
+        )
+        if missing_count == len(text_nodes):
+            import os as _os_local
+            violations.append(_os_local.path.basename(path))
+
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message=f"spec.json text_nodes missing typography metadata (fontSize/fontWeight/fontFamily) — re-extract with figma-section-spec.py --download-assets: {', '.join(violations[:3])}",
+            location=spec_paths[0],
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def _check_spec_extraction_method_warning(rule: dict, ctx: "ValidationContext") -> ValidationResult:
+    """Warn when spec.json was generated via MCP manual fallback instead of figma-section-spec.py."""
+    import json as _json
+
+    spec_paths = _discover_spec_json_files(ctx)
+    if not spec_paths:
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no spec.json")
+
+    fallback_specs = []
+    for path in spec_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as fp:
+                data = _json.load(fp)
+        except Exception:
+            continue
+        method = (data.get("source") or {}).get("extraction_method", "")
+        if "manual-fallback" in method or "manual_fallback" in method:
+            try:
+                import os as _os_inner
+                fallback_specs.append(_os_inner.path.basename(path))
+            except Exception:
+                fallback_specs.append(path)
+
+    if fallback_specs:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message=f"MCP manual fallback spec detected — typography accuracy not guaranteed: {', '.join(fallback_specs[:3])}",
+            location=spec_paths[0],
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 def _check_landing_unit_mixed_scale(rule: dict, ctx: ValidationContext) -> ValidationResult:
     if ctx.profile != "landing":
         return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="profile_not_landing")
@@ -2658,6 +2770,103 @@ def _check_landing_unit_mixed_scale(rule: dict, ctx: ValidationContext) -> Valid
 
 
 # ===== CUSTOM HANDLERS =====
+
+def check_img_no_fixed_size(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    violations: list[str] = []
+    for block in re.finditer(r"([^{}]+)\{([^{}]*)\}", ctx.css_text):
+        selector = block.group(1).strip()
+        body = block.group(2)
+        if selector.startswith("@"):
+            continue
+        sel_parts = [s.strip() for s in selector.split(",")]
+        for part in sel_parts:
+            tokens = part.split()
+            last_token = tokens[-1] if tokens else ""
+            if last_token not in ("img", ".img_area"):
+                continue
+            for prop in ("width", "height"):
+                if re.search(rf"(?<![a-z-]){prop}\s*:\s*\d", body):
+                    violations.append(f"{part} has fixed {prop}")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message="; ".join(violations[:3]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+# Common-area child classes are reused across header/footer, so they must be
+# parent-scoped (.header .logo) rather than declared standalone (CLAUDE.md).
+COMMON_AREA_CHILD_CLASSES = (
+    "logo_txt", "logo", "gnb", "utils", "copyright",
+    "sns_talk", "sns_youtube", "sns_instagram", "sns_facebook", "sns",
+    "icon_login", "icon_search", "icon_menu",
+)
+
+# Global classes are reused everywhere, so they must stand alone without a
+# body/html ancestor (CLAUDE.md). Section-level overrides (.main_intro .cont) are fine.
+GLOBAL_STANDALONE_CLASSES = ("header", "footer", "cont", "img_area")
+
+
+def _iter_selector_parts(css_text: str):
+    for block in re.finditer(r"([^{}]+)\{([^{}]*)\}", css_text):
+        selector = block.group(1).strip()
+        if not selector or selector.startswith("@"):
+            continue
+        for part in (p.strip() for p in selector.split(",")):
+            if part:
+                yield part
+
+
+def check_common_area_child_scope(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    violations: list[str] = []
+    for part in _iter_selector_parts(ctx.css_text):
+        if re.search(r"\.(header|footer)\b", part):
+            continue  # already parent-scoped by a common-area wrapper
+        for cls in COMMON_AREA_CHILD_CLASSES:
+            if re.search(rf"\.{cls}\b", part):
+                violations.append(f"{part} (.{cls} unscoped)")
+                break
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="공통영역 자식 클래스 단독선언 — .header/.footer 부모 스코핑 필요: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_global_class_standalone(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    violations: list[str] = []
+    for part in _iter_selector_parts(ctx.css_text):
+        if not re.search(r"\b(body|html)\b", part):
+            continue
+        for cls in GLOBAL_STANDALONE_CLASSES:
+            if re.search(rf"\.{cls}\b", part):
+                violations.append(part)
+                break
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="전역 클래스에 body/html 부모 금지 — 단독 선언: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_korean_css_comment(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """CSS comments must be English only (CLAUDE.md). Flag Hangul inside /* */."""
+    violations: list[str] = []
+    for match in re.finditer(r"/\*.*?\*/", ctx.css_text, re.DOTALL):
+        block = match.group(0)
+        if re.search(r"[가-힣]", block):
+            violations.append(block.strip()[:40])
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="CSS 주석은 영어만 — 한글 주석 발견: " + "; ".join(violations[:3]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
 
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
     handler_name = _resolve_custom_handler_name(rule) or "unknown"
@@ -2715,9 +2924,197 @@ def enforce_policy3_rules_conflict_bypass(rule: dict, _ctx: ValidationContext) -
     return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="validated_by_figma_validate")
 
 
+# ===== AGI-003 new handlers (eos interior feedback) =====
+
+def check_no_wrapper_class(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Forbid non-standard full-page wrapper classes like eos_site, wrap_all, page_wrapper."""
+    forbidden_patterns = [
+        r"eos_\w+",
+        r"wrap_all",
+        r"page_wrapper",
+        r"site_\w+",
+        r"all_wrap",
+    ]
+    html = ctx.html_text
+    violations = []
+    for i, line in enumerate(html.split("\n"), 1):
+        classes = re.findall(r'class="([^"]*)"', line)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                for pat in forbidden_patterns:
+                    if re.match(f"^{pat}$", cls):
+                        violations.append(f"line {i}: non-standard wrapper class .{cls}")
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="; ".join(violations[:5]),
+            location=f"{ctx.html_path}",
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_no_min_width_wrapper(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Forbid min-width on body/page-level wrappers."""
+    css = ctx.css_text
+    violations = []
+    wrapper_selectors = {"body", "html", ".wrap", ".wrapper", ".container"}
+    for match in re.finditer(r"([^{]+)\{([^}]+)\}", css):
+        selector = match.group(1).strip().lower()
+        body = match.group(2)
+        if any(ws in selector for ws in wrapper_selectors) or selector in ("html,body", "body", "html"):
+            if re.search(r"min-width\s*:", body):
+                violations.append(f"min-width on {selector}")
+    # Also catch any min-width >= 1000px on any selector
+    for i, line in enumerate(css.split("\n"), 1):
+        m = re.search(r"min-width\s*:\s*(\d+)px", line)
+        if m and int(m.group(1)) >= 1000:
+            violations.append(f"line {i}: min-width:{m.group(1)}px (>=1000px forbidden)")
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="; ".join(violations[:5]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_font_variable_required(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Non-reset font-family declarations should use CSS variables, not hardcoded names."""
+    css = ctx.css_text
+    violations = []
+    for i, line in enumerate(css.split("\n"), 1):
+        if "font-family" not in line:
+            continue
+        stripped = line.strip()
+        # Skip comments
+        if stripped.startswith("/*") or stripped.startswith("//"):
+            continue
+        # Skip @font-face blocks (already handled in reset.css)
+        if "@font-face" in stripped:
+            continue
+        # Skip lines using CSS variables
+        if "var(--" in line:
+            continue
+        # Detect hardcoded font-family declarations
+        fm = re.search(r"font-family\s*:\s*([^;]+)", line)
+        if fm:
+            value = fm.group(1).strip()
+            # Allow generic font families only
+            generics = {"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "inherit", "initial", "unset"}
+            families = [f.strip().strip("'\"").lower() for f in value.split(",")]
+            non_generic = [f for f in families if f not in generics]
+            if non_generic:
+                violations.append(f"line {i}: hardcoded font-family '{value}' — use var(--font) instead")
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="; ".join(violations[:5]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_child_prefix_nesting(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Detect child classes that nest the parent prefix (e.g. .main_project_list instead of .main_project .list)."""
+    css = ctx.css_text
+    # Collect all section-level selectors (2-token pattern like main_intro, main_product)
+    section_re = re.compile(r"^\.([a-z]+_[a-z]+)\s*\{", re.MULTILINE)
+    sections = set(section_re.findall(css))
+
+    violations = []
+    # Find all standalone selectors that look like prefix_section_child (3+ tokens)
+    nested_re = re.compile(r"^\.([a-z]+_[a-z]+_[a-z0-9_]+)\s*\{", re.MULTILINE)
+    for match in nested_re.finditer(css):
+        cls = match.group(1)
+        parts = cls.split("_")
+        # Check if the first two tokens form a known section
+        candidate_section = f"{parts[0]}_{parts[1]}"
+        if candidate_section in sections:
+            child_part = "_".join(parts[2:])
+            violations.append(f".{cls} → .{candidate_section} .{child_part}")
+
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="child prefix nesting: " + "; ".join(violations[:5]),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_cont_class_required(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Forbid custom inner wrapper classes — enforce .cont for inner width limiting."""
+    html = ctx.html_text
+    forbidden_inner = [
+        r"\w+_inner\b",
+        r"sec_inner\b",
+        r"content_wrap\b",
+        r"inner_wrap\b",
+        r"page_inner\b",
+    ]
+    violations = []
+    for i, line in enumerate(html.split("\n"), 1):
+        classes = re.findall(r'class="([^"]*)"', line)
+        for cls_str in classes:
+            for cls in cls_str.split():
+                if cls == "cont":
+                    continue
+                for pat in forbidden_inner:
+                    if re.match(f"^{pat}$", cls):
+                        violations.append(f"line {i}: .{cls} → use .cont instead")
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="; ".join(violations[:5]),
+            location=ctx.html_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_reset_property_duplicate(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """Detect specific reset.css property duplicates in common.css (e.g. a{color:inherit})."""
+    css = ctx.css_text
+    css_dir = os.path.dirname(ctx.css_path)
+    reset_path = os.path.join(css_dir, "reset.css")
+    if not os.path.exists(reset_path):
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True, message="no reset.css found")
+
+    reset_css = Path(reset_path).read_text(encoding="utf-8")
+
+    # Specific property patterns to check for duplication
+    check_patterns = [
+        (r"a\s*\{[^}]*color\s*:\s*inherit", "a{color:inherit}"),
+        (r"a\s*\{[^}]*text-decoration", "a{text-decoration}"),
+        (r"img\s*\{[^}]*max-width", "img{max-width}"),
+        (r"(?:html|body)\s*(?:,\s*(?:html|body))?\s*\{[^}]*font-family", "html/body{font-family}"),
+        (r"(?:html|body)\s*(?:,\s*(?:html|body))?\s*\{[^}]*font-size", "html/body{font-size}"),
+        (r"(?:html|body)\s*(?:,\s*(?:html|body))?\s*\{[^}]*line-height", "html/body{line-height}"),
+        (r"(?:html|body)\s*(?:,\s*(?:html|body))?\s*\{[^}]*color\s*:", "html/body{color}"),
+    ]
+
+    violations = []
+    for pattern, desc in check_patterns:
+        if re.search(pattern, reset_css, re.IGNORECASE) and re.search(pattern, css, re.IGNORECASE):
+            violations.append(f"reset.css duplicate in common.css: {desc}")
+
+    if violations:
+        return ValidationResult(
+            rule["id"], rule["severity"], False,
+            message="; ".join(violations),
+            location=ctx.css_path,
+        )
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
     "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
+    "check_common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
+    "common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
+    "check_global_class_standalone": _safe_custom_handler(check_global_class_standalone),
+    "global_class_standalone": _safe_custom_handler(check_global_class_standalone),
+    "check_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
+    "no_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
     "item_spacing_reflected": item_spacing_reflected,
     "enforce_policy1_vertical_margin_bottom": _safe_custom_handler(enforce_policy1_vertical_margin_bottom),
     "enforce_policy2_constraints_extract_only": _safe_custom_handler(enforce_policy2_constraints_extract_only),
@@ -2753,7 +3150,7 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_common_area_prefix": _adapt_legacy_check(check_common_area_prefix),
     "check_excessive_individual_classes": _adapt_legacy_check(check_excessive_individual_classes),
     "check_generic_class_names": _adapt_legacy_check(check_generic_class_names),
-    "check_body_page_class": _adapt_legacy_check(check_body_page_class),
+    "check_body_class": _adapt_legacy_check(check_body_class),
     "check_image_naming": _adapt_legacy_check(check_image_naming),
     "check_large_side_padding": _adapt_legacy_check(check_large_side_padding),
     # REQ-019 new custom checks
@@ -2805,6 +3202,21 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "excessive_individual_classes": _adapt_legacy_check(check_excessive_individual_classes),
     "reset_duplicate": _adapt_legacy_check(check_reset_duplicate),
     "img_naming": _adapt_legacy_check(check_image_naming),
+    # DOD-003: formerly stubbed handlers
+    "check_img_no_fixed_size": _safe_custom_handler(check_img_no_fixed_size),
+    "img_no_fixed_size": _safe_custom_handler(check_img_no_fixed_size),
+    "check_no_background_size": _adapt_legacy_check(check_no_background_size),
+    "no_background_size": _adapt_legacy_check(check_no_background_size),
+    # AGI-003 new rules (handler not yet implemented — skip to avoid false positive)
+    "html_formatting": _safe_custom_handler(check_html_formatting),
+    "no_decorative_empty_tag": _safe_custom_handler(manual_review),
+    "media_query_by_section": _safe_custom_handler(manual_review),
+    "generic_class_parent_scope": _safe_custom_handler(manual_review),
+    # REQ-048: spec.json typography schema gate
+    "check_spec_typography_required": _safe_custom_handler(_check_spec_typography_required),
+    "spec_typography_required": _safe_custom_handler(_check_spec_typography_required),
+    "check_spec_extraction_method_warning": _safe_custom_handler(_check_spec_extraction_method_warning),
+    "spec_extraction_method_warning": _safe_custom_handler(_check_spec_extraction_method_warning),
     # T02 implementations (formerly stubbed by id fallback)
     "manual_review": _safe_custom_handler(manual_review),
     "page_filename_class_prefix_match": _safe_custom_handler(page_filename_class_prefix_match),
@@ -2817,6 +3229,7 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "no_adjacent_text_merge": _safe_custom_handler(no_adjacent_text_merge),
     "text_newline_preserved": _safe_custom_handler(text_newline_preserved),
     "newline_converted_to_br": _safe_custom_handler(newline_converted_to_br),
+    "check_newline_to_br": _safe_custom_handler(newline_converted_to_br),
     "override_span_split_required": _safe_custom_handler(override_span_split_required),
     "style_diff_span_required": _safe_custom_handler(style_diff_span_required),
     "no_style_flatten": _safe_custom_handler(no_style_flatten),
@@ -2833,6 +3246,19 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "font_size_pc_rem": _adapt_legacy_check(check_font_size_base),
     "root_var_line_separated": _adapt_legacy_check(check_root_vars),
     "p_tag_condition_enforced": _adapt_legacy_check(check_p_tag_misuse),
+    # AGI-003 eos interior feedback rules
+    "check_no_wrapper_class": _safe_custom_handler(check_no_wrapper_class),
+    "no_wrapper_class": _safe_custom_handler(check_no_wrapper_class),
+    "check_no_min_width_wrapper": _safe_custom_handler(check_no_min_width_wrapper),
+    "no_min_width_wrapper": _safe_custom_handler(check_no_min_width_wrapper),
+    "check_font_variable_required": _safe_custom_handler(check_font_variable_required),
+    "font_variable_required": _safe_custom_handler(check_font_variable_required),
+    "check_child_prefix_nesting": _safe_custom_handler(check_child_prefix_nesting),
+    "child_prefix_nesting": _safe_custom_handler(check_child_prefix_nesting),
+    "check_cont_class_required": _safe_custom_handler(check_cont_class_required),
+    "cont_class_required": _safe_custom_handler(check_cont_class_required),
+    "check_reset_property_duplicate": _safe_custom_handler(check_reset_property_duplicate),
+    "reset_property_duplicate": _safe_custom_handler(check_reset_property_duplicate),
 }
 
 
@@ -2994,73 +3420,24 @@ def _result_to_violation(result: ValidationResult) -> Violation:
     )
 
 
-def _run_auto_fix(html_path: str, css_path: str) -> dict[str, object]:
-    tools_dir = Path(__file__).resolve().parent
-    report_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(prefix="validate-fix-", suffix=".json", delete=False) as temp_file:
-            report_path = Path(temp_file.name)
-        command = [
-            sys.executable,
-            str(tools_dir / "repair-from-violations.py"),
-            "--html",
-            html_path,
-            "--css",
-            css_path,
-            "--report",
-            str(report_path),
-        ]
-        proc = subprocess.run(command, text=True, capture_output=True, check=False)
-        payload: dict[str, object] = {}
-        if report_path.exists():
-            payload = json.loads(report_path.read_text(encoding="utf-8"))
-        payload["exit_code"] = proc.returncode
-        payload["raw_output"] = "\n".join(part for part in [proc.stdout.strip(), proc.stderr.strip()] if part)
-        return payload
-    except Exception as exc:  # pragma: no cover - defensive
-        return {
-            "total_fixed": 0,
-            "by_category": {},
-            "files_modified": [],
-            "unfixable_count": 0,
-            "dry_run": False,
-            "exit_code": 2,
-            "raw_output": str(exc),
-        }
-    finally:
-        if report_path and report_path.exists():
-            report_path.unlink(missing_ok=True)
-
-
-def _render_auto_fix_line(result: dict[str, object]) -> str:
-    by_category = result.get("by_category", {})
-    category_summary = "none"
-    if isinstance(by_category, dict):
-        non_zero = [f"{key}:{value}" for key, value in by_category.items() if int(value) > 0]
-        if non_zero:
-            category_summary = ", ".join(non_zero)
-    return f"[auto-fix] {result.get('total_fixed', 0)} violations fixed (category: {category_summary})"
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate semantic HTML/CSS against project rules")
     parser.add_argument("--html", required=True, help="HTML file path")
     parser.add_argument("--css", required=True, help="CSS file path")
     parser.add_argument("--img", help="Image directory path")
-    parser.add_argument("--fix", action="store_true", help="Run deterministic auto-fix before validation")
     parser.add_argument(
         "--profile",
         choices=["all", "basic", "landing"],
         help="Validation profile (default: auto from .project-type, fallback: all)",
     )
     parser.add_argument("--mapping", help="mapping.json path (T02)")
-    parser.add_argument("--rules", default="rules/rules.yaml", help="Rules YAML path")
+    parser.add_argument(
+        "--rules",
+        default=str(Path(__file__).resolve().parent.parent / "rules" / "rules.yaml"),
+        help="Rules YAML path",
+    )
     args = parser.parse_args()
     resolved_profile = args.profile or _resolve_profile_from_project_type(args.html, args.css)
-
-    if args.fix:
-        auto_fix_result = _run_auto_fix(args.html, args.css)
-        print(_render_auto_fix_line(auto_fix_result))
 
     results = run_validation(
         rules_path=args.rules,

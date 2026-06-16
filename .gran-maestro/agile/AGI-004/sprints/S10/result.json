@@ -1,0 +1,26 @@
+{
+  "sprint_id": "S10",
+  "status": "done",
+  "planned": [
+    "DOD-005 룰 커버리지 갭 측정 리포트"
+  ],
+  "completed": [
+    "tools/rule-coverage-report.py: 조사 21갭의 해소 현황 manifest + rules.yaml 통계",
+    "A/B급 8/12 해소(67%) 측정",
+    "잔여(no_guess_prefix 등) 사유 명시",
+    "범위외 C급 분리",
+    "테스트 3건"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T14:56:42.224106+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "rule-coverage-report.py 실행 시 미인코딩 갭 해소율(A/B 8/12=67%)과 잔여 항목+사유가 측정 가능한 리포트로 출력된다.",
+  "foundational_reason": null,
+  "summary": "DOD-005 달성, 전체 132 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

@@ -1,0 +1,21 @@
+{
+  "sprint_id": "S03",
+  "status": "done",
+  "planned": [
+    "DOD-004 + DOD-006 + DOD-002 + DOD-007"
+  ],
+  "completed": [
+    "select-ai.py 신설 + pm-verify normalize 강화 (23→2건",
+    "soft-match + span-inherit + summary filter) + 4 도구 error 경로 검증 + 매뉴얼 확정"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-04-21T15:14:36.102790+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "select-ai.py 실행 시 즉시 외주 AI 선정 + pm-verify 가 디에스솔루션 데이터에서 false-negative 91% 감소",
+  "foundational_reason": null,
+  "summary": "Sprint 3 — DoD 4건 완료. 총 7/7 DoD done"
+}

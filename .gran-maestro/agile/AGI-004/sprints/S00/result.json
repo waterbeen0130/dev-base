@@ -1,0 +1,22 @@
+{
+  "sprint_id": "S00",
+  "status": "done",
+  "planned": [
+    "테스트 환경 구축"
+  ],
+  "completed": [
+    "테스트 환경 구축"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T09:46:08.843891+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": null,
+  "foundational_reason": null,
+  "summary": "pytest 9.0.2 감지, smoke test 7 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

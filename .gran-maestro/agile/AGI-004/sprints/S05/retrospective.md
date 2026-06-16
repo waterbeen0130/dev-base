@@ -1,0 +1,25 @@
+# S05 Retrospective
+
+- status: done
+- timestamp: 2026-06-15T14:25:54.122387+00:00
+- known_limitations: rules/claude.md(init-project 템플릿)는 별도 배포 관심사라 이번 범위 밖 — 후속 정리 필요.
+- direction: Sprint6: DOD-006 검증실행 게이트 또는 DOD-004 폐기도구 탐지. Sprint7 스티어링에서 DOD-009/012/013 승인.
+
+## 성공 항목
+- 단일소스 통합 + shim화 + GEMINI.md
+- 규칙 중복 0
+- 테스트 그린
+
+## 실패 항목
+- 없음
+
+## Velocity
+- planned: 2
+- completed: 2
+- rate: 1.0
+
+## Lessons Learned
+AGENTS.md 397줄 중 대부분은 OMX 프레임(중복 아님) — dev-base 규칙 중복 블록만 제거하는 게 정확. 무차별 축소 금지.
+
+## Known Issues
+- 없음

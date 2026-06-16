@@ -1,0 +1,24 @@
+{
+  "sprint_id": "S09",
+  "status": "done",
+  "planned": [
+    "DOD-003 텍스트 부분색상(character_segments) 누락 검출"
+  ],
+  "completed": [
+    "tools/check-mixed-styles.py: has_mixed_styles=true인데 비-base 구간색이 HTML/CSS에 없으면(단일색 출력) 검출",
+    "#abc/#aabbcc 형태 매칭",
+    "회귀 테스트 4건"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T14:48:29.320231+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "spec의 has_mixed_styles 구간 색상을 무시하고 단일색으로 출력하면 검출된다. 인라인 span/CSS 클래스 둘 다 인정(오탐 0).",
+  "foundational_reason": null,
+  "summary": "DOD-003 달성, 전체 129 passed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

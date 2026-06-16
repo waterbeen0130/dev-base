@@ -1,0 +1,69 @@
+{"timestamp": "2026-06-15T06:50:57.474686+00:00", "event": "agile.init", "steering_every": 3}
+{"timestamp": "2026-06-15T09:34:23.917678+00:00", "event": "agile.update", "fields": {"status": "active", "objective_version": 1}}
+{"timestamp": "2026-06-15T09:45:53.891868+00:00", "event": "agile.result", "sprint_id": "S00", "status": "in_progress"}
+{"timestamp": "2026-06-15T09:46:08.858127+00:00", "event": "agile.result", "sprint_id": "S00", "status": "done"}
+{"timestamp": "2026-06-15T09:46:09.549917+00:00", "event": "agile.update", "fields": {"current_sprint": 1}}
+{"timestamp": "2026-06-15T09:46:57.291780+00:00", "event": "agile.result", "sprint_id": "S01", "status": "in_progress"}
+{"timestamp": "2026-06-15T09:52:55.937595+00:00", "event": "agile.result", "sprint_id": "S01", "status": "done"}
+{"timestamp": "2026-06-15T09:52:56.379108+00:00", "event": "agile.retrospective", "sprint_id": "S01", "status": "done"}
+{"timestamp": "2026-06-15T13:10:34.932220+00:00", "event": "agile.objective-snapshot", "version": 1, "reason": "스크린샷-우선 2패스 워크플로우 채택 + AI-agnostic 단일소스(rules/INSTRUCTIONS.md) 통합으로 방향 전환 (사용자 스티어링)", "objective_version": 2}
+{"timestamp": "2026-06-15T13:28:19.726646+00:00", "event": "agile.result", "sprint_id": "S02", "status": "done"}
+{"timestamp": "2026-06-15T13:28:20.133314+00:00", "event": "agile.objective-transition", "dod": "DOD-001", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:28:20.437576+00:00", "event": "agile.retrospective", "sprint_id": "S02", "status": "done"}
+{"timestamp": "2026-06-15T13:47:36.083209+00:00", "event": "agile.result", "sprint_id": "S03", "status": "done"}
+{"timestamp": "2026-06-15T13:47:36.534055+00:00", "event": "agile.objective-transition", "dod": "DOD-002", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:47:36.843355+00:00", "event": "agile.retrospective", "sprint_id": "S03", "status": "done"}
+{"timestamp": "2026-06-15T13:47:37.141388+00:00", "event": "agile.update", "fields": {"current_sprint": 4}}
+{"timestamp": "2026-06-15T13:58:36.478260+00:00", "event": "agile.objective-transition", "dod": "DOD-001", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:58:36.825557+00:00", "event": "agile.objective-transition", "dod": "DOD-002", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:04:43.487877+00:00", "event": "agile.result", "sprint_id": "S04", "status": "done"}
+{"timestamp": "2026-06-15T14:04:43.915594+00:00", "event": "agile.retrospective", "sprint_id": "S04", "status": "done"}
+{"timestamp": "2026-06-15T14:04:44.223716+00:00", "event": "agile.update", "fields": {"current_sprint": 5}}
+{"timestamp": "2026-06-15T14:25:52.730965+00:00", "event": "agile.result", "sprint_id": "S05", "status": "done"}
+{"timestamp": "2026-06-15T14:25:53.157707+00:00", "event": "agile.objective-transition", "dod": "DOD-009", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:25:53.490056+00:00", "event": "agile.objective-transition", "dod": "DOD-012", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:25:53.798181+00:00", "event": "agile.objective-transition", "dod": "DOD-013", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:25:54.140077+00:00", "event": "agile.retrospective", "sprint_id": "S05", "status": "done"}
+{"timestamp": "2026-06-15T14:25:54.442059+00:00", "event": "agile.update", "fields": {"current_sprint": 6}}
+{"timestamp": "2026-06-15T14:30:22.478995+00:00", "event": "agile.result", "sprint_id": "S06", "status": "done"}
+{"timestamp": "2026-06-15T14:30:22.889821+00:00", "event": "agile.objective-transition", "dod": "DOD-006", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:30:23.197795+00:00", "event": "agile.retrospective", "sprint_id": "S06", "status": "done"}
+{"timestamp": "2026-06-15T14:30:23.489872+00:00", "event": "agile.update", "fields": {"current_sprint": 7}}
+{"timestamp": "2026-06-15T14:34:35.854920+00:00", "event": "agile.objective-transition", "dod": "DOD-006", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.169523+00:00", "event": "agile.objective-transition", "dod": "DOD-009", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.492826+00:00", "event": "agile.objective-transition", "dod": "DOD-012", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.822936+00:00", "event": "agile.objective-transition", "dod": "DOD-013", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:36:25.140920+00:00", "event": "agile.result", "sprint_id": "S07", "status": "done"}
+{"timestamp": "2026-06-15T14:36:25.610511+00:00", "event": "agile.objective-transition", "dod": "DOD-004", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:36:25.927248+00:00", "event": "agile.retrospective", "sprint_id": "S07", "status": "done"}
+{"timestamp": "2026-06-15T14:36:26.234124+00:00", "event": "agile.update", "fields": {"current_sprint": 8}}
+{"timestamp": "2026-06-15T14:43:01.664484+00:00", "event": "agile.result", "sprint_id": "S08", "status": "done"}
+{"timestamp": "2026-06-15T14:43:02.106972+00:00", "event": "agile.objective-transition", "dod": "DOD-011", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:43:02.386724+00:00", "event": "agile.retrospective", "sprint_id": "S08", "status": "done"}
+{"timestamp": "2026-06-15T14:43:02.661479+00:00", "event": "agile.update", "fields": {"current_sprint": 9}}
+{"timestamp": "2026-06-15T14:48:29.326856+00:00", "event": "agile.result", "sprint_id": "S09", "status": "done"}
+{"timestamp": "2026-06-15T14:48:29.838760+00:00", "event": "agile.objective-transition", "dod": "DOD-003", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:48:30.129597+00:00", "event": "agile.retrospective", "sprint_id": "S09", "status": "done"}
+{"timestamp": "2026-06-15T14:48:30.428090+00:00", "event": "agile.update", "fields": {"current_sprint": 10}}
+{"timestamp": "2026-06-15T14:54:42.905198+00:00", "event": "agile.objective-transition", "dod": "DOD-003", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.205080+00:00", "event": "agile.objective-transition", "dod": "DOD-004", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.484538+00:00", "event": "agile.objective-transition", "dod": "DOD-011", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.785718+00:00", "event": "agile.objective-transition", "dod": "DOD-007", "from_status": "todo", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:44.084873+00:00", "event": "agile.objective-transition", "dod": "DOD-010", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:56:42.233493+00:00", "event": "agile.result", "sprint_id": "S10", "status": "done"}
+{"timestamp": "2026-06-15T14:56:42.871259+00:00", "event": "agile.objective-transition", "dod": "DOD-005", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:56:43.226327+00:00", "event": "agile.retrospective", "sprint_id": "S10", "status": "done"}
+{"timestamp": "2026-06-15T14:56:43.563673+00:00", "event": "agile.update", "fields": {"current_sprint": 11}}
+{"timestamp": "2026-06-15T14:58:21.462343+00:00", "event": "agile.result", "sprint_id": "S11", "status": "done"}
+{"timestamp": "2026-06-15T14:58:21.909607+00:00", "event": "agile.objective-transition", "dod": "DOD-008", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:58:22.240047+00:00", "event": "agile.retrospective", "sprint_id": "S11", "status": "done"}
+{"timestamp": "2026-06-15T15:06:38.921646+00:00", "event": "agile.objective-transition", "dod": "DOD-005", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T15:06:39.337101+00:00", "event": "agile.objective-transition", "dod": "DOD-008", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T15:07:09.180005+00:00", "event": "agile.finalize.step.load_session", "ok": true}
+{"timestamp": "2026-06-15T15:07:09.256280+00:00", "event": "agile.finalize.step.collect_reqs", "ok": true, "req_ids": []}
+{"timestamp": "2026-06-15T15:07:09.260685+00:00", "event": "agile.finalize.step.inspect_reqs", "ok": true, "skipped_reqs": [], "pending_accept_reqs": []}
+{"timestamp": "2026-06-15T15:07:09.265635+00:00", "event": "agile.finalize.step.remove_worktrees", "ok": true, "removed_worktrees": []}
+{"timestamp": "2026-06-15T15:07:09.597228+00:00", "event": "agile.finalize.step.orphan_cleanup", "ok": true, "orphan_cleanup": {"orphans": [], "cleaned": [], "failed": []}}
+{"timestamp": "2026-06-15T15:07:09.927163+00:00", "event": "agile.finalize.step.boundary_check", "ok": true, "boundary_ok": null}
+{"timestamp": "2026-06-15T15:07:09.932778+00:00", "event": "agile.finalize.ok", "agi_id": "AGI-004", "accepted_reqs": [], "skipped_reqs": [], "pending_accept_reqs": [], "removed_worktrees": [], "orphan_cleanup": {"orphans": [], "cleaned": [], "failed": []}, "boundary_ok": null}
+{"timestamp": "2026-06-15T15:07:18.736747+00:00", "event": "agile.update", "fields": {"status": "completed"}}

@@ -176,18 +176,18 @@
 
 ## selector_single_line
 - 상태: replaced_by:auto_fix
-- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `multiline_selector` 치환으로 결정론적 자동 수정이 가능해져 룰 엔진 경고 규칙을 제거.
+- 결정 이유: selector 한 줄 포맷은 `rules/common.md` 수동 규칙으로 관리 (auto-fix 폐기됨).
 - 영향 범위: rules/rules.yaml
-- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`multiline_selector`)
+- 대체 방법: 수동으로 CSS 셀렉터를 한 줄로 작성 (auto-fix 폐기됨)
 
 ## media_query_format
 - 상태: replaced_by:auto_fix
-- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `media_indent` 치환으로 @media 내부 포맷 정리가 자동화되어 중복 규칙 제거.
+- 결정 이유: @media 내부 포맷은 `rules/common.md` 수동 규칙으로 관리 (auto-fix 폐기됨).
 - 영향 범위: rules/rules.yaml
-- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`media_indent`)
+- 대체 방법: 수동으로 @media 블록 내부 규칙 한 줄 작성 (auto-fix 폐기됨)
 
 ## no_media_indent
 - 상태: replaced_by:auto_fix
-- 결정 이유: REQ-026 auto-fix(`repair-from-violations.py`)의 `media_indent` 치환과 역할이 중복되어 룰 엔진 항목을 정리.
+- 결정 이유: @media 포맷 관리는 `rules/common.md` 수동 규칙으로 통합 (auto-fix 폐기됨).
 - 영향 범위: rules/rules.yaml
-- 대체 방법: `python3 tools/repair-from-violations.py --html <html> --css <css>` (`media_indent`)
+- 대체 방법: 수동으로 @media 블록 내부 규칙 한 줄 작성 (auto-fix 폐기됨)

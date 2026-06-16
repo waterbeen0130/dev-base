@@ -13,10 +13,11 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 ## 코드 스타일
 
 ### HTML
+- `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역이므로 페이지별 class 사용하지 않음
 - `<div>` + 클래스 기반 구조 우선. `<section>`은 주요 콘텐츠 섹션에만 사용
 - `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div class="img_area">` + `<p>` 또는 `<span>` 사용
 - 모든 이미지에 `alt` 속성 필수 — **짧고 간결하게** (예: `alt="로고"`, `alt="제품 이미지"`, 긴 한국어 문장 금지)
-- 이미지는 래퍼 div 안에 배치 (`.img_area` 등)
+- 이미지는 래퍼 div 안에 배치 (`.img_area` 등). **img 및 .img_area에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img_area의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - `aria-label`은 **텍스트가 없는 인터랙티브 요소에만** 사용 — 장식 래퍼, span 등에 남발 금지
 - `aria-hidden`은 최소한으로 사용
 - 줄바꿈: `<br>` 태그 사용, 반응형은 `<br class="mb_only">` / `<br class="pc_only">`
@@ -24,17 +25,22 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - 섹션 내부 래퍼는 `.cont` 클래스, 최대 1개
 
 ### CSS
-- **각 셀렉터 규칙은 한 줄로 작성** (여러 줄로 펼치지 않음)
+- **각 셀렉터 규칙은 한 줄로 작성** (여러 줄로 펼치지 않음). 단, **콤마 셀렉터 3개 이상**이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙임
 - **같은 셀렉터를 여러 번 선언하지 않음** — 하나의 셀렉터에 모든 속성을 합쳐서 한 줄로
 - **미디어쿼리 블록 안에서 각 규칙은 줄바꿈으로 분리** (한 줄에 모든 규칙을 이어붙이지 않음)
 - **미디어쿼리 내부 들여쓰기 없음** — 셀렉터는 컬럼 0에서 시작
 - font-size: **PC는 `rem`**, **모바일(768px 이하)은 고정 `px`**
-- 기본 폰트 베이스: `html,body{font-size:clamp(14px, 1.2vw, 16px);}` (rem 기준점)
+- 기본 폰트 베이스: reset.css에 선언됨 → common.css에서 **재선언 금지**
 - **line-height: 무단위 비율만** (`1.3`, `1.45`, `1.6`) — Figma의 computed px 값(`25.866px`, `63.228px`) 금지
 - **letter-spacing: `em` 단위 기본**, 2px 이하 미세 조정은 px 허용 (`-0.5px`, `-1px`)
 - **border-radius: 원형은 `50%`**, **pill 형태는 `2em`** — `999px` 사용 금지
 - **HTML 페이지 파일명**: 메인=`index.html` 고정, 서브=의미 있는 영문명 (snake_case, flat 배치). `page_1.html`, `sub_01.html` 금지. 파일명에서 `.html` 제거한 값 = CSS 프리픽스 (`greeting.html` → `greeting_`)
 - 클래스명: **페이지 프리픽스 형식** (`{페이지}_{역할}`), **snake_case** 전용
+  - `index.html` → `main_` prefix (예: `main_mv`, `main_intro`, `main_product`) — `index_` 도 허용
+  - `greeting.html` → `greeting_` (예: `greeting_title`, `greeting_desc`)
+  - 기타 서브페이지 → 파일명에서 `.html` 제거한 값이 prefix
+  - 자식 클래스에도 prefix 일관 적용: `main_intro_card`, `main_intro_card_icon`
+- **공통 영역은 prefix 없음**: `.header`, `.footer`, `.logo`, `.gnb`, `.utils`, `.sns`, `.copyright` 등은 prefix 없이 사용, 스코핑으로 충돌 방지 (`.header .logo`, `.footer .logo`)
 - `sec_1`, `sec_2` 같은 범용 이름 금지
 - 공통 접미사 패턴: `_area`, `_wrap`, `_list`, `_item`, `_inner`, `_cont`
 - **공통 컴포넌트 타입**: 재사용 UI는 `listType_N`, `titleType_N` 패턴 사용
@@ -196,11 +202,11 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 - 각 Figma TEXT 노드는 반드시 **독립된 HTML 요소로 1:1 매핑**
 - 인접 TEXT 노드끼리 하나로 합치기 금지
 
-## Figma 텍스트 줄바꿈 처리 (중요)
-- 텍스트 노드의 `node.characters`에서 `\n`을 감지한다
-- **단일 `\n`**: `<br>` 태그로 변환 — 절대 무시 금지
-- **연속 `\n\n`**: `</p><p>` 또는 블록 분리로 변환
-- 줄바꿈이 원본에 있으면 반드시 HTML 출력에 반영해야 한다
+## Figma 텍스트 줄바꿈 처리 (CRITICAL — 반드시 준수)
+- 텍스트 노드의 `node.characters`에서 `\n` 및 ` `을 감지한다
+- **단일 `\n`**: HTML `<br>` 태그로 **반드시** 변환 — HTML에 `\n`을 그냥 두면 브라우저가 무시하므로 절대 금지
+- **연속 `\n\n`**: `</p><p>` 블록 분리 또는 `<br><br>`로 변환
+- 줄바꿈이 원본에 있으면 반드시 HTML 출력에 `<br>`로 반영해야 한다
 
 ## Figma 텍스트 스타일 분할 (중요)
 - 하나의 텍스트 노드 안에서 **아래 속성 중 1개라도 다른 구간이 있으면 반드시 `<span>`으로 분리**한다:
@@ -327,6 +333,7 @@ HTML <li> 수 == Step 3 결과 N 을 자동 대조 (불일치 시 CRITICAL)
 ### Figma MCP 데이터 사용 규칙 (CRITICAL)
 - Figma MCP 응답을 섹션별로 받아 직접 해석하여 CSS 값 결정
 - Figma 속성 → CSS 변환 규칙 준수 (layoutMode→flex-direction, itemSpacing→gap, fills→hex 색상 등)
+- `fills` type이 `IMAGE`인 프레임 → `<div class="img_area"><img>` 구조. **프레임 bbox.w/bbox.h는 img/img_area가 아닌 부모 컨테이너에 적용** — img/img_area에 width/height 직접 선언 금지
 - MCP 응답에 없는 속성은 추측하지 않음
 - "그럴듯한" 값, "합리적인" 기본값을 임의로 넣는 것 절대 금지
 - 완성 후 validate-semantic.py로 규칙 검증 필수
@@ -405,7 +412,7 @@ const data = await fetchData();
 - 과도한 추상화
 - 불필요한 의존성
 - `<figure>`, `<figcaption>`, `<main>`, `<article>` 사용
-- CSS 셀렉터 여러 줄 펼침 (각 규칙은 한 줄로)
+- CSS 셀렉터 여러 줄 펼침 (각 규칙은 한 줄로, 콤마 셀렉터 3개+ 시 셀렉터만 줄바꿈 허용)
 - 같은 셀렉터 중복 선언
 - CSS 미디어쿼리 내부 들여쓰기
 - 미디어쿼리 안 모든 규칙을 한 줄에 이어붙이기

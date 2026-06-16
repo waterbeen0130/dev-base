@@ -1,0 +1,47 @@
+{
+  "id": "REQ-044",
+  "title": "figma-section-spec.py --download-assets 구현 (SVG/PNG 다운로드 + manifest 확장)",
+  "original_request": "PLN-012 REQ-A: Figma images API 로 VECTOR → SVG, IMAGE fills → PNG 다운로드 + asset_manifest 에 local_path/format/실제 SHA256 기록",
+  "status": "done",
+  "current_phase": 5,
+  "created_at": "2026-04-21T05:00:00.000Z",
+  "auto_approve": true,
+  "source_plan": "PLN-012",
+  "dag_auto_chain": false,
+  "tasks": [
+    {
+      "id": "01",
+      "title": "--download-assets 플래그 + Figma images API 통합 + manifest 스키마 확장",
+      "status": "committed",
+      "agent": "codex-dev",
+      "spec": "tasks/01/spec.md",
+      "commit_hash": "49e0b0f",
+      "self_check": {
+        "tsc": "PASS",
+        "test": "PASS",
+        "ran_at": "2026-04-21T05:20:00.000Z"
+      },
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005"
+      ],
+      "background_task_id": "b7owta1de",
+      "worktree": "/mnt/d/dev-base/.gran-maestro/worktrees/REQ-044-T01"
+    }
+  ],
+  "dependencies": {
+    "blockedBy": [],
+    "relatedTo": [
+      "PLN-011",
+      "REQ-043"
+    ],
+    "blocks": [
+      "REQ-046"
+    ]
+  },
+  "stitch_screens": [],
+  "updated_at": "2026-04-21T05:07:11.000Z"
+}

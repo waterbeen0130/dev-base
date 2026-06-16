@@ -1,0 +1,24 @@
+# S03 Retrospective
+
+- status: done
+- timestamp: 2026-06-15T13:47:36.826781+00:00
+- known_limitations: 신규 규칙 severity는 warning(MAJOR)로 보수 도입 — 클린 픽스처 더 쌓이면 CRITICAL 승격 검토.
+- direction: 스티어링 체크포인트(Sprint4): DOD-001/002 승인 요청. 이후 DOD-006 검증실행 게이트 또는 DOD-012 단일소스.
+
+## 성공 항목
+- 스코핑 규칙 2종 + 회귀 테스트
+- 오탐 0
+
+## 실패 항목
+- 없음
+
+## Velocity
+- planned: 1
+- completed: 1
+- rate: 1.0
+
+## Lessons Learned
+신형 (rule,ctx)->ValidationResult 핸들러 + _iter_selector_parts 헬퍼로 CSS 셀렉터 규칙을 간결히 추가 가능.
+
+## Known Issues
+- 없음

@@ -1,0 +1,22 @@
+{
+  "sprint_id": "S01",
+  "status": "done",
+  "planned": [
+    "프로젝트 건강 점검 + 검증 rule engine 복구"
+  ],
+  "completed": [
+    "rules.yaml 미등록 카테고리(css.image/css.formatting→css.format/spec.schema) 수정 + EXPECTED_RULE_COUNT 65→81 동기화 + REQ-024 stale 카운트 가드 갱신 + validation_schema.json 재생성"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-06-15T09:52:55.929324+00:00",
+  "sprint_kind": "user_observable",
+  "user_observable_change": "깨져 있던 검증 rule engine(load_rules)이 복구되어 pm-verify/validate-semantic가 다시 규칙을 정상 로드·실행한다. 전체 테스트 106 passed (이전 26 failed).",
+  "foundational_reason": null,
+  "summary": "health 복구: 26 failed → 0 failed",
+  "aux_status": "ok",
+  "aux_warnings": []
+}

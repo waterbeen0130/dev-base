@@ -1,0 +1,21 @@
+{
+  "sprint_id": "S00",
+  "status": "done",
+  "planned": [
+    "테스트 환경 구축"
+  ],
+  "completed": [
+    "테스트 환경 구축 — pytest 9.0.2 + tests/ 기존 구조 재사용",
+    "smoke 3건 PASS"
+  ],
+  "generated": {
+    "pln": [],
+    "req": []
+  },
+  "sprint_goals": [],
+  "timestamp": "2026-04-21T13:07:41.019788+00:00",
+  "sprint_kind": "foundational",
+  "user_observable_change": null,
+  "foundational_reason": "테스트 러너 자체는 사용자 관찰 불가. 다음 user_observable Sprint 에서 DoD 완료로 가시화",
+  "summary": "smoke test 통과 (3/4, 1건 known-issue 로 등록)"
+}

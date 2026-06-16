@@ -1,0 +1,25 @@
+{"timestamp": "2026-06-15T13:10:34.922146+00:00", "version": 1, "reason": "스크린샷-우선 2패스 워크플로우 채택 + AI-agnostic 단일소스(rules/INSTRUCTIONS.md) 통합으로 방향 전환 (사용자 스티어링)"}
+{"timestamp": "2026-06-15T13:28:20.127178+00:00", "event": "objective-transition", "dod": "DOD-001", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:47:36.527931+00:00", "event": "objective-transition", "dod": "DOD-002", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:58:36.472588+00:00", "event": "objective-transition", "dod": "DOD-001", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T13:58:36.820390+00:00", "event": "objective-transition", "dod": "DOD-002", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:25:53.153229+00:00", "event": "objective-transition", "dod": "DOD-009", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:25:53.485527+00:00", "event": "objective-transition", "dod": "DOD-012", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:25:53.792241+00:00", "event": "objective-transition", "dod": "DOD-013", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:30:22.883763+00:00", "event": "objective-transition", "dod": "DOD-006", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:34:35.848843+00:00", "event": "objective-transition", "dod": "DOD-006", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.165113+00:00", "event": "objective-transition", "dod": "DOD-009", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.486190+00:00", "event": "objective-transition", "dod": "DOD-012", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:34:36.816511+00:00", "event": "objective-transition", "dod": "DOD-013", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:36:25.605566+00:00", "event": "objective-transition", "dod": "DOD-004", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:43:02.101603+00:00", "event": "objective-transition", "dod": "DOD-011", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:48:29.832101+00:00", "event": "objective-transition", "dod": "DOD-003", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:42.899522+00:00", "event": "objective-transition", "dod": "DOD-003", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.199900+00:00", "event": "objective-transition", "dod": "DOD-004", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.479910+00:00", "event": "objective-transition", "dod": "DOD-011", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:43.779945+00:00", "event": "objective-transition", "dod": "DOD-007", "from_status": "todo", "to_status": "done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T14:54:44.079130+00:00", "event": "objective-transition", "dod": "DOD-010", "from_status": "todo", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:56:42.864854+00:00", "event": "objective-transition", "dod": "DOD-005", "from_status": "todo", "to_status": "proposed_done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T14:58:21.901632+00:00", "event": "objective-transition", "dod": "DOD-008", "from_status": "todo", "to_status": "proposed_done", "priority": "should", "changed": true}
+{"timestamp": "2026-06-15T15:06:38.914161+00:00", "event": "objective-transition", "dod": "DOD-005", "from_status": "proposed_done", "to_status": "done", "priority": "must", "changed": true}
+{"timestamp": "2026-06-15T15:06:39.329569+00:00", "event": "objective-transition", "dod": "DOD-008", "from_status": "proposed_done", "to_status": "done", "priority": "should", "changed": true}

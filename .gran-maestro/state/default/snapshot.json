@@ -3,9 +3,18 @@
   "currentSkill": "agile-plan",
   "currentStep": 3,
   "totalSteps": 3,
-  "enterCount": 1,
-  "skillStack": [],
+  "enterCount": 2,
+  "skillStack": [
+    {
+      "skill": "agile-plan",
+      "step": 3
+    }
+  ],
   "status": "active",
-  "updatedAt": "2026-04-04T03:33:32.000Z",
-  "enteredAt": "2026-04-04T03:33:32.000Z"
+  "updatedAt": "2026-04-21T12:44:27.000Z",
+  "enteredAt": "2026-04-21T12:44:27.000Z",
+  "returnTo": {
+    "skill": "agile",
+    "step": 1
+  }
 }

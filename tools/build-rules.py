@@ -372,25 +372,6 @@ def find_profile_rules_node(source: str) -> ast.AST | None:
     return None
 
 
-def replace_profile_rules_block(source: str, block: str) -> str:
-    marker_pattern = re.compile(
-        rf"{re.escape(PROFILE_RULES_BEGIN)}.*?{re.escape(PROFILE_RULES_END)}",
-        re.DOTALL,
-    )
-    if marker_pattern.search(source):
-        return marker_pattern.sub(block.rstrip("\n"), source, count=1)
-
-    node = find_profile_rules_node(source)
-    if node is None or not hasattr(node, "lineno") or not hasattr(node, "end_lineno"):
-        raise ValueError("Could not locate PROFILE_RULES assignment in tools/build-prompts.py")
-
-    lines = source.splitlines(keepends=True)
-    start = node.lineno - 1
-    end = node.end_lineno
-    lines[start:end] = block.splitlines(keepends=True)
-    return "".join(lines)
-
-
 def diff_text(path: Path, expected: str) -> str:
     current = read_text(path)
     if current == expected:
@@ -426,7 +407,6 @@ def write_or_check(outputs: dict[Path, str], check_only: bool) -> int:
 def build_outputs(args: argparse.Namespace) -> dict[Path, str]:
     input_path = Path(args.input)
     output_dir = Path(args.output_dir)
-    build_prompts_path = Path(__file__).resolve().parent / "build-prompts.py"
 
     payload = load_rules_yaml(input_path)
     all_rules = [rule for rule in normalize_rules(payload) if not is_deprecated(rule)]
@@ -472,17 +452,6 @@ def build_outputs(args: argparse.Namespace) -> dict[Path, str]:
         outputs[output_dir / "landing.md"] = landing_md
 
     outputs[output_dir / "validation_schema.json"] = build_validation_schema(payload, sorted_rules)
-
-    profile_rules = {
-        "basic": profile_rule_descriptions(sorted_rules, "basic", order_map),
-        "landing": profile_rule_descriptions(sorted_rules, "landing", order_map),
-    }
-    auto_block = render_profile_rules_block(profile_rules)
-    build_prompts_source = read_text(build_prompts_path)
-    if not build_prompts_source:
-        raise FileNotFoundError(f"missing build-prompts.py at: {build_prompts_path}")
-
-    outputs[build_prompts_path] = replace_profile_rules_block(build_prompts_source, auto_block)
     return outputs
 
 

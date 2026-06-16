@@ -2,7 +2,7 @@
   "id": "REQ-038",
   "title": "validator 강화 — no_forbidden_class regex 확장 + HTML 주석 제외",
   "original_request": "validate-semantic.py의 no_forbidden_class 규칙이 (1) sec_1|sec_2 리터럴만 잡고 sec_\\d+ 전체 범위를 커버하지 못함, (2) HTML 주석 내부까지 스캔하여 false positive 발생. 두 가지를 모두 해결하여 파이프라인 정확도 향상.",
-  "current_phase": 1,
+  "current_phase": 5,
   "created_at": "2026-04-20T04:30:00.000Z",
   "auto_approve": true,
   "source_plan": null,
@@ -11,17 +11,27 @@
     {
       "id": "01",
       "title": "validator 강화 — no_forbidden_class regex 확장 + HTML 주석 제외",
-      "status": "pending",
+      "status": "done",
       "agent": "codex-dev",
       "spec": "tasks/01/spec.md",
-      "covers_ac": ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+      "covers_ac": [
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005"
+      ],
+      "commit_hash": "4914e57d52608bbec766cb1a35884a814ec0a211",
+      "commit_message": "[REQ-038] validator 강화 — no_forbidden_class regex 확장 + HTML 주석 제외"
     }
   ],
-  "status": "spec_ready",
+  "status": "done",
   "dependencies": {
     "blockedBy": [],
     "relatedTo": [],
     "blocks": []
   },
-  "stitch_screens": []
+  "stitch_screens": [],
+  "completed_at": "2026-04-21T09:17:35.944672+00:00",
+  "completion_note": "Drift cleanup: implementation already merged in 4914e57 prior to maestro state sync. request.json reconciled."
 }

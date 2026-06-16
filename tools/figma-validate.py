@@ -513,16 +513,23 @@ def validate_asset_manifest(spec: dict, spec_path: str) -> list[Violation]:
         spec_node_id = item.get("spec_node_id")
         if not all(isinstance(value, str) and value for value in (kind, ref, hash_value, spec_node_id)):
             continue
+        local_path = item.get("local_path")
+        asset_format = item.get("format")
         key = (kind, ref)
         if key in manifest_index:
             duplicate_keys.add(key)
         else:
-            manifest_index[key] = {
+            manifest_item = {
                 "kind": kind,
                 "ref": ref,
                 "hash": hash_value,
                 "spec_node_id": spec_node_id,
             }
+            if isinstance(local_path, str) and local_path:
+                manifest_item["local_path"] = local_path
+            if isinstance(asset_format, str) and asset_format:
+                manifest_item["format"] = asset_format
+            manifest_index[key] = manifest_item
 
     for duplicate_kind, duplicate_ref in sorted(duplicate_keys):
         add_violation(
@@ -544,6 +551,19 @@ def validate_asset_manifest(spec: dict, spec_path: str) -> list[Violation]:
                 json.dumps(expected, ensure_ascii=False, sort_keys=True),
                 "missing entry",
             )
+            continue
+        if "local_path" in actual:
+            valid_hash = re.fullmatch(r"[0-9a-fA-F]{64}", actual["hash"]) is not None
+            valid_format = actual.get("format") in {"svg", "png"}
+            matches_expected_identity = actual["spec_node_id"] == expected["spec_node_id"]
+            if not (matches_expected_identity and valid_hash and valid_format):
+                add_violation(
+                    violations,
+                    "v2.assetManifest.exists",
+                    f"{expected['kind']}:{expected['ref']}",
+                    "downloaded asset entry with matching spec_node_id, 64-char hash, and svg/png format",
+                    json.dumps(actual, ensure_ascii=False, sort_keys=True),
+                )
             continue
         if actual["hash"] != expected["hash"] or actual["spec_node_id"] != expected["spec_node_id"]:
             add_violation(
@@ -621,6 +641,36 @@ def _manifest_image_refs(manifest: object) -> set[str]:
     return refs
 
 
+def _manifest_html_asset_refs(manifest: object) -> set[str]:
+    if isinstance(manifest, dict):
+        assets = manifest.get("assets")
+    else:
+        assets = manifest
+    if not isinstance(assets, list):
+        return set()
+
+    refs: set[str] = set()
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+        local_path = asset.get("local_path")
+        if isinstance(local_path, str) and local_path:
+            stem = Path(urlsplit(local_path).path).stem
+            if stem:
+                refs.add(stem)
+            continue
+
+        kind = asset.get("kind")
+        if isinstance(kind, str) and kind and kind != "image":
+            continue
+        ref = asset.get("image_ref")
+        if not isinstance(ref, str) or not ref:
+            ref = asset.get("ref")
+        if isinstance(ref, str) and ref:
+            refs.add(ref)
+    return refs
+
+
 def _html_img_basenames(html: str) -> set[str]:
     srcs = re.findall(r"<img\b[^>]*\bsrc\s*=\s*['\"]([^'\"]+)['\"]", html, flags=re.I)
     basenames: set[str] = set()
@@ -651,7 +701,7 @@ def validate_asset_manifest_consistency(
     except Exception:  # noqa: BLE001
         return []
 
-    manifest_refs = _manifest_image_refs(manifest)
+    manifest_refs = _manifest_html_asset_refs(manifest)
     html_basenames = _html_img_basenames(html)
     if not html_basenames:
         return []

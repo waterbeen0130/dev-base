@@ -1,0 +1,24 @@
+# S01 Retrospective
+
+- status: done
+- timestamp: 2026-06-15T09:52:56.345767+00:00
+- known_limitations: 이 health 이슈는 objective DoD가 아닌 사전조건이었음. 신규 규칙(DOD-001 등) 작업은 Sprint 2부터.
+- direction: Sprint 2: DOD-010 회귀 픽스처 토대 + DOD-001 no_figma_nodeid_class 규칙 신설
+
+## 성공 항목
+- 검증 rule engine 복구
+- 전체 테스트 그린화
+
+## 실패 항목
+- 없음
+
+## Velocity
+- planned: 1
+- completed: 1
+- rate: 1.0
+
+## Lessons Learned
+rules.yaml 카테고리/카운트가 단일 권위(EXPECTED_RULE_COUNT)와 어긋나면 load_rules가 전면 실패해 검증 전체가 무력화됨. 규칙 추가 시 카테고리 레지스트리+카운트 동기화 필수.
+
+## Known Issues
+- 없음

@@ -1,0 +1,24 @@
+# S07 Retrospective
+
+- status: done
+- timestamp: 2026-06-15T14:36:25.912981+00:00
+- known_limitations: 남은 DoD: 003(부분색상) 005(커버리지리포트) 007(우회탐지) 008(노이즈재점검) 010(픽스처확장) 011(산출물경계).
+- direction: Sprint8~: DOD-011 산출물경계 / DOD-003 부분색상 / DOD-005 커버리지 리포트 등.
+
+## 성공 항목
+- 폐기도구 탐지기 + 회귀 테스트
+- 문서 멘션 오탐 0
+
+## 실패 항목
+- 없음
+
+## Velocity
+- planned: 1
+- completed: 1
+- rate: 1.0
+
+## Lessons Learned
+폐기도구 탐지는 .md(금지 목록 거주지) 제외 + 주석 제외 + 호출 컨텍스트 매칭이 오탐 0의 핵심.
+
+## Known Issues
+- 없음
