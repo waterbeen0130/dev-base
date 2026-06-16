@@ -3206,7 +3206,40 @@ def check_no_duplicate_ir_class(rule: dict, ctx: ValidationContext) -> Validatio
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+def check_root_width_derivation(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """--width 는 Figma 콘텐츠폭 + 양측 --padding 과 일치해야 한다 (spec.json 발견 시에만 검증).
+
+    --width = content_width + 2 * --padding. content_width 는 extracted/*_spec.json 의
+    frame inner width(- figma padding) 에서 추출. spec 미발견 시 graceful skip.
+    """
+    css = ctx.css_text
+    width_val = _extract_root_var(css, "width")
+    padding_val = _extract_root_var(css, "padding")
+    if not width_val or not padding_val:
+        # presence 는 root_vars_required 의 책임 — 여기선 skip
+        return ValidationResult(rule["id"], rule["severity"], True)
+    pad_m = re.match(r"^\s*(\d+)\s*px", padding_val)
+    width_m = re.match(r"^\s*(\d+)\s*px", width_val)
+    if not pad_m or not width_m:
+        return ValidationResult(rule["id"], rule["severity"], True)  # non-px → 범위 외
+    content_width = _extract_max_figma_content_width(getattr(ctx, "html_path", "") or "")
+    if content_width is None:
+        # spec.json 미발견 → 검증 불가 (비차단)
+        return ValidationResult(rule["id"], rule["severity"], True, skipped=True,
+                                message="no spec.json — --width 도출 검증 불가")
+    expected = content_width + 2 * int(pad_m.group(1))
+    actual = int(width_m.group(1))
+    if actual != expected:
+        return ValidationResult(rule["id"], rule["severity"], False,
+            message=(f"--width({actual}px) ≠ Figma 콘텐츠폭({content_width}) + "
+                     f"2×--padding({pad_m.group(1)}) = {expected}px"),
+            location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
+    "check_root_width_derivation": _safe_custom_handler(check_root_width_derivation),
+    "root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "check_no_body_background": _safe_custom_handler(check_no_body_background),
     "no_body_background": _safe_custom_handler(check_no_body_background),
     "check_no_img_area_declaration": _safe_custom_handler(check_no_img_area_declaration),

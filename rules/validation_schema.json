@@ -931,6 +931,24 @@
     },
     {
       "applies_to": [
+        "landing"
+      ],
+      "category": "css.variables",
+      "description": ":root --width 는 Figma 콘텐츠폭 + 양측 --padding 과 일치해야 한다 (--width = content_width + 2×--padding). content_width 는 extracted/*_spec.json 의 frame inner width 에서 추출하며, spec 미발견 시 비차단 skip.",
+      "id": "root_width_derivation",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom",
+      "custom_handler": "check_root_width_derivation",
+      "selector": "custom:check_root_width_derivation",
+      "priority": 200,
+      "examples": {
+        "bad": ":root{--padding:20px;--width:1400px;}  (콘텐츠폭 1440인데 1400)",
+        "good": ":root{--padding:20px;--width:1480px;}  (= 콘텐츠폭 1440 + 2×20)"
+      }
+    },
+    {
+      "applies_to": [
         "common",
         "basic",
         "landing"
