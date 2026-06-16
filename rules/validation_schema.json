@@ -650,22 +650,6 @@
         "basic",
         "landing"
       ],
-      "category": "css.layout",
-      "description": "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용).",
-      "id": "no_column_flex_gap",
-      "severity": "error",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "check_no_column_gap",
-      "selector": "custom:check_no_column_gap",
-      "priority": 100
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing"
-      ],
       "category": "css.format",
       "description": "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외).",
       "id": "no_important",
@@ -1295,23 +1279,6 @@
         "bad": "HTML 에 asset_manifest 미등록 이미지 (AI 합성 의심)",
         "good": "HTML 이미지 전부 asset_manifest 등록된 Figma 원본"
       }
-    },
-    {
-      "applies_to": [
-        "common",
-        "basic",
-        "landing",
-        "figma"
-      ],
-      "category": "figma.mapping",
-      "description": "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.",
-      "id": "vertical_frame_itemspacing_uses_margin_bottom",
-      "severity": "error",
-      "target": "css",
-      "type": "custom",
-      "custom_handler": "enforce_policy1_vertical_margin_bottom",
-      "selector": "custom:enforce_policy1_vertical_margin_bottom",
-      "priority": 100
     },
     {
       "applies_to": [

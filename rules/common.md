@@ -12,7 +12,6 @@
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `flexbox_layout` | `error` | 레이아웃은 flexbox만 사용한다 (Grid/float 금지). |
-| `no_column_flex_gap` | `error` | flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용). |
 | `no_fixed_min_height` | `warning` | 고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용. |
 | `no_min_width_wrapper` | `warning` | 페이지 래퍼 또는 body에 min-width를 선언하지 않는다. 반응형 레이아웃에서 min-width는 모바일 대응을 방해한다. |
 
@@ -20,13 +19,6 @@
 
 레이아웃은 flexbox만 사용한다 (Grid/float 금지).
 
-
----
-### no_column_flex_gap (error)
-
-flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용).
-
-**검증 핸들러**: `check_no_column_gap`
 
 ---
 ### no_fixed_min_height (warning)
@@ -824,20 +816,12 @@ reset.css 의 .ir 과 동일한 IR/스크린리더 숨김 패턴(left:-10000px, 
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `no_constraints_to_position_absolute_mapping` | `error` | Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다. |
-| `vertical_frame_itemspacing_uses_margin_bottom` | `error` | Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지. |
 
 ### no_constraints_to_position_absolute_mapping (error)
 
 Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다.
 
 **검증 핸들러**: `enforce_policy2_constraints_extract_only`
-
----
-### vertical_frame_itemspacing_uses_margin_bottom (error)
-
-Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지.
-
-**검증 핸들러**: `enforce_policy1_vertical_margin_bottom`
 
 ---
 ## Figma 충실도

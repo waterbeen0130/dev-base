@@ -15,7 +15,7 @@
 ### 도구 / 스크립트
 - `generate.py` / `json-to-html.py` 같은 자동 코드 생성 스크립트 작성 금지
 - 자동 재시도 / auto-repair 루프 사용 금지
-- 폐기 도구 참조 금지: `repair-from-violations`, `structural-diff`, `compare-css`, `check-rules-drift`, `build-prompts`, `brief-checksum`, `run-pipeline`, `split-sections`, `assemble`, `migrate-spec`, `post-impl-verify`
+- 폐기 도구 부활/참조/호출 금지 (예: `repair-from-violations`, `run-pipeline`, `compare-css` 등). **전체 목록·검증의 단일 소스는 `D:/dev-base/tools/check-deprecated-tools.py` 의 `DEPRECATED_TOOLS`** 다 (목록을 손으로 복제하지 않는다).
 
 ### 룰 / 해석
 - `POLICY-1` (VERTICAL frame margin-bottom 강제) — 모던 CSS `gap` 과 충돌, 적용 금지

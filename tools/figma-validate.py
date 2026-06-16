@@ -2217,7 +2217,6 @@ def _figma_policy_handler(rule: RuleDefinition, _context: RuleDispatchContext | 
 
 
 PYDANTIC_POLICY_HANDLERS: dict[str, Callable[[RuleDefinition, RuleDispatchContext | None], RuleHandlerResult]] = {
-    "vertical_frame_itemspacing_uses_margin_bottom": _figma_policy_handler,
     "no_constraints_to_position_absolute_mapping": _figma_policy_handler,
     "figma_rules_conflict_uses_meta_marker": _figma_policy_handler,
 }
