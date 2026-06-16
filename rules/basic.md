@@ -31,15 +31,8 @@ common.css에 reset.css의 핵심 패턴(* margin/padding/box-sizing 등)을 중
 
 | Rule ID | Severity | Description |
 | --- | --- | --- |
-| `font_size_base` | `warning` | html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트). |
 | `font_size_pc_rem` | `warning` | basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용. |
 
-### font_size_base (warning)
-
-html,body에 font-size: clamp(14px, 1.2vw, 16px) 기준 선언이 필요하다 (basic 프로젝트).
-
-
----
 ### font_size_pc_rem (warning)
 
 basic 프로젝트: PC font-size는 rem 단위, 모바일(@media max-width:768px)에서만 px 사용.

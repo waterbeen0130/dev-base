@@ -121,7 +121,6 @@ body{background:#eef4f7;}
 | `media_query_format` | `warning` | @media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다. |
 | `no_important` | `warning` | !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외). |
 | `no_korean_css_comment` | `warning` | CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출. |
-| `no_media_indent` | `info` | @media 블록 내부 규칙에 들여쓰기를 사용하지 않는다. |
 | `reset_property_duplicate` | `warning` | reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다. |
 | `selector_single_line` | `warning` | 각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지). 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙인다. |
 
@@ -175,13 +174,6 @@ CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내
 **검증 핸들러**: `check_korean_css_comment`
 
 ---
-### no_media_indent (info)
-
-@media 블록 내부 규칙에 들여쓰기를 사용하지 않는다.
-
-**검증 핸들러**: `check_media_indent`
-
----
 ### reset_property_duplicate (warning)
 
 reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다.
@@ -202,8 +194,7 @@ reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-fami
 | --- | --- | --- |
 | `clamp_threshold` | `info` | 100px 미만 값에는 clamp()를 사용하지 않는다 (고정 px). 100px 이상만 clamp 허용. |
 | `no_clamp_under_100` | `info` | padding/margin에 100px 미만 clamp()를 사용하지 않는다. |
-| `no_raw_calc` | `warning` | calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지. |
-| `no_raw_vw` | `warning` | vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지. |
+| `no_raw_calc` | `warning` | calc()와 vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지. |
 
 ### clamp_threshold (info)
 
@@ -220,14 +211,7 @@ padding/margin에 100px 미만 clamp()를 사용하지 않는다.
 ---
 ### no_raw_calc (warning)
 
-calc()는 clamp() 내부에서만 사용한다. 단독 사용 금지.
-
-**검증 핸들러**: `check_raw_calc_vw`
-
----
-### no_raw_vw (warning)
-
-vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
+calc()와 vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 
 **검증 핸들러**: `check_raw_calc_vw`
 
@@ -281,7 +265,7 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 | `common_area_child_scope` | `warning` | 공통영역 자식 클래스(.logo, .gnb, .utils, .sns, .copyright, .logo_txt 등)는 .header/.footer 부모 셀렉터와 함께 선언한다. 단독 선언(.logo{}, .gnb a{})은 header/footer 양쪽 충돌 위험으로 금지. |
 | `cont_redundant_scoping` | `warning` | .X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다. |
 | `excessive_individual_classes` | `warning` | 같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다. |
-| `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. |
+| `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont/.img_area)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다. |
 | `global_class_standalone` | `warning` | 전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용. |
 | `no_duplicate_selector` | `warning` | 같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언). |
 | `no_utility_classes` | `warning` | .font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리. |
@@ -326,7 +310,7 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 ---
 ### generic_class_parent_scope (warning)
 
-페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다.
+페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont/.img_area)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다.
 
 **근거**: 섹션 내부 클래스가 부모 스코핑 없이 단독 선언되면 다른 페이지/섹션과 충돌 가능
 
@@ -636,7 +620,6 @@ DOM 최대 깊이는 5단계를 초과하지 않는다.
 | --- | --- | --- |
 | `common_area_prefix` | `error` | header/footer/gnb/logo/container/utils/sns/copyright 같은 공통 영역에 페이지 프리픽스를 사용하지 않는다. 공통 영역은 어떤 페이지(index.html, greeting.html 등)에 있어도 prefix 없이 사용한다. 이 규칙은 page_prefix_required 보다 항상 우선한다. |
 | `cont_class_required` | `error` | 섹션 내부 너비 제한에는 .cont 공통 클래스를 사용한다. eos_inner, sec_inner, content_wrap 같은 커스텀 inner wrapper 클래스를 금지한다. |
-| `generic_class_name` | `error` | sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다. |
 | `meaningful_page_name` | `error` | 의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다. |
 | `no_body_class` | `error` | body 태그에 class 속성을 추가하지 않는다 — body는 공통 영역이므로 페이지별 class 금지. |
 | `no_figma_nodeid_class` | `error` | Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_v2 같은 {접두}_{f\|v\|t}{숫자} 패턴)를 금지한다. 디자이너 레이어 식별자이며 시맨틱 의미가 없다. 페이지 prefix + 역할명(main_intro, greeting_title)을 사용한다. |
@@ -675,12 +658,6 @@ header/footer/gnb/logo/container/utils/sns/copyright 같은 공통 영역에 페
 <div class="cont">
 ```
 **근거**: .cont는 common.css에 전역 선언된 표준 패턴이며 커스텀 inner wrapper는 일관성을 해침
-
----
-### generic_class_name (error)
-
-sec_숫자, section_숫자, box숫자 같은 범용 클래스명을 모두 금지한다.
-
 
 ---
 ### meaningful_page_name (error)
@@ -790,7 +767,6 @@ HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).
 | --- | --- | --- |
 | `newline_to_br_required` | `error` | spec.json 텍스트의 \n 및 \u2028은 HTML에서 반드시 <br> 태그로 변환한다. HTML 원문에 \n을 그냥 두면 브라우저가 무시하므로 <br>로 명시 변환 필수. 연속 \n\n은 블록 분리(</p><p>) 또는 <br><br>로 처리. |
 | `p_tag_condition_enforced` | `warning` | <p> 태그는 텍스트에 \n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용. |
-| `p_tag_misuse` | `info` | 20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용. |
 
 ### newline_to_br_required (error)
 
@@ -802,13 +778,6 @@ spec.json 텍스트의 \n 및 \u2028은 HTML에서 반드시 <br> 태그로 변�
 ### p_tag_condition_enforced (warning)
 
 <p> 태그는 텍스트에 \n이 있거나, 길이 95자 초과거나, 종결어미 반복일 때만 사용. 짧은 라벨은 <span> 사용.
-
-**검증 핸들러**: `check_p_tag_misuse`
-
----
-### p_tag_misuse (info)
-
-20자 미만 짧은 텍스트에 <p> 태그를 사용하지 않는다 — <span> 사용.
 
 **검증 핸들러**: `check_p_tag_misuse`
 

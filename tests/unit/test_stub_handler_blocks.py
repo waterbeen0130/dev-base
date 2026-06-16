@@ -35,6 +35,8 @@ def test_stub_handler_blocks_with_major_failure() -> None:
 
     assert result.passed is False
     assert result.skipped is False
-    assert result.severity == "warning"
+    # missing handler is a misconfiguration → fail-closed at error(CRITICAL),
+    # not downgraded to warning (which the accept gate would ignore)
+    assert result.severity == "error"
     assert "[STUB-PASS BLOCKED]" in result.message
     assert "missing_handler_impl" in result.message
