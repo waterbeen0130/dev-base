@@ -56,14 +56,22 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
   python3 D:/dev-base/tools/workflow-ledger.py append --step values --provider {provider}
   ```
 
-### Step 3 — 검증 (게이트)
+### Step 3 — 검증 (게이트, MANDATORY · 기계적 강제)
 ```bash
 python3 D:/dev-base/tools/pm-verify.py \
   --spec-dir extracted/ --html index.html --css css/common.css --img img/ --profile {landing|basic} \
-  --section {SECTION}
+  --section {SECTION} \
+  --emit-report .gran-maestro/pm-verify-report.json
 ```
 - CRITICAL 0건이어야 완료. 실행 증거(통과 리포트) 없이는 완료/전달 금지.
 - `--section` 을 주면 pm-verify 가 원장에 `verify` 단계를 자동 기록한다.
+- `--emit-report .gran-maestro/pm-verify-report.json` **필수**: accept 게이트가 이 경로의 신선한(sha 일치) 리포트를 요구한다. 없으면 차단.
+- **Figma 실측 강제**: `extracted/*_spec.json` 에 폰트 메타데이터(fontSize)가 없으면 pm-verify 가 하드 FAIL 한다(추측 금지). 반드시 `figma-section-spec.py --download-assets` 로 실측 추출한 spec 으로 검증한다.
+
+> **accept 하드 게이트 (건너뛰기 불가)**: `accept-preflight-verify.py` 가 mst:accept 시 자동 실행되며 아래를 BLOCK 한다 —
+> ① `spec-measured`: `extracted/*_spec.json`(fontSize 포함) 없음 → 차단(Figma 실측 누락).
+> ② `verify-evidence`: 신선한 `pm-verify-report.json` 없음/stale → 차단(검증툴 미실행).
+> ③ validate-semantic CRITICAL, 산출물경계, 부분색상, 2패스순서/추출주체(원장 존재 시).
 
 ### Step 4 — 시각 비교
 - Playwright 1920px 렌더 → Figma PNG 와 나란히 비교 → 자연어 피드백 → Pass 1/2 복귀.

@@ -215,6 +215,7 @@ def main() -> int:
     parser.add_argument("--img", help="Image directory for broken link check")
     parser.add_argument("--profile", default="landing")
     parser.add_argument("--emit-report", help="Write verification evidence JSON (DOD-006) to this path")
+    parser.add_argument("--allow-missing-spec", action="store_true", help="Allow verification to pass even when spec.json has no font metadata (escape hatch — default: hard fail to force Figma 실측)")
     parser.add_argument("--section", help="Section name — when set, records the 'verify' step in the workflow ledger (AGI-004 #4)")
     parser.add_argument("--ledger", help="Workflow ledger path override (default: <root>/.gran-maestro/workflow-ledger.json)")
     args = parser.parse_args()
@@ -245,9 +246,15 @@ def main() -> int:
                     break
             except Exception:
                 pass
-    if not _spec_has_font:
-        print("\n⚠️  WARNING: spec에 font 메타데이터 없음 — 폰트 5필드 검증 불가")
-        print("   figma-section-spec.py --download-assets 로 재추출하세요")
+    spec_missing = not _spec_has_font
+    if spec_missing:
+        if args.allow_missing_spec:
+            print("\n⚠️  WARNING: spec에 font 메타데이터 없음 — 폰트 5필드 검증 불가 (--allow-missing-spec)")
+            print("   figma-section-spec.py --download-assets 로 재추출하세요")
+        else:
+            print("\n❌ FAIL: spec.json 폰트 메타데이터(fontSize) 없음 — Figma 실측 누락(추측 의심).")
+            print("   figma-section-spec.py --download-assets 로 실측 추출 필수.")
+            print("   (정당한 예외 시에만 --allow-missing-spec)")
 
     # 1. figma-validate (trusted categories only)
     print("\n[1] Figma 충실도 (텍스트 + 폰트 + 색상)")
@@ -304,8 +311,9 @@ def main() -> int:
         print(f"  figma-validate 노이즈: {len(noisy_fig)} 건 (layoutSizing/opacity/frame/clamp 등)")
         print(f"  validate-semantic 노이즈: {len(noisy_sem)} 건")
 
-    # Gate
-    fail = bool(trusted_fig or trusted_sem or missing)
+    # Gate — missing Figma 실측(spec font metadata) is a hard fail unless escaped.
+    spec_gate_fail = spec_missing and not args.allow_missing_spec
+    fail = bool(trusted_fig or trusted_sem or missing or spec_gate_fail)
 
     # DOD-006: emit verification execution evidence (sha-bound to current files)
     if args.emit_report:
@@ -340,7 +348,8 @@ def main() -> int:
 
     print("\n" + "=" * 80)
     if fail:
-        print(f"결과: ✗ FAIL — Figma 위반 {len(trusted_fig)}, 컨벤션 위반 {len(trusted_sem)}, broken {len(missing)}")
+        spec_note = ", spec실측누락" if spec_gate_fail else ""
+        print(f"결과: ✗ FAIL — Figma 위반 {len(trusted_fig)}, 컨벤션 위반 {len(trusted_sem)}, broken {len(missing)}{spec_note}")
         return 1
     print("결과: ✓ PASS")
     return 0

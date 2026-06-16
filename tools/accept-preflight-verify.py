@@ -95,14 +95,51 @@ def find_html_css_in_dir(search_dir: Path) -> tuple[Path | None, Path | None, st
     return html_file, css_file, img_dir
 
 
-def find_spec_file(search_dir: Path) -> Path | None:
-    """Find a *_spec.json (extracted/ first, then dir root) for mixed-style check."""
+def find_spec_files(search_dir: Path) -> list[Path]:
+    """Return all *_spec.json (extracted/ first, then dir root)."""
     for base in (search_dir / "extracted", search_dir):
         if base.is_dir():
             specs = sorted(base.glob("*_spec.json"))
             if specs:
-                return specs[0]
-    return None
+                return specs
+    return []
+
+
+def find_spec_file(search_dir: Path) -> Path | None:
+    """Find a *_spec.json (extracted/ first, then dir root) for mixed-style check."""
+    specs = find_spec_files(search_dir)
+    return specs[0] if specs else None
+
+
+def spec_has_font_metadata(spec_files: list[Path]) -> bool:
+    """True if any spec.json carries real typography (a text_node with fontSize)."""
+    for path in spec_files:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        nodes = data.get("text_nodes")
+        if isinstance(nodes, list) and any(
+            isinstance(n, dict) and n.get("fontSize") for n in nodes
+        ):
+            return True
+    return False
+
+
+def find_verify_report(output_dir: Path | None, project_root: Path) -> Path | None:
+    """Locate a pm-verify evidence report (emitted via pm-verify --emit-report)."""
+    candidates = []
+    if output_dir:
+        candidates.append(output_dir / ".gran-maestro" / "pm-verify-report.json")
+        candidates.append(output_dir / "pm-verify-report.json")
+    candidates.append(project_root / ".gran-maestro" / "pm-verify-report.json")
+    for c in candidates:
+        if c.is_file():
+            return c
+    # default location even if absent — verify-evidence-gate reports it as missing
+    if output_dir:
+        return output_dir / ".gran-maestro" / "pm-verify-report.json"
+    return project_root / ".gran-maestro" / "pm-verify-report.json"
 
 
 def find_ledger(project_root: Path, output_dir: Path | None) -> Path | None:
@@ -296,6 +333,42 @@ def gate_extraction_provenance(ledger: Path | None) -> dict:
     return _result(name, PASS, "provenance ok")
 
 
+def gate_spec_measured(spec_files: list[Path]) -> dict:
+    """FORCE Figma 실측: a publishing deliverable must ship extracted/*_spec.json
+    with real typography. No spec / no fontSize = the agent guessed instead of
+    measuring → BLOCK (no silent skip)."""
+    name = "spec-measured"
+    if not spec_files:
+        return _result(name, BLOCK,
+                       "extracted/*_spec.json 없음 — Figma 실측 누락. "
+                       "figma-section-spec.py --download-assets 로 spec 추출 필수")
+    if not spec_has_font_metadata(spec_files):
+        return _result(name, BLOCK,
+                       "spec.json 에 폰트 메타데이터(fontSize) 없음 — MCP 폴백/추측 의심. "
+                       "figma-section-spec.py 로 재추출 필요")
+    return _result(name, PASS, f"{len(spec_files)} spec.json (typography ok)")
+
+
+def gate_verify_evidence(html_path: Path | None, css_path: Path | None, report: Path | None) -> dict:
+    """FORCE 검증툴 실행: completion requires a fresh pm-verify report sha-bound to
+    the current html/css. No report (= pm-verify never run) or stale → BLOCK."""
+    name = "verify-evidence"
+    if not html_path or not css_path or not report:
+        return _result(name, BLOCK, "pm-verify 증거 리포트 경로 불명")
+    rc, output = _run([
+        sys.executable, str(TOOLS_DIR / "verify-evidence-gate.py"),
+        "--html", str(html_path), "--css", str(css_path), "--report", str(report),
+    ])
+    if rc < 0:
+        return _result(name, BLOCK, f"runner error: {output[:120]}")
+    if rc == 1:
+        # no_evidence / stale_evidence / verification_failed
+        return _result(name, BLOCK,
+                       output.strip().replace("\n", " ")[:200]
+                       + " — pm-verify --emit-report 로 검증 후 재제출")
+    return _result(name, PASS, "fresh pm-verify evidence")
+
+
 def evaluate_gates(
     deliverable_dir: Path | None,
     html_path: Path | None,
@@ -304,9 +377,13 @@ def evaluate_gates(
     project_root: Path,
     ledger: Path | None,
     profile: str,
+    spec_files: list[Path] | None = None,
+    verify_report: Path | None = None,
 ) -> list[dict]:
     """Run all wired gates and return their results in order."""
     return [
+        gate_spec_measured(spec_files if spec_files is not None else ([spec_file] if spec_file else [])),
+        gate_verify_evidence(html_path, css_path, verify_report),
         gate_validate_semantic(html_path, css_path, profile),
         gate_output_boundary(deliverable_dir),
         gate_mixed_styles(spec_file, html_path, css_path),
@@ -388,8 +465,10 @@ def main() -> int:
             output_dir = output_dir.parent
 
     profile = detect_profile(css_path)
-    spec_file = find_spec_file(output_dir) if output_dir else None
+    spec_files = find_spec_files(output_dir) if output_dir else []
+    spec_file = spec_files[0] if spec_files else None
     ledger = find_ledger(project_root, output_dir)
+    verify_report = find_verify_report(output_dir, project_root)
 
     gate_results = evaluate_gates(
         deliverable_dir=output_dir,
@@ -399,6 +478,8 @@ def main() -> int:
         project_root=project_root,
         ledger=ledger,
         profile=profile,
+        spec_files=spec_files,
+        verify_report=verify_report,
     )
     decision, reason = summarize(gate_results)
 
