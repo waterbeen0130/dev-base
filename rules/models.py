@@ -161,7 +161,7 @@ except ModuleNotFoundError:
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RULES_PATH = ROOT / "rules" / "rules.yaml"
 DEFAULT_SCHEMA_PATH = ROOT / "rules" / "validation_schema.json"
-EXPECTED_RULE_COUNT = 86
+EXPECTED_RULE_COUNT = 87
 AUTO_GENERATED_COMMENT = "AUTO-GENERATED FROM rules/models.py — DO NOT EDIT"
 
 

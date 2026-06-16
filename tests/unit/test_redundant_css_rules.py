@@ -1,6 +1,7 @@
 """Forbid Figma-transliterated redundant CSS.
 
-- no_fixed_min_height: fixed px min-height / min-block-size (Figma frame height)
+- no_fixed_height: fixed px height/min-height/max-height + block-size (Figma frame height)
+- no_margin_first_child_reset: :first/:last-child margin reset → use flex gap
   is forbidden; 0/auto/%/vh/var() allowed.
 - no_redundant_white_background: background:#fff is redundant (white is default)
   unless the element is scoped under a colored section (white over color).
@@ -31,32 +32,68 @@ def _results(tmp_path: Path, css_text: str, profile: str = "landing") -> dict:
     return {r.rule_id: r for r in results}
 
 
-# ---- no_fixed_min_height ----
+# ---- no_fixed_height (min/max/plain all forbidden) ----
 
-def test_fixed_min_height_px_flagged(tmp_path):
+def test_fixed_height_px_flagged(tmp_path):
+    r = _results(tmp_path, ".box{height:448px;}")
+    assert r["no_fixed_height"].passed is False
+
+
+def test_min_height_px_flagged(tmp_path):
     r = _results(tmp_path, ".visual_box{min-height:448px;}")
-    assert r["no_fixed_min_height"].passed is False
+    assert r["no_fixed_height"].passed is False
 
 
-def test_min_block_size_px_flagged(tmp_path):
-    # logical property — agent used this in the real project
+def test_max_height_px_flagged(tmp_path):
+    # user: min이든 max든 넣지마 — max-height fixed px is now flagged too
+    r = _results(tmp_path, ".card{max-height:300px;}")
+    assert r["no_fixed_height"].passed is False
+
+
+def test_block_size_logical_px_flagged(tmp_path):
     r = _results(tmp_path, ".visual_box{min-block-size:685px;}")
-    assert r["no_fixed_min_height"].passed is False
+    assert r["no_fixed_height"].passed is False
 
 
-def test_min_height_vh_allowed(tmp_path):
+def test_height_vh_allowed(tmp_path):
     r = _results(tmp_path, ".hero{min-height:100vh;}")
-    assert r["no_fixed_min_height"].passed is True
+    assert r["no_fixed_height"].passed is True
 
 
-def test_min_height_zero_allowed(tmp_path):
+def test_height_zero_allowed(tmp_path):
     r = _results(tmp_path, ".flex_child{min-height:0;}")
-    assert r["no_fixed_min_height"].passed is True
+    assert r["no_fixed_height"].passed is True
 
 
-def test_max_and_line_height_not_confused(tmp_path):
-    r = _results(tmp_path, ".x{max-height:500px;line-height:1.5;}")
-    assert r["no_fixed_min_height"].passed is True
+def test_line_height_not_confused(tmp_path):
+    # line-height is typography, must not be flagged as a fixed height
+    r = _results(tmp_path, ".x{line-height:1.5;width:100px;}")
+    assert r["no_fixed_height"].passed is True
+
+
+# ---- no_margin_first_child_reset (margin spacing → gap) ----
+
+def test_first_child_margin_reset_flagged(tmp_path):
+    css = (".program_list li{inline-size:340px;margin-left:30px;}\n"
+           ".program_list li:first-child{margin-left:0;}")
+    r = _results(tmp_path, css)
+    assert r["no_margin_first_child_reset"].passed is False
+
+
+def test_last_child_margin_reset_flagged(tmp_path):
+    r = _results(tmp_path, ".list li:last-child{margin-right:0;}")
+    assert r["no_margin_first_child_reset"].passed is False
+
+
+def test_first_child_without_margin_reset_ok(tmp_path):
+    # first-child changing a non-margin property is fine
+    r = _results(tmp_path, ".list li:first-child{color:#f00;}")
+    assert r["no_margin_first_child_reset"].passed is True
+
+
+def test_gap_layout_not_flagged(tmp_path):
+    r = _results(tmp_path, ".program_list{display:flex;gap:30px;}\n.program_list li{inline-size:340px;}")
+    assert r["no_margin_first_child_reset"].passed is True
 
 
 # ---- no_redundant_white_background ----

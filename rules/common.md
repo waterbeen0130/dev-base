@@ -12,7 +12,8 @@
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `flexbox_layout` | `error` | 레이아웃은 flexbox만 사용한다 (Grid/float 금지). |
-| `no_fixed_min_height` | `warning` | 고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용. |
+| `no_fixed_height` | `warning` | 고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img/.img_area 는 img_no_fixed_size 가 담당) |
+| `no_margin_first_child_reset` | `warning` | :first-child/:last-child 에서 margin 을 0 으로 리셋하지 않는다. `.list li{margin-left:30px} .list li:first-child{margin-left:0}` 식 형제 간격 처리는 flex gap 으로 대체한다 — gap 을 쓰면 first/last-child 리셋 자체가 불필요하다. |
 | `no_min_width_wrapper` | `warning` | 페이지 래퍼 또는 body에 min-width를 선언하지 않는다. 반응형 레이아웃에서 min-width는 모바일 대응을 방해한다. |
 
 ### flexbox_layout (error)
@@ -21,19 +22,34 @@
 
 
 ---
-### no_fixed_min_height (warning)
+### no_fixed_height (warning)
 
-고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용.
+고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img/.img_area 는 img_no_fixed_size 가 담당)
 
 **나쁜 예**:
 ```css
-.visual_box{min-height:448px;}  /  .box{min-block-size:685px;}
+.box{height:448px;}  /  .card{max-height:300px;}  /  .v{min-block-size:685px;}
 ```
 **좋은 예**:
 ```css
-.visual_box{padding:40px 0;}  (콘텐츠가 높이 결정)  /  .hero{min-height:100vh;}
+.box{padding:40px 0;}  (콘텐츠가 높이 결정)  /  .hero{min-height:100vh;}
 ```
-**검증 핸들러**: `check_no_fixed_min_height`
+**검증 핸들러**: `check_no_fixed_height`
+
+---
+### no_margin_first_child_reset (warning)
+
+:first-child/:last-child 에서 margin 을 0 으로 리셋하지 않는다. `.list li{margin-left:30px} .list li:first-child{margin-left:0}` 식 형제 간격 처리는 flex gap 으로 대체한다 — gap 을 쓰면 first/last-child 리셋 자체가 불필요하다.
+
+**나쁜 예**:
+```css
+.program_list li{inline-size:340px;margin-left:30px;}  .program_list li:first-child{margin-left:0;}
+```
+**좋은 예**:
+```css
+.program_list{display:flex;gap:30px;}  .program_list li{inline-size:340px;}
+```
+**검증 핸들러**: `check_no_margin_first_child_reset`
 
 ---
 ### no_min_width_wrapper (warning)

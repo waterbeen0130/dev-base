@@ -3249,21 +3249,43 @@ def check_root_width_derivation(rule: dict, ctx: ValidationContext) -> Validatio
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
-def check_no_fixed_min_height(rule: dict, ctx: ValidationContext) -> ValidationResult:
-    """고정 px min-height/min-block-size 금지 — Figma 프레임 높이 직역(반응형 저해).
+def check_no_fixed_height(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """고정 px height/min-height/max-height (및 logical block-size 변형) 전부 금지.
 
-    높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용, 고정 px(>0)만 차단.
-    min-block-size(logical) 도 동일 취급.
+    Figma 프레임 높이 직역(반응형 저해) — 높이는 콘텐츠/패딩이 결정한다.
+    min/max 가릴 것 없이 고정 px(>0) 차단. 0/auto/%/vh/var() 등 비-px 는 허용.
     """
     css = ctx.css_text
     violations = []
+    pat = re.compile(r"\b((?:min-|max-)?(?:height|block-size))\s*:\s*(\d+(?:\.\d+)?)px")
     for i, line in enumerate(css.split("\n"), 1):
         if line.strip().startswith("/*"):
             continue
-        for m in re.finditer(r"\bmin-(?:height|block-size)\s*:\s*(\d+(?:\.\d+)?)px", line):
-            if float(m.group(1)) == 0:
+        for m in pat.finditer(line):
+            if float(m.group(2)) == 0:
                 continue
-            violations.append(f"line {i}: min-height:{m.group(1)}px 고정값 금지 — 콘텐츠/패딩으로 높이 결정")
+            violations.append(f"line {i}: {m.group(1)}:{m.group(2)}px 고정값 금지 — 콘텐츠/패딩으로 높이 결정")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_no_margin_first_child_reset(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """:first-child/:last-child 의 margin 리셋(0) 금지 — flex gap 으로 간격 처리.
+
+    `.list li{margin-left:30px} .list li:first-child{margin-left:0}` 같은 패턴은
+    형제 간격을 margin 으로 처리한 신호다. flex `gap` 을 쓰면 first/last-child
+    리셋 자체가 불필요하다.
+    """
+    css = ctx.css_text
+    violations = []
+    margin_zero = re.compile(r"\bmargin(?:-(?:left|right|top|bottom))?\s*:\s*0(?:px|em|rem|%)?\b")
+    for selector, body in _iter_css_rules(css):
+        if not re.search(r":(?:first|last)-child\b", selector):
+            continue
+        if margin_zero.search(body):
+            violations.append(f"{selector.strip()[:50]} — margin 리셋 금지, flex gap 으로 간격 처리")
     if violations:
         return ValidationResult(rule["id"], rule["severity"], False,
                                 message="; ".join(violations[:5]), location=ctx.css_path)
@@ -3317,8 +3339,10 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "validate_asset_manifest_consistency": _safe_custom_handler(_owned_by_figma_validate),
     "check_no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
     "no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
-    "check_no_fixed_min_height": _safe_custom_handler(check_no_fixed_min_height),
-    "no_fixed_min_height": _safe_custom_handler(check_no_fixed_min_height),
+    "check_no_fixed_height": _safe_custom_handler(check_no_fixed_height),
+    "no_fixed_height": _safe_custom_handler(check_no_fixed_height),
+    "check_no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
+    "no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
     "check_root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "check_no_body_background": _safe_custom_handler(check_no_body_background),
