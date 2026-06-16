@@ -3271,6 +3271,39 @@ def check_no_fixed_height(rule: dict, ctx: ValidationContext) -> ValidationResul
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+_LOGICAL_BOX_PROPS = {
+    "inline-size": "width", "min-inline-size": "min-width", "max-inline-size": "max-width",
+    "block-size": "height", "min-block-size": "min-height", "max-block-size": "max-height",
+    "margin-inline": "margin-left/right", "margin-block": "margin-top/bottom",
+    "padding-inline": "padding-left/right", "padding-block": "padding-top/bottom",
+    "inset-inline": "left/right", "inset-block": "top/bottom",
+}
+_LOGICAL_BOX_RE = re.compile(
+    r"\b((?:min-|max-)?(?:inline|block)-size|(?:margin|padding|inset)-(?:inline|block)(?:-(?:start|end))?)\s*:"
+)
+
+
+def check_no_logical_box_properties(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """논리 박스 속성(inline-size/block-size/margin-inline 등) 금지 — 물리 속성 사용.
+
+    이 프로젝트 컨벤션은 물리 속성(width/height/margin-left ...)이다. 추출
+    에이전트가 inline-size/block-size 를 남발하는 것을 차단한다.
+    """
+    css = ctx.css_text
+    violations = []
+    for i, line in enumerate(css.split("\n"), 1):
+        if line.strip().startswith("/*"):
+            continue
+        for m in _LOGICAL_BOX_RE.finditer(line):
+            prop = m.group(1)
+            phys = _LOGICAL_BOX_PROPS.get(prop, "물리 속성")
+            violations.append(f"line {i}: {prop} 금지 — {phys} 사용")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:6]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 def check_no_margin_first_child_reset(rule: dict, ctx: ValidationContext) -> ValidationResult:
     """:first-child/:last-child 의 margin 리셋(0) 금지 — flex gap 으로 간격 처리.
 
@@ -3341,6 +3374,8 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
     "check_no_fixed_height": _safe_custom_handler(check_no_fixed_height),
     "no_fixed_height": _safe_custom_handler(check_no_fixed_height),
+    "check_no_logical_box_properties": _safe_custom_handler(check_no_logical_box_properties),
+    "no_logical_box_properties": _safe_custom_handler(check_no_logical_box_properties),
     "check_no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
     "no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
     "check_root_width_derivation": _safe_custom_handler(check_root_width_derivation),

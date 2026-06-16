@@ -303,8 +303,28 @@
       "selector": "custom:check_no_margin_first_child_reset",
       "priority": 200,
       "examples": {
-        "bad": ".program_list li{inline-size:340px;margin-left:30px;}  .program_list li:first-child{margin-left:0;}",
-        "good": ".program_list{display:flex;gap:30px;}  .program_list li{inline-size:340px;}"
+        "bad": ".program_list li{width:340px;margin-left:30px;}  .program_list li:first-child{margin-left:0;}",
+        "good": ".program_list{display:flex;gap:30px;}  .program_list li{width:340px;}"
+      }
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.format",
+      "description": "논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다.",
+      "id": "no_logical_box_properties",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom",
+      "custom_handler": "check_no_logical_box_properties",
+      "selector": "custom:check_no_logical_box_properties",
+      "priority": 200,
+      "examples": {
+        "bad": ".box{inline-size:340px;block-size:200px;}",
+        "good": ".box{width:340px;height:200px;}"
       }
     },
     {
