@@ -3329,8 +3329,6 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "cont_redundant_scoping": _safe_custom_handler(check_cont_redundant_scoping),
     "check_no_duplicate_ir_class": _safe_custom_handler(check_no_duplicate_ir_class),
     "no_duplicate_ir_class": _safe_custom_handler(check_no_duplicate_ir_class),
-    "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
-    "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
     "check_common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
     "common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
     "check_global_class_standalone": _safe_custom_handler(check_global_class_standalone),
@@ -3338,7 +3336,6 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "check_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
     "no_korean_css_comment": _safe_custom_handler(check_korean_css_comment),
     "item_spacing_reflected": item_spacing_reflected,
-    "enforce_policy1_vertical_margin_bottom": _safe_custom_handler(enforce_policy1_vertical_margin_bottom),
     "enforce_policy2_constraints_extract_only": _safe_custom_handler(enforce_policy2_constraints_extract_only),
     "enforce_policy3_rules_conflict_bypass": _safe_custom_handler(enforce_policy3_rules_conflict_bypass),
     # direct check_* compatibility

@@ -12,7 +12,7 @@
 - 응답 언어: **한국어**. 코드 주석: **영어만**.
 - 규칙의 단일 소스: `rules/rules.yaml` → 자동 생성 `rules/common.md`. 규칙 변경은 rules.yaml 만 수정하고 빌드 재실행(`python3 tools/build-rules.py`)한다. **규칙을 이 파일이나 AI shim 에 손으로 복제하지 않는다.**
 - 검증 단일 소스: `tools/pm-verify.py` / `tools/validate-semantic.py`. 완료 보고 전 반드시 실행하고 raw 출력 그대로 보고한다(거짓 보고 금지).
-- 폐기 도구 부활 금지: `generate.py`, `json-to-html.py`, `repair-from-violations.py`, `structural-diff.py`, `compare-css.py`, `run-pipeline.py`, `--converge` 자동 재시도 루프 등.
+- 폐기 도구 부활/호출 금지 (예: `generate.py`, `json-to-html.py`, `run-pipeline.py`, `--converge` 자동 재시도 등). **전체 목록·검증의 단일 소스는 `tools/check-deprecated-tools.py` 의 `DEPRECATED_TOOLS`** 다 (문서에 목록을 손으로 복제하지 않는다).
 
 ---
 

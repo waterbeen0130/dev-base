@@ -22,7 +22,7 @@ def _load_figma_validate_module():
 
 def test_dispatch_handler_accepts_rule_definition_instance() -> None:
     module = _load_figma_validate_module()
-    rule = next(item for item in load_rules() if item.id == "vertical_frame_itemspacing_uses_margin_bottom")
+    rule = next(item for item in load_rules() if item.id == "no_constraints_to_position_absolute_mapping")
 
     result = module.dispatch_rule_handler(rule, module.RuleDispatchContext())
 

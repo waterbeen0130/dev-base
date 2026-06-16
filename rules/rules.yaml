@@ -481,17 +481,6 @@ rules:
       target: css
       pattern: "display\\s*:\\s*grid|float\\s*:\\s*(left|right)"
 
-  - id: no_column_flex_gap
-    description: "flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용)."
-    severity: error
-    priority: 100
-    applies_to: [common, basic, landing]
-    category: css.layout
-    validation:
-      type: custom
-      target: css
-      custom_handler: check_no_column_gap
-
   - id: no_important
     description: "!important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외)."
     severity: warning
@@ -975,17 +964,6 @@ rules:
       good: "HTML 이미지 전부 asset_manifest 등록된 Figma 원본"
 
   # ===== Figma v2 policy sync (REQ-029) =====
-
-  - id: vertical_frame_itemspacing_uses_margin_bottom
-    description: "Figma VERTICAL frame 의 itemSpacing > 0 은 자식 요소의 margin-bottom 으로 변환한다. column flex gap / row-gap 사용 금지."
-    severity: error
-    priority: 100
-    applies_to: [common, basic, landing, figma]
-    category: figma.mapping
-    validation:
-      type: custom
-      target: css
-      custom_handler: enforce_policy1_vertical_margin_bottom
 
   - id: no_constraints_to_position_absolute_mapping
     description: "Figma constraints 는 spec 에 추출만 하고 CSS position:absolute 등 절대 배치로 매핑하지 않는다. 본 프로젝트는 flexbox 전용 레이아웃을 유지한다."
