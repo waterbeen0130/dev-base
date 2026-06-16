@@ -273,6 +273,46 @@
         "basic",
         "landing"
       ],
+      "category": "css.layout",
+      "description": "고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용.",
+      "id": "no_fixed_min_height",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom",
+      "custom_handler": "check_no_fixed_min_height",
+      "selector": "custom:check_no_fixed_min_height",
+      "priority": 200,
+      "examples": {
+        "bad": ".visual_box{min-height:448px;}  /  .box{min-block-size:685px;}",
+        "good": ".visual_box{padding:40px 0;}  (콘텐츠가 높이 결정)  /  .hero{min-height:100vh;}"
+      }
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
+      "category": "css.color",
+      "description": "기본값 #fff 를 불필요하게 선언하지 않는다. white 는 페이지 기본값이므로 그냥 선언하면 의미 없다. colored 배경(섹션 등) 위에 흰 영역을 올릴 때만 정당 — colored 섹션 클래스 아래로 스코핑된 경우에만 허용한다.",
+      "id": "no_redundant_white_background",
+      "severity": "warning",
+      "target": "css",
+      "type": "custom",
+      "custom_handler": "check_no_redundant_white_background",
+      "selector": "custom:check_no_redundant_white_background",
+      "priority": 180,
+      "examples": {
+        "bad": ".card{background:#fff;}  (colored 배경 위가 아님)",
+        "good": ".main_visual{background:#eef4f7;}  .main_visual .visual_box{background:#fff;}  (tint 위 흰 카드)"
+      }
+    },
+    {
+      "applies_to": [
+        "common",
+        "basic",
+        "landing"
+      ],
       "category": "accessibility",
       "description": "reset.css 의 .ir 과 동일한 IR/스크린리더 숨김 패턴(left:-10000px, text-indent 음수, clip 등)을 새 클래스로 재정의하지 않는다. 기존 reset.css 의 .ir 을 사용한다.",
       "id": "no_duplicate_ir_class",

@@ -13,6 +13,7 @@
 | --- | --- | --- |
 | `flexbox_layout` | `error` | 레이아웃은 flexbox만 사용한다 (Grid/float 금지). |
 | `no_column_flex_gap` | `error` | flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용). |
+| `no_fixed_min_height` | `warning` | 고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용. |
 | `no_min_width_wrapper` | `warning` | 페이지 래퍼 또는 body에 min-width를 선언하지 않는다. 반응형 레이아웃에서 min-width는 모바일 대응을 방해한다. |
 
 ### flexbox_layout (error)
@@ -26,6 +27,21 @@
 flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수직 간격은 margin 사용).
 
 **검증 핸들러**: `check_no_column_gap`
+
+---
+### no_fixed_min_height (warning)
+
+고정 px min-height(및 logical min-block-size) 를 선언하지 않는다. Figma 프레임 높이를 직역한 불필요한 고정 높이로 반응형을 저해한다. 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용.
+
+**나쁜 예**:
+```css
+.visual_box{min-height:448px;}  /  .box{min-block-size:685px;}
+```
+**좋은 예**:
+```css
+.visual_box{padding:40px 0;}  (콘텐츠가 높이 결정)  /  .hero{min-height:100vh;}
+```
+**검증 핸들러**: `check_no_fixed_min_height`
 
 ---
 ### no_min_width_wrapper (warning)
@@ -42,6 +58,7 @@ flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수�
 | `hex_color_only` | `error` | 색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용. |
 | `no_body_background` | `error` | body/html 에 page background(background-color/background-image) 를 선언하지 않는다. body 는 공통 영역이라 전 페이지가 오염된다. 페이지 배경은 섹션/페이지 래퍼에서 지정한다 (white/투명 제외). |
 | `no_hex8_literal` | `warning` | 8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외). |
+| `no_redundant_white_background` | `warning` | 기본값 #fff 를 불필요하게 선언하지 않는다. white 는 페이지 기본값이므로 그냥 선언하면 의미 없다. colored 배경(섹션 등) 위에 흰 영역을 올릴 때만 정당 — colored 섹션 클래스 아래로 스코핑된 경우에만 허용한다. |
 
 ### hex_color_only (error)
 
@@ -77,6 +94,21 @@ body{background:#eef4f7;}
 8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외).
 
 **검증 핸들러**: `_check_no_hex8_literal`
+
+---
+### no_redundant_white_background (warning)
+
+기본값 #fff 를 불필요하게 선언하지 않는다. white 는 페이지 기본값이므로 그냥 선언하면 의미 없다. colored 배경(섹션 등) 위에 흰 영역을 올릴 때만 정당 — colored 섹션 클래스 아래로 스코핑된 경우에만 허용한다.
+
+**나쁜 예**:
+```css
+.card{background:#fff;}  (colored 배경 위가 아님)
+```
+**좋은 예**:
+```css
+.main_visual{background:#eef4f7;}  .main_visual .visual_box{background:#fff;}  (tint 위 흰 카드)
+```
+**검증 핸들러**: `check_no_redundant_white_background`
 
 ---
 ## CSS 포맷
