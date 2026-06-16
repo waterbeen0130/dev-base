@@ -31,31 +31,45 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
 ```
 - `--download-assets` 필수(이미지 1:1). 추출 직후 `text_nodes[0].fontSize` 존재 확인 — 없으면 즉시 중단(재추출).
 - spec.json 은 이후 **값 오라클로만** 사용한다.
+- 추출 성공 직후 원장에 기록(섹션 워크플로우 시작):
+  ```bash
+  python3 D:/dev-base/tools/workflow-ledger.py append --step extract --provider figma-section-spec --section {SECTION}
+  ```
 
 ### Step 1 — Pass 1: 구조 (스크린샷만 보고 시맨틱 마크업)
 - 입력: **PNG 스크린샷만**. spec 노드 트리는 보지 않는다.
 - 화면을 보고 **역할(role)** 로 구조를 짠다: 상단 가로줄+메뉴 → `header > nav > ul > li > a`, 반복 카드 → `ul > li`, 큰 제목 → `h2/h3`, 서술 단락 → `p`.
 - 클래스명은 아래 §2 네이밍 규칙대로. **노드명(main_f0 등) 절대 금지.**
 - 모든 `<img>` 는 `.img_area` 래퍼 안에. 골격 CSS(flexbox)로 레이아웃만 잡는다.
+- Pass 1 완료 시 원장 기록(`{provider}` = 실제 추출 주체 omx/codex/claude/gemini):
+  ```bash
+  python3 D:/dev-base/tools/workflow-ledger.py append --step structure --provider {provider}
+  ```
 
 ### Step 2 — Pass 2: 값 정밀 보정 (spec.json 대조)
 - spec.json 과 대조해 **값만** 덮어쓴다 — 구조는 변경하지 않는다.
 - 텍스트는 `text_nodes[].characters` **byte-exact**(NBSP/`\n`/연속 공백 보존, `\n`→`<br>`).
 - 색상 hex, 폰트 5필드(fontFamily/fontSize/fontWeight/lineHeight/color), letter-spacing em, px 값.
 - `has_mixed_styles:true` 면 `character_segments` 로 구간별 `<span>` 분리.
+- Pass 2 완료 시 원장 기록:
+  ```bash
+  python3 D:/dev-base/tools/workflow-ledger.py append --step values --provider {provider}
+  ```
 
 ### Step 3 — 검증 (게이트)
 ```bash
 python3 D:/dev-base/tools/pm-verify.py \
-  --spec-dir extracted/ --html index.html --css css/common.css --img img/ --profile {landing|basic}
+  --spec-dir extracted/ --html index.html --css css/common.css --img img/ --profile {landing|basic} \
+  --section {SECTION}
 ```
 - CRITICAL 0건이어야 완료. 실행 증거(통과 리포트) 없이는 완료/전달 금지.
+- `--section` 을 주면 pm-verify 가 원장에 `verify` 단계를 자동 기록한다.
 
 ### Step 4 — 시각 비교
 - Playwright 1920px 렌더 → Figma PNG 와 나란히 비교 → 자연어 피드백 → Pass 1/2 복귀.
 
 ### 워크플로우 원장 (순서·주체 증명, MANDATORY)
-각 단계 완료 시 `.gran-maestro/workflow-ledger.json` 에 단계를 append 한다:
+각 단계 완료 시 위 Step 0~3 의 `workflow-ledger.py` 호출로 `.gran-maestro/workflow-ledger.json` 에 단계를 기록한다. **JSON 을 손으로 편집하지 말고 반드시 helper CLI 를 쓴다**(원자적 기록·순서 보존). 생성되는 형식:
 ```json
 {"section": "main_visual", "steps": [
   {"step": "extract",   "provider": "figma-section-spec", "ts": "..."},
@@ -64,9 +78,10 @@ python3 D:/dev-base/tools/pm-verify.py \
   {"step": "verify",    "provider": "pm-verify", "ts": "..."}
 ]}
 ```
-- `step` 은 `extract → structure(Pass1) → values(Pass2) → verify` 순서. `values` 가 `structure` 보다 먼저면 노드명 직역 위험으로 차단된다.
+- `step` 은 `extract → structure(Pass1) → values(Pass2) → verify` 순서. `extract` 는 새 섹션 워크플로우를 시작(원장 리셋)하고, 나머지는 현재 섹션에 append 된다. `values` 가 `structure` 보다 먼저면 노드명 직역 위험으로 차단된다.
 - `structure`/`values` 의 `provider` 는 알려진 추출 주체(omx/codex/claude/gemini)여야 한다(미상 차단).
-- 검증: `python3 D:/dev-base/tools/check-workflow-order.py --ledger ...` + `check-extraction-provenance.py --ledger ...`
+- 검증: `python3 D:/dev-base/tools/check-workflow-order.py --ledger ...` + `check-extraction-provenance.py --ledger ...`. 원장이 있으면 accept 게이트(`accept-preflight-verify.py`)가 이 두 검사를 자동 수행한다.
+- 원장은 현재(마지막) 섹션 기준 단일 파일이다. accept 게이트는 마지막 작업 섹션을 검증한다(다중 섹션 집계는 후속 과제).
 
 ### Step 5 — (선택) 그누보드 스킨
 - `rules/gnuboard.md` 전체 Read 후 적용.
