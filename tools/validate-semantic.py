@@ -3237,7 +3237,73 @@ def check_root_width_derivation(rule: dict, ctx: ValidationContext) -> Validatio
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+def check_no_fixed_min_height(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """고정 px min-height/min-block-size 금지 — Figma 프레임 높이 직역(반응형 저해).
+
+    높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 는 허용, 고정 px(>0)만 차단.
+    min-block-size(logical) 도 동일 취급.
+    """
+    css = ctx.css_text
+    violations = []
+    for i, line in enumerate(css.split("\n"), 1):
+        if line.strip().startswith("/*"):
+            continue
+        for m in re.finditer(r"\bmin-(?:height|block-size)\s*:\s*(\d+(?:\.\d+)?)px", line):
+            if float(m.group(1)) == 0:
+                continue
+            violations.append(f"line {i}: min-height:{m.group(1)}px 고정값 금지 — 콘텐츠/패딩으로 높이 결정")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+_WHITE_BG = re.compile(r"^(background|background-color)\s*:\s*(#fff(?:fff)?|white)$", re.I)
+
+
+def check_no_redundant_white_background(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """기본값 #fff 를 불필요하게 선언 금지.
+
+    white 는 페이지 기본값이라 그냥 선언하면 의미 없다. colored 배경(섹션 등)
+    위에 흰 영역을 올릴 때만 정당하다 → 셀렉터가 colored 섹션 클래스 아래로
+    스코핑된 경우에만 허용. 그 외 standalone background:#fff 는 불필요로 차단.
+    """
+    css = ctx.css_text
+    # Pass 1: colored(비-white/비-neutral) 배경을 가진 셀렉터의 클래스 토큰 수집
+    colored_classes = set()
+    for selector, body in _iter_css_rules(css):
+        for decl in body.split(";"):
+            m = re.match(r"\s*background(?:-color)?\s*:\s*([^;]+)", decl, re.I)
+            if not m:
+                continue
+            first = m.group(1).strip().lower().split()
+            val = first[0] if first else ""
+            if val and val not in _NEUTRAL_BG:
+                colored_classes.update(re.findall(r"\.([a-z][\w-]*)", selector))
+
+    # Pass 2: colored ancestor 없이 선언된 순수 white 배경 차단
+    violations = []
+    for selector, body in _iter_css_rules(css):
+        decls = [d.strip() for d in body.split(";") if d.strip()]
+        if not any(_WHITE_BG.match(d) for d in decls):
+            continue
+        sel_classes = set(re.findall(r"\.([a-z][\w-]*)", selector))
+        # 자기 자신을 제외한 ancestor 클래스 중 colored 가 있으면 정당(white over color)
+        ancestors = sel_classes - {re.findall(r"\.([a-z][\w-]*)", selector)[-1]} if sel_classes else set()
+        if ancestors & colored_classes:
+            continue
+        violations.append(f"{selector.strip()[:40]} — background:#fff 불필요(기본값). colored 배경 위에서만 선언")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
+    "check_no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
+    "no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
+    "check_no_fixed_min_height": _safe_custom_handler(check_no_fixed_min_height),
+    "no_fixed_min_height": _safe_custom_handler(check_no_fixed_min_height),
     "check_root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "check_no_body_background": _safe_custom_handler(check_no_body_background),
