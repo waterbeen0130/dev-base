@@ -215,6 +215,8 @@ def main() -> int:
     parser.add_argument("--img", help="Image directory for broken link check")
     parser.add_argument("--profile", default="landing")
     parser.add_argument("--emit-report", help="Write verification evidence JSON (DOD-006) to this path")
+    parser.add_argument("--section", help="Section name — when set, records the 'verify' step in the workflow ledger (AGI-004 #4)")
+    parser.add_argument("--ledger", help="Workflow ledger path override (default: <root>/.gran-maestro/workflow-ledger.json)")
     args = parser.parse_args()
 
     html_path = Path(args.html)
@@ -325,6 +327,16 @@ def main() -> int:
         }
         Path(args.emit_report).write_text(_json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"\n[evidence] 검증 증거 기록: {args.emit_report}")
+
+    # AGI-004 #4: record the verify step in the workflow ledger (opt-in via --section).
+    if args.section:
+        ledger_cmd = [sys.executable, str(TOOLS_DIR / "workflow-ledger.py")]
+        if args.ledger:
+            ledger_cmd += ["--ledger", args.ledger]
+        ledger_cmd += ["append", "--step", "verify", "--provider", "pm-verify", "--section", args.section]
+        rc_led, out_led = run(ledger_cmd)
+        tag = "ledger" if rc_led == 0 else "ledger-warn"
+        print(f"\n[{tag}] {out_led.strip()}")
 
     print("\n" + "=" * 80)
     if fail:
