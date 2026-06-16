@@ -2869,13 +2869,25 @@ def check_korean_css_comment(rule: dict, ctx: ValidationContext) -> ValidationRe
 
 
 def _stub_handler(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    # A missing/typo'd custom_handler is a system misconfiguration, not a content
+    # issue — always fail-closed at error(→CRITICAL) so it blocks loudly instead
+    # of being silently downgraded to MAJOR (which the accept gate ignores).
     handler_name = _resolve_custom_handler_name(rule) or "unknown"
     return ValidationResult(
         rule["id"],
-        "warning",
+        "error",
         False,
         skipped=False,
-        message=f"[STUB-PASS BLOCKED] handler {handler_name} not implemented — treating as MAJOR FAIL",
+        message=f"[STUB-PASS BLOCKED] handler {handler_name} not implemented — fail-closed (CRITICAL)",
+    )
+
+
+def _owned_by_figma_validate(rule: dict, _ctx: ValidationContext) -> ValidationResult:
+    # These rules are enforced in figma-validate.py (its own dispatch), not the
+    # semantic engine. Skip cleanly here instead of stub-failing.
+    return ValidationResult(
+        rule["id"], rule["severity"], True, skipped=True,
+        message="enforced in figma-validate.py (not semantic engine)",
     )
 
 
@@ -3300,6 +3312,9 @@ def check_no_redundant_white_background(rule: dict, ctx: ValidationContext) -> V
 
 
 CUSTOM_HANDLERS: Dict[str, Callable] = {
+    # figma-validate.py owns enforcement; skip cleanly in the semantic engine.
+    "validate_text_byte_exact": _safe_custom_handler(_owned_by_figma_validate),
+    "validate_asset_manifest_consistency": _safe_custom_handler(_owned_by_figma_validate),
     "check_no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
     "no_redundant_white_background": _safe_custom_handler(check_no_redundant_white_background),
     "check_no_fixed_min_height": _safe_custom_handler(check_no_fixed_min_height),
