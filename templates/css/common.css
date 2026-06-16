@@ -26,8 +26,6 @@
 .cont{max-width:1200px; margin:0 auto; padding:0 20px;}
 .page_title{margin-bottom:40px; padding-bottom:20px; border-bottom:2px solid #333;}
 .page_title h3{font-size:2rem; font-weight:700;}
-.img_area{margin:20px 0;}
-.img_area img{max-width:100%;}
 .pagination{display:flex; justify-content:center; align-items:center; gap:5px; margin-top:40px;}
 .pagination a{display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:1px solid #ddd; text-decoration:none; color:#333;}
 .pagination a.num.active{background:#333; color:#fff; border-color:#333;}
