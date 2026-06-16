@@ -513,21 +513,21 @@ def build_character_segments(node: dict) -> list[dict]:
     base_fills = node.get("fills") or []
 
     segments: list[dict] = []
-    previous_resolved = None
 
     def resolve(override_id):
-        nonlocal previous_resolved
         if override_id == 0 or override_id is None:
-            resolved = {**base_style, "fills": base_fills}
+            return {**base_style, "fills": base_fills}
+        override = table.get(str(override_id), {}) or {}
+        # Figma API: styleOverrideTable values have props at top level (fills, fontWeight, etc.)
+        override_fills = override.get("fills")
+        resolved = {**base_style}
+        for key in ("fontFamily", "fontSize", "fontWeight", "lineHeightPx", "letterSpacing", "textDecoration", "textCase"):
+            if key in override:
+                resolved[key] = override[key]
+        if override_fills is not None:
+            resolved["fills"] = override_fills
         else:
-            override = table.get(str(override_id), {}) or {}
-            override_style = override.get("style") or {}
-            override_fills = override.get("fills")
-            base_for_merge = previous_resolved if previous_resolved is not None else {**base_style, "fills": base_fills}
-            resolved = {**base_for_merge, **override_style}
-            if override_fills is not None:
-                resolved["fills"] = override_fills
-        previous_resolved = resolved
+            resolved["fills"] = base_fills
         return resolved
 
     override_ids = [overrides[i] if i < len(overrides) else 0 for i in range(len(chars))]
@@ -580,6 +580,9 @@ def normalize_text_node(node: dict) -> dict:
     text_case = normalize_enum(style.get("textCase"), {"ORIGINAL", "UPPER", "LOWER", "TITLE", "SMALL_CAPS", "SMALL_CAPS_FORCED"}, "ORIGINAL")
     text_decoration = normalize_enum(style.get("textDecoration"), {"NONE", "UNDERLINE", "STRIKETHROUGH"}, "NONE")
 
+    segments = build_character_segments(node)
+    has_mixed = _detect_mixed_styles(segments)
+
     return {
         "id": node.get("id"),
         "name": node.get("name"),
@@ -603,8 +606,23 @@ def normalize_text_node(node: dict) -> dict:
         "paragraphSpacing": normalize_numeric_default(style.get("paragraphSpacing"), default=0.0),
         "paragraphIndent": normalize_numeric_default(style.get("paragraphIndent"), default=0.0),
         "bbox": extract_bbox(node),
-        "character_segments": build_character_segments(node),
+        "has_mixed_styles": has_mixed,
+        "character_segments": segments,
     }
+
+
+def _detect_mixed_styles(segments: list[dict]) -> bool:
+    if len(segments) <= 1:
+        return False
+    first = segments[0]
+    for seg in segments[1:]:
+        if seg.get("color") != first.get("color"):
+            return True
+        if seg.get("fontWeight") != first.get("fontWeight"):
+            return True
+        if seg.get("fontSize") != first.get("fontSize"):
+            return True
+    return False
 
 
 def normalize_frame_node(node: dict, image_refs: set[str]) -> dict:
