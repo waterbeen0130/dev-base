@@ -43,11 +43,11 @@
 
 **나쁜 예**:
 ```css
-.program_list li{inline-size:340px;margin-left:30px;}  .program_list li:first-child{margin-left:0;}
+.program_list li{width:340px;margin-left:30px;}  .program_list li:first-child{margin-left:0;}
 ```
 **좋은 예**:
 ```css
-.program_list{display:flex;gap:30px;}  .program_list li{inline-size:340px;}
+.program_list{display:flex;gap:30px;}  .program_list li{width:340px;}
 ```
 **검증 핸들러**: `check_no_margin_first_child_reset`
 
@@ -129,6 +129,7 @@ body{background:#eef4f7;}
 | `media_query_format` | `warning` | @media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다. |
 | `no_important` | `warning` | !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외). |
 | `no_korean_css_comment` | `warning` | CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출. |
+| `no_logical_box_properties` | `warning` | 논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다. |
 | `reset_property_duplicate` | `warning` | reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다. |
 | `selector_single_line` | `warning` | 각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지). 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙인다. |
 
@@ -180,6 +181,21 @@ CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내
 /* header area */
 ```
 **검증 핸들러**: `check_korean_css_comment`
+
+---
+### no_logical_box_properties (warning)
+
+논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다.
+
+**나쁜 예**:
+```css
+.box{inline-size:340px;block-size:200px;}
+```
+**좋은 예**:
+```css
+.box{width:340px;height:200px;}
+```
+**검증 핸들러**: `check_no_logical_box_properties`
 
 ---
 ### reset_property_duplicate (warning)

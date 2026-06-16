@@ -71,6 +71,33 @@ def test_line_height_not_confused(tmp_path):
     assert r["no_fixed_height"].passed is True
 
 
+# ---- no_logical_box_properties (logical → physical) ----
+
+def test_inline_size_flagged(tmp_path):
+    r = _results(tmp_path, ".box{inline-size:340px;}")
+    assert r["no_logical_box_properties"].passed is False
+
+
+def test_block_size_flagged(tmp_path):
+    r = _results(tmp_path, ".box{block-size:200px;}")
+    assert r["no_logical_box_properties"].passed is False
+
+
+def test_min_max_logical_flagged(tmp_path):
+    r = _results(tmp_path, ".box{min-inline-size:100px;max-block-size:50%;}")
+    assert r["no_logical_box_properties"].passed is False
+
+
+def test_margin_inline_flagged(tmp_path):
+    r = _results(tmp_path, ".box{margin-inline:auto;}")
+    assert r["no_logical_box_properties"].passed is False
+
+
+def test_physical_properties_not_flagged(tmp_path):
+    r = _results(tmp_path, ".box{width:340px;height:200px;margin-left:30px;}")
+    assert r["no_logical_box_properties"].passed is True
+
+
 # ---- no_margin_first_child_reset (margin spacing → gap) ----
 
 def test_first_child_margin_reset_flagged(tmp_path):
