@@ -40,6 +40,7 @@ flex-direction:column 컨테이너에서는 gap을 사용하지 않는다 (수�
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `hex_color_only` | `error` | 색상은 hex 전용 (#fff, #090944). rgb()/hsl() 금지. 투명도 필요 시만 rgba() 허용. |
+| `no_body_background` | `error` | body/html 에 page background(background-color/background-image) 를 선언하지 않는다. body 는 공통 영역이라 전 페이지가 오염된다. 페이지 배경은 섹션/페이지 래퍼에서 지정한다 (white/투명 제외). |
 | `no_hex8_literal` | `warning` | 8자리 hex 리터럴(#RRGGBBAA)은 사용하지 않는다 (주석 및 url(data:) 내부는 제외). |
 
 ### hex_color_only (error)
@@ -54,6 +55,21 @@ color: rgb(255,255,255);
 ```css
 color: #fff;
 ```
+
+---
+### no_body_background (error)
+
+body/html 에 page background(background-color/background-image) 를 선언하지 않는다. body 는 공통 영역이라 전 페이지가 오염된다. 페이지 배경은 섹션/페이지 래퍼에서 지정한다 (white/투명 제외).
+
+**나쁜 예**:
+```css
+body{background:#eef4f7;}
+```
+**좋은 예**:
+```css
+.main_visual{background:#eef4f7;}  /  .sub_wrap{background:#eef4f7;}
+```
+**검증 핸들러**: `check_no_body_background`
 
 ---
 ### no_hex8_literal (warning)
@@ -231,6 +247,7 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `common_area_child_scope` | `warning` | 공통영역 자식 클래스(.logo, .gnb, .utils, .sns, .copyright, .logo_txt 등)는 .header/.footer 부모 셀렉터와 함께 선언한다. 단독 선언(.logo{}, .gnb a{})은 header/footer 양쪽 충돌 위험으로 금지. |
+| `cont_redundant_scoping` | `warning` | .X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다. |
 | `excessive_individual_classes` | `warning` | 같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다. |
 | `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. |
 | `global_class_standalone` | `warning` | 전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용. |
@@ -251,6 +268,21 @@ vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금지.
 .header .logo{...}  /  .header .gnb a{...}
 ```
 **검증 핸들러**: `check_common_area_child_scope`
+
+---
+### cont_redundant_scoping (warning)
+
+.X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다.
+
+**나쁜 예**:
+```css
+.header .cont,.footer .cont{width:min(100%,var(--width));margin:0 auto;}
+```
+**좋은 예**:
+```css
+.cont{margin:0 auto;max-width:var(--width);padding:0 var(--padding);}  (전역 1회)  /  .header .cont{max-width:1920px;padding:0 50px;}  (값이 다른 특수)
+```
+**검증 핸들러**: `check_cont_redundant_scoping`
 
 ---
 ### excessive_individual_classes (warning)
@@ -416,6 +448,7 @@ border-radius: 2em;
 | --- | --- | --- |
 | `img_no_fixed_size` | `error` | img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다. |
 | `no_background_size` | `error` | background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다. |
+| `no_img_area_declaration` | `warning` | .img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다. |
 
 ### img_no_fixed_size (error)
 
@@ -437,6 +470,21 @@ background-size 선언을 금지한다. --download-assets가 이미지를 Figma 
 ['background-size 없이 background-image만 선언', '이미지 크기는 부모 컨테이너에서 제어']
 ```
 **검증 핸들러**: `check_no_background_size`
+
+---
+### no_img_area_declaration (warning)
+
+.img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다.
+
+**나쁜 예**:
+```css
+.img_area{display:block;overflow:hidden;}  /  .img_area img{max-width:100%;}
+```
+**좋은 예**:
+```css
+(선언 없음 — reset.css img{max-width:100%} 사용)
+```
+**검증 핸들러**: `check_no_img_area_declaration`
 
 ---
 ## HTML 구조
@@ -739,6 +787,7 @@ spec.json 텍스트의 \n 및 \u2028은 HTML에서 반드시 <br> 태그로 변�
 | --- | --- | --- |
 | `img_alt_concise` | `info` | img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지). |
 | `minimal_aria` | `info` | aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지). |
+| `no_duplicate_ir_class` | `warning` | reset.css 의 .ir 과 동일한 IR/스크린리더 숨김 패턴(left:-10000px, text-indent 음수, clip 등)을 새 클래스로 재정의하지 않는다. 기존 reset.css 의 .ir 을 사용한다. |
 
 ### img_alt_concise (info)
 
@@ -752,6 +801,21 @@ img alt 텍스트는 짧고 간결하게 (한국어 문장 전체 금지).
 aria-label은 시각적 텍스트가 없는 인터랙티브 요소에만 사용한다 (남용 금지).
 
 **검증 핸들러**: `minimal_aria`
+
+---
+### no_duplicate_ir_class (warning)
+
+reset.css 의 .ir 과 동일한 IR/스크린리더 숨김 패턴(left:-10000px, text-indent 음수, clip 등)을 새 클래스로 재정의하지 않는다. 기존 reset.css 의 .ir 을 사용한다.
+
+**나쁜 예**:
+```css
+.text_bank{position:absolute;left:-10000px;inline-size:1px;block-size:1px;overflow:hidden;}
+```
+**좋은 예**:
+```css
+(reset.css 의 .ir 사용)
+```
+**검증 핸들러**: `check_no_duplicate_ir_class`
 
 ---
 ## Figma 매핑

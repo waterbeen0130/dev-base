@@ -167,6 +167,62 @@ rules:
       bad: "body .header{...}  /  html .cont{...}"
       good: ".header{...}  /  .cont{...}  /  .main_intro .cont{...}"
 
+  - id: no_body_background
+    description: "body/html 에 page background(background-color/background-image) 를 선언하지 않는다. body 는 공통 영역이라 전 페이지가 오염된다. 페이지 배경은 섹션/페이지 래퍼에서 지정한다 (white/투명 제외)."
+    severity: error
+    priority: 250
+    applies_to: [common, basic, landing]
+    category: css.color
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_body_background
+    examples:
+      bad: "body{background:#eef4f7;}"
+      good: ".main_visual{background:#eef4f7;}  /  .sub_wrap{background:#eef4f7;}"
+
+  - id: no_img_area_declaration
+    description: ".img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다."
+    severity: warning
+    priority: 200
+    applies_to: [common, basic, landing]
+    category: css.image
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_img_area_declaration
+    examples:
+      bad: ".img_area{display:block;overflow:hidden;}  /  .img_area img{max-width:100%;}"
+      good: "(선언 없음 — reset.css img{max-width:100%} 사용)"
+
+  - id: cont_redundant_scoping
+    description: ".X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다."
+    severity: warning
+    priority: 180
+    applies_to: [common, basic, landing]
+    category: css.selector
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_cont_redundant_scoping
+    examples:
+      bad: ".header .cont,.footer .cont{width:min(100%,var(--width));margin:0 auto;}"
+      good: ".cont{margin:0 auto;max-width:var(--width);padding:0 var(--padding);}  (전역 1회)  /  .header .cont{max-width:1920px;padding:0 50px;}  (값이 다른 특수)"
+
+  - id: no_duplicate_ir_class
+    description: "reset.css 의 .ir 과 동일한 IR/스크린리더 숨김 패턴(left:-10000px, text-indent 음수, clip 등)을 새 클래스로 재정의하지 않는다. 기존 reset.css 의 .ir 을 사용한다."
+    severity: warning
+    priority: 150
+    applies_to: [common, basic, landing]
+    category: accessibility
+    validation:
+      type: custom
+      target: css
+      custom_handler: check_no_duplicate_ir_class
+    examples:
+      bad: ".text_bank{position:absolute;left:-10000px;inline-size:1px;block-size:1px;overflow:hidden;}"
+      good: "(reset.css 의 .ir 사용)"
+
   - id: no_korean_css_comment
     description: "CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출."
     severity: warning

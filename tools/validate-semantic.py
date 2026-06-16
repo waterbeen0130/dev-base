@@ -3106,7 +3106,115 @@ def check_reset_property_duplicate(rule: dict, ctx: ValidationContext) -> Valida
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+# ===== Feedback (제천한방힐링아카데미 landing review) handlers =====
+# body bg pollution / .img_area redeclare / redundant .cont scoping / reset .ir dup
+
+_NEUTRAL_BG = {"transparent", "none", "inherit", "initial", "unset", "currentcolor",
+               "#fff", "#ffffff", "white"}
+
+
+def _iter_css_rules(css: str):
+    """Yield (selector, body) for flat CSS rule blocks (one-line rules + @media inner)."""
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        yield m.group(1).strip(), m.group(2).strip()
+
+
+def check_no_body_background(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """body/html 에 page background(색/이미지) 선언 금지 — 공통 영역이라 전 페이지 오염."""
+    violations = []
+    for selector, body in _iter_css_rules(ctx.css_text):
+        tokens = {t.strip().lower() for t in selector.split(",")}
+        if not ({"body", "html"} & tokens):
+            continue
+        m = re.search(r"\bbackground(?:-color|-image)?\s*:\s*([^;]+)", body)
+        if not m:
+            continue
+        value = m.group(1).strip().lower()
+        first = value.split()[0] if value.split() else value
+        if first in _NEUTRAL_BG:
+            continue
+        violations.append(f"{selector}{{background:{value[:40]}}} — body/html 배경 금지(페이지/섹션에서 지정)")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+def check_no_img_area_declaration(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """.img_area 단독 선언 금지 — reset.css 의 img{max-width:100%} 사용, 기본 CSS 두지 않음."""
+    violations = []
+    for selector, body in _iter_css_rules(ctx.css_text):
+        for tok in selector.split(","):
+            if tok.strip() == ".img_area" and body.strip():
+                violations.append(f".img_area{{{body[:50]}}} — 기본 CSS 금지(reset img{{max-width}} 사용)")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+_REDUNDANT_CONT_DECL = re.compile(
+    r"^(?:"
+    r"margin\s*:\s*0 auto|margin\s*:\s*auto|"
+    r"max-width\s*:\s*var\(--width\)|"
+    r"width\s*:\s*min\(\s*100%\s*,\s*var\(--width\)\s*\)|"
+    r"width\s*:\s*var\(--width\)"
+    r")$"
+)
+
+
+def check_cont_redundant_scoping(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """.X .cont 가 전역 .cont 기본값(max-width:var(--width)/margin:0 auto 등)만 재선언하면 중복."""
+    violations = []
+    for selector, body in _iter_css_rules(ctx.css_text):
+        scoped = [t.strip() for t in selector.split(",") if re.search(r"\S\s+\.cont$", t.strip())]
+        if not scoped:
+            continue
+        decls = [re.sub(r"\s+", " ", d.strip()) for d in body.split(";") if d.strip()]
+        if not decls:
+            continue
+        if all(_REDUNDANT_CONT_DECL.match(d) for d in decls):
+            violations.append(f"{selector}{{{body[:50]}}} — 전역 .cont 기본값 중복(특수 override만 허용)")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
+_IR_CLASS_NAMES = {"ir", "blind", "skip", "hidden", "sr_only", "sr-only", "screen_reader",
+                   "screen-reader", "visually_hidden", "visually-hidden", "a11y_hidden",
+                   "text_blind", "readable"}
+_IR_SIGNATURE = re.compile(
+    r"left\s*:\s*-\d{4,}px|text-indent\s*:\s*-\d{4,}|clip\s*:\s*rect|clip-path\s*:\s*inset\(\s*50%"
+)
+
+
+def check_no_duplicate_ir_class(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """reset.css .ir 와 동일한 IR/스크린리더 숨김 패턴을 새 클래스로 재정의 금지."""
+    violations = []
+    for selector, body in _iter_css_rules(ctx.css_text):
+        m = re.fullmatch(r"\.([a-z][\w-]*)", selector.strip())
+        if not m:
+            continue
+        if m.group(1).lower() in _IR_CLASS_NAMES:
+            continue
+        if _IR_SIGNATURE.search(body):
+            violations.append(f".{m.group(1)} — IR 숨김 패턴 중복(기존 reset.css .ir 사용)")
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:5]), location=ctx.css_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 CUSTOM_HANDLERS: Dict[str, Callable] = {
+    "check_no_body_background": _safe_custom_handler(check_no_body_background),
+    "no_body_background": _safe_custom_handler(check_no_body_background),
+    "check_no_img_area_declaration": _safe_custom_handler(check_no_img_area_declaration),
+    "no_img_area_declaration": _safe_custom_handler(check_no_img_area_declaration),
+    "check_cont_redundant_scoping": _safe_custom_handler(check_cont_redundant_scoping),
+    "cont_redundant_scoping": _safe_custom_handler(check_cont_redundant_scoping),
+    "check_no_duplicate_ir_class": _safe_custom_handler(check_no_duplicate_ir_class),
+    "no_duplicate_ir_class": _safe_custom_handler(check_no_duplicate_ir_class),
     "check_no_column_gap": _safe_custom_handler(check_no_column_gap),
     "no_column_flex_gap": _safe_custom_handler(check_no_column_gap),
     "check_common_area_child_scope": _safe_custom_handler(check_common_area_child_scope),
