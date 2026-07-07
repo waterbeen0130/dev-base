@@ -54,16 +54,30 @@ def test_body_white_or_transparent_not_flagged(tmp_path):
     assert r["no_body_background"].passed is True
 
 
-# ---- no_img_area_declaration ----
+# ---- span_not_block_container (HTML target) ----
 
-def test_img_area_standalone_declaration_is_flagged(tmp_path):
-    r = _results(tmp_path, ".img_area{display:block;overflow:hidden;}")
-    assert r["no_img_area_declaration"].passed is False
+def _html_results(tmp_path: Path, html_text: str, profile: str = "landing") -> dict:
+    html_path = tmp_path / "index.html"
+    css_path = tmp_path / "common.css"
+    html_path.write_text(html_text + "\n", encoding="utf-8")
+    css_path.write_text(".cont{margin:0 auto;}\n", encoding="utf-8")
+    results = validate_semantic.run_validation(
+        rules_path=str(RULES_PATH),
+        html_path=str(html_path),
+        css_path=str(css_path),
+        profile=profile,
+    )
+    return {r.rule_id: r for r in results}
 
 
-def test_no_img_area_declaration_clean(tmp_path):
-    r = _results(tmp_path, ".cont{margin:0 auto;max-width:var(--width);}")
-    assert r["no_img_area_declaration"].passed is True
+def test_span_wrapping_block_is_flagged(tmp_path):
+    r = _html_results(tmp_path, '<span class="main_intro"><div class="card">x</div></span>')
+    assert r["span_not_block_container"].passed is False
+
+
+def test_span_inline_label_is_clean(tmp_path):
+    r = _html_results(tmp_path, '<div class="main_intro"><span class="title">label</span></div>')
+    assert r["span_not_block_container"].passed is True
 
 
 # ---- cont_redundant_scoping ----

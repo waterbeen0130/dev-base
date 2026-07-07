@@ -20,4 +20,4 @@ def test_figma_validate_version_info_preserves_category_counts() -> None:
 
     combined = "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
     assert result.returncode == 0, combined
-    assert "category counts: v1=11, v2=14, total=25" in combined
+    assert "category counts: v1=12, v2=14, total=26" in combined

@@ -47,8 +47,22 @@ TRUSTED_FIGMA_CATEGORIES = {
     "폰트 5필드 완결성",
     "lineHeight 비율 일치",
     "fills color hex 일치",
+    "text-align 일치",
     "interaction URL 일치",
     "텍스트 위변조",
+    # Promoted from noise after measuring zero false-positives on correctly-paired
+    # schema_v2 output (true-positive on real mismatch, clean pass when correct).
+    # Frame-matched only — unmatched ("미매칭") lines are demoted in parse_figma_validate.
+    "v2.cornerRadii.match",
+    "v2.fills.solid.match",
+}
+
+# Categories gated only when the frame/text node was actually matched to a CSS
+# rule. The frame→selector matcher is heuristic, so verdicts on unmatched
+# ("미매칭") frames are unreliable and demoted to noise.
+MATCHED_ONLY_FIGMA_CATEGORIES = {
+    "v2.cornerRadii.match",
+    "v2.fills.solid.match",
 }
 
 NOISY_FIGMA_CATEGORIES = {
@@ -59,9 +73,7 @@ NOISY_FIGMA_CATEGORIES = {
     "asset_manifest 일치",
     "v2.layoutSizing.match",
     "v2.opacity.match",
-    "v2.cornerRadii.match",
     "v2.strokes.match",
-    "v2.fills.solid.match",
     "v2.effects.match",
     "v2.textCase.match",
 }
@@ -166,6 +178,12 @@ def parse_figma_validate(output: str, html_text: str = "") -> tuple[list[str], l
             # validator can't resolve CSS inherit — demote to noisy
             if category == "fills color hex 일치" and "> span" in line:
                 noisy.append(f"[span-inherit] {line.strip()}")
+                continue
+
+            # frame-matched-only categories: the heuristic matcher couldn't locate
+            # a CSS rule for this frame ("미매칭") — can't trust the verdict, demote.
+            if category in MATCHED_ONLY_FIGMA_CATEGORIES and "미매칭" in line:
+                noisy.append(f"[unmatched-frame] {line.strip()}")
                 continue
 
             trusted.append(line.strip())

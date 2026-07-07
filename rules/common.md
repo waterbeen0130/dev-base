@@ -12,7 +12,7 @@
 | Rule ID | Severity | Description |
 | --- | --- | --- |
 | `flexbox_layout` | `error` | 레이아웃은 flexbox만 사용한다 (Grid/float 금지). |
-| `no_fixed_height` | `warning` | 고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img/.img_area 는 img_no_fixed_size 가 담당) |
+| `no_fixed_height` | `error` | 고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img 는 img_no_fixed_size 가 담당) |
 | `no_margin_first_child_reset` | `warning` | :first-child/:last-child 에서 margin 을 0 으로 리셋하지 않는다. `.list li{margin-left:30px} .list li:first-child{margin-left:0}` 식 형제 간격 처리는 flex gap 으로 대체한다 — gap 을 쓰면 first/last-child 리셋 자체가 불필요하다. |
 | `no_min_width_wrapper` | `warning` | 페이지 래퍼 또는 body에 min-width를 선언하지 않는다. 반응형 레이아웃에서 min-width는 모바일 대응을 방해한다. |
 
@@ -22,9 +22,9 @@
 
 
 ---
-### no_fixed_height (warning)
+### no_fixed_height (error)
 
-고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img/.img_area 는 img_no_fixed_size 가 담당)
+고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img 는 img_no_fixed_size 가 담당)
 
 **나쁜 예**:
 ```css
@@ -129,7 +129,7 @@ body{background:#eef4f7;}
 | `media_query_format` | `warning` | @media 내부 규칙은 줄바꿈 분리하되 들여쓰기 없이 작성한다. 한 줄에 모든 규칙을 이어붙이지 않는다. |
 | `no_important` | `warning` | !important는 사용하지 않는다 (mb_/mt_/txt_c 등 유틸리티 클래스만 예외). |
 | `no_korean_css_comment` | `warning` | CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내 한글을 검출. |
-| `no_logical_box_properties` | `warning` | 논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다. |
+| `no_logical_box_properties` | `error` | 논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다 (accept 게이트 차단 대상). |
 | `reset_property_duplicate` | `warning` | reset.css에 이미 선언된 속성(a{color:inherit}, img{max-width}, font-family, font-size 등)을 common.css에서 중복 선언하지 않는다. |
 | `selector_single_line` | `warning` | 각 CSS 셀렉터 규칙은 한 줄로 작성한다 (여러 줄 펼침 금지). 콤마 셀렉터 3개 이상이면 셀렉터만 줄바꿈, 속성은 마지막 셀렉터 뒤에 한 줄로 붙인다. |
 
@@ -183,9 +183,9 @@ CSS 주석은 영어만 사용한다 (한국어 주석 금지). /* */ 블록 내
 **검증 핸들러**: `check_korean_css_comment`
 
 ---
-### no_logical_box_properties (warning)
+### no_logical_box_properties (error)
 
-논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다.
+논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다 (accept 게이트 차단 대상).
 
 **나쁜 예**:
 ```css
@@ -289,8 +289,8 @@ calc()와 vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금�
 | `common_area_child_scope` | `warning` | 공통영역 자식 클래스(.logo, .gnb, .utils, .sns, .copyright, .logo_txt 등)는 .header/.footer 부모 셀렉터와 함께 선언한다. 단독 선언(.logo{}, .gnb a{})은 header/footer 양쪽 충돌 위험으로 금지. |
 | `cont_redundant_scoping` | `warning` | .X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다. |
 | `excessive_individual_classes` | `warning` | 같은 접두사 클래스가 5개 이상이면 부모 스코핑(.parent .child) + 태그 셀렉터로 축소해야 한다. 자식에 부모 prefix를 중첩하지 않는다. |
-| `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont/.img_area)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다. |
-| `global_class_standalone` | `warning` | 전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용. |
+| `generic_class_parent_scope` | `warning` | 페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다. |
+| `global_class_standalone` | `warning` | 전역 클래스(.header, .footer, .cont)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용. |
 | `no_duplicate_selector` | `warning` | 같은 셀렉터를 미디어쿼리 밖에서 중복 선언하지 않는다 (한 번만 선언). |
 | `no_utility_classes` | `warning` | .font_serif, .weight_bold 같은 유틸리티 클래스를 사용하지 않는다 — 부모 셀렉터에서 직접 처리. |
 | `selector_scoped` | `warning` | 셀렉터는 페이지/섹션 스코프 안에 작성한다 (전역 단일 클래스 셀렉터 지양). |
@@ -334,14 +334,14 @@ calc()와 vw 단위는 clamp() 내부에서만 사용한다. 단독 사용 금�
 ---
 ### generic_class_parent_scope (warning)
 
-페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont/.img_area)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다.
+페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다.
 
 **근거**: 섹션 내부 클래스가 부모 스코핑 없이 단독 선언되면 다른 페이지/섹션과 충돌 가능
 
 ---
 ### global_class_standalone (warning)
 
-전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용.
+전역 클래스(.header, .footer, .cont)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용.
 
 **나쁜 예**:
 ```css
@@ -486,13 +486,12 @@ border-radius: 2em;
 
 | Rule ID | Severity | Description |
 | --- | --- | --- |
-| `img_no_fixed_size` | `error` | img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다. |
+| `img_no_fixed_size` | `error` | img에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다. |
 | `no_background_size` | `error` | background-size 선언을 금지한다. --download-assets가 이미지를 Figma 디자인 1:1 크기로 추출하므로 background-size가 불필요하다. spec.json의 scaleMode/scalingFactor/imageTransform은 Figma 내부 렌더링 파라미터이며 CSS로 변환하면 안 된다. |
-| `no_img_area_declaration` | `warning` | .img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다. |
 
 ### img_no_fixed_size (error)
 
-img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
+img에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
 
 **검증 핸들러**: `check_img_no_fixed_size`
 
@@ -512,21 +511,6 @@ background-size 선언을 금지한다. --download-assets가 이미지를 Figma 
 **검증 핸들러**: `check_no_background_size`
 
 ---
-### no_img_area_declaration (warning)
-
-.img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다.
-
-**나쁜 예**:
-```css
-.img_area{display:block;overflow:hidden;}  /  .img_area img{max-width:100%;}
-```
-**좋은 예**:
-```css
-(선언 없음 — reset.css img{max-width:100%} 사용)
-```
-**검증 핸들러**: `check_no_img_area_declaration`
-
----
 ## HTML 구조
 
 | Rule ID | Severity | Description |
@@ -543,7 +527,7 @@ HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. �
 **나쁜 예**:
 ```html
 <ul><li>A</li><li>B</li><li>C</li></ul>
-<div class="card"><span class="img_area"><img src="img/photo.jpg" alt=""></span><span class="title">Title</span></div>
+<div class="card"><img src="img/photo.jpg" alt=""><span class="title">Title</span></div>
 ```
 **좋은 예**:
 ```html
@@ -553,7 +537,7 @@ HTML 태그는 적절히 줄바꿈하고 4-space 들여쓰기를 적용한다. �
     <li>C</li>
 </ul>
 <div class="card">
-    <span class="img_area"><img src="img/photo.jpg" alt=""></span>
+    <img src="img/photo.jpg" alt="">
     <span class="title">Title</span>
 </div>
 ```
@@ -598,6 +582,7 @@ DOM 최대 깊이는 5단계를 초과하지 않는다.
 | `no_decorative_empty_tag` | `warning` | 장식 목적의 빈 span/div/i 태그 사용을 금지한다. CSS ::before/::after 가상 선택자로 대체한다. 예외: 아이콘 폰트 <i>, 빈 셀 <td>, JavaScript 동적 조작 요소. |
 | `no_empty_div` | `warning` | 빈 div(<div></div>) 사용 금지. |
 | `no_inline_style` | `error` | 인라인 style 속성을 사용하지 않는다. |
+| `span_not_block_container` | `error` | <span>은 인라인 요소다. 블록 컨테이너(섹션/카드/래퍼)로 사용 금지 — 블록 레벨 자식(div/section/ul/ol/nav/header/footer/aside/p/h1~h6/table/form/li)을 직접 감싸면 안 된다. 컨테이너는 <div>, 인라인 텍스트/짧은 라벨만 <span>. 추출 에이전트가 모든 요소를 span으로 감싸는 잘못된 마크업을 차단한다. |
 
 ### forbidden_tag (error)
 
@@ -636,6 +621,21 @@ DOM 최대 깊이는 5단계를 초과하지 않는다.
 
 인라인 style 속성을 사용하지 않는다.
 
+
+---
+### span_not_block_container (error)
+
+<span>은 인라인 요소다. 블록 컨테이너(섹션/카드/래퍼)로 사용 금지 — 블록 레벨 자식(div/section/ul/ol/nav/header/footer/aside/p/h1~h6/table/form/li)을 직접 감싸면 안 된다. 컨테이너는 <div>, 인라인 텍스트/짧은 라벨만 <span>. 추출 에이전트가 모든 요소를 span으로 감싸는 잘못된 마크업을 차단한다.
+
+**나쁜 예**:
+```html
+<span class="main_intro"><div class="card">...</div></span>
+```
+**좋은 예**:
+```html
+<div class="main_intro"><div class="card">...</div></div>  /  <span class="title">라벨</span>
+```
+**검증 핸들러**: `check_span_not_block_container`
 
 ---
 ## HTML 네이밍
@@ -706,7 +706,7 @@ Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_
 ```
 **좋은 예**:
 ```html
-<div class="main_intro"><span class="main_visual">
+<div class="main_intro"><div class="main_visual">
 ```
 
 ---
@@ -734,7 +734,7 @@ site_, g_, common_ 같은 추측성 prefix 클래스를 금지한다. 공통영�
 ```
 **좋은 예**:
 ```html
-<div class="header"><span class="main_intro">
+<div class="header"><div class="main_intro">
 ```
 
 ---
@@ -770,19 +770,6 @@ CSS 클래스 프리픽스는 HTML 파일명과 일치해야 한다 (greeting.ht
 
 HTML 클래스명은 snake_case 만 사용한다 (kebab-case, camelCase 금지).
 
-
----
-## HTML 이미지
-
-| Rule ID | Severity | Description |
-| --- | --- | --- |
-| `img_wrapped` | `warning` | 모든 <img> 태그는 .img_area 래퍼 안에 배치한다 (CSS 배경 이미지만 제외). 로고, 아이콘, 파트너 로고 등 예외 없음. |
-
-### img_wrapped (warning)
-
-모든 <img> 태그는 .img_area 래퍼 안에 배치한다 (CSS 배경 이미지만 제외). 로고, 아이콘, 파트너 로고 등 예외 없음.
-
-**검증 핸들러**: `check_img_wrapper`
 
 ---
 ## HTML 텍스트

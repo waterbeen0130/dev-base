@@ -29,7 +29,7 @@ Gemini CLI 기반 AI 전용 규칙입니다. Gran Maestro 워크플로우에서 
   - `itemSpacing` → 간격 동일하면 gap, 다르면 개별 margin
   - `padding*` → `padding` (shorthand)
   - `fills` → `background`/`color` (hex 변환, 투명도 시만 rgba)
-  - `fills` type이 `IMAGE`인 프레임 → `<div class="img_area"><img>` 구조. **프레임 bbox.w/bbox.h는 img/img_area가 아닌 부모 컨테이너에 적용** (예: `.main_card{width:300px;}`) — img/img_area에 width/height 직접 선언 금지
+  - `fills` type이 `IMAGE`인 프레임 → `<img>` (래퍼 없음). **프레임 bbox.w/bbox.h는 img가 아닌 부모 컨테이너에 적용** (예: `.main_card{width:300px;}`) — img에 width/height 직접 선언 금지
   - `lineHeightPx` → `line-height` (무단위 비율로 변환)
   - `letterSpacing` → `letter-spacing` (em 단위로 변환)
   - `cornerRadius` → `border-radius`
@@ -46,9 +46,9 @@ Gemini CLI 기반 AI 전용 규칙입니다. Gran Maestro 워크플로우에서 
 
 - `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역이므로 페이지별 class 사용하지 않음
 - `<div>` + 클래스 기반 구조 우선. `<section>`은 주요 콘텐츠 섹션에만 사용
-- `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div class="img_area">` + `<span>` 사용
+- `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div>` + `<span>` 사용
 - 모든 이미지에 `alt` 속성 필수 — **짧고 간결하게** (예: `alt="로고"`, 긴 한국어 문장 금지)
-- 이미지는 래퍼 div 안에 배치 (`.img_area` 등). **img 및 .img_area에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img_area의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
+- 이미지는 래퍼 없이 `<img>` 그대로 배치 (`.img_area` 등 래퍼 금지). **img 에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - `aria-label`은 **텍스트가 없는 인터랙티브 요소에만** 사용
 - 줄바꿈: `<br>` 태그 사용, 반응형은 `<br class="mb_only">` / `<br class="pc_only">`
 - 빈 `<div>` 금지

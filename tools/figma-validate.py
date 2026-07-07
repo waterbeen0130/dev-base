@@ -54,7 +54,10 @@ VOID_TAGS = {
 
 BOX_SIDES = ("top", "right", "bottom", "left")
 FONT_FIELDS = ("font-family", "font-size", "font-weight", "line-height", "color")
-INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing"}
+# LEFT is intentionally excluded — it is the CSS default and usually omitted, so
+# verifying it would false-positive. Only non-default alignments are checked.
+TEXT_ALIGN_MAP = {"CENTER": "center", "RIGHT": "right", "JUSTIFIED": "justify"}
+INHERITED_PROPERTIES = {"font-family", "font-size", "font-weight", "line-height", "color", "letter-spacing", "text-align"}
 SCHEMA_V1_PATTERN = re.compile(r"^1(?:\.\d+\.\d+)?$")
 SCHEMA_V2_PATTERN = re.compile(r"^2(?:\.\d+\.\d+)?$")
 POLICY_1_CATEGORY = "[POLICY-1] VERTICAL frame itemSpacing must map to margin-bottom"
@@ -65,6 +68,7 @@ V1_CATEGORIES = (
     "폰트 5필드 완결성",
     "lineHeight 비율 일치",
     "fills color hex 일치",
+    "text-align 일치",
     "frame padding/gap 반영",
     "clamp 적용",
     "column flex gap 금지",
@@ -111,6 +115,7 @@ MAJOR_CATEGORIES = {
     "clamp 적용",
     "lineHeight 비율 일치",
     "column flex gap 금지",
+    "text-align 일치",
 }
 
 
@@ -2316,6 +2321,21 @@ def validate_text_nodes(
                 node,
                 expected_color,
                     f"{render_value(actual_color)} @ {match.element.short_selector()}",
+                )
+
+        # text-align: only flag non-default alignment (LEFT is the CSS default and
+        # commonly omitted — checking it would false-positive). properties is
+        # inheritance-aware, so a parent's text-align counts (text-align inherits).
+        expected_align = TEXT_ALIGN_MAP.get(str(node.get("textAlignHorizontal") or "").upper())
+        if expected_align:
+            actual_align = properties.get("text-align").value.strip().lower() if properties.get("text-align") else None
+            if actual_align != expected_align:
+                add_violation(
+                    violations,
+                    "text-align 일치",
+                    node,
+                    expected_align,
+                    f"{render_value(actual_align)} @ {match.element.short_selector()}",
                 )
 
         if schema_branch == "v2":

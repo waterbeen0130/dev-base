@@ -55,13 +55,32 @@
 | frame padding/gap 반영, clamp 적용, column flex gap 금지 | 정당 | 레이아웃 휴리스틱, FP 다수 |
 | [POLICY-1] vertical margin-bottom | 정당 | 모던 CSS gap과 충돌(의도적 비활성) |
 | asset_manifest 일치 | 정당(위험 커버됨) | 실제 위험(이미지 누락/오연결)은 **pm-verify [3] broken-link 검사(비억제)** 가 직접 검출 |
-| v2.layoutSizing/opacity/cornerRadii/strokes/fills.solid/effects/textCase | 정당 | Figma 충실도 미세검사, CSS 1:1 해석 불가로 FP 다수 |
+| v2.layoutSizing/opacity/strokes/effects/textCase | 정당 | Figma 충실도 미세검사, CSS 1:1 해석 불가로 FP 다수 |
+| v2.cornerRadii.match / v2.fills.solid.match | **복귀(promoted)** | 2026-06-17 재판정 — 아래 §재판정 보강 참조 |
 | vertical_frame_margin_bottom | 정당 | POLICY-1 중복 + gap 충돌 |
 | inner_wrapper_limit | 정당(위험 커버됨) | 정당한 다중 래퍼(hero bg+content) 차단 FP. 과도 중첩의 실제 위험은 **max_dom_depth(MAJOR, 비억제)** 가 커버 |
 | line_height_tidy_ratio | 정당 | Figma 정확비율(1.0/1.5)을 "너무 깔끔"으로 오탐 |
 | reset_duplicate | 정당 | body{word-break} 재선언 FP 사례 |
 
 **복귀 항목: 없음.** 두 개의 실제 위험(broken image, 과도 중첩)은 각각 broken-link 검사·max_dom_depth가 비억제로 잡으므로, 억제를 풀면 순수 FP만 늘어난다(R1). 이 결정은 `tests/unit/test_noise_reclassification.py` 가 잠가, 향후 억제 집합이 말없이 바뀌면 테스트가 실패해 재판정·문서 갱신을 강제한다.
+
+## 재판정 보강 (2026-06-17 — text-align/border-radius/color 검증 구멍)
+
+사용자 지적: "Figma 값 중 text 정렬·border-radius·color가 철저히 추출/검증 안 되는 것 같다." 조사 결과 **추출(figma-section-spec.py)은 세 값 모두 정상**이나 검증 게이트에 구멍이 있었다.
+
+| 값 | 문제 | 조치 |
+|----|------|------|
+| text-align | figma-validate.py에 **검사 자체가 없었음** | `text-align 일치` 신규 검사 추가(V1_CATEGORIES, MAJOR). 텍스트노드 기준 + `text-align`을 `INHERITED_PROPERTIES`에 추가해 부모 선언까지 상속 해석. LEFT(기본값)는 의도적으로 미검사(FP 방지) |
+| border-radius | `v2.cornerRadii.match` 검사는 있으나 NOISY로 억제 | **복귀(게이트화)** |
+| color | `fills color hex 일치`(레거시)는 게이트 중. `v2.fills.solid.match`는 억제 | `v2.fills.solid.match` **복귀(게이트화)** |
+
+**복귀 근거(실측)**: 올바르게 짝지은 schema_v2 미니 픽스처로 측정.
+- 정확한 산출물(border-radius:24px / fill #f5f5f5): v2.cornerRadii·v2.fills.solid 위반 **0건(FP 없음)**.
+- 틀린 산출물(8px / #ffffff): 두 카테고리 모두 정확히 발화(TP), `.box`에 깨끗이 매칭.
+
+**조건**: frame→selector 매처는 휴리스틱이라 stale/오매칭 시 FP 위험이 있다. 따라서 두 카테고리는 **매칭 성공(frame-matched-only)일 때만 게이트**하고, `미매칭` 라인은 `parse_figma_validate`에서 `[unmatched-frame]` 노이즈로 강등한다(`MATCHED_ONLY_FIGMA_CATEGORIES`).
+
+**회귀 테스트**: `tests/regression/test_text_align_and_v2_promotion.py`(text-align TP/FP/LEFT-skip/inherit, cornerRadii TP/FP, pm-verify promote/미매칭 강등). 카테고리 카운트 동기화: `tests/regression/test_figma_validate_categories.py`(v1=12,total=26).
 
 ## Q&A 보강 사항
 

@@ -15,9 +15,9 @@ GitHub Copilot, Cursor 등 Codex 기반 AI 전용 규칙입니다.
 ### HTML
 - `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역이므로 페이지별 class 사용하지 않음
 - `<div>` + 클래스 기반 구조 우선. `<section>`은 주요 콘텐츠 섹션에만 사용
-- `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div class="img_area">` + `<p>` 또는 `<span>` 사용
+- `<main>`, `<article>`, `<figure>`, `<figcaption>` **사용 금지** — `<div>` + `<p>` 또는 `<span>` 사용
 - 모든 이미지에 `alt` 속성 필수 — **짧고 간결하게** (예: `alt="로고"`, `alt="제품 이미지"`, 긴 한국어 문장 금지)
-- 이미지는 래퍼 div 안에 배치 (`.img_area` 등). **img 및 .img_area에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img_area의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
+- 이미지는 래퍼 없이 `<img>` 그대로 배치 (`.img_area` 등 래퍼 금지). **img 에 고정 width/height 금지** — Figma bbox 크기가 필요하면 img의 **부모 컨테이너**에서 제어 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - `aria-label`은 **텍스트가 없는 인터랙티브 요소에만** 사용 — 장식 래퍼, span 등에 남발 금지
 - `aria-hidden`은 최소한으로 사용
 - 줄바꿈: `<br>` 태그 사용, 반응형은 `<br class="mb_only">` / `<br class="pc_only">`
@@ -333,7 +333,7 @@ HTML <li> 수 == Step 3 결과 N 을 자동 대조 (불일치 시 CRITICAL)
 ### Figma MCP 데이터 사용 규칙 (CRITICAL)
 - Figma MCP 응답을 섹션별로 받아 직접 해석하여 CSS 값 결정
 - Figma 속성 → CSS 변환 규칙 준수 (layoutMode→flex-direction, itemSpacing→gap, fills→hex 색상 등)
-- `fills` type이 `IMAGE`인 프레임 → `<div class="img_area"><img>` 구조. **프레임 bbox.w/bbox.h는 img/img_area가 아닌 부모 컨테이너에 적용** — img/img_area에 width/height 직접 선언 금지
+- `fills` type이 `IMAGE`인 프레임 → `<img>` (래퍼 없음). **프레임 bbox.w/bbox.h는 img가 아닌 부모 컨테이너에 적용** — img에 width/height 직접 선언 금지
 - MCP 응답에 없는 속성은 추측하지 않음
 - "그럴듯한" 값, "합리적인" 기본값을 임의로 넣는 것 절대 금지
 - 완성 후 validate-semantic.py로 규칙 검증 필수

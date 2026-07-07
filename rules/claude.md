@@ -50,7 +50,6 @@
 |----------------------|--------------|
 | `.logo{...}` | `.header .logo{...}` |
 | `.logo a{...}` | `.header .logo a{...}` |
-| `.logo .img_area{...}` | `.header .logo .img_area{...}` |
 | `.logo_txt{...}` | `.header .logo_txt{...}` |
 | `.logo_txt strong{...}` | `.header .logo_txt strong{...}` |
 | `.gnb{...}` | `.header .gnb{...}` |
@@ -67,14 +66,12 @@
 | `.header` | 헤더 컨테이너 |
 | `.footer` | 푸터 컨테이너 |
 | `.cont` | 섹션 내부 너비 제한 |
-| `.img_area` | 이미지 래퍼 |
 
 | ❌ 금지 (body/html 부모 붙이기) | ✅ 올바른 사용 |
 |-------------------------------|--------------|
 | `body .cont{...}` | `.cont{...}` |
 | `body .header{...}` | `.header{...}` |
 | `body .footer{...}` | `.footer{...}` |
-| `body .img_area{...}` | `.img_area{...}` |
 
 ### 페이지 전용 영역 (페이지 prefix 강제)
 
@@ -122,7 +119,7 @@
 | `.gallery_list{...}` | `.main_gallery .gallery_list{...}` |
 | `.gallery_util{...}` | `.main_gallery .gallery_util{...}` |
 
-부모 스코핑 예외 (단독 선언 대상): 페이지 prefix가 붙은 섹션 컨테이너 자체(`.main_news`, `.main_schedule` 등)와 전역 공통 클래스(`.header`, `.footer`, `.cont`, `.img_area`)는 `body`/`html` 등 어떤 부모도 붙이지 않고 단독 선언한다.
+부모 스코핑 예외 (단독 선언 대상): 페이지 prefix가 붙은 섹션 컨테이너 자체(`.main_news`, `.main_schedule` 등)와 전역 공통 클래스(`.header`, `.footer`, `.cont`)는 `body`/`html` 등 어떤 부모도 붙이지 않고 단독 선언한다.
 
 ### 시멘틱 마크업 강제
 ```html
@@ -152,13 +149,13 @@
 
 나쁨:
 ```html
-<h1 class="logo"><a href="index.html"><span class="img_area"><img src="../img/logo.png" alt="로고"></span><span class="logo_txt"><strong>회사명</strong><em>COMPANY</em></span></a></h1>
+<h1 class="logo"><a href="index.html"><img src="../img/logo.png" alt="로고"><span class="logo_txt"><strong>회사명</strong><em>COMPANY</em></span></a></h1>
 ```
 좋음:
 ```html
 <h1 class="logo">
     <a href="index.html">
-        <span class="img_area"><img src="../img/logo.png" alt="로고"></span>
+        <img src="../img/logo.png" alt="로고">
         <span class="logo_txt">
             <strong>회사명</strong>
             <em>COMPANY</em>
@@ -215,15 +212,12 @@
 - `.index_page .cont` 같은 페이지 래퍼 스코핑 금지 — `.cont`는 어떤 섹션 안에서든 동일하게 동작
 - 페이지별 `.cont` 커스텀이 필요하면 `.main_intro .cont{max-width:1200px;}` 식으로 섹션 레벨에서 오버라이드
 
-### 이미지 래퍼 (img_area)
-모든 `<img>` 태그는 `.img_area` 래퍼 안에 배치한다.
-- 예외 없음: 로고, 파트너 로고, 아이콘, 갤러리 모두 포함
-- CSS 배경 이미지(`background-image`)만 제외
-`.img_area` 는 시맨틱 래퍼 클래스다. common.css 에 기본 CSS 는 두지 않으며, 필요한 스타일은 섹션/전역에서 직접 정의한다(선언 시 `body`/`html` 부모 없이 단독 선언 — `global_class_standalone`).
-**img 및 .img_area에 고정 width/height 금지** — 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
+### 이미지 (래퍼 금지)
+`<img>` 태그는 **래퍼 없이 그대로** 출력한다. `.img_area` 등 span/div 래퍼로 감싸지 않는다 (로고, 파트너 로고, 아이콘, 갤러리 모두 포함). 이미지 반응형은 reset.css 의 `img{max-width:100%}` 가 처리한다.
+**img 에 고정 width/height 금지** — 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다.
 **`background-size` 금지** — `--download-assets` 가 이미지를 Figma 디자인 1:1 크기로 다운로드하므로 `background-size` 가 불필요하다. spec.json 의 `scaleMode`(`FILL`/`FIT`/`CROP`), `scalingFactor`, `imageTransform` 은 Figma 내부 렌더링 파라미터이며, CSS `background-size` 로 변환하면 안 된다.
 ```html
-<span class="img_area"><img src="./img/logo.png" alt="..."></span>
+<img src="./img/logo.png" alt="...">
 ```
 
 ---

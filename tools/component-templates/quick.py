@@ -28,10 +28,6 @@ def render(node: dict, image_map: dict[str, str], css_rules: dict) -> str:
         "align-items": "center", "gap": "4px", "width": "70px",
         "text-align": "center"
     }
-    css_rules[".quick li a .img_area"] = {"width": "50px", "height": "50px"}
-    css_rules[".quick li a .img_area img"] = {
-        "width": "100%", "height": "100%", "object-fit": "contain"
-    }
     css_rules[".quick li a span"] = {
         "font-size": "0.75rem", "font-weight": "600", "color": "#424242"
     }
@@ -50,7 +46,7 @@ def render(node: dict, image_map: dict[str, str], css_rules: dict) -> str:
         lines.append('  <li>')
         lines.append('    <a href="#">')
         if img_path:
-            lines.append(f'      <div class="img_area"><img src="{img_path}" alt="{label}"></div>')
+            lines.append(f'      <img src="{img_path}" alt="{label}">')
         lines.append(f'      <span>{label}</span>')
         lines.append('    </a>')
         lines.append('  </li>')

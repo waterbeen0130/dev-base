@@ -40,7 +40,7 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
 - 입력: **PNG 스크린샷만**. spec 노드 트리는 보지 않는다.
 - 화면을 보고 **역할(role)** 로 구조를 짠다: 상단 가로줄+메뉴 → `header > nav > ul > li > a`, 반복 카드 → `ul > li`, 큰 제목 → `h2/h3`, 서술 단락 → `p`.
 - 클래스명은 아래 §2 네이밍 규칙대로. **노드명(main_f0 등) 절대 금지.**
-- 모든 `<img>` 는 `.img_area` 래퍼 안에. 골격 CSS(flexbox)로 레이아웃만 잡는다.
+- `<img>` 는 래퍼 없이 그대로 출력한다 (`.img_area` 등 래퍼 금지). 골격 CSS(flexbox)로 레이아웃만 잡는다.
 - Pass 1 완료 시 원장 기록(`{provider}` = 실제 추출 주체 omx/codex/claude/gemini):
   ```bash
   python3 D:/dev-base/tools/workflow-ledger.py append --step structure --provider {provider}
@@ -107,7 +107,7 @@ python3 D:/dev-base/tools/pm-verify.py \
 
 - **공통 영역은 prefix 없음**: `.header`, `.footer`, `.logo`, `.gnb`, `.utils`, `.sns`, `.copyright`, `.container`. 어떤 페이지에 있어도 prefix 금지(`.index_header` ✗ → `.header`).
 - **공통 영역 자식은 부모 스코핑**: `.logo{}` ✗ → `.header .logo{}` / `.footer .copyright{}`. (`common_area_child_scope`)
-- **전역 클래스는 단독 선언**: `.header`/`.footer`/`.cont`/`.img_area` 에 `body`/`html` 부모 금지. 섹션 오버라이드(`.main_intro .cont`)만 허용. (`global_class_standalone`)
+- **전역 클래스는 단독 선언**: `.header`/`.footer`/`.cont` 에 `body`/`html` 부모 금지. 섹션 오버라이드(`.main_intro .cont`)만 허용. (`global_class_standalone`)
 - **페이지 콘텐츠는 페이지 prefix**: `index.html`→`main_`, `greeting.html`→`greeting_`. prefix 는 섹션 컨테이너에만, 자식은 짧은 역할명 + 부모 스코핑(`.main_intro .card`).
 - **Figma 노드명/추측 prefix 금지**: `main_f0`/`main_v53`/`header_b`/`sec_1`/`site_`/`g_` ✗. (`no_figma_nodeid_class`, `no_forbidden_class`)
 - `<body>` 에 class 금지. 장식용 빈 태그 금지(`::before`/`::after`). 반복 요소는 `ul>li`.

@@ -63,11 +63,11 @@
 ### HTML 핵심 규칙
 
 - `<body>` 태그에 class 속성 추가 금지 — body는 공통 영역, 페이지별 class 사용하지 않음
-- `<figure>`, `<figcaption>`, `<main>`, `<article>` 태그 **사용 금지** — `<div class="img_area">` + `<span>` 사용
+- `<figure>`, `<figcaption>`, `<main>`, `<article>` 태그 **사용 금지** — `<div>` + `<span>` 사용
 - 인라인 `style` 속성 금지
 - 빈 `<div>` 금지, 내부 wrapper div는 최대 1개 (DOM 최대 깊이 5단계)
 - 모든 이미지에 짧은 `alt` 필수 (한국어 문장 전체 금지)
-- **img 및 .img_area에 고정 width/height CSS 금지** — spec.json의 이미지 프레임 `bbox.w`/`bbox.h` 값은 img/img_area가 아닌 **부모 컨테이너**에 적용한다. 예: `.main_card{width:300px;}` (O) / `.main_card img{width:300px;height:200px;}` (X) / `.main_card .img_area{width:300px;}` (X)
+- 이미지는 래퍼 없이 `<img>` 그대로 (`.img_area` 등 래퍼 금지). **img 에 고정 width/height CSS 금지** — spec.json의 이미지 프레임 `bbox.w`/`bbox.h` 값은 img가 아닌 **부모 컨테이너**에 적용한다. 예: `.main_card{width:300px;}` (O) / `.main_card img{width:300px;height:200px;}` (X)
 - `<nav>` 안에는 `ul>li>a` 구조 강제 (직접 `<a>` 나열 금지)
 - `<p>` 태그는 다음 중 하나 충족 시에만 사용: `\n` 포함 / 95자 초과 / 종결어 반복 — 짧은 라벨은 `<span>`
 - 모든 요소에 개별 클래스 부여 금지 — 부모+태그 선택자(`.parent h2`, `.parent li a`) 우선

@@ -115,13 +115,14 @@
   },
 
   "image": {
-    "wrapper_required": true,
-    "wrapper_class": "img_area",
+    "wrapper_required": false,
+    "wrapper_note": "no wrapper — output bare <img>. .img_area/span/div wrappers are forbidden. reset.css img{max-width:100%} handles responsiveness",
     "bg_section": {
       "applies_to": "landing",
-      "height_from_original_px": true,
+      "height_from_original_px": false,
+      "aspect_ratio_from_original": true,
       "object_fit": "cover",
-      "note": "image-based sections: set height equal to original image pixel height and apply object-fit:cover"
+      "note": "image-based sections: derive responsive height via aspect-ratio (original width/height), NOT a fixed px height. fixed px height/min-height/max-height is forbidden (no_fixed_height, CRITICAL). object-fit:cover on the image; height follows content/aspect-ratio"
     },
     "inline_img": {
       "width_percent_based": true,
@@ -286,7 +287,7 @@
     "br_class_responsive": ["mb_only", "pc_only"],
     "img_in_wrapper": true,
     "no_figure_figcaption": true,
-    "no_figure_figcaption_note": "do not use <figure>/<figcaption>. use <div class='img_area'> + <p> or <span> instead",
+    "no_figure_figcaption_note": "do not use <figure>/<figcaption>. use <div> + <p> or <span> instead",
     "prefer_div_over_semantic": true,
     "prefer_div_over_semantic_note": "use <div> with class for sections/wrappers. <section> only for major content sections. avoid <main>, <article>, <figure>, <figcaption>",
     "minimal_aria": true,

@@ -42,8 +42,8 @@
 
 ### 2.3 이미지 노드
 
-- 모든 이미지는 `<div class="img_area">` 안에 배치
-- **img 및 .img_area에 고정 width/height 금지** — 크기가 필요하면 부모 컨테이너에서 제어
+- 이미지는 래퍼 없이 `<img>` 그대로 배치 (`.img_area` 등 래퍼 금지)
+- **img 에 고정 width/height 금지** — 크기가 필요하면 부모 컨테이너에서 제어
 - `<figure>`, `<figcaption>` 사용 금지
 
 ### 2.4 divider 노드
@@ -157,7 +157,7 @@
   - 각 노드에 클래스 부여 ({page}_{role} 패턴)
   - 오버라이드 세그먼트 → span 분할
   - \n → <br> 변환
-  - 이미지 → img_area 래핑
+  - 이미지 → `<img>` 그대로 (래퍼 없음)
   ↓
 [Step 3: CSS 생성]
   - 중간 JSON의 layout/visual/text.style 값을 그대로 CSS로 출력
@@ -216,7 +216,7 @@
 - [ ] 같은 셀렉터 중복 없음
 - [ ] 클래스명이 snake_case + 페이지 프리픽스
 - [ ] 이미지 파일명이 의미 있는 snake_case (Figma node ID 금지)
-- [ ] 이미지가 `.img_area` 래퍼 안에 배치 (배경 이미지 제외)
+- [ ] 이미지는 래퍼 없이 `<img>` 그대로 배치 (`.img_area` 등 래퍼 금지)
 - [ ] 한국어 텍스트에 `word-break: keep-all` 적용
 - [ ] `html,body`에 `font-size:clamp(14px, 1.2vw, 16px)` 설정 (basic 프로필)
 - [ ] 100px 이상 padding/margin에 `clamp()` 사용

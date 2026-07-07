@@ -154,7 +154,7 @@ rules:
       good: ".header .logo{...}  /  .header .gnb a{...}"
 
   - id: global_class_standalone
-    description: "전역 클래스(.header, .footer, .cont, .img_area)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용."
+    description: "전역 클래스(.header, .footer, .cont)는 body/html 등 부모를 붙이지 않고 단독 선언한다. 섹션 레벨 오버라이드(.main_intro .cont)는 허용."
     severity: warning
     priority: 200
     applies_to: [common, basic, landing]
@@ -181,20 +181,6 @@ rules:
       bad: "body{background:#eef4f7;}"
       good: ".main_visual{background:#eef4f7;}  /  .sub_wrap{background:#eef4f7;}"
 
-  - id: no_img_area_declaration
-    description: ".img_area 를 단독으로 선언(기본 CSS)하지 않는다. 이미지 반응형은 reset.css 의 img{max-width:100%} 가 처리하므로 .img_area 기본 규칙은 중복이다."
-    severity: warning
-    priority: 200
-    applies_to: [common, basic, landing]
-    category: css.image
-    validation:
-      type: custom
-      target: css
-      custom_handler: check_no_img_area_declaration
-    examples:
-      bad: ".img_area{display:block;overflow:hidden;}  /  .img_area img{max-width:100%;}"
-      good: "(선언 없음 — reset.css img{max-width:100%} 사용)"
-
   - id: cont_redundant_scoping
     description: ".X .cont 스코핑이 전역 .cont 기본값(max-width:var(--width), margin:0 auto, width:min(100%,var(--width)))만 재선언하면 중복이다. 전역 .cont 공통값을 그대로 쓰고, 값이 다른 특수 케이스에서만 별도 선언한다."
     severity: warning
@@ -210,8 +196,8 @@ rules:
       good: ".cont{margin:0 auto;max-width:var(--width);padding:0 var(--padding);}  (전역 1회)  /  .header .cont{max-width:1920px;padding:0 50px;}  (값이 다른 특수)"
 
   - id: no_fixed_height
-    description: "고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img/.img_area 는 img_no_fixed_size 가 담당)"
-    severity: warning
+    description: "고정 px height/min-height/max-height (및 logical block-size 변형) 를 선언하지 않는다. min/max 가릴 것 없이 고정 px 금지. Figma 프레임 높이 직역은 반응형을 저해한다 — 높이는 콘텐츠/패딩이 결정한다. 0/auto/%/vh/var() 등 비-px 는 허용. (img 는 img_no_fixed_size 가 담당)"
+    severity: error
     priority: 200
     applies_to: [common, basic, landing]
     category: css.layout
@@ -238,8 +224,8 @@ rules:
       good: ".program_list{display:flex;gap:30px;}  .program_list li{width:340px;}"
 
   - id: no_logical_box_properties
-    description: "논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다."
-    severity: warning
+    description: "논리 박스 속성(inline-size/block-size, min/max 변형, margin-inline/block, padding-inline/block, inset-inline/block)을 사용하지 않는다. 이 프로젝트 컨벤션은 물리 속성(width/height/margin-left/padding-top ...)이다. 추출 에이전트의 inline-size/block-size 남발을 차단한다 (accept 게이트 차단 대상)."
+    severity: error
     priority: 200
     applies_to: [common, basic, landing]
     category: css.format
@@ -250,6 +236,20 @@ rules:
     examples:
       bad: ".box{inline-size:340px;block-size:200px;}"
       good: ".box{width:340px;height:200px;}"
+
+  - id: span_not_block_container
+    description: "<span>은 인라인 요소다. 블록 컨테이너(섹션/카드/래퍼)로 사용 금지 — 블록 레벨 자식(div/section/ul/ol/nav/header/footer/aside/p/h1~h6/table/form/li)을 직접 감싸면 안 된다. 컨테이너는 <div>, 인라인 텍스트/짧은 라벨만 <span>. 추출 에이전트가 모든 요소를 span으로 감싸는 잘못된 마크업을 차단한다."
+    severity: error
+    priority: 100
+    applies_to: [common, basic, landing]
+    category: html.semantic
+    validation:
+      type: custom
+      target: html
+      custom_handler: check_span_not_block_container
+    examples:
+      bad: "<span class=\"main_intro\"><div class=\"card\">...</div></span>"
+      good: "<div class=\"main_intro\"><div class=\"card\">...</div></div>  /  <span class=\"title\">라벨</span>"
 
   - id: no_redundant_white_background
     description: "기본값 #fff 를 불필요하게 선언하지 않는다. white 는 페이지 기본값이므로 그냥 선언하면 의미 없다. colored 배경(섹션 등) 위에 흰 영역을 올릴 때만 정당 — colored 섹션 클래스 아래로 스코핑된 경우에만 허용한다."
@@ -305,7 +305,7 @@ rules:
       pattern: "\\b(site_|g_|common_)[a-z]"
     examples:
       bad: "<div class=\"site_header\"><span class=\"common_wrap\">"
-      good: "<div class=\"header\"><span class=\"main_intro\">"
+      good: "<div class=\"header\"><div class=\"main_intro\">"
 
   - id: no_figma_nodeid_class
     description: "Figma 노드명을 그대로 박은 클래스(main_f0, main_v53, main_t12, hero_v2 같은 {접두}_{f|v|t}{숫자} 패턴)를 금지한다. 디자이너 레이어 식별자이며 시맨틱 의미가 없다. 페이지 prefix + 역할명(main_intro, greeting_title)을 사용한다."
@@ -319,7 +319,7 @@ rules:
       pattern: "[a-z]+_[fvt][0-9]+"
     examples:
       bad: "<div class=\"main_f0\"><span class=\"main_v53\"><p class=\"main_t12\">"
-      good: "<div class=\"main_intro\"><span class=\"main_visual\">"
+      good: "<div class=\"main_intro\"><div class=\"main_visual\">"
 
   - id: meaningful_page_name
     description: "의미 있는 영문 페이지명을 위해 HTML 파일명 + 본문(class/markup) 모두에서 page_1/sub_01 같은 기계식 이름을 금지한다."
@@ -779,19 +779,8 @@ rules:
       target: html
       custom_handler: check_list_pattern
 
-  - id: img_wrapped
-    description: "모든 <img> 태그는 .img_area 래퍼 안에 배치한다 (CSS 배경 이미지만 제외). 로고, 아이콘, 파트너 로고 등 예외 없음."
-    severity: warning
-    priority: 200
-    applies_to: [common, basic, landing]
-    category: html.image
-    validation:
-      type: custom
-      target: html
-      custom_handler: check_img_wrapper
-
   - id: img_no_fixed_size
-    description: "img 및 .img_area에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다."
+    description: "img에 고정 width/height CSS를 선언하지 않는다. 로고 img는 어떤 크기 제어도 금지 (img width/height, 부모 flex-basis/max-width 모두 금지 — 원본 사이즈 그대로 출력). 일반 이미지는 크기가 필요하면 부모 컨테이너에서 제어한다."
     severity: error
     priority: 100
     applies_to: [common, basic, landing]
@@ -1027,7 +1016,7 @@ rules:
     examples:
       bad: |
         <ul><li>A</li><li>B</li><li>C</li></ul>
-        <div class="card"><span class="img_area"><img src="img/photo.jpg" alt=""></span><span class="title">Title</span></div>
+        <div class="card"><img src="img/photo.jpg" alt=""><span class="title">Title</span></div>
       good: |
         <ul>
             <li>A</li>
@@ -1035,7 +1024,7 @@ rules:
             <li>C</li>
         </ul>
         <div class="card">
-            <span class="img_area"><img src="img/photo.jpg" alt=""></span>
+            <img src="img/photo.jpg" alt="">
             <span class="title">Title</span>
         </div>
     validation:
@@ -1068,7 +1057,7 @@ rules:
       custom_handler: media_query_by_section
 
   - id: generic_class_parent_scope
-    description: "페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont/.img_area)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다."
+    description: "페이지 prefix 섹션(.main_visual, .main_news 등) 내부의 모든 자식 클래스는 반드시 부모 섹션 셀렉터와 함께 선언한다. 범용적 이름인지 판단하지 않는다 — 섹션 내부이면 무조건 부모를 붙인다. 예외: 전역 공통 클래스(.header/.footer/.cont)는 global_class_standalone 규칙에 따라 단독 선언하며 이 규칙 대상이 아니다."
     severity: warning
     priority: 300
     applies_to: [common, basic, landing]

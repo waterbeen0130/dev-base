@@ -85,23 +85,6 @@ class SemanticValidator:
                         filepath,
                     )
 
-    def check_img_wrapper(self, html: str, filepath: str):
-        """모든 <img> 태그가 .img_area 래퍼 안에 있는지 확인 (CSS 배경 이미지만 제외, 로고/아이콘도 포함)"""
-        lines = html.split("\n")
-        for i, line in enumerate(lines, 1):
-            if "<img " not in line:
-                continue
-            if "img_area" not in line:
-                prev = lines[max(0, i - 2):i]
-                if not any("img_area" in p for p in prev):
-                    self._add(
-                        "img-wrapper",
-                        "MAJOR",
-                        f"이미지에 img_area 래퍼 없음: {line.strip()[:60]}",
-                        i,
-                        filepath,
-                    )
-
     def check_inline_style(self, html: str, filepath: str):
         """인라인 스타일 사용 확인"""
         for i, line in enumerate(html.split("\n"), 1):
@@ -277,11 +260,17 @@ class SemanticValidator:
             self._add("reset-css-separate", "MAJOR", "reset.css가 별도 파일로 분리되어 있지 않음 (basic 프로젝트 규칙)", 0, filepath)
 
     def check_selector_format(self, css: str, filepath: str):
-        """셀렉터 한 줄 포맷 확인 (미디어쿼리 내부 제외)"""
+        """셀렉터 한 줄 포맷 확인 (미디어쿼리 내부 제외)
+        - 속성을 여러 줄로 펼친 셀렉터 금지
+        - 콤마 셀렉터 3개 이상을 한 줄에 나열 금지 (셀렉터마다 줄바꿈)
+        """
         lines = css.split("\n")
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
-            if stripped.endswith("{") and not stripped.startswith("@") and not stripped.startswith("/*") and not stripped.startswith(":root"):
+            if stripped.startswith("@") or stripped.startswith("/*") or stripped.startswith(":root"):
+                continue
+            # expanded multi-line selector body (selector on its own line, props below)
+            if stripped.endswith("{"):
                 if i < len(lines):
                     next_line = lines[i].strip() if i < len(lines) else ""
                     if next_line and not next_line.startswith("}") and not next_line.startswith(".") and not next_line.startswith("@"):
@@ -292,6 +281,18 @@ class SemanticValidator:
                             i,
                             filepath,
                         )
+            # collapsed grouped selectors: 3+ comma selectors on a single line
+            if "{" in stripped:
+                selector_part = stripped.split("{", 1)[0]
+                comma_count = selector_part.count(",")
+                if comma_count >= 2:
+                    self._add(
+                        "grouped-selector-newline",
+                        "MINOR",
+                        f"콤마 셀렉터 {comma_count + 1}개는 셀렉터마다 줄바꿈: {selector_part.strip()[:50]}",
+                        i,
+                        filepath,
+                    )
 
     # ===== Additional HTML Checks =====
 
@@ -567,7 +568,6 @@ class SemanticValidator:
 
 LEGACY_CHECK_METHODS = [
     "check_nav_structure",
-    "check_img_wrapper",
     "check_inline_style",
     "check_forbidden_tags",
     "check_list_pattern",
@@ -604,7 +604,6 @@ LEGACY_CHECK_METHODS = [
 
 LEGACY_HTML_CHECKS = {
     "check_nav_structure",
-    "check_img_wrapper",
     "check_inline_style",
     "check_forbidden_tags",
     "check_list_pattern",
@@ -3152,19 +3151,6 @@ def check_no_body_background(rule: dict, ctx: ValidationContext) -> ValidationRe
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
-def check_no_img_area_declaration(rule: dict, ctx: ValidationContext) -> ValidationResult:
-    """.img_area 단독 선언 금지 — reset.css 의 img{max-width:100%} 사용, 기본 CSS 두지 않음."""
-    violations = []
-    for selector, body in _iter_css_rules(ctx.css_text):
-        for tok in selector.split(","):
-            if tok.strip() == ".img_area" and body.strip():
-                violations.append(f".img_area{{{body[:50]}}} — 기본 CSS 금지(reset img{{max-width}} 사용)")
-    if violations:
-        return ValidationResult(rule["id"], rule["severity"], False,
-                                message="; ".join(violations[:5]), location=ctx.css_path)
-    return ValidationResult(rule["id"], rule["severity"], True)
-
-
 _REDUNDANT_CONT_DECL = re.compile(
     r"^(?:"
     r"margin\s*:\s*0 auto|margin\s*:\s*auto|"
@@ -3304,6 +3290,48 @@ def check_no_logical_box_properties(rule: dict, ctx: ValidationContext) -> Valid
     return ValidationResult(rule["id"], rule["severity"], True)
 
 
+_BLOCK_LEVEL_TAGS = {
+    "div", "section", "ul", "ol", "nav", "header", "footer", "aside",
+    "article", "main", "p", "h1", "h2", "h3", "h4", "h5", "h6",
+    "table", "form", "figure", "li", "dl",
+}
+_VOID_TAGS = {
+    "img", "br", "hr", "input", "meta", "link", "source", "area",
+    "col", "wbr", "embed", "track",
+}
+_HTML_TAG_RE = re.compile(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*?)(/?)>")
+
+
+def check_span_not_block_container(rule: dict, ctx: ValidationContext) -> ValidationResult:
+    """<span>이 블록 레벨 요소를 직접 감싸는 잘못된 마크업 차단.
+
+    span 은 인라인 요소이므로 블록 컨테이너(섹션/카드/래퍼)로 쓰면 안 된다.
+    스택 기반으로 여는 블록 태그의 직속 부모가 span 이면 위반으로 본다.
+    추출 에이전트가 모든 요소를 span 으로 감싸는 패턴을 차단한다.
+    """
+    html = ctx.html_text
+    violations = []
+    stack = []  # list of (tag, line)
+    for m in _HTML_TAG_RE.finditer(html):
+        closing, tag, self_close = m.group(1), m.group(2).lower(), m.group(4)
+        line = html.count("\n", 0, m.start()) + 1
+        if closing:
+            for idx in range(len(stack) - 1, -1, -1):
+                if stack[idx][0] == tag:
+                    del stack[idx:]
+                    break
+            continue
+        if tag in _VOID_TAGS or self_close:
+            continue
+        if tag in _BLOCK_LEVEL_TAGS and stack and stack[-1][0] == "span":
+            violations.append(f"line {line}: <span>이 블록 요소 <{tag}> 를 감쌈 — 컨테이너는 <div> 사용")
+        stack.append((tag, line))
+    if violations:
+        return ValidationResult(rule["id"], rule["severity"], False,
+                                message="; ".join(violations[:6]), location=ctx.html_path)
+    return ValidationResult(rule["id"], rule["severity"], True)
+
+
 def check_no_margin_first_child_reset(rule: dict, ctx: ValidationContext) -> ValidationResult:
     """:first-child/:last-child 의 margin 리셋(0) 금지 — flex gap 으로 간격 처리.
 
@@ -3376,14 +3404,14 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "no_fixed_height": _safe_custom_handler(check_no_fixed_height),
     "check_no_logical_box_properties": _safe_custom_handler(check_no_logical_box_properties),
     "no_logical_box_properties": _safe_custom_handler(check_no_logical_box_properties),
+    "check_span_not_block_container": _safe_custom_handler(check_span_not_block_container),
+    "span_not_block_container": _safe_custom_handler(check_span_not_block_container),
     "check_no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
     "no_margin_first_child_reset": _safe_custom_handler(check_no_margin_first_child_reset),
     "check_root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "root_width_derivation": _safe_custom_handler(check_root_width_derivation),
     "check_no_body_background": _safe_custom_handler(check_no_body_background),
     "no_body_background": _safe_custom_handler(check_no_body_background),
-    "check_no_img_area_declaration": _safe_custom_handler(check_no_img_area_declaration),
-    "no_img_area_declaration": _safe_custom_handler(check_no_img_area_declaration),
     "check_cont_redundant_scoping": _safe_custom_handler(check_cont_redundant_scoping),
     "cont_redundant_scoping": _safe_custom_handler(check_cont_redundant_scoping),
     "check_no_duplicate_ir_class": _safe_custom_handler(check_no_duplicate_ir_class),
@@ -3399,7 +3427,6 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "enforce_policy3_rules_conflict_bypass": _safe_custom_handler(enforce_policy3_rules_conflict_bypass),
     # direct check_* compatibility
     "check_nav_structure": _adapt_legacy_check(check_nav_structure),
-    "check_img_wrapper": _adapt_legacy_check(check_img_wrapper),
     "check_inline_style": _adapt_legacy_check(check_inline_style),
     "check_forbidden_tags": _adapt_legacy_check(check_forbidden_tags),
     "check_list_pattern": _adapt_legacy_check(check_list_pattern),
@@ -3462,7 +3489,6 @@ CUSTOM_HANDLERS: Dict[str, Callable] = {
     "_check_figma_element_parent_match": _safe_custom_handler(_check_figma_element_parent_match),
     # rule-id based aliases from rules.yaml
     "nav_ul_li_structure": _adapt_legacy_check(check_nav_structure),
-    "img_wrapped": _adapt_legacy_check(check_img_wrapper),
     "list_pattern_required": _adapt_legacy_check(check_list_pattern),
     "p_tag_misuse": _adapt_legacy_check(check_p_tag_misuse),
     "common_area_prefix": _adapt_legacy_check(check_common_area_prefix),

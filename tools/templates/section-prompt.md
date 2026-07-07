@@ -33,7 +33,6 @@
 - `a{color:inherit; text-decoration:none}` — reset.css
 - `img{max-width:100%}` — reset.css
 - `.cont{…}` — common.css skeleton
-- `.img_area{…}`, `.img_area img{…}` — common.css skeleton
 - `#wrap{overflow:hidden}` — 필요 시 common.css에 1회만
 - `strong{font-weight:700}` — 브라우저 기본값
 
@@ -43,7 +42,7 @@
 - DOM 최대 깊이 5단계
 - 불필요 래퍼(자식 1개, 스타일 없음) 제거
 - 리스트형 반복(3개+) → `ul > li`
-- 이미지는 `div.img_area > img` 래퍼. **img 및 .img_area에 고정 width/height 금지** — JSON bbox 크기는 img_area의 **부모 컨테이너**에 적용 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
+- 이미지는 래퍼 없이 `<img>` 그대로 (`.img_area` 등 래퍼 금지). **img 에 고정 width/height 금지** — JSON bbox 크기는 img의 **부모 컨테이너**에 적용 (예: `.main_card{width:300px;}` O / `.main_card img{width:300px;}` X)
 - 짧은 텍스트에 `<p>` 금지 → `<span>` 사용
 - 클래스: snake_case, `{page}_{역할}` 패턴
   - `index.html` → `main_` prefix (예: `main_mv`, `main_intro`, `main_product`)
@@ -77,7 +76,7 @@
 {{PREV_CSS}}
 
 ## 이미지 매핑
-아래 노드 ID는 이미지 파일이 있으므로 `<div class="img_area"><img src="..." alt="..."></div>`로 렌더링하라.
+아래 노드 ID는 이미지 파일이 있으므로 래퍼 없이 `<img src="..." alt="...">`로 렌더링하라 (`.img_area` 등 래퍼 금지).
 
 {{IMAGE_MAP}}
 

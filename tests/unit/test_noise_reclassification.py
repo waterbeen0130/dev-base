@@ -29,6 +29,10 @@ EXPECTED_NOISY_SEMANTIC = {
     "line_height_tidy_ratio",
     "reset_duplicate",
 }
+# v2.cornerRadii.match / v2.fills.solid.match were RE-JUDGED and PROMOTED to gating
+# after measuring zero false-positives on correctly-paired schema_v2 output
+# (clean pass when correct, true-positive on real mismatch). They are now gated
+# frame-matched-only (unmatched "미매칭" lines are demoted in parse_figma_validate).
 EXPECTED_NOISY_FIGMA = {
     "frame padding/gap 반영",
     "clamp 적용",
@@ -37,9 +41,7 @@ EXPECTED_NOISY_FIGMA = {
     "asset_manifest 일치",
     "v2.layoutSizing.match",
     "v2.opacity.match",
-    "v2.cornerRadii.match",
     "v2.strokes.match",
-    "v2.fills.solid.match",
     "v2.effects.match",
     "v2.textCase.match",
 }
