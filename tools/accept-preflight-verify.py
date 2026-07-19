@@ -28,6 +28,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -161,6 +162,19 @@ def find_verify_report(output_dir: Path | None, project_root: Path) -> Path | No
     return project_root / ".gran-maestro" / "pm-verify-report.json"
 
 
+def find_visual_compare_report(output_dir: Path | None, project_root: Path) -> Path | None:
+    """Locate an optional visual-compare evidence report."""
+    candidates = []
+    if output_dir:
+        candidates.append(output_dir / ".gran-maestro" / "visual-compare-report.json")
+        candidates.append(output_dir / "visual-compare-report.json")
+    candidates.append(project_root / ".gran-maestro" / "visual-compare-report.json")
+    for c in candidates:
+        if c.is_file():
+            return c
+    return None
+
+
 def report_allows_low_coverage(report_path: Path | None, spec_files: list[Path] | None = None) -> tuple[bool, str | None]:
     if not report_path or not report_path.is_file():
         return False, "pm-verify report missing"
@@ -281,6 +295,68 @@ def _run(cmd: list[str], timeout: int = 30) -> tuple[int, str]:
 
 def _result(name: str, status: str, detail: str) -> dict:
     return {"name": name, "status": status, "detail": detail}
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _report_path(value: object, report_path: Path) -> Path | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    candidate = Path(value)
+    if candidate.is_absolute():
+        return candidate
+    return (report_path.parent / candidate).resolve()
+
+
+def _load_json_file(path: Path | None) -> dict | None:
+    if not path or not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _ledger_section(ledger_path: Path | None) -> str | None:
+    payload = _load_json_file(ledger_path)
+    section = payload.get("section") if isinstance(payload, dict) else None
+    if isinstance(section, str) and section.strip():
+        return section.strip()
+    return None
+
+
+def find_expected_design_asset(
+    output_dir: Path | None,
+    project_root: Path,
+    ledger: Path | None,
+    visual_report: Path | None,
+) -> Path | None:
+    payload = _load_json_file(visual_report)
+    section = None
+    if payload is not None:
+        report_section = payload.get("section")
+        if isinstance(report_section, str) and report_section.strip():
+            section = report_section.strip()
+    section = section or _ledger_section(ledger)
+    if not section:
+        return None
+
+    candidates = []
+    if output_dir:
+        candidates.extend(
+            [
+                output_dir / ".gran-maestro" / "figma-png" / f"{section}.png",
+                output_dir / "figma-png" / f"{section}.png",
+            ]
+        )
+    candidates.append(project_root / ".gran-maestro" / "figma-png" / f"{section}.png")
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
 
 
 # --- individual gates -------------------------------------------------------
@@ -443,6 +519,83 @@ def gate_verify_evidence(
     return _result(name, PASS, "fresh pm-verify evidence")
 
 
+def gate_visual_compare(
+    html_path: Path | None,
+    design_path: Path | None,
+    report: Path | None,
+    *,
+    css_path: Path | None = None,
+    ledger_path: Path | None = None,
+) -> dict:
+    """Opt-in visual evidence gate bound to current html/css/design sha."""
+    name = "visual-compare"
+    if not report or not report.is_file():
+        return _result(name, SKIP, "visual report 없음 — opt-in")
+    if not html_path or not html_path.is_file():
+        return _result(name, BLOCK, "html path missing for visual evidence")
+
+    try:
+        payload = json.loads(report.read_text(encoding="utf-8"))
+    except Exception:
+        return _result(name, BLOCK, "visual report invalid — rerun visual-compare.py --emit-report")
+
+    report_design = _report_path(payload.get("design_path"), report)
+    bound_design = design_path or report_design
+    if not bound_design or not bound_design.is_file():
+        return _result(name, BLOCK, "design path missing for visual evidence — rerun visual-compare.py")
+
+    stale_fields = []
+    report_html_sha = payload.get("html_sha256")
+    report_css_sha = payload.get("css_sha256")
+    report_design_sha = payload.get("design_sha256")
+    report_section = payload.get("section")
+    if report_html_sha != _sha256_file(html_path):
+        stale_fields.append("html sha mismatch")
+    if css_path and report_css_sha is not None and report_css_sha != _sha256_file(css_path):
+        stale_fields.append("css sha mismatch")
+    if design_path and report_design and report_design.resolve() != design_path.resolve():
+        stale_fields.append("design path mismatch")
+    if report_design_sha != _sha256_file(bound_design):
+        stale_fields.append("design sha mismatch")
+    ledger_section = _ledger_section(ledger_path)
+    if ledger_section and isinstance(report_section, str) and report_section.strip() and ledger_section != report_section.strip():
+        stale_fields.append("section mismatch")
+    if stale_fields:
+        return _result(
+            name,
+            BLOCK,
+            "stale visual evidence ("
+            + ", ".join(stale_fields)
+            + ") — visual-compare.py --emit-report 로 재검증 필요",
+        )
+
+    passed = bool(payload.get("passed"))
+    allow_visual_mismatch = bool(payload.get("allow_visual_mismatch"))
+    threshold_passed = payload.get("threshold_passed")
+
+    if allow_visual_mismatch:
+        if threshold_passed is False or not passed:
+            return _result(
+                name,
+                PASS,
+                "fresh visual evidence (allow_visual_mismatch=true, threshold override audited)",
+            )
+        return _result(
+            name,
+            PASS,
+            "fresh visual evidence (allow_visual_mismatch=true)",
+        )
+
+    if not passed:
+        return _result(
+            name,
+            BLOCK,
+            "visual compare failed — threshold exceeded without accepted exception",
+        )
+
+    return _result(name, PASS, "fresh visual evidence")
+
+
 def evaluate_gates(
     deliverable_dir: Path | None,
     html_path: Path | None,
@@ -453,6 +606,8 @@ def evaluate_gates(
     profile: str,
     spec_files: list[Path] | None = None,
     verify_report: Path | None = None,
+    visual_report: Path | None = None,
+    design_asset: Path | None = None,
 ) -> list[dict]:
     """Run all wired gates and return their results in order."""
     return [
@@ -466,6 +621,13 @@ def evaluate_gates(
             css_path,
             verify_report,
             spec_files if spec_files is not None else ([spec_file] if spec_file else []),
+        ),
+        gate_visual_compare(
+            html_path,
+            design_asset,
+            visual_report,
+            css_path=css_path,
+            ledger_path=ledger,
         ),
         gate_validate_semantic(html_path, css_path, profile),
         gate_output_boundary(deliverable_dir),
@@ -552,6 +714,8 @@ def main() -> int:
     spec_file = spec_files[0] if spec_files else None
     ledger = find_ledger(project_root, output_dir)
     verify_report = find_verify_report(output_dir, project_root)
+    visual_report = find_visual_compare_report(output_dir, project_root)
+    design_asset = find_expected_design_asset(output_dir, project_root, ledger, visual_report)
 
     gate_results = evaluate_gates(
         deliverable_dir=output_dir,
@@ -563,6 +727,8 @@ def main() -> int:
         profile=profile,
         spec_files=spec_files,
         verify_report=verify_report,
+        visual_report=visual_report,
+        design_asset=design_asset,
     )
     decision, reason = summarize(gate_results)
 

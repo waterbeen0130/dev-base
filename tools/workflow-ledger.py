@@ -39,7 +39,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VALID_STEPS = ("extract", "structure", "values", "verify")
+VALID_STEPS = ("extract", "structure", "values", "verify", "visual-compare")
 DEFAULT_LEDGER_REL = Path(".gran-maestro") / "workflow-ledger.json"
 
 

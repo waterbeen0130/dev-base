@@ -12,5 +12,6 @@ dependencies = [
 testpaths = ["tests"]
 addopts = "-m 'not network'"
 markers = [
+  "browser: exercises Playwright-backed visual rendering flows",
   "network: exercises live network-dependent Adobe XD extraction flows",
 ]

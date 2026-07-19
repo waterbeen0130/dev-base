@@ -65,6 +65,14 @@ def test_invalid_step_raises(tmp_path: Path):
         wl.append_step(p, "deploy", "omx", section="x")
 
 
+def test_visual_compare_step_is_allowed(tmp_path: Path):
+    p = _ledger(tmp_path)
+    wl.append_step(p, "extract", "figma-section-spec", section="hero")
+    wl.append_step(p, "visual-compare", "visual-compare")
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert data["steps"][-1]["step"] == "visual-compare"
+
+
 def test_section_mismatch_raises(tmp_path: Path):
     p = _ledger(tmp_path)
     wl.append_step(p, "extract", "figma-section-spec", section="hero")

@@ -76,7 +76,16 @@ python3 D:/dev-base/tools/pm-verify.py \
 > ③ validate-semantic CRITICAL, 산출물경계, 부분색상, 2패스순서/추출주체(원장 존재 시).
 
 ### Step 4 — 시각 비교
-- Playwright 1920px 렌더 → Figma PNG 와 나란히 비교 → 자연어 피드백 → Pass 1/2 복귀.
+- `tools/visual-compare.py` 로 Playwright 1920px 렌더와 디자인 PNG 를 비교하고, 필요 시 Pass 1/2 로 복귀한다.
+```bash
+python3 D:/dev-base/tools/visual-compare.py \
+  --html index.html --css css/common.css --design .gran-maestro/figma-png/{SECTION}.png \
+  --emit-report .gran-maestro/visual-compare-report.json \
+  --section {SECTION}
+```
+- 기본 임계값은 diff ratio `0.05`(5%), height delta ratio `0.03`(3%) 이다. 임계 초과가 허용된 경우에만 `--allow-visual-mismatch` 를 사용하고, 예외 사용 사실은 리포트/게이트 detail 에 남는다.
+- visual compare 완료 시 원장에 `visual-compare` 단계가 추가된다. 이 단계는 참고용 감사 로그이며, 구조 순서 강제의 단일 소스는 계속 `extract → structure → values → verify` 검증이다.
+- accept 게이트는 `visual-compare-report.json` 이 없으면 **SKIP(opt-in)** 한다. 리포트가 있으면 현재 HTML/디자인 sha 와 대조해 stale 을 BLOCK 하고, `passed=false` 리포트도 BLOCK 한다.
 
 ### 워크플로우 원장 (순서·주체 증명, MANDATORY)
 각 단계 완료 시 위 Step 0~3 의 `workflow-ledger.py` 호출로 `.gran-maestro/workflow-ledger.json` 에 단계를 기록한다. **JSON 을 손으로 편집하지 말고 반드시 helper CLI 를 쓴다**(원자적 기록·순서 보존). 생성되는 형식:
