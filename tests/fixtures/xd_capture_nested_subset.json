@@ -1,0 +1,427 @@
+{
+  "version": "1.0.0",
+  "resources": {
+    "href": "/resources/graphics/graphicContent.agc"
+  },
+  "artboards": {
+    "href": "/resources/graphics/graphicContent.agc",
+    "nested-artboard-main": {
+      "width": 1920,
+      "height": 6114,
+      "name": "엔덴틱스_v2_main",
+      "x": -8180,
+      "y": -22987
+    }
+  },
+  "children": [
+    {
+      "type": "artboard",
+      "id": "nested-artboard-main",
+      "meta": {
+        "ux": {
+          "width": 1920,
+          "height": 6114
+        }
+      },
+      "style": {
+        "fill": {
+          "type": "solid",
+          "color": {
+            "mode": "RGB",
+            "value": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            }
+          }
+        }
+      },
+      "artboard": {
+        "ref": "graphicContent",
+        "children": [
+          {
+            "type": "group",
+            "name": "TOP_v3",
+            "id": "group-top",
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": -8180,
+              "ty": -22987
+            },
+            "meta": {
+              "ux": {
+                "width": 1920,
+                "height": 900
+              }
+            },
+            "group": {
+              "children": [
+                {
+                  "type": "shape",
+                  "name": "Background",
+                  "id": "shape-bg",
+                  "transform": {
+                    "a": 1,
+                    "b": 0,
+                    "c": 0,
+                    "d": 1,
+                    "tx": -8180,
+                    "ty": -22987
+                  },
+                  "meta": {
+                    "ux": {
+                      "width": 1920,
+                      "height": 900
+                    }
+                  },
+                  "style": {
+                    "fill": {
+                      "type": "solid",
+                      "color": {
+                        "mode": "RGB",
+                        "value": {
+                          "r": 21,
+                          "g": 31,
+                          "b": 52
+                        }
+                      }
+                    }
+                  },
+                  "shape": {}
+                },
+                {
+                  "type": "group",
+                  "name": "Footer Copy",
+                  "id": "group-footer-copy",
+                  "transform": {
+                    "a": 1,
+                    "b": 0,
+                    "c": 0,
+                    "d": 1,
+                    "tx": -8050,
+                    "ty": -22110
+                  },
+                  "meta": {
+                    "ux": {
+                      "width": 740,
+                      "height": 180
+                    }
+                  },
+                  "group": {
+                    "children": [
+                      {
+                        "type": "text",
+                        "name": "Request a Demo",
+                        "id": "text-request-demo",
+                        "transform": {
+                          "a": 1,
+                          "b": 0,
+                          "c": 0,
+                          "d": 1,
+                          "tx": -8040,
+                          "ty": -22090
+                        },
+                        "style": {
+                          "font": {
+                            "family": "Pretendard",
+                            "style": "Bold",
+                            "size": 48
+                          },
+                          "fill": {
+                            "type": "solid",
+                            "color": {
+                              "mode": "RGB",
+                              "value": {
+                                "r": 255,
+                                "g": 255,
+                                "b": 255
+                              }
+                            }
+                          },
+                          "textAttributes": {
+                            "lineHeight": 58,
+                            "letterSpacing": -15,
+                            "paragraphAlign": "left"
+                          }
+                        },
+                        "text": {
+                          "frame": "autoHeight",
+                          "rawText": "Request a Demo"
+                        },
+                        "meta": {
+                          "ux": {
+                            "nameL10N": "SHAPE_GROUP",
+                            "singleTextObject": true,
+                            "rangedStyles": [
+                              {
+                                "length": 14,
+                                "fontFamily": "Pretendard",
+                                "fontStyle": "Bold",
+                                "postscriptName": "Pretendard-Bold",
+                                "fontSize": 48,
+                                "charSpacing": -15,
+                                "fill": {
+                                  "value": 4294967295
+                                }
+                              }
+                            ],
+                            "outlinesLayout": {
+                              "static": {
+                                "paragraphs": [
+                                  {
+                                    "lines": [
+                                      {
+                                        "position": 0,
+                                        "layoutBounds": {
+                                          "left": 0,
+                                          "right": 312,
+                                          "ascent": -46,
+                                          "descent": 12
+                                        },
+                                        "runs": [
+                                          {
+                                            "style": {
+                                              "fontFamily": "Pretendard",
+                                              "fontStyle": "Bold",
+                                              "postscriptName": "Pretendard-Bold",
+                                              "fontSize": 48
+                                            },
+                                            "charSpacing": -15,
+                                            "stringRange": {
+                                              "startIndex": 0,
+                                              "length": 14
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "group",
+                        "name": "Contact Detail",
+                        "id": "group-contact-detail",
+                        "transform": {
+                          "a": 1,
+                          "b": 0,
+                          "c": 0,
+                          "d": 1,
+                          "tx": -8040,
+                          "ty": -21990
+                        },
+                        "meta": {
+                          "ux": {
+                            "width": 680,
+                            "height": 120
+                          }
+                        },
+                        "group": {
+                          "children": [
+                            {
+                              "type": "text",
+                              "name": "02-304-8001",
+                              "id": "text-phone",
+                              "transform": {
+                                "a": 1,
+                                "b": 0,
+                                "c": 0,
+                                "d": 1,
+                                "tx": -8040,
+                                "ty": -21990
+                              },
+                              "style": {
+                                "font": {
+                                  "family": "Pretendard",
+                                  "style": "Regular",
+                                  "size": 16
+                                },
+                                "fill": {
+                                  "type": "solid",
+                                  "color": {
+                                    "mode": "RGB",
+                                    "value": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255
+                                    }
+                                  }
+                                },
+                                "textAttributes": {
+                                  "lineHeight": 19,
+                                  "letterSpacing": -15,
+                                  "paragraphAlign": "left"
+                                }
+                              },
+                              "text": {
+                                "frame": "autoHeight",
+                                "rawText": "02-304-8001"
+                              },
+                              "meta": {
+                                "ux": {
+                                  "nameL10N": "SHAPE_GROUP",
+                                  "singleTextObject": true,
+                                  "rangedStyles": [
+                                    {
+                                      "length": 11,
+                                      "fontFamily": "Pretendard",
+                                      "fontStyle": "Regular",
+                                      "postscriptName": "Pretendard-Regular",
+                                      "fontSize": 16,
+                                      "charSpacing": -15,
+                                      "fill": {
+                                        "value": 4294967295
+                                      }
+                                    }
+                                  ],
+                                  "outlinesLayout": {
+                                    "static": {
+                                      "paragraphs": [
+                                        {
+                                          "lines": [
+                                            {
+                                              "position": 0,
+                                              "layoutBounds": {
+                                                "left": 0,
+                                                "right": 95.36563873291016,
+                                                "ascent": -15,
+                                                "descent": 4
+                                              },
+                                              "runs": [
+                                                {
+                                                  "style": {
+                                                    "fontFamily": "Pretendard",
+                                                    "fontStyle": "Regular",
+                                                    "postscriptName": "Pretendard-Regular",
+                                                    "fontSize": 16
+                                                  },
+                                                  "charSpacing": -15,
+                                                  "stringRange": {
+                                                    "startIndex": 0,
+                                                    "length": 11
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "text",
+                              "name": "endentics.cs@gmail.com",
+                              "id": "text-email",
+                              "transform": {
+                                "a": 1,
+                                "b": 0,
+                                "c": 0,
+                                "d": 1,
+                                "tx": -7900,
+                                "ty": -21990
+                              },
+                              "style": {
+                                "font": {
+                                  "family": "Pretendard",
+                                  "style": "Regular",
+                                  "size": 16
+                                },
+                                "fill": {
+                                  "type": "solid",
+                                  "color": {
+                                    "mode": "RGB",
+                                    "value": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255
+                                    }
+                                  }
+                                },
+                                "textAttributes": {
+                                  "lineHeight": 19,
+                                  "letterSpacing": -15,
+                                  "paragraphAlign": "left"
+                                }
+                              },
+                              "text": {
+                                "frame": "autoHeight",
+                                "rawText": "endentics.cs@gmail.com"
+                              },
+                              "meta": {
+                                "ux": {
+                                  "nameL10N": "SHAPE_GROUP",
+                                  "singleTextObject": true,
+                                  "rangedStyles": [
+                                    {
+                                      "length": 22,
+                                      "fontFamily": "Pretendard",
+                                      "fontStyle": "Regular",
+                                      "postscriptName": "Pretendard-Regular",
+                                      "fontSize": 16,
+                                      "charSpacing": -15,
+                                      "fill": {
+                                        "value": 4294967295
+                                      }
+                                    }
+                                  ],
+                                  "outlinesLayout": {
+                                    "static": {
+                                      "paragraphs": [
+                                        {
+                                          "lines": [
+                                            {
+                                              "position": 0,
+                                              "layoutBounds": {
+                                                "left": 0,
+                                                "right": 172.88186645507812,
+                                                "ascent": -15,
+                                                "descent": 4
+                                              },
+                                              "runs": [
+                                                {
+                                                  "style": {
+                                                    "fontFamily": "Pretendard",
+                                                    "fontStyle": "Regular",
+                                                    "postscriptName": "Pretendard-Regular",
+                                                    "fontSize": 16
+                                                  },
+                                                  "charSpacing": -15,
+                                                  "stringRange": {
+                                                    "startIndex": 0,
+                                                    "length": 22
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

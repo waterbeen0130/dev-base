@@ -1,0 +1,31 @@
+{
+  "schema_version": "2.0.0",
+  "text_nodes": [
+    {
+      "id": "1:1",
+      "name": "title",
+      "characters": "Baseline Title",
+      "fontFamily": "Pretendard",
+      "fontSize": 32,
+      "fontWeight": 700,
+      "lineHeightPx": 48,
+      "lineHeightRatio": 1.5,
+      "letterSpacing": 0,
+      "color": "#111111"
+    },
+    {
+      "id": "1:2",
+      "name": "desc",
+      "characters": "Baseline description for measured spec.",
+      "fontFamily": "Pretendard",
+      "fontSize": 18,
+      "fontWeight": 400,
+      "lineHeightPx": 28,
+      "lineHeightRatio": 1.5556,
+      "letterSpacing": 0,
+      "color": "#222222"
+    }
+  ],
+  "frame_nodes": [],
+  "interactions": []
+}

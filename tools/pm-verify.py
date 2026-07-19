@@ -33,6 +33,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -40,6 +41,15 @@ from pathlib import Path
 
 
 TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from spec_coverage import (  # noqa: E402
+    build_spec_sha_map,
+    count_html_text_blocks_from_source,
+    format_spec_coverage_detail,
+    measure_spec_coverage as shared_measure_spec_coverage,
+)
 
 TRUSTED_FIGMA_CATEGORIES = {
     "텍스트 byte-exact",
@@ -225,6 +235,15 @@ def check_broken_links(html_path: Path, img_dir: Path | None) -> list[str]:
     return missing
 
 
+def measure_spec_coverage(spec_dir: Path, html_source: str) -> dict[str, object]:
+    spec_files = sorted(spec_dir.glob("*_spec.json")) if spec_dir.exists() else []
+    html_text_blocks = count_html_text_blocks_from_source(html_source)
+    measurement = shared_measure_spec_coverage(spec_files, html_text_blocks)
+    assert measurement is not None
+    measurement["spec_shas"] = build_spec_sha_map(spec_files)
+    return measurement
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--spec-dir", required=True)
@@ -234,6 +253,7 @@ def main() -> int:
     parser.add_argument("--profile", default="landing")
     parser.add_argument("--emit-report", help="Write verification evidence JSON (DOD-006) to this path")
     parser.add_argument("--allow-missing-spec", action="store_true", help="Allow verification to pass even when spec.json has no font metadata (escape hatch — default: hard fail to force Figma 실측)")
+    parser.add_argument("--allow-low-coverage", action="store_true", help="Allow verification to pass with low spec coverage and record the exception in the evidence report")
     parser.add_argument("--section", help="Section name — when set, records the 'verify' step in the workflow ledger (AGI-004 #4)")
     parser.add_argument("--ledger", help="Workflow ledger path override (default: <root>/.gran-maestro/workflow-ledger.json)")
     args = parser.parse_args()
@@ -274,6 +294,18 @@ def main() -> int:
             print("   figma-section-spec.py --download-assets 로 실측 추출 필수.")
             print("   (정당한 예외 시에만 --allow-missing-spec)")
 
+    html_source = html_path.read_text(encoding="utf-8")
+    spec_coverage = measure_spec_coverage(spec_dir, html_source)
+    spec_coverage_fail = not spec_coverage["passed"]
+    if spec_coverage_fail:
+        detail = format_spec_coverage_detail(spec_coverage)
+        if args.allow_low_coverage:
+            print(f"\n⚠️  WARNING: spec 커버리지 낮음 — {detail}")
+            print("   감사 기록을 남기고 계속 진행합니다 (--allow-low-coverage).")
+        else:
+            print(f"\n❌ FAIL: spec 커버리지 부족 — {detail}")
+            print("   껍데기 spec 가능성. spec 보강 또는 정당한 예외 시 --allow-low-coverage 사용.")
+
     # 1. figma-validate (trusted categories only)
     print("\n[1] Figma 충실도 (텍스트 + 폰트 + 색상)")
     rc_fig, out_fig = run([
@@ -283,7 +315,6 @@ def main() -> int:
         "--html", str(html_path),
         "--css", str(css_path),
     ])
-    html_source = html_path.read_text(encoding="utf-8")
     trusted_fig, noisy_fig = parse_figma_validate(out_fig, html_source)
     if trusted_fig:
         print(f"  ✗ {len(trusted_fig)} 위반")
@@ -331,7 +362,8 @@ def main() -> int:
 
     # Gate — missing Figma 실측(spec font metadata) is a hard fail unless escaped.
     spec_gate_fail = spec_missing and not args.allow_missing_spec
-    fail = bool(trusted_fig or trusted_sem or missing or spec_gate_fail)
+    coverage_gate_fail = spec_coverage_fail and not args.allow_low_coverage
+    fail = bool(trusted_fig or trusted_sem or missing or spec_gate_fail or coverage_gate_fail)
 
     # DOD-006: emit verification execution evidence (sha-bound to current files)
     if args.emit_report:
@@ -350,6 +382,11 @@ def main() -> int:
             "trusted_figma_violations": len(trusted_fig),
             "trusted_semantic_violations": len(trusted_sem),
             "broken_links": len(missing),
+            "spec_coverage": {
+                **spec_coverage,
+                "allow_low_coverage": args.allow_low_coverage,
+                "passed": not coverage_gate_fail,
+            },
         }
         Path(args.emit_report).write_text(_json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"\n[evidence] 검증 증거 기록: {args.emit_report}")
@@ -367,7 +404,8 @@ def main() -> int:
     print("\n" + "=" * 80)
     if fail:
         spec_note = ", spec실측누락" if spec_gate_fail else ""
-        print(f"결과: ✗ FAIL — Figma 위반 {len(trusted_fig)}, 컨벤션 위반 {len(trusted_sem)}, broken {len(missing)}{spec_note}")
+        coverage_note = ", spec커버리지부족" if coverage_gate_fail else ""
+        print(f"결과: ✗ FAIL — Figma 위반 {len(trusted_fig)}, 컨벤션 위반 {len(trusted_sem)}, broken {len(missing)}{spec_note}{coverage_note}")
         return 1
     print("결과: ✓ PASS")
     return 0

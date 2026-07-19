@@ -36,6 +36,16 @@ from pathlib import Path
 
 
 TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+from spec_coverage import (  # noqa: E402
+    build_spec_sha_map,
+    count_html_text_blocks as shared_count_html_text_blocks,
+    format_spec_coverage_detail,
+    measure_spec_coverage as shared_measure_spec_coverage,
+)
+
 VALIDATE_SCRIPT = TOOLS_DIR / "validate-semantic.py"
 
 # Gate status constants
@@ -126,6 +136,15 @@ def spec_has_font_metadata(spec_files: list[Path]) -> bool:
     return False
 
 
+def count_html_text_blocks(html_path: Path | None) -> int | None:
+    return shared_count_html_text_blocks(html_path)
+
+
+def measure_spec_coverage(spec_files: list[Path], html_path: Path | None) -> dict[str, object] | None:
+    html_text_blocks = count_html_text_blocks(html_path)
+    return shared_measure_spec_coverage(spec_files, html_text_blocks)
+
+
 def find_verify_report(output_dir: Path | None, project_root: Path) -> Path | None:
     """Locate a pm-verify evidence report (emitted via pm-verify --emit-report)."""
     candidates = []
@@ -140,6 +159,29 @@ def find_verify_report(output_dir: Path | None, project_root: Path) -> Path | No
     if output_dir:
         return output_dir / ".gran-maestro" / "pm-verify-report.json"
     return project_root / ".gran-maestro" / "pm-verify-report.json"
+
+
+def report_allows_low_coverage(report_path: Path | None, spec_files: list[Path] | None = None) -> tuple[bool, str | None]:
+    if not report_path or not report_path.is_file():
+        return False, "pm-verify report missing"
+    try:
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False, "pm-verify report invalid"
+    spec_coverage = payload.get("spec_coverage")
+    if not isinstance(spec_coverage, dict) or not spec_coverage.get("allow_low_coverage"):
+        return False, "allow_low_coverage absent"
+    report_shas = spec_coverage.get("spec_shas")
+    if not isinstance(report_shas, dict):
+        return False, "allow_low_coverage requires spec_shas"
+    current_shas = build_spec_sha_map(spec_files or [])
+    for spec_path, current_sha in current_shas.items():
+        report_sha = report_shas.get(spec_path)
+        if report_sha is None:
+            return False, f"allow_low_coverage missing spec_shas entry for {spec_path}"
+        if report_sha != current_sha:
+            return False, f"allow_low_coverage spec sha mismatch for {spec_path}"
+    return True, None
 
 
 def find_ledger(project_root: Path, output_dir: Path | None) -> Path | None:
@@ -333,7 +375,11 @@ def gate_extraction_provenance(ledger: Path | None) -> dict:
     return _result(name, PASS, "provenance ok")
 
 
-def gate_spec_measured(spec_files: list[Path]) -> dict:
+def gate_spec_measured(
+    spec_files: list[Path],
+    html_path: Path | None = None,
+    verify_report: Path | None = None,
+) -> dict:
     """FORCE Figma 실측: a publishing deliverable must ship extracted/*_spec.json
     with real typography. No spec / no fontSize = the agent guessed instead of
     measuring → BLOCK (no silent skip)."""
@@ -346,19 +392,47 @@ def gate_spec_measured(spec_files: list[Path]) -> dict:
         return _result(name, BLOCK,
                        "spec.json 에 폰트 메타데이터(fontSize) 없음 — MCP 폴백/추측 의심. "
                        "figma-section-spec.py 로 재추출 필요")
+    coverage = measure_spec_coverage(spec_files, html_path)
+    if coverage is not None and not coverage["passed"]:
+        allow_low_coverage, allow_low_coverage_reason = report_allows_low_coverage(
+            verify_report,
+            spec_files,
+        )
+        if allow_low_coverage:
+            return _result(
+                name,
+                PASS,
+                "spec coverage exception accepted from pm-verify report "
+                "(allow_low_coverage=true) — " + format_spec_coverage_detail(coverage),
+            )
+        return _result(
+            name,
+            BLOCK,
+            "spec 커버리지 부족 — "
+            + format_spec_coverage_detail(coverage)
+            + (f" (report rejected: {allow_low_coverage_reason})" if allow_low_coverage_reason else ""),
+        )
     return _result(name, PASS, f"{len(spec_files)} spec.json (typography ok)")
 
 
-def gate_verify_evidence(html_path: Path | None, css_path: Path | None, report: Path | None) -> dict:
+def gate_verify_evidence(
+    html_path: Path | None,
+    css_path: Path | None,
+    report: Path | None,
+    spec_files: list[Path] | None = None,
+) -> dict:
     """FORCE 검증툴 실행: completion requires a fresh pm-verify report sha-bound to
     the current html/css. No report (= pm-verify never run) or stale → BLOCK."""
     name = "verify-evidence"
     if not html_path or not css_path or not report:
         return _result(name, BLOCK, "pm-verify 증거 리포트 경로 불명")
-    rc, output = _run([
+    cmd = [
         sys.executable, str(TOOLS_DIR / "verify-evidence-gate.py"),
         "--html", str(html_path), "--css", str(css_path), "--report", str(report),
-    ])
+    ]
+    for spec_file in spec_files or []:
+        cmd.extend(["--spec", str(spec_file)])
+    rc, output = _run(cmd)
     if rc < 0:
         return _result(name, BLOCK, f"runner error: {output[:120]}")
     if rc == 1:
@@ -382,8 +456,17 @@ def evaluate_gates(
 ) -> list[dict]:
     """Run all wired gates and return their results in order."""
     return [
-        gate_spec_measured(spec_files if spec_files is not None else ([spec_file] if spec_file else [])),
-        gate_verify_evidence(html_path, css_path, verify_report),
+        gate_spec_measured(
+            spec_files if spec_files is not None else ([spec_file] if spec_file else []),
+            html_path=html_path,
+            verify_report=verify_report,
+        ),
+        gate_verify_evidence(
+            html_path,
+            css_path,
+            verify_report,
+            spec_files if spec_files is not None else ([spec_file] if spec_file else []),
+        ),
         gate_validate_semantic(html_path, css_path, profile),
         gate_output_boundary(deliverable_dir),
         gate_mixed_styles(spec_file, html_path, css_path),

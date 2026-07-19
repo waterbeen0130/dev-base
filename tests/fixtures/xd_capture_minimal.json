@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "artboards": {
+    "href": "/resources/graphics/graphicContent.agc",
+    "artboard-main": {
+      "width": 1920,
+      "height": 6114,
+      "name": "엔덴틱스_v2_main",
+      "x": -8180,
+      "y": -22987
+    }
+  },
+  "children": [
+    {
+      "type": "artboard",
+      "id": "artboard-main",
+      "meta": {
+        "ux": {
+          "width": 1920,
+          "height": 6114
+        }
+      },
+      "style": {
+        "fill": {
+          "type": "solid",
+          "color": {
+            "mode": "RGB",
+            "value": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            }
+          }
+        }
+      },
+      "artboard": {
+        "children": [
+          {
+            "type": "group",
+            "name": "Hero",
+            "id": "group-hero",
+            "transform": {
+              "a": 1,
+              "b": 0,
+              "c": 0,
+              "d": 1,
+              "tx": -8000,
+              "ty": -22800
+            },
+            "meta": {
+              "ux": {
+                "width": 600,
+                "height": 320
+              }
+            },
+            "children": [
+              {
+                "id": "text-title",
+                "type": "text",
+                "name": "Hero Title",
+                "style": {
+                  "fill": {
+                    "type": "solid",
+                    "color": {
+                      "mode": "RGB",
+                      "value": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      }
+                    }
+                  },
+                  "font": {
+                    "postscriptName": "Pretendard-Medium",
+                    "family": "Pretendard",
+                    "localizedFamilyName": "Pretendard",
+                    "style": "Medium",
+                    "size": 70
+                  },
+                  "textAttributes": {
+                    "lineHeight": 98,
+                    "letterSpacing": 0,
+                    "textTransform": "none",
+                    "textScript": "none"
+                  }
+                },
+                "text": {
+                  "frame": {
+                    "type": "positioned"
+                  },
+                  "rawText": "Redefining Endodontics"
+                },
+                "meta": {
+                  "ux": {
+                    "singleTextObject": true,
+                    "rangedStyles": [
+                      {
+                        "length": 0,
+                        "fontFamily": "Pretendard",
+                        "fontStyle": "Medium",
+                        "postscriptName": "Pretendard-Medium",
+                        "fontSize": 70,
+                        "charSpacing": 0,
+                        "fill": {
+                          "value": 4294967295
+                        }
+                      }
+                    ]
+                  }
+                },
+                "transform": {
+                  "a": 1,
+                  "b": 0,
+                  "c": 0,
+                  "d": 1,
+                  "tx": -8028,
+                  "ty": -22680
+                }
+              },
+              {
+                "id": "text-mixed",
+                "type": "text",
+                "name": "Seal(logo)",
+                "style": {
+                  "fill": {
+                    "type": "solid",
+                    "color": {
+                      "mode": "RGB",
+                      "value": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 255
+                      }
+                    }
+                  },
+                  "font": {
+                    "postscriptName": "Pretendard-Regular",
+                    "family": "Pretendard",
+                    "localizedFamilyName": "Pretendard",
+                    "style": "Regular",
+                    "size": 20
+                  },
+                  "textAttributes": {
+                    "lineHeight": 30,
+                    "paragraphAlign": "center",
+                    "textTransform": "none",
+                    "textScript": "none"
+                  }
+                },
+                "text": {
+                  "frame": {
+                    "type": "positioned"
+                  },
+                  "rawText": "Seal(logo)"
+                },
+                "meta": {
+                  "ux": {
+                    "singleTextObject": true,
+                    "rangedStyles": [
+                      {
+                        "length": 4,
+                        "fontFamily": "Pretendard",
+                        "fontStyle": "Regular",
+                        "postscriptName": "Pretendard-Regular",
+                        "fontSize": 50,
+                        "charSpacing": 0,
+                        "fill": {
+                          "value": 4294967295
+                        }
+                      },
+                      {
+                        "length": 6,
+                        "fontFamily": "Pretendard",
+                        "fontStyle": "Regular",
+                        "postscriptName": "Pretendard-Regular",
+                        "fontSize": 20,
+                        "charSpacing": 0,
+                        "fill": {
+                          "value": 4283129777
+                        }
+                      }
+                    ]
+                  }
+                },
+                "transform": {
+                  "a": 1,
+                  "b": 0,
+                  "c": 0,
+                  "d": 1,
+                  "tx": -8010,
+                  "ty": -22540
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

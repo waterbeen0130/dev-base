@@ -10,3 +10,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not network'"
+markers = [
+  "network: exercises live network-dependent Adobe XD extraction flows",
+]

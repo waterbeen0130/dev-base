@@ -31,6 +31,8 @@ FIGMA_TOKEN="figd_..." python3 D:/dev-base/tools/figma-png-download.py \
 ```
 - `--download-assets` 필수(이미지 1:1). 추출 직후 `text_nodes[0].fontSize` 존재 확인 — 없으면 즉시 중단(재추출).
 - spec.json 은 이후 **값 오라클로만** 사용한다.
+- XD 입력 대안 경로: `python3 D:/dev-base/tools/xd-section-spec.py --url {URL} --artboard {아트보드명} --section {SECTION} --output extracted/`
+  원장 provider 는 `xd-web-spec`, 실패 처리는 fail-loud(껍데기 spec 미생성), 이후 `pm-verify`/accept 게이트에서 spec 커버리지 검사도 강제된다. 이미지 에셋 자동 다운로드는 미지원(후속 과제) — 에셋은 별도 확보.
 - 추출 성공 직후 원장에 기록(섹션 워크플로우 시작):
   ```bash
   python3 D:/dev-base/tools/workflow-ledger.py append --step extract --provider figma-section-spec --section {SECTION}
