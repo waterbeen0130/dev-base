@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import shutil
 import subprocess
@@ -217,6 +218,8 @@ def _run_pm_verify_subprocess(
     html_path: Path,
     css_path: Path,
     report_path: Path,
+    figma_output: str = "",
+    semantic_output: str = "",
 ) -> subprocess.CompletedProcess[str]:
     wrapper = textwrap.dedent(
         """
@@ -229,7 +232,18 @@ def _run_pm_verify_subprocess(
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        module.run = lambda cmd: (0, "")
+        figma_output = sys.argv[6]
+        semantic_output = sys.argv[7]
+
+        def fake_run(cmd):
+            target = Path(cmd[1]).name
+            if target == "figma-validate.py":
+                return 1 if figma_output else 0, figma_output
+            if target == "validate-semantic.py":
+                return 1 if semantic_output else 0, semantic_output
+            return 0, ""
+
+        module.run = fake_run
         module.check_broken_links = lambda html_path, img_dir: []
 
         sys.argv = [
@@ -253,6 +267,8 @@ def _run_pm_verify_subprocess(
             str(html_path),
             str(css_path),
             str(report_path),
+            figma_output,
+            semantic_output,
         ],
         text=True,
         capture_output=True,
@@ -265,8 +281,86 @@ def _load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _extract_real_xd_spec(tmp_path: Path) -> Path:
+    capture_dir = _copy_offline_capture(tmp_path)
+    extract_dir = tmp_path / "extracted"
+    extract_result = _run_xd_extract(capture_dir=capture_dir, output_dir=extract_dir)
+    assert extract_result.returncode == 0, extract_result.stdout + extract_result.stderr
+    return extract_dir
+
+
+def _render_spec_text(text: str, *, preserve_linebreaks: bool) -> str:
+    escaped = html.escape(text, quote=False)
+    if preserve_linebreaks:
+        return escaped.replace("\n", "<br>\n")
+    return escaped.replace("\n", " ")
+
+
+def _write_spec_mirrored_fixture(
+    tmp_path: Path,
+    *,
+    spec_payload: dict,
+    multiline_text_id: str,
+    preserve_linebreaks: bool,
+    extra_css: str,
+) -> tuple[Path, Path]:
+    html_path = tmp_path / "index.html"
+    css_path = tmp_path / "common.css"
+    blocks = []
+    for index, node in enumerate(spec_payload["text_nodes"], start=1):
+        node_id = node["id"]
+        text = node["characters"]
+        rendered_text = _render_spec_text(
+            text,
+            preserve_linebreaks=preserve_linebreaks if node_id == multiline_text_id else True,
+        )
+        blocks.append(f'<p class="copy copy_{index}" data-node-id="{html.escape(node_id)}">{rendered_text}</p>')
+
+    html_path.write_text(
+        textwrap.dedent(
+            f"""
+            <!doctype html>
+            <html lang="ko">
+            <head>
+            <meta charset="utf-8">
+            <link rel="stylesheet" href="common.css">
+            </head>
+            <body>
+            <section class="main_visual">
+            <div class="main_visual_inner">
+            {'\n'.join(blocks)}
+            </div>
+            </section>
+            </body>
+            </html>
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    css_path.write_text(
+        textwrap.dedent(
+            f"""
+            .main_visual{{display:flex;justify-content:center;padding:40px 0}}
+            .main_visual .main_visual_inner{{display:flex;flex-direction:column;gap:8px;width:1200px}}
+            .main_visual .copy{{font-size:16px;line-height:1.5;color:#222222}}
+            {extra_css}
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    return html_path, css_path
+
+
 def _write_capture_payload(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _make_linebreak_violation(node: dict) -> str:
+    expected = node["characters"]
+    actual = expected.replace("\n", " ")
+    return f"줄바꿈 보존 | {node['id']} ({node['name']}) | {expected!r} | {actual!r} @ .copy"
 
 
 def test_xd_pipeline_offline_extracts_real_capture_and_emits_coverage_report(tmp_path: Path):
@@ -407,6 +501,68 @@ def test_xd_pipeline_prefers_richest_duplicate_artboard_payload(tmp_path: Path):
     spec_payload = _load_json(extract_dir / "main_spec.json")
     assert len(spec_payload["text_nodes"]) == 1
     assert spec_payload["text_nodes"][0]["characters"] == "Richer payload wins"
+
+
+def test_req052_pipeline_violations_reports_linebreak_and_radius_failures(tmp_path: Path):
+    extract_dir = _extract_real_xd_spec(tmp_path)
+    spec_payload = _load_json(extract_dir / "main_spec.json")
+    multiline_node = next(node for node in spec_payload["text_nodes"] if "\n" in node["characters"])
+
+    html_path, css_path = _write_spec_mirrored_fixture(
+        tmp_path,
+        spec_payload=spec_payload,
+        multiline_text_id=multiline_node["id"],
+        preserve_linebreaks=False,
+        extra_css=".main_visual .copy_1{border-radius:999px}",
+    )
+    report_path = tmp_path / "pm-verify-report.json"
+    verify_result = _run_pm_verify_subprocess(
+        spec_dir=extract_dir,
+        html_path=html_path,
+        css_path=css_path,
+        report_path=report_path,
+        figma_output=_make_linebreak_violation(multiline_node),
+    )
+    output = verify_result.stdout + verify_result.stderr
+    report = _load_json(report_path)
+
+    assert verify_result.returncode == 1
+    assert "줄바꿈 보존" in output
+    assert "border-radius" in output
+    assert "999px" in output
+    assert report["border_radius_check"]["status"] == "failed"
+    assert report["border_radius_check"]["passed"] is False
+    assert report["border_radius_check"]["violations"] == ["999px"]
+    assert report["border_radius_check"]["spec_radius_set"] == [7, 7.5, 8, 12, 20, 21, 24, 29, 32, 187]
+
+
+def test_req052_pipeline_clean_avoids_new_gate_failures(tmp_path: Path):
+    extract_dir = _extract_real_xd_spec(tmp_path)
+    spec_payload = _load_json(extract_dir / "main_spec.json")
+    multiline_node = next(node for node in spec_payload["text_nodes"] if "\n" in node["characters"])
+
+    html_path, css_path = _write_spec_mirrored_fixture(
+        tmp_path,
+        spec_payload=spec_payload,
+        multiline_text_id=multiline_node["id"],
+        preserve_linebreaks=True,
+        extra_css=".main_visual .copy_1{border-radius:24px}\n.main_visual .copy_2{border-radius:50%}\n",
+    )
+    report_path = tmp_path / "pm-verify-report.json"
+    verify_result = _run_pm_verify_subprocess(
+        spec_dir=extract_dir,
+        html_path=html_path,
+        css_path=css_path,
+        report_path=report_path,
+    )
+    output = verify_result.stdout + verify_result.stderr
+    report = _load_json(report_path)
+
+    assert "줄바꿈 보존" not in output
+    assert "border-radius 검사 failed" not in output
+    assert report["border_radius_check"]["status"] == "passed"
+    assert report["border_radius_check"]["passed"] is True
+    assert report["border_radius_check"]["violations"] == []
 
 
 @pytest.mark.network

@@ -248,6 +248,61 @@ def extract_transform_bbox(node: dict) -> dict:
     }
 
 
+def extract_shape_corner_data(node: dict) -> tuple[float | int | None, list[float | int], str | None, dict | None]:
+    if node.get("type") not in {"shape", "rectangle"}:
+        return None, [0, 0, 0, 0], None, None
+
+    shape = node.get("shape")
+    if not isinstance(shape, dict) or "r" not in shape:
+        return None, [0, 0, 0, 0], None, None
+
+    raw_radius = shape.get("r")
+    normalized_radii: list[float | int] = [0, 0, 0, 0]
+    extra: dict | None = None
+    bbox = extract_transform_bbox(node)
+    width = bbox.get("w")
+    height = bbox.get("h")
+    max_allowed_radius: float | None = None
+    if isinstance(width, (int, float)) and isinstance(height, (int, float)):
+        max_allowed_radius = min(float(width), float(height)) / 2.0
+
+    if isinstance(raw_radius, list):
+        values: list[float | int] = []
+        for value in raw_radius[:4]:
+            parsed = safe_round_3(value)
+            if not isinstance(parsed, (int, float)):
+                return None, [0, 0, 0, 0], None, None
+            if float(parsed) < 0:
+                return None, [0, 0, 0, 0], None, None
+            if max_allowed_radius is not None and float(parsed) > max_allowed_radius:
+                return None, [0, 0, 0, 0], None, None
+            values.append(parsed)
+        while len(values) < 4:
+            values.append(0)
+        normalized_radii = values[:4]
+        if len(set(normalized_radii)) == 1:
+            corner_radius = normalized_radii[0]
+        else:
+            corner_radius = None
+    else:
+        parsed = safe_round_3(raw_radius)
+        if not isinstance(parsed, (int, float)):
+            return None, [0, 0, 0, 0], None, None
+        if float(parsed) < 0:
+            return None, [0, 0, 0, 0], None, None
+        if max_allowed_radius is not None and float(parsed) > max_allowed_radius:
+            return None, [0, 0, 0, 0], None, None
+        corner_radius = parsed
+        normalized_radii = [parsed, parsed, parsed, parsed]
+
+    hint = None
+    if isinstance(corner_radius, (int, float)) and max_allowed_radius is not None:
+        if float(corner_radius) >= max_allowed_radius:
+            hint = "50%"
+
+    return corner_radius, normalized_radii, hint, extra
+
+
 def extract_text_bbox(node: dict) -> dict:
     transform = node.get("transform")
     if not isinstance(transform, dict):
@@ -503,6 +558,7 @@ def normalize_text_node(node: dict) -> dict:
 
 
 def normalize_frame_node(node: dict) -> dict:
+    corner_radius, rectangle_corner_radii, hint, extra = extract_shape_corner_data(node)
     return {
         "id": node.get("id"),
         "name": node.get("name"),
@@ -529,9 +585,10 @@ def normalize_frame_node(node: dict) -> dict:
         "layoutAlign": "INHERIT",
         "componentId": None,
         "componentSetId": None,
-        "cornerRadius": None,
-        "rectangleCornerRadii": [0, 0, 0, 0],
-        "border_radius_hint": None,
+        "cornerRadius": corner_radius,
+        "rectangleCornerRadii": rectangle_corner_radii,
+        "border_radius_hint": hint,
+        "_extra": extra,
     }
 
 

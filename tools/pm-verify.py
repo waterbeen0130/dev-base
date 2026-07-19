@@ -33,11 +33,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
+from html.parser import HTMLParser
 
 
 TOOLS_DIR = Path(__file__).resolve().parent
@@ -47,7 +49,9 @@ if str(TOOLS_DIR) not in sys.path:
 from spec_coverage import (  # noqa: E402
     build_spec_sha_map,
     count_html_text_blocks_from_source,
+    format_border_radius_detail,
     format_spec_coverage_detail,
+    measure_border_radius_check,
     measure_spec_coverage as shared_measure_spec_coverage,
 )
 
@@ -130,17 +134,41 @@ def _normalize_text_for_match(text: str) -> str:
     return " ".join(text.split()).lower()  # collapse whitespace + case insensitive
 
 
+def _decode_validator_text(text: str) -> str:
+    """Decode validator-printed escape sequences into comparable text."""
+    text = html.unescape(text)
+    text = text.replace("\\r\\n", "\n")
+    text = text.replace("\\n", "\n")
+    text = text.replace("\\r", "\r")
+    text = text.replace("\\xa0", "\xa0")
+    text = text.replace("\\u2028", "\u2028")
+    return text
+
+
 def _extract_text_body_from_html(html_text: str) -> str:
     """Strip HTML tags and normalize for byte-exact comparison fallback."""
-    import re as _re
-    import html as _html
     # Replace <br> with space before stripping tags
-    html_text = _re.sub(r"<br\s*/?>", " ", html_text, flags=_re.IGNORECASE)
+    html_text = re.sub(r"<br\s*/?>", " ", html_text, flags=re.IGNORECASE)
     # Strip all tags
-    plain = _re.sub(r"<[^>]+>", " ", html_text)
+    plain = re.sub(r"<[^>]+>", " ", html_text)
     # HTML unescape (&amp; → &)
-    plain = _html.unescape(plain)
+    plain = html.unescape(plain)
     return _normalize_text_for_match(plain)
+
+
+class _HTMLNode:
+    def __init__(
+        self,
+        *,
+        tag: str,
+        attrs: dict[str, str],
+        parent: "_HTMLNode | None",
+        children: list["_HTMLNode | str"] | None = None,
+    ) -> None:
+        self.tag = tag
+        self.attrs = attrs
+        self.parent = parent
+        self.children = children or []
 
 
 def _soft_match_text(spec_text: str, html_normalized: str) -> bool:
@@ -151,18 +179,245 @@ def _soft_match_text(spec_text: str, html_normalized: str) -> bool:
     return spec_norm in html_normalized
 
 
+class _LinebreakHTMLParser(HTMLParser):
+    """Collect text lines separated by <br> and block boundaries."""
+
+    _BLOCK_TAGS = {
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "figcaption",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hr",
+        "li",
+        "main",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "section",
+        "table",
+        "td",
+        "th",
+        "tr",
+        "ul",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._current: list[str] = []
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        lowered = tag.lower()
+        if lowered == "br":
+            self._flush_line()
+        elif lowered in self._BLOCK_TAGS:
+            self._flush_line()
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() == "br":
+            self._flush_line()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in self._BLOCK_TAGS:
+            self._flush_line()
+
+    def handle_data(self, data: str) -> None:
+        self._current.append(data)
+
+    def close(self) -> None:
+        super().close()
+        self._flush_line()
+
+    def _flush_line(self) -> None:
+        normalized = _normalize_text_for_match("".join(self._current))
+        if normalized:
+            self.parts.append(normalized)
+        self._current.clear()
+
+
+def _extract_html_line_parts(html_text: str) -> list[str]:
+    """Return normalized text parts split by explicit/structural line boundaries."""
+    parser = _LinebreakHTMLParser()
+    parser.feed(html_text)
+    parser.close()
+    return parser.parts
+
+
+class _ScopedHTMLParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.root = _HTMLNode(tag="__root__", attrs={}, parent=None, children=[])
+        self._stack = [self.root]
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        node = _HTMLNode(
+            tag=tag.lower(),
+            attrs={key.lower(): (value or "") for key, value in attrs},
+            parent=self._stack[-1],
+            children=[],
+        )
+        self._stack[-1].children.append(node)
+        self._stack.append(node)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        node = _HTMLNode(
+            tag=tag.lower(),
+            attrs={key.lower(): (value or "") for key, value in attrs},
+            parent=self._stack[-1],
+            children=[],
+        )
+        self._stack[-1].children.append(node)
+
+    def handle_endtag(self, tag: str) -> None:
+        lowered = tag.lower()
+        for index in range(len(self._stack) - 1, 0, -1):
+            if self._stack[index].tag == lowered:
+                del self._stack[index:]
+                return
+
+    def handle_data(self, data: str) -> None:
+        if data:
+            self._stack[-1].children.append(data)
+
+
+def _parse_html_tree(html_text: str) -> _HTMLNode:
+    parser = _ScopedHTMLParser()
+    parser.feed(html_text)
+    parser.close()
+    return parser.root
+
+
+def _parse_scope_selector(line: str) -> str | None:
+    marker = " @ "
+    if marker not in line:
+        return None
+    return line.rsplit(marker, 1)[1].strip()
+
+
+def _node_has_class(node: _HTMLNode, class_name: str) -> bool:
+    return class_name in node.attrs.get("class", "").split()
+
+
+def _node_matches_selector(node: _HTMLNode, selector: str) -> bool:
+    selector = selector.strip()
+    if not selector:
+        return False
+    if selector.startswith("."):
+        return _node_has_class(node, selector[1:])
+    if selector.startswith("#"):
+        return node.attrs.get("id") == selector[1:]
+    return node.tag == selector.lower()
+
+
+def _find_nodes_for_selector(root: _HTMLNode, selector: str) -> list[_HTMLNode]:
+    matched: list[_HTMLNode] = []
+    stack = list(reversed(root.children))
+    while stack:
+        current = stack.pop()
+        if isinstance(current, str):
+            continue
+        if _node_matches_selector(current, selector):
+            matched.append(current)
+        stack.extend(reversed(current.children))
+    return matched
+
+
+def _collect_node_line_parts(node: _HTMLNode) -> list[str]:
+    parts: list[str] = []
+    current: list[str] = []
+
+    def flush() -> None:
+        normalized = _normalize_text_for_match("".join(current))
+        if normalized:
+            parts.append(normalized)
+        current.clear()
+
+    def visit(child: _HTMLNode | str) -> None:
+        if isinstance(child, str):
+            current.append(child)
+            return
+        if child.tag == "br":
+            flush()
+            return
+        if child.tag in _LinebreakHTMLParser._BLOCK_TAGS:
+            flush()
+        for nested in child.children:
+            visit(nested)
+        if child.tag in _LinebreakHTMLParser._BLOCK_TAGS:
+            flush()
+
+    for child in node.children:
+        visit(child)
+    flush()
+    return parts
+
+
+def _split_expected_linebreak_segments(spec_text: str) -> list[str]:
+    """Split spec text into normalized segments separated by intended line breaks."""
+    decoded = _decode_validator_text(spec_text)
+    return [segment for segment in (_normalize_text_for_match(part) for part in decoded.split("\n")) if segment]
+
+
+def _linebreaks_preserved(spec_text: str, html_text: str, scope_selector: str | None = None) -> bool:
+    """Return True when HTML preserves the spec line-break count for the text."""
+    expected_segments = _split_expected_linebreak_segments(spec_text)
+    if len(expected_segments) <= 1:
+        return False
+
+    if scope_selector:
+        root = _parse_html_tree(html_text)
+        nodes = _find_nodes_for_selector(root, scope_selector)
+        if nodes:
+            for node in nodes:
+                html_parts = _collect_node_line_parts(node)
+                if len(html_parts) < len(expected_segments):
+                    continue
+                for start in range(len(html_parts) - len(expected_segments) + 1):
+                    window = html_parts[start:start + len(expected_segments)]
+                    if window == expected_segments:
+                        return True
+            return False
+
+    html_parts = _extract_html_line_parts(html_text)
+    if len(html_parts) < len(expected_segments):
+        return False
+
+    for start in range(len(html_parts) - len(expected_segments) + 1):
+        window = html_parts[start:start + len(expected_segments)]
+        if window == expected_segments:
+            return True
+    return False
+
+
 def parse_figma_validate(output: str, html_text: str = "") -> tuple[list[str], list[str]]:
     """Return (trusted_violations, noisy_notes) — each as list of lines.
 
-    For text byte-exact / linebreak preservation violations, apply soft-match
-    fallback using normalized comparison (strips <br>/NBSP/escape) before
-    treating them as real violations. This reduces false-negatives reported
-    in digital-solution retrospective.
+    Byte-exact text keeps the historical soft-match fallback to avoid known
+    false negatives. Linebreak preservation is stricter: the violation is
+    cleared only when the HTML preserves the same line-break count with <br>
+    tags or equivalent block-element boundaries between the matched text parts.
     """
     html_normalized = _extract_text_body_from_html(html_text) if html_text else ""
     trusted = []
     noisy = []
     softmatched = []
+    linebreak_matched = []
     for line in output.splitlines():
         if "|" not in line:
             continue
@@ -174,14 +429,19 @@ def parse_figma_validate(output: str, html_text: str = "") -> tuple[list[str], l
             continue
 
         if category in TRUSTED_FIGMA_CATEGORIES:
-            # Text byte-exact / linebreak preservation: try soft match fallback
-            if category in ("텍스트 byte-exact", "줄바꿈 보존") and html_normalized:
-                if len(parts) >= 3:
-                    expected = parts[2].strip()
-                    if expected.startswith("'") and expected.endswith("'"):
-                        expected = expected[1:-1]
+            if len(parts) >= 3:
+                expected = parts[2].strip()
+                if expected.startswith("'") and expected.endswith("'"):
+                    expected = expected[1:-1]
+
+                if category == "텍스트 byte-exact" and html_normalized:
                     if _soft_match_text(expected, html_normalized):
                         softmatched.append(line.strip())
+                        continue
+
+                if category == "줄바꿈 보존" and html_text:
+                    if _linebreaks_preserved(expected, html_text, _parse_scope_selector(line)):
+                        linebreak_matched.append(line.strip())
                         continue
 
             # fills color on inherit chain (anything ending in '> span'):
@@ -202,6 +462,8 @@ def parse_figma_validate(output: str, html_text: str = "") -> tuple[list[str], l
 
     if softmatched:
         noisy.extend([f"[soft-match] {line}" for line in softmatched])
+    if linebreak_matched:
+        noisy.extend([f"[linebreak-match] {line}" for line in linebreak_matched])
     return trusted, noisy
 
 
@@ -242,6 +504,11 @@ def measure_spec_coverage(spec_dir: Path, html_source: str) -> dict[str, object]
     assert measurement is not None
     measurement["spec_shas"] = build_spec_sha_map(spec_files)
     return measurement
+
+
+def measure_border_radius(spec_dir: Path, css_source: str, html_source: str) -> dict[str, object]:
+    spec_files = sorted(spec_dir.glob("*_spec.json")) if spec_dir.exists() else []
+    return measure_border_radius_check(spec_files, css_source, html_source)
 
 
 def main() -> int:
@@ -295,6 +562,7 @@ def main() -> int:
             print("   (정당한 예외 시에만 --allow-missing-spec)")
 
     html_source = html_path.read_text(encoding="utf-8")
+    css_source = css_path.read_text(encoding="utf-8")
     spec_coverage = measure_spec_coverage(spec_dir, html_source)
     spec_coverage_fail = not spec_coverage["passed"]
     if spec_coverage_fail:
@@ -305,6 +573,16 @@ def main() -> int:
         else:
             print(f"\n❌ FAIL: spec 커버리지 부족 — {detail}")
             print("   껍데기 spec 가능성. spec 보강 또는 정당한 예외 시 --allow-low-coverage 사용.")
+
+    border_radius_check = measure_border_radius(spec_dir, css_source, html_source)
+    border_radius_fail = border_radius_check["status"] == "failed"
+    border_radius_warning = border_radius_check["status"] == "skipped" or bool(border_radius_check["warnings"])
+    if border_radius_fail:
+        detail = format_border_radius_detail(border_radius_check)
+        print(f"\n❌ FAIL: border-radius 검사 실패 — {detail}")
+    elif border_radius_warning:
+        detail = format_border_radius_detail(border_radius_check)
+        print(f"\n⚠️  WARNING: border-radius 검사 {border_radius_check['status']} — {detail}")
 
     # 1. figma-validate (trusted categories only)
     print("\n[1] Figma 충실도 (텍스트 + 폰트 + 색상)")
@@ -363,7 +641,7 @@ def main() -> int:
     # Gate — missing Figma 실측(spec font metadata) is a hard fail unless escaped.
     spec_gate_fail = spec_missing and not args.allow_missing_spec
     coverage_gate_fail = spec_coverage_fail and not args.allow_low_coverage
-    fail = bool(trusted_fig or trusted_sem or missing or spec_gate_fail or coverage_gate_fail)
+    fail = bool(trusted_fig or trusted_sem or missing or spec_gate_fail or coverage_gate_fail or border_radius_fail)
 
     # DOD-006: emit verification execution evidence (sha-bound to current files)
     if args.emit_report:
@@ -387,6 +665,7 @@ def main() -> int:
                 "allow_low_coverage": args.allow_low_coverage,
                 "passed": not coverage_gate_fail,
             },
+            "border_radius_check": border_radius_check,
         }
         Path(args.emit_report).write_text(_json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"\n[evidence] 검증 증거 기록: {args.emit_report}")
